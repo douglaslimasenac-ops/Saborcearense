@@ -1,0 +1,10 @@
+com\saborcearense\delivery\repository\ClienteRepository.class
+com\saborcearense\delivery\DeliveryApplication.class
+com\saborcearense\delivery\model\Pedido.class
+com\saborcearense\delivery\controller\CardapioController.class
+com\saborcearense\delivery\controller\PedidoController.class
+com\saborcearense\delivery\repository\PedidoRepository.class
+com\saborcearense\delivery\controller\ClienteController.class
+com\saborcearense\delivery\model\ItemCardapio.class
+com\saborcearense\delivery\repository\ItemCardapioRepository.class
+com\saborcearense\delivery\model\Cliente.class
