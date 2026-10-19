@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acompanhar Pedido - Saborcearense</title>
+    
+    <!-- Scripts necessários para o WebSocket rodar no navegador -->
+    <script src="https://cloudflare.com"></script>
+    <script src="https://cloudflare.com"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f7f7;
+            text-align: center;
+            padding: 50px 20px;
+        }
+        .container {
+            background: white;
+            max-width: 450px;
+            margin: 0 auto;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h2 { color: #333; }
+        .pedido-id {
+            background: #eee;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: #e67e22;
+        }
+        .status-box {
+            font-size: 22px;
+            font-weight: bold;
+            margin: 30px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            transition: all 0.5s ease;
+        }
+        .status-confirmado {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Saborcearense</h2>
+        <p>Seu pedido foi enviado ao WhatsApp do restaurante!</p>
+        <p>Código de acompanhamento: <span id="codigo-pedido" class="pedido-id">------</span></p>
+        
+        <div id="status-pedido" class="status-box">
+            ⏳ AGUARDANDO CONFIRMAÇÃO
+        </div>
+
+        <p style="font-size: 14px; color: #666;">Não feche essa página. Assim que o restaurante confirmar o recebimento, a tela atualizará sozinha.</p>
+    </div>
+
+    <script>
+        // Substitua pelo endereço correto do seu backend hospedado no Render
+        const URL_BACKEND = "https://onrender.com"; 
+
+        // Recupera o ID do pedido salvo no passo anterior
+        const pedidoId = localStorage.getItem('idPedidoSaborcearense');
+        
+        if (pedidoId) {
+            document.getElementById('codigo-pedido').innerText = `#${pedidoId}`;
+            conectarAoServidor(pedidoId);
+        } else {
+            document.getElementById('status-pedido').innerText = "❌ Nenhum pedido ativo localizado.";
+        }
+
+        function conectarAoServidor(id) {
+            // Abre o canal de comunicação WebSocket com o Spring Boot
+            const socket = new SockJS(`${URL_BACKEND}/ws-saborcearense`);
+            const stompClient = Stomp.over(socket);
+
+            // Oculta logs poluídos do stomp no console (opcional)
+            stompClient.debug = null;
+
+            stompClient.connect({}, function (frame) {
+                // Se inscreve no canal exclusivo deste pedido
+                stompClient.subscribe('/topic/pedido/' + id, function (mensagem) {
+                    const novoStatus = mensagem.body;
+                    
+                    if (novoStatus === "CONFIRMADO") {
+                        const boxStatus = document.getElementById('status-pedido');
+                        boxStatus.innerText = "✅ PEDIDO CONFIRMADO!";
+                        boxStatus.classList.add('status-confirmado');
+                    }
+                });
+            }, function (erro) {
+                // Caso o Render entre em standby ou a rede caia, tenta reconectar após 5 segundos
+                console.log("Conexão perdida. Tentando restabelecer...");
+                setTimeout(() => conectarAoServidor(id), 5000);
+            });
+        }
+    </script>
+</body>
+</html>

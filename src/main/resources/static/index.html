@@ -95,108 +95,55 @@
     </main>
 
     <script>
-        // Inicializa o carrinho em memória buscando o que já estava salvo no localStorage (evita perder dados ao dar F5)
-        let carrinhoMemoria = {};
+        <!-- Cole este bloco de código dentro da sua tag <script> existente no seu HTML -->
+<script>
+    // 1. IMPORTANTE: Substitua pela URL real que o Render te deu para o seu backend Java
+    const URL_BACKEND = "https://onrender.com"; 
+
+    // Altere o nome desta função para o mesmo nome que está no seu botão de finalizar (ex: onclick="finalizar()")
+    async function enviarPedidoParaOZap() {
+        
+        // [OPCIONAL] Se você tiver validações de campos vazios, deixe-as aqui em cima.
+
         try {
-            const itensSalvos = JSON.parse(localStorage.getItem('carrinho_itens')) || [];
-            itensSalvos.forEach(item => {
-                carrinhoMemoria[item.id] = item;
+            // 2. Faz uma requisição ao Spring Boot para gerar o código do pedido antes de ir pro Whats
+            const resposta = await fetch(`${URL_BACKEND}/api/pedidos/criar`, {
+                method: 'POST'
             });
-        } catch (e) {
-            console.error("Erro ao ler localStorage inicial", e);
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            // 1. Busca o status de funcionamento da loja
-            fetch('/api/cardapio/status')
-                .then(res => res.json())
-                .then(status => {
-                    const barra = document.getElementById('status-loja');
-                    barra.innerText = status.mensagem;
-                    if (!status.aberto) {
-                        barra.style.backgroundColor = "#e74c3c";
-                    } else {
-                        barra.style.backgroundColor = "#27ae60";
-                    }
-                })
-                .catch(err => console.error("Erro ao buscar status:", err));
-
-            // 2. Busca todos os produtos do cardápio cadastrados
-            fetch('/api/cardapio')
-                .then(res => res.json())
-                .then(produtos => {
-                    produtos.forEach(item => {
-                        const conteiner = document.getElementById(`section-${item.categoria}`);
-                        if (conteiner) {
-                            // Verifica se este item já estava adicionado no carrinho anteriormente
-                            const qtdInicial = carrinhoMemoria[item.id] ? carrinhoMemoria[item.id].quantidade : 0;
-                            const classeSelecionado = qtdInicial > 0 ? 'selecionado' : '';
-
-                            conteiner.innerHTML += `
-                                <div class="menu-item ${classeSelecionado}" id="item-card-${item.id}">
-                                    <div class="item-details">
-                                        <h3>${item.nome}</h3>
-                                        <p class="price">R$ ${item.preco.toFixed(2)}</p>
-                                    </div>
-                                    <div class="seletor-quantidade">
-                                        <button class="btn-qtd" onclick="alterarQuantidade(${item.id}, '${item.nome}', ${item.preco}, -1)">−</button>
-                                        <span class="qtd-numero" id="qtd-val-${item.id}">${qtdInicial}</span>
-                                        <button class="btn-qtd" onclick="alterarQuantidade(${item.id}, '${item.nome}', ${item.preco}, 1)">+</button>
-                                    </div>
-                                </div>`;
-                        }
-                    });
-                    // Atualiza o valor do total flutuante logo no carregamento
-                    atualizarCarrinhoFlutuante();
-                })
-                .catch(err => console.error("Erro ao carregar cardápio:", err));
-        });
-
-        // Função que gerencia o clique nos botões de + e -
-        function alterarQuantidade(id, nome, preco, mudanca) {
-            const campoTexto = document.getElementById(`qtd-val-${id}`);
-            const cardItem = document.getElementById(`item-card-${id}`);
-            if (!campoTexto || !cardItem) return;
-
-            let qtdAtual = parseInt(campoTexto.innerText) || 0;
-            qtdAtual += mudanca;
-
-            if (qtdAtual < 0) qtdAtual = 0;
-            campoTexto.innerText = qtdAtual;
-
-            // Atualiza o objeto do carrinho em memória
-            if (qtdAtual > 0) {
-                carrinhoMemoria[id] = { id: id, nome: nome, preco: preco, quantidade: qtdAtual };
-                cardItem.classList.add('selecionado'); 
-            } else {
-                delete carrinhoMemoria[id];
-                cardItem.classList.remove('selecionado'); 
-            }
-
-            atualizarCarrinhoFlutuante();
             
-            // Sincroniza em tempo real com o localStorage para manter coerência entre páginas
-            localStorage.setItem('carrinho_itens', JSON.stringify(Object.values(carrinhoMemoria)));
+            const pedidoCriado = await resposta.json();
+            const pedidoId = pedidoCriado.id; // Recebe o ID de 6 dígitos (Ex: X7R9B2)
+
+            // 3. Monta o link que o restaurante usará para confirmar o pedido com apenas 1 clique
+            const linkDeConfirmacao = `${URL_BACKEND}/api/pedidos/${pedidoId}/confirmar`;
+
+            // 4. Cria a mensagem do WhatsApp injetando o ID e o Link gerados
+            let textoWhatsapp = `*NOVO PEDIDO - SABORCEARENSE (#${pedidoId})*\n\n`;
+            
+            // ------------------------------------------------------------------------
+            // MANTENHA A SUA LÓGICA ATUAL DE CAPTURA DOS DADOS AQUI. EXEMPlO:
+            // const nome = document.getElementById('nome').value;
+            // textoWhatsapp += `Cliente: ${nome}\n`;
+            // ------------------------------------------------------------------------
+            
+            // Adiciona o link de confirmação no final da mensagem que o restaurante vai ler
+            textoWhatsapp += `\n👉 *CLIQUE AQUI PARA CONFIRMAR O PEDIDO:* ${linkDeConfirmacao}`;
+
+            // 5. Salva o ID no navegador do cliente para a próxima tela saber o que monitorar
+            localStorage.setItem('idPedidoSaborcearense', pedidoId);
+
+            // 6. Abre o WhatsApp para enviar a mensagem ao restaurante
+            const numeroRestaurante = "55XXXXXXXXXXX"; // Insira o número do restaurante com DDD
+            window.open(`https://wa.me{numeroRestaurante}?text=${encodeURIComponent(textoWhatsapp)}`, '_blank');
+
+            // 7. Redireciona o cliente na mesma aba para a tela de acompanhamento que criamos
+            window.location.href = 'acompanhar.html';
+
+        } catch (erro) {
+            console.error("Erro ao processar o fluxo do pedido:", erro);
+            alert("Ops! Tivemos um problema de conexão com o servidor. Tente finalizar novamente.");
         }
-
-        function atualizarCarrinhoFlutuante() {
-            let total = 0;
-            Object.values(carrinhoMemoria).forEach(item => {
-                total += (item.preco * item.quantidade);
-            });
-            document.getElementById('total-flutuante').innerText = "R\$ " + total.toFixed(2);
-        }
-
-        function irParaOFechamento() {
-            let itensSelecionados = Object.values(carrinhoMemoria);
-
-            if (itensSelecionados.length === 0) {
-                alert("Seu carrinho está vazio! Adicione pelo menos um item.");
-                return;
-            }
-
-            window.location.href = "carrinho.html";
-        }
+    }
     </script>
 </body>
 </html>
