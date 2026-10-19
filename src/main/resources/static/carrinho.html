@@ -217,7 +217,7 @@
                         `*TOTAL GERAL:* R$ ${totalGeral.toFixed(2)}`;
 
             localStorage.removeItem('carrinho_itens');
-           window.open(`https://wa.me//{/encodeURIComponent(textoWhatsapp)}`, '_blank');
+           window.open("https://wa.me/" + encodeURIComponent(textoWhatsapp), '_blank');
         }
     </script>
 </body>
