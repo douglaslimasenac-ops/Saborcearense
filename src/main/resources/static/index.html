@@ -93,11 +93,21 @@
             <button onclick="irParaOFechamento()" class="btn-avancar">Avançar para o Carrinho ➔</button>
         </div>
     </main>
+
     <script>
-        // Objeto global para armazenar temporariamente o carrinho em memória
+        // Inicializa o carrinho em memória buscando o que já estava salvo no localStorage (evita perder dados ao dar F5)
         let carrinhoMemoria = {};
+        try {
+            const itensSalvos = JSON.parse(localStorage.getItem('carrinho_itens')) || [];
+            itensSalvos.forEach(item => {
+                carrinhoMemoria[item.id] = item;
+            });
+        } catch (e) {
+            console.error("Erro ao ler localStorage inicial", e);
+        }
 
         document.addEventListener("DOMContentLoaded", () => {
+            // 1. Busca o status de funcionamento da loja
             fetch('/api/cardapio/status')
                 .then(res => res.json())
                 .then(status => {
@@ -108,53 +118,65 @@
                     } else {
                         barra.style.backgroundColor = "#27ae60";
                     }
-                });
+                })
+                .catch(err => console.error("Erro ao buscar status:", err));
 
+            // 2. Busca todos os produtos do cardápio cadastrados
             fetch('/api/cardapio')
                 .then(res => res.json())
                 .then(produtos => {
                     produtos.forEach(item => {
                         const conteiner = document.getElementById(`section-${item.categoria}`);
                         if (conteiner) {
+                            // Verifica se este item já estava adicionado no carrinho anteriormente
+                            const qtdInicial = carrinhoMemoria[item.id] ? carrinhoMemoria[item.id].quantidade : 0;
+                            const classeSelecionado = qtdInicial > 0 ? 'selecionado' : '';
+
                             conteiner.innerHTML += `
-                                <div class="menu-item" id="item-card-${item.id}">
+                                <div class="menu-item ${classeSelecionado}" id="item-card-${item.id}">
                                     <div class="item-details">
                                         <h3>${item.nome}</h3>
                                         <p class="price">R$ ${item.preco.toFixed(2)}</p>
                                     </div>
                                     <div class="seletor-quantidade">
                                         <button class="btn-qtd" onclick="alterarQuantidade(${item.id}, '${item.nome}', ${item.preco}, -1)">−</button>
-                                        <span class="qtd-numero" id="qtd-val-${item.id}">0</span>
+                                        <span class="qtd-numero" id="qtd-val-${item.id}">${qtdInicial}</span>
                                         <button class="btn-qtd" onclick="alterarQuantidade(${item.id}, '${item.nome}', ${item.preco}, 1)">+</button>
                                     </div>
                                 </div>`;
                         }
                     });
-                });
+                    // Atualiza o valor do total flutuante logo no carregamento
+                    atualizarCarrinhoFlutuante();
+                })
+                .catch(err => console.error("Erro ao carregar cardápio:", err));
         });
 
         // Função que gerencia o clique nos botões de + e -
         function alterarQuantidade(id, nome, preco, mudanca) {
             const campoTexto = document.getElementById(`qtd-val-${id}`);
             const cardItem = document.getElementById(`item-card-${id}`);
+            if (!campoTexto || !cardItem) return;
+
             let qtdAtual = parseInt(campoTexto.innerText) || 0;
-            
             qtdAtual += mudanca;
 
             if (qtdAtual < 0) qtdAtual = 0;
-
             campoTexto.innerText = qtdAtual;
 
             // Atualiza o objeto do carrinho em memória
             if (qtdAtual > 0) {
-                carrinhoMemoria[id] = { nome: nome, preco: preco, quantidade: qtdAtual };
-                cardItem.classList.add('selecionado'); // Adiciona cor de fundo
+                carrinhoMemoria[id] = { id: id, nome: nome, preco: preco, quantidade: qtdAtual };
+                cardItem.classList.add('selecionado'); 
             } else {
                 delete carrinhoMemoria[id];
-                cardItem.classList.remove('selecionado'); // Remove cor de fundo
+                cardItem.classList.remove('selecionado'); 
             }
 
             atualizarCarrinhoFlutuante();
+            
+            // Sincroniza em tempo real com o localStorage para manter coerência entre páginas
+            localStorage.setItem('carrinho_itens', JSON.stringify(Object.values(carrinhoMemoria)));
         }
 
         function atualizarCarrinhoFlutuante() {
@@ -173,8 +195,8 @@
                 return;
             }
 
-            // Salva os itens e muda de página
-            localStorage.setItem('carrinho_itens', JSON.stringify(itensSelecionados));
             window.location.href = "carrinho.html";
         }
     </script>
+</body>
+</html>
