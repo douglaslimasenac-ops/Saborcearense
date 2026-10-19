@@ -124,3 +124,45 @@ header h1 { margin: 0; font-size: 2.2rem; }
     background-color: #f39c12;
     box-shadow: inset 0 -2px 5px rgba(0,0,0,0.1);
 }
+/* Barra flutuante do carrinho estilo iFood */
+.barra-carrinho {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 600px;
+    background-color: var(--dark);
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.15);
+    box-sizing: border-box;
+    font-weight: bold;
+    z-index: 999;
+}
+.btn-avancar {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.btn-voltar {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: bold;
+}
+.linha-revisao-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+    font-size: 1rem;
+}

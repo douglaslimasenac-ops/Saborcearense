@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delivery Sabor Cearense</title>
+    <title>Sabor Cearense - Cardápio</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,16 +17,6 @@
     <div id="status-loja" class="status-barra">Carregando status...</div>
 
     <main class="container">
-        
-        <!-- IDENTIFICAÇÃO DO CLIENTE -->
-        <section class="form-section">
-            <h2>👤 Identificação do Cliente</h2>
-            <div class="input-group text-input">
-                <input type="tel" id="telefone" placeholder="Telefone com DDD (Ex: 85999999999)" required onblur="buscarCadastroPorTelefone()">
-                <input type="text" id="nome" placeholder="Seu Nome Completo" required>
-            </div>
-        </section>
-
         <!-- PRATOS DO DIA -->
         <section class="menu-section">
             <h2>🌹 Pratos do Dia</h2>
@@ -37,18 +27,15 @@
         <section class="menu-section">
             <h2>📌 Pratos Principais</h2>
             <p class="section-note">*Acompanham arroz, feijão e farofa</p>
-            
             <h3>🐔 Frango</h3>
             <div id="section-FRANGO" class="menu-items"></div>
-
             <h3>🥩 Carne</h3>
             <div id="section-CARNE" class="menu-items"></div>
-
             <h3>🐟 Outros</h3>
             <div id="section-OUTROS" class="menu-items"></div>
         </section>
 
-        <!-- BEBIDAS (Nova Seção) -->
+        <!-- BEBIDAS -->
         <section class="menu-section">
             <h2>🥤 Bebidas Geladas</h2>
             <div id="section-BEBIDA" class="menu-items"></div>
@@ -60,61 +47,14 @@
             <div id="section-SOBREMESA" class="menu-items"></div>
         </section>
 
-        <!-- CONFIGURAÇÕES DE ENTREGA -->
-        <section class="form-section">
-            <h2>🛵 Forma de Retirada / Entrega</h2>
-            <div class="input-group text-input">
-                <select id="tipoEntrega" onchange="alternarTipoEntrega()" required>
-                    <option value="Entrega" selected>Receber em Casa (Entrega)</option>
-                    <option value="Retirada">Retirar na Loja</option>
-                </select>
-            </div>
-
-            <!-- BLOCO DE ENDEREÇO -->
-            <div id="blocoEndereco">
-                <h2>📍 Dados de Entrega</h2>
-                <div class="input-group text-input">
-                    <select id="bairro" onchange="atualizarTotais()" required>
-                        <option value="">Selecione o seu Bairro</option>
-                        <option value="Centro">Centro - R$ 5,00</option>
-                        <option value="Aldeota">Aldeota - R$ 7,00</option>
-                        <option value="Meireles">Meireles - R$ 8,00</option>
-                        <option value="Fatima">Fátima - R$ 6,00</option>
-                        <option value="Parquelanda">Parquelanda - R$ 9,00</option>
-                    </select>
-                    <input type="text" id="endereco" placeholder="Rua, Número, Bloco, Apto" required>
-                </div>
-            </div>
-
-            <h2>📝 Observações do Pedido</h2>
-            <div class="input-group text-input">
-                <input type="text" id="acompanhamentos" placeholder="Acompanhamentos (Ex: Maionese e Batata frita)">
-                <textarea id="observacoes" rows="2" placeholder="Ex: Sem cebola, bife bem passado..."></textarea>
-            </div>
-
-            <h2>💳 Pagamento</h2>
-            <div class="input-group text-input">
-                <select id="pagamento" required>
-                    <option value="">Selecione a Forma de Pagamento</option>
-                    <option value="Pix">Pix (CNPJ: 59361228000150)</option>
-                    <option value="Dinheiro">Dinheiro</option>
-                    <option value="Cartão">Cartão Crédito/Débito</option>
-                </select>
-            </div>
-
-            <!-- PAINEL DE VALORES -->
-            <div class="resumo-valores">
-                <div class="linha-valor"><span>Subtotal itens:</span> <span id="val-subtotal">R$ 0,00</span></div>
-                <div class="linha-valor"><span>Taxa de entrega:</span> <span id="val-taxa">R$ 0,00</span></div>
-                <div class="linha-valor total-geral"><span>Total Geral:</span> <span id="val-total">R$ 0,00</span></div>
-            </div>
-
-            <button onclick="enviarPedido()" class="btn-submit">📱 Enviar Pedido para o WhatsApp</button>
-        </section>
+        <!-- BARRA DO CARRINHO FLUTUANTE ESTILO IFOOD -->
+        <div class="barra-carrinho">
+            <div>Total dos itens: <span id="total-flutuante">R\$ 0,00</span></div>
+            <button onclick="irParaOFechamento()" class="btn-avancar">Avançar para o Carrinho ➔</button>
+        </div>
     </main>
-    <script>
-        const taxasBairros = { "Centro": 5.0, "Aldeota": 7.0, "Meireles": 8.0, "Fatima": 6.0, "Parquelanda": 9.0 };
 
+    <script>
         document.addEventListener("DOMContentLoaded", () => {
             fetch('/api/cardapio/status')
                 .then(res => res.json())
@@ -123,31 +63,14 @@
                     barra.innerText = status.mensagem;
                     if (!status.aberto) {
                         barra.style.backgroundColor = "#e74c3c";
-                        document.querySelector('.btn-submit').disabled = true;
-                        document.querySelector('.btn-submit').innerText = "Loja Fechada no Momento";
-                        document.querySelector('.btn-submit').style.backgroundColor = "#7f8c8d";
                     } else {
                         barra.style.backgroundColor = "#27ae60";
                     }
                 });
 
-            if(localStorage.getItem('cliente_telefone')) {
-                document.getElementById('telefone').value = localStorage.getItem('cliente_telefone');
-                document.getElementById('nome').value = localStorage.getItem('cliente_nome');
-                document.getElementById('endereco').value = localStorage.getItem('cliente_endereco');
-                document.getElementById('bairro').value = localStorage.getItem('cliente_bairro') || "";
-            }
-
             fetch('/api/cardapio')
                 .then(res => res.json())
                 .then(produtos => {
-                    document.getElementById('section-PRATOS_DO_DIA').innerHTML = '';
-                    document.getElementById('section-FRANGO').innerHTML = '';
-                    document.getElementById('section-CARNE').innerHTML = '';
-                    document.getElementById('section-OUTROS').innerHTML = '';
-                    document.getElementById('section-BEBIDA').innerHTML = '';
-                    document.getElementById('section-SOBREMESA').innerHTML = '';
-
                     produtos.forEach(item => {
                         const conteiner = document.getElementById(`section-${item.categoria}`);
                         if (conteiner) {
@@ -157,138 +80,44 @@
                                         <h3>${item.nome}</h3>
                                         <p class="price">R$ ${item.preco.toFixed(2)}</p>
                                     </div>
-                                    <input type="number" min="0" value="0" class="quantity" data-name="${item.nome}" data-price="${item.preco}" onchange="atualizarTotais()">
+                                    <input type="number" min="0" value="0" class="quantity" data-id="${item.id}" data-name="${item.nome}" data-price="${item.preco}" onchange="atualizarCarrinhoFlutuante()">
                                 </div>`;
                         }
                     });
                 });
         });
 
-        function alternarTipoEntrega() {
-            const tipo = document.getElementById('tipoEntrega').value;
-            const bloco = document.getElementById('blocoEndereco');
-            if (tipo === 'Retirada') {
-                bloco.style.display = 'none';
-                document.getElementById('bairro').value = "";
-                document.getElementById('endereco').value = "";
-            } else {
-                bloco.style.display = 'block';
-            }
-            atualizarTotais();
-        }
-
-        function atualizarTotais() {
-            let subtotal = 0;
+        function atualizarCarrinhoFlutuante() {
+            let total = 0;
             document.querySelectorAll('.quantity').forEach(campo => {
                 const qtd = parseInt(campo.value) || 0;
                 const preco = parseFloat(campo.getAttribute('data-price'));
-                subtotal += (preco * qtd);
+                total += (preco * qtd);
             });
-
-            const tipoEntrega = document.getElementById('tipoEntrega').value;
-            const bairroSelecionado = document.getElementById('bairro').value;
-            let taxa = (tipoEntrega === 'Entrega' && bairroSelecionado) ? (taxasBairros[bairroSelecionado] || 0) : 0;
-            let totalGeral = subtotal + taxa;
-
-            document.getElementById('val-subtotal').innerText = "R\$ " + subtotal.toFixed(2);
-            document.getElementById('val-taxa').innerText = taxa > 0 ? "R\$ " + taxa.toFixed(2) : "Grátis / Retirada";
-            document.getElementById('val-total').innerText = "R\$ " + totalGeral.toFixed(2);
+            document.getElementById('total-flutuante').innerText = "R\$ " + total.toFixed(2);
         }
 
-        function buscarCadastroPorTelefone() {
-            const t = document.getElementById('telefone').value.replace(/\D/g, '');
-            if(t.length < 10) return;
-            fetch(`/api/clientes/${t}`).then(res => res.json()).then(c => {
-                document.getElementById('nome').value = c.nome;
-                document.getElementById('endereco').value = c.endereco;
-                if(c.bairro) document.getElementById('bairro').value = c.bairro;
-                atualizarTotais();
-            }).catch(() => {});
-        }
-
-        async function salvarCadastroDoCliente() {
-            const telefone = document.getElementById('telefone').value.replace(/\D/g, '');
-            const nome = document.getElementById('nome').value;
-            const endereco = document.getElementById('endereco').value;
-            const bairro = document.getElementById('bairro').value;
-
-            localStorage.setItem('cliente_telefone', telefone);
-            localStorage.setItem('cliente_nome', nome);
-            localStorage.setItem('cliente_endereco', endereco);
-            localStorage.setItem('cliente_bairro', bairro);
-
-            try {
-                await fetch('/api/clientes', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ telefone, nome, endereco, bairro })
-                });
-            } catch (e) {}
-        }
-
-        async function enviarPedido() {
-            const numeroWhatsapp = "5521974720736"; 
-            let itensPedido = "";
-            let subtotal = 0;
-
+        function irParaOFechamento() {
+            let itensSelecionados = [];
             document.querySelectorAll('.quantity').forEach(campo => {
                 const qtd = parseInt(campo.value) || 0;
                 if (qtd > 0) {
-                    const nome = campo.getAttribute('data-name');
-                    const preco = parseFloat(campo.getAttribute('data-price'));
-                    subtotal += (preco * qtd);
-                    itensPedido += `- ${qtd}x ${nome} (R$ ${(preco * qtd).toFixed(2)})\n`;
+                    itensSelecionados.push({
+                        nome: campo.getAttribute('data-name'),
+                        preco: parseFloat(campo.getAttribute('data-price')),
+                        quantidade: qtd
+                    });
                 }
             });
 
-            if (!itensPedido) return alert("Adicione pelo menos um item!");
-
-            const telefone = document.getElementById('telefone').value;
-            const nomeCliente = document.getElementById('nome').value;
-            const tipoEntrega = document.getElementById('tipoEntrega').value;
-            const pagamento = document.getElementById('pagamento').value;
-            const bairro = document.getElementById('bairro').value;
-            const endereco = document.getElementById('endereco').value;
-            const acompanhamentos = document.getElementById('acompanhamentos').value || "Nenhum";
-            const observacoes = document.getElementById('observacoes').value || "Nenhuma";
-
-            if (!telefone || !nomeCliente || !pagamento) return alert("Preencha a Identificação e o Pagamento!");
-            if (tipoEntrega === 'Entrega' && (!bairro || !endereco)) return alert("Preencha o Bairro e o Endereço de entrega!");
-
-            let taxa = tipoEntrega === 'Entrega' ? (taxasBairros[bairro] || 0) : 0;
-            let totalGeral = subtotal + taxa;
-
-            await salvarCadastroDoCliente();
-
-            try {
-                await fetch('/api/pedidos', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        cliente: nomeCliente, tipoEntrega, bairro, taxaEntrega: taxa, resumoItens: itensPedido.replace(/\n/g, " | "), total: totalGeral
-                    })
-                });
-            } catch (e) {}
-
-            let mensagem = `☀️ *SABOR CEARENSE - PEDIDO* ☀️\n\n` +
-                           `*Cliente:* ${nomeCliente}\n` +
-                           `*Telefone:* ${telefone}\n` +
-                           `*Tipo:* ${tipoEntrega}\n`;
-            
-            if(tipoEntrega === 'Entrega') {
-                mensagem += `*Bairro:* ${bairro}\n*Endereço:* ${endereco}\n`;
+            if (itensSelecionados.length === 0) {
+                alert("Seu carrinho está vazio! Adicione pelo menos um item.");
+                return;
             }
 
-            mensagem += `\n*Itens do Pedido:*\n${itensPedido}\n` +
-                        `*Acompanhamentos:* ${acompanhamentos}\n` +
-                        `*Observações:* ${observacoes}\n\n` +
-                        `*Pagamento:* ${pagamento}\n` +
-                        `---------------------------\n` +
-                        `*Subtotal itens:* R$ ${subtotal.toFixed(2)}\n` +
-                        `*Taxa de Entrega:* R$ ${taxa.toFixed(2)}\n` +
-                        `*TOTAL GERAL:* R$ ${totalGeral.toFixed(2)}`;
-
-            window.open("https://wa.me" + numeroWhatsapp + "?text=" + encodeURIComponent(mensagem), '_blank');
+            // Salva os itens escolhidos temporariamente e muda de página
+            localStorage.setItem('carrinho_itens', JSON.stringify(itensSelecionados));
+            window.location.href = "carrinho.html";
         }
     </script>
 </body>
