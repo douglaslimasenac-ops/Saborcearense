@@ -14,6 +14,8 @@
         <p class="info-header">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
     </header>
 
+    <div id="status-loja" class="status-barra">Carregando status...</div>
+
     <main class="container">
         
         <!-- IDENTIFICAÇÃO DO CLIENTE -->
@@ -25,12 +27,13 @@
             </div>
         </section>
 
-        <!-- CARDÁPIO DINÂMICO -->
+        <!-- PRATOS DO DIA -->
         <section class="menu-section">
             <h2>🌹 Pratos do Dia</h2>
             <div id="section-PRATOS_DO_DIA" class="menu-items"></div>
         </section>
 
+        <!-- PRATOS PRINCIPAIS -->
         <section class="menu-section">
             <h2>📌 Pratos Principais</h2>
             <p class="section-note">*Acompanham arroz, feijão e farofa</p>
@@ -45,6 +48,13 @@
             <div id="section-OUTROS" class="menu-items"></div>
         </section>
 
+        <!-- BEBIDAS (Nova Seção) -->
+        <section class="menu-section">
+            <h2>🥤 Bebidas Geladas</h2>
+            <div id="section-BEBIDA" class="menu-items"></div>
+        </section>
+
+        <!-- SOBREMESAS -->
         <section class="menu-section">
             <h2>😋 Sobremesas - R\$ 8,00</h2>
             <div id="section-SOBREMESA" class="menu-items"></div>
@@ -66,11 +76,11 @@
                 <div class="input-group text-input">
                     <select id="bairro" onchange="atualizarTotais()" required>
                         <option value="">Selecione o seu Bairro</option>
-                        <option value="Engenho Novo">engenho novo - R$ 0,00</option>
-                        <option value="Méier">Méier - R$ 3,00</option>
-                        <option value="Grajaú">Grajaú - R$ 4,00</option>
-                        <option value="Andaraí">Andaraí - R$ 5,00</option>
-                        <option value="Tijuca">Grande Tijuca - R$ 6,00</option>
+                        <option value="Centro">Centro - R$ 5,00</option>
+                        <option value="Aldeota">Aldeota - R$ 7,00</option>
+                        <option value="Meireles">Meireles - R$ 8,00</option>
+                        <option value="Fatima">Fátima - R$ 6,00</option>
+                        <option value="Parquelanda">Parquelanda - R$ 9,00</option>
                     </select>
                     <input type="text" id="endereco" placeholder="Rua, Número, Bloco, Apto" required>
                 </div>
@@ -92,7 +102,7 @@
                 </select>
             </div>
 
-            <!-- PAINEL DE VALORES ESTILO IFOOD -->
+            <!-- PAINEL DE VALORES -->
             <div class="resumo-valores">
                 <div class="linha-valor"><span>Subtotal itens:</span> <span id="val-subtotal">R$ 0,00</span></div>
                 <div class="linha-valor"><span>Taxa de entrega:</span> <span id="val-taxa">R$ 0,00</span></div>
@@ -103,10 +113,24 @@
         </section>
     </main>
     <script>
-        // Configuração de Taxas dos Bairros
         const taxasBairros = { "Centro": 5.0, "Aldeota": 7.0, "Meireles": 8.0, "Fatima": 6.0, "Parquelanda": 9.0 };
 
         document.addEventListener("DOMContentLoaded", () => {
+            fetch('/api/cardapio/status')
+                .then(res => res.json())
+                .then(status => {
+                    const barra = document.getElementById('status-loja');
+                    barra.innerText = status.mensagem;
+                    if (!status.aberto) {
+                        barra.style.backgroundColor = "#e74c3c";
+                        document.querySelector('.btn-submit').disabled = true;
+                        document.querySelector('.btn-submit').innerText = "Loja Fechada no Momento";
+                        document.querySelector('.btn-submit').style.backgroundColor = "#7f8c8d";
+                    } else {
+                        barra.style.backgroundColor = "#27ae60";
+                    }
+                });
+
             if(localStorage.getItem('cliente_telefone')) {
                 document.getElementById('telefone').value = localStorage.getItem('cliente_telefone');
                 document.getElementById('nome').value = localStorage.getItem('cliente_nome');
@@ -117,6 +141,13 @@
             fetch('/api/cardapio')
                 .then(res => res.json())
                 .then(produtos => {
+                    document.getElementById('section-PRATOS_DO_DIA').innerHTML = '';
+                    document.getElementById('section-FRANGO').innerHTML = '';
+                    document.getElementById('section-CARNE').innerHTML = '';
+                    document.getElementById('section-OUTROS').innerHTML = '';
+                    document.getElementById('section-BEBIDA').innerHTML = '';
+                    document.getElementById('section-SOBREMESA').innerHTML = '';
+
                     produtos.forEach(item => {
                         const conteiner = document.getElementById(`section-${item.categoria}`);
                         if (conteiner) {
@@ -157,7 +188,6 @@
             const tipoEntrega = document.getElementById('tipoEntrega').value;
             const bairroSelecionado = document.getElementById('bairro').value;
             let taxa = (tipoEntrega === 'Entrega' && bairroSelecionado) ? (taxasBairros[bairroSelecionado] || 0) : 0;
-
             let totalGeral = subtotal + taxa;
 
             document.getElementById('val-subtotal').innerText = "R\$ " + subtotal.toFixed(2);
@@ -258,7 +288,7 @@
                         `*Taxa de Entrega:* R$ ${taxa.toFixed(2)}\n` +
                         `*TOTAL GERAL:* R$ ${totalGeral.toFixed(2)}`;
 
-            window.open("https://wa.me/" + numeroWhatsapp + "?text=" + encodeURIComponent(mensagem), '_blank');
+            window.open("https://wa.me" + numeroWhatsapp + "?text=" + encodeURIComponent(mensagem), '_blank');
         }
     </script>
 </body>
