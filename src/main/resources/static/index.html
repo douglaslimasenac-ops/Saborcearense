@@ -5,6 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sabor Cearense - Cardápio</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos para os novos seletores de quantidade estilo iFood */
+        .seletor-quantidade {
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 2px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .btn-qtd {
+            background-color: transparent;
+            border: none;
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-weight: bold;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s;
+        }
+        .btn-qtd:active { transform: scale(0.9); }
+        .qtd-numero {
+            font-size: 1rem;
+            font-weight: bold;
+            min-width: 24px;
+            text-align: center;
+            color: var(--dark);
+        }
+        /* Destaque visual quando o item tem quantidade maior que zero */
+        .menu-item.selecionado {
+            background-color: #fff9f4;
+            border-left: 4px solid var(--primary);
+            padding-left: 8px;
+        }
+    </style>
 </head>
 <body>
 
@@ -53,8 +93,10 @@
             <button onclick="irParaOFechamento()" class="btn-avancar">Avançar para o Carrinho ➔</button>
         </div>
     </main>
-
     <script>
+        // Objeto global para armazenar temporariamente o carrinho em memória
+        let carrinhoMemoria = {};
+
         document.addEventListener("DOMContentLoaded", () => {
             fetch('/api/cardapio/status')
                 .then(res => res.json())
@@ -75,50 +117,64 @@
                         const conteiner = document.getElementById(`section-${item.categoria}`);
                         if (conteiner) {
                             conteiner.innerHTML += `
-                                <div class="menu-item">
+                                <div class="menu-item" id="item-card-${item.id}">
                                     <div class="item-details">
                                         <h3>${item.nome}</h3>
                                         <p class="price">R$ ${item.preco.toFixed(2)}</p>
                                     </div>
-                                    <input type="number" min="0" value="0" class="quantity" data-id="${item.id}" data-name="${item.nome}" data-price="${item.preco}" onchange="atualizarCarrinhoFlutuante()">
+                                    <div class="seletor-quantidade">
+                                        <button class="btn-qtd" onclick="alterarQuantidade(${item.id}, '${item.nome}', ${item.preco}, -1)">−</button>
+                                        <span class="qtd-numero" id="qtd-val-${item.id}">0</span>
+                                        <button class="btn-qtd" onclick="alterarQuantidade(${item.id}, '${item.nome}', ${item.preco}, 1)">+</button>
+                                    </div>
                                 </div>`;
                         }
                     });
                 });
         });
 
+        // Função que gerencia o clique nos botões de + e -
+        function alterarQuantidade(id, nome, preco, mudanca) {
+            const campoTexto = document.getElementById(`qtd-val-${id}`);
+            const cardItem = document.getElementById(`item-card-${id}`);
+            let qtdAtual = parseInt(campoTexto.innerText) || 0;
+            
+            qtdAtual += mudanca;
+
+            if (qtdAtual < 0) qtdAtual = 0;
+
+            campoTexto.innerText = qtdAtual;
+
+            // Atualiza o objeto do carrinho em memória
+            if (qtdAtual > 0) {
+                carrinhoMemoria[id] = { nome: nome, preco: preco, quantidade: qtdAtual };
+                cardItem.classList.add('selecionado'); // Adiciona cor de fundo
+            } else {
+                delete carrinhoMemoria[id];
+                cardItem.classList.remove('selecionado'); // Remove cor de fundo
+            }
+
+            atualizarCarrinhoFlutuante();
+        }
+
         function atualizarCarrinhoFlutuante() {
             let total = 0;
-            document.querySelectorAll('.quantity').forEach(campo => {
-                const qtd = parseInt(campo.value) || 0;
-                const preco = parseFloat(campo.getAttribute('data-price'));
-                total += (preco * qtd);
+            Object.values(carrinhoMemoria).forEach(item => {
+                total += (item.preco * item.quantidade);
             });
             document.getElementById('total-flutuante').innerText = "R\$ " + total.toFixed(2);
         }
 
         function irParaOFechamento() {
-            let itensSelecionados = [];
-            document.querySelectorAll('.quantity').forEach(campo => {
-                const qtd = parseInt(campo.value) || 0;
-                if (qtd > 0) {
-                    itensSelecionados.push({
-                        nome: campo.getAttribute('data-name'),
-                        preco: parseFloat(campo.getAttribute('data-price')),
-                        quantidade: qtd
-                    });
-                }
-            });
+            let itensSelecionados = Object.values(carrinhoMemoria);
 
             if (itensSelecionados.length === 0) {
                 alert("Seu carrinho está vazio! Adicione pelo menos um item.");
                 return;
             }
 
-            // Salva os itens escolhidos temporariamente e muda de página
+            // Salva os itens e muda de página
             localStorage.setItem('carrinho_itens', JSON.stringify(itensSelecionados));
             window.location.href = "carrinho.html";
         }
     </script>
-</body>
-</html>
