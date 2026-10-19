@@ -1,171 +1,241 @@
+/* ==========================================================================
+   CONFIGURAÇÕES GLOBAIS E PALETA DE CORES (Baseada na Logo)
+   ========================================================================== */
 :root {
-    --primary: #e67e22;
-    --secondary: #27ae60;
-    --dark: #2c3e50;
-    --light: #f8f9fa;
-    --text: #333;
+    --primary: #f59e2f;       /* Laranja Quente da Logo (Sol/Cacto) */
+    --primary-hover: #dd8416; /* Laranja mais escuro para cliques e hovers */
+    --dark: #111111;          /* Preto Sólido da Logo para textos e títulos */
+    --muted: #555555;         /* Cinza escuro para descrições legíveis */
+    --background: #fdfaf6;    /* Fundo off-white caloroso que combina com o tema */
+    --surface: #ffffff;       /* Branco limpo para blocos de conteúdo e cards */
+    --success: #27ae60;       /* Verde para indicadores de sucesso (Loja aberta) */
+    --border: #f0e6da;        /* Divisores sutis em tom areia/creme */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--light);
-    color: var(--text);
-    margin: 0;
-    padding: 0;
+    background-color: var(--background);
+    color: var(--dark);
+    line-height: 1.5;
 }
-
-header {
-    background: linear-gradient(135deg, #f39c12, var(--primary));
-    color: white;
-    text-align: center;
-    padding: 2rem 1rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-header h1 { margin: 0; font-size: 2.2rem; }
-.subtitle { margin: 0.5rem 0 0; font-weight: 300; }
-.info-header { background: rgba(0,0,0,0.1); display: inline-block; padding: 0.3rem 1rem; border-radius: 20px; font-size: 0.9rem; margin-top: 0.8rem; }
 
 .container {
+    width: 100%;
     max-width: 600px;
-    margin: 2rem auto;
-    padding: 0 1rem;
+    margin: 0 auto;
+    padding: 16px;
+    padding-bottom: 110px; /* Evita que o carrinho flutuante cubra as sobremesas */
 }
 
-.menu-section, .form-section {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+/* ==========================================================================
+   HEADER COM LOGO REDONDA
+   ========================================================================== */
+header {
+    background: var(--surface);
+    text-align: center;
+    padding: 24px 16px;
+    border-bottom: 1px solid var(--border);
 }
 
-.menu-section h2 { color: var(--primary); border-bottom: 2px solid var(--light); padding-bottom: 0.5rem; margin-top: 0; }
-.menu-section h3 { color: var(--dark); margin: 1.5rem 0 0.5rem; font-size: 1.1rem; border-left: 3px solid var(--primary); padding-left: 8px;}
-.section-note { font-size: 0.85rem; color: #7f8c8d; font-style: italic; margin-top: -0.5rem; margin-bottom: 1rem; }
+.logo-restaurante {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 10px;
+}
+
+header .subtitle {
+    font-size: 1.05rem;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+header .info-header {
+    font-size: 0.85rem;
+    color: var(--dark);
+    margin-top: 8px;
+    font-weight: 700;
+}
+
+/* Status de Funcionamento */
+.status-barra {
+    text-align: center;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 0.9rem;
+    padding: 8px;
+    transition: background-color 0.3s ease;
+}
+
+/* ==========================================================================
+   ELEMENTOS DE CARDÁPIO E SELETORES ESTILO IFOOD
+   ========================================================================== */
+.menu-section {
+    margin-top: 24px;
+}
+
+.menu-section h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: var(--dark);
+}
+
+.menu-section h3 {
+    font-size: 1rem;
+    color: var(--muted);
+    margin: 16px 0 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+}
+
+.section-note {
+    font-size: 0.85rem;
+    color: var(--primary-hover);
+    margin-top: -8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.menu-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
 
 .menu-item {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
-    border-bottom: 1px dashed #eee;
-}
-.menu-item:last-child { border-bottom: none; }
-.item-details h3 { margin: 0; font-size: 1rem; border-left: none; padding-left: 0; color: #333; }
-
-.price { font-weight: bold; color: var(--secondary); margin: 0.2rem 0 0; font-size: 0.95rem; }
-
-.quantity {
-    width: 55px;
-    padding: 0.4rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    text-align: center;
-    font-size: 1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.form-section h2 { font-size: 1.2rem; color: var(--dark); margin-top: 1.5rem; }
+.menu-item:hover {
+    box-shadow: 0 4px 10px rgba(245, 158, 47, 0.08);
+}
 
-.text-input input, .text-input textarea, .text-input select {
-    width: 100%;
-    padding: 0.8rem;
-    margin-bottom: 0.8rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 1rem;
-    font-family: inherit;
+/* Destaque visual do iFood adaptado ao tom quente da logo */
+.menu-item.selecionado {
+    background-color: #fffbf4;
+    border-left: 4px solid var(--primary);
+}
+
+.item-details h3 {
+    font-size: 1.05rem;
+    color: var(--dark);
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.item-details p.price {
+    font-size: 1.1rem;
+    color: var(--dark);
+    font-weight: 800;
+}
+
+.btn-qtd {
+    color: var(--primary); /* Botões de + e - em laranja */
+}
+
+/* ==========================================================================
+   BARRA DO CARRINHO FLUTUANTE RENOVADA
+   ========================================================================== */
+.barra-carrinho {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 540px;
+    background-color: var(--dark); /* Barra escura destaca muito bem o texto */
+    color: #ffffff;
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+}
+
+.barra-carrinho #total-flutuante {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--primary); /* Preço total brilha em laranja no fundo preto */
+}
+
+.btn-avancar {
+    background-color: var(--primary);
+    color: var(--dark);
+    border: none;
+    padding: 12px 20px;
+    font-weight: 800;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.btn-avancar:hover {
+    background-color: var(--primary-hover);
+}
+
+/* ==========================================================================
+   FORMULÁRIOS E BOTÃO DE SUBMIT (CARRINHO)
+   ========================================================================== */
+.form-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.form-section h2 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--dark);
+    border-bottom: 2px solid var(--background);
+    padding-bottom: 6px;
+    margin-bottom: 16px;
+}
+
+.text-input input:focus, 
+.text-input select:focus, 
+.text-input textarea:focus {
+    border-color: var(--primary); /* Bordas focadas acendem em laranja */
+}
+
+.total-geral {
+    font-size: 1.15rem;
+    font-weight: 900;
 }
 
 .btn-submit {
     width: 100%;
-    background-color: var(--secondary);
-    color: white;
+    background-color: var(--success);
+    color: #ffffff;
     border: none;
-    padding: 1rem;
+    padding: 16px;
     font-size: 1.1rem;
-    font-weight: bold;
-    border-radius: 4px;
+    font-weight: 800;
+    border-radius: 12px;
     cursor: pointer;
-    transition: background 0.2s;
-    margin-top: 1rem;
-}
-.btn-submit:hover { background-color: #219150; }
-/* Resumo de valores estilo iFood */
-.resumo-valores {
-    background-color: #fcfcfc;
-    border: 1px solid #eee;
-    border-radius: 6px;
-    padding: 1rem;
-    margin: 1.5rem 0;
-}
-.linha-valor {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.95rem;
-    color: #555;
-    margin-bottom: 0.5rem;
-}
-.total-geral {
-    border-top: 1px solid #ddd;
-    padding-top: 0.5rem;
-    margin-top: 0.5rem;
-    font-weight: bold;
-    font-size: 1.15rem;
-    color: var(--secondary);
-}
-.status-barra {
-    text-align: center;
-    color: white;
-    padding: 0.6rem;
-    font-weight: bold;
-    font-size: 1rem;
-    background-color: #f39c12;
-    box-shadow: inset 0 -2px 5px rgba(0,0,0,0.1);
-}
-/* Barra flutuante do carrinho estilo iFood */
-.barra-carrinho {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 600px;
-    background-color: var(--dark);
-    color: white;
-    padding: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.15);
-    box-sizing: border-box;
-    font-weight: bold;
-    z-index: 999;
-}
-.btn-avancar {
-    background-color: var(--primary);
-    color: white;
-    border: none;
-    padding: 0.6rem 1.2rem;
-    font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
-}
-.btn-voltar {
-    display: inline-block;
-    margin-bottom: 1rem;
-    color: var(--primary);
-    text-decoration: none;
-    font-weight: bold;
-}
-.linha-revisao-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #eee;
-    font-size: 1rem;
-}/* Garante que o conteúdo final não seja coberto pela barra flutuante */
-main, .container, section:last-of-type {
-    padding-bottom: 90px; /* Ajuste esse valor de acordo com a altura da sua barra */
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
 }
