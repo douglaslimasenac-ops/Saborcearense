@@ -44,6 +44,29 @@
             border-left: 4px solid var(--primary);
             padding-left: 8px;
         }
+        /* Estilo para itens esgotados */
+        .item-esgotado {
+            opacity: 0.6;
+            background-color: #eaeaea !important;
+            border-left: 4px solid #7f8c8d !important;
+        }
+        .badge-esgotado {
+            color: #c0392b;
+            font-weight: bold;
+            font-size: 0.9rem;
+            background: #f9d5d5;
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+        footer {
+            text-align: center;
+            margin: 40px 0 80px 0;
+        }
+        footer a {
+            color: #7f8c8d;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -90,50 +113,128 @@
         <!-- BARRA DO CARRINHO FLUTUANTE ESTILO IFOOD -->
         <div class="barra-carrinho">
             <div>Total dos itens: <span id="total-flutuante">R$ 0,00</span></div>
-            <!-- Atualizado para chamar a função correta ao invés de ir para outra tela vazia -->
             <button onclick="enviarPedidoParaOZap()" class="btn-avancar">Avançar para o Carrinho ➔</button>
         </div>
     </main>
 
-    <!-- ÁREA JAVASCRIPT CORRIGIDA (Sem tags duplicadas ou comentários inválidos) -->
+    <footer>
+        <a href="admin.html">⚙ Acessar Painel do Administrador</a>
+    </footer>
+    <!-- ÁREA JAVASCRIPT CORRIGIDA E INTEGRADA COM O STATUS DE ESGOTADO -->
     <script>
         // 1. IMPORTANTE: Substitua pela URL real que o Render te deu para o seu backend Java
         const URL_BACKEND = "https://onrender.com"; 
 
+        let carrinho = {};
+
+        // Carrega o cardápio assim que a página abre
+        document.addEventListener("DOMContentLoaded", () => {
+            carregarCardapio();
+        });
+
+        async function carregarCardapio() {
+            try {
+                // Rota que busca todos os pratos no seu backend
+                const resposta = await fetch(URL_BACKEND + "/api/admin/pratos");
+                const pratos = await resposta.json();
+
+                // Lista das seções do cardápio mapeadas
+                const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "BEBIDA", "SOBREMESA"];
+                secoes.forEach(sec => {
+                    const el = document.getElementById("section-" + sec);
+                    if (el) el.innerHTML = "";
+                });
+
+                pratos.forEach(prato => {
+                    // Mapeia onde o prato deve entrar com base no dia da semana ou categoria cadastrada
+                    let secaoAlvo = prato.diaDaSemana; 
+                    
+                    const container = document.getElementById("section-" + secaoAlvo);
+                    if (container) {
+                        
+                        let controleQuantidadeHTML = "";
+                        let classeEsgotado = "";
+
+                        // Verifica se o backend marcou o prato como esgotado
+                        if (prato.esgotado) {
+                            classeEsgotado = "item-esgotado";
+                            controleQuantidadeHTML = `<span class="badge-esgotado">Esgotado</span>`;
+                        } else {
+                            controleQuantidadeHTML = `
+                                <div class="seletor-quantidade">
+                                    <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, -1, ${prato.preco})">-</button>
+                                    <span class="qtd-numero" id="qtd-${prato.id}">0</span>
+                                    <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, 1, ${prato.preco})">+</button>
+                                </div>
+                            `;
+                        }
+
+                        container.innerHTML += `
+                            <div class="menu-item ${classeEsgotado}" id="item-${prato.id}">
+                                <div class="item-info">
+                                    <h4>${prato.nome}</h4>
+                                    <p>${prato.descricao || ''}</p>
+                                    <span class="preco">R$ ${prato.preco.toFixed(2).replace('.', ',')}</span>
+                                </div>
+                                <div class="item-controles">
+                                    ${controleQuantidadeHTML}
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            } catch (erro) {
+                console.error("Erro ao carregar cardápio:", erro);
+                document.getElementById("status-loja").innerText = "Erro ao carregar o cardápio.";
+            }
+        }
+
+        function mudarQuantidade(id, alteracao, preco) {
+            if (!carrinho[id]) carrinho[id] = { qtd: 0, preco: preco };
+            
+            carrinho[id].qtd += alteracao;
+
+            if (carrinho[id].qtd <= 0) {
+                carrinho[id].qtd = 0;
+                document.getElementById(`item-${id}`).classList.remove("selecionado");
+            } else {
+                document.getElementById(`item-${id}`).classList.add("selecionado");
+            }
+
+            document.getElementById(`qtd-${id}`).innerText = carrinho[id].qtd;
+            atualizarTotalFlutuante();
+        }
+
+        function atualizarTotalFlutuante() {
+            let total = 0;
+            for (let id in carrinho) {
+                total += carrinho[id].qtd * carrinho[id].preco;
+            }
+            document.getElementById("total-flutuante").innerText = "R\$ " + total.toFixed(2).replace('.', ',');
+        }
+
         async function enviarPedidoParaOZap() {
             try {
-                // 2. Faz uma requisição ao Spring Boot para gerar o código do pedido
                 const resposta = await fetch(URL_BACKEND + "/api/pedidos/criar", {
                     method: 'POST'
                 });
                 
                 const pedidoCriado = await resposta.json();
-                const pedidoId = pedidoCriado.id; // Recebe o ID de 6 dígitos
+                const pedidoId = pedidoCriado.id; 
 
-                // 3. Monta o link que o restaurante usará para confirmar o pedido
                 const linkDeConfirmacao = URL_BACKEND + "/api/pedidos/" + pedidoId + "/confirmar";
 
-                // 4. Cria a mensagem do WhatsApp injetando o ID e o Link gerados
                 let textoWhatsapp = "*NOVO PEDIDO - SABORCEARENSE (#" + pedidoId + ")*\n\n";
-                
-                // Exemplo de integração dos dados atuais coletados do carrinho
                 const totalPedido = document.getElementById('total-flutuante').innerText;
                 textoWhatsapp += "*Total do Pedido:* " + totalPedido + "\n";
-                
-                // Adiciona o link de confirmação no final da mensagem
                 textoWhatsapp += "\n👉 *CLIQUE AQUI PARA CONFIRMAR O PEDIDO:* " + linkDeConfirmacao;
 
-                // 5. Salva o ID no navegador do cliente para a tela de acompanhamento
                 localStorage.setItem('idPedidoSaborcearense', pedidoId);
 
-                // 6. Configuração segura do número oficial do restaurante (Modificado para evitar erros de concatenação)
                 const numeroRestaurante = "5521969179343"; 
-                const urlWhatsappFinal = "https://whatsapp.com" + numeroRestaurante + "&text=" + encodeURIComponent(textoWhatsapp);
+                const urlWhatsappFinal = "https://wa.me" + numeroRestaurante + "?text=" + encodeURIComponent(textoWhatsapp);
                 
-                // Abre o WhatsApp na aba secundária de forma nativa e sem travas de pop-up
                 window.open(urlWhatsappFinal, '_blank');
-
-                // 7. Redireciona o cliente na mesma aba para a tela de acompanhamento
                 window.location.href = 'acompanhar.html';
 
             } catch (erro) {
@@ -144,3 +245,4 @@
     </script>
 </body>
 </html>
+

@@ -1,0 +1,50 @@
+package com.saborcearense.api.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/admin/pratos")
+@CrossOrigin(origins = "*") // Permite que o seu HTML acesse a API
+public class AdminPratoController {
+
+    @Autowired 
+    private PratoRepository pratoRepository; // Substitua pelo seu Repository
+
+    // Listar todos os pratos no painel
+    @GetMapping
+    public ResponseEntity<List<Prato>> listarTodos() {
+        return ResponseEntity.ok(pratoRepository.findAll());
+    }
+
+    // Adicionar novo prato
+    @PostMapping
+    public ResponseEntity<Prato> adicionar(@RequestBody Prato novoPrato) {
+        return ResponseEntity.ok(pratoRepository.save(novoPrato));
+    }
+
+    // Alterar dados e status (Esgotado)
+    @PutMapping("/{id}")
+    public ResponseEntity<Prato> atualizar(@PathVariable Long id, @RequestBody Prato pratoAtualizado) {
+        return pratoRepository.findById(id)
+            .map(prato -> {
+                prato.setNome(pratoAtualizado.getNome());
+                prato.setPreco(pratoAtualizado.getPreco());
+                prato.setEsgotado(pratoAtualizado.isEsgotado());
+                return ResponseEntity.ok(pratoRepository.save(prato));
+            })
+            .orElse(ResponseEntity.notFound().build());
+    }
+
+    // Retirar (Deletar) prato
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        if (pratoRepository.existsById(id)) {
+            pratoRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+}
