@@ -1,50 +1,211 @@
-package com.saborcearense.api.controller;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Sabor Cearense</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; background-color: #f5f6fa; color: #333; }
+        .container-admin { max-width: 1000px; margin: 0 auto; }
+        h1, h2 { color: #2c3e50; }
+        .btn-voltar { display: inline-block; margin-bottom: 20px; color: #e67e22; text-decoration: none; font-weight: bold; }
+        .form-container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        .form-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; }
+        .form-group { flex: 1; min-width: 200px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background: #e67e22; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background 0.2s; }
+        button:hover { background: #d35400; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        th, td { padding: 12px 15px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background-color: #2c3e50; color: white; }
+        .btn-acao { padding: 6px 12px; font-size: 0.85rem; margin-right: 5px; }
+        .btn-save { background: #2ecc71; }
+        .btn-save:hover { background: #27ae60; }
+        .btn-status { background: #3498db; }
+        .btn-status.esgotado { background: #95a5a6; }
+        .btn-delete { background: #e74c3c; }
+        .btn-delete:hover { background: #c0392b; }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+        .status-disponivel { background: #e8f8f5; color: #2ecc71; }
+        .status-esgotado { background: #fce4e4; color: #e74c3c; }
+        .input-table { border: 1px solid transparent; padding: 6px; background: transparent; font-size: 0.95rem; width: 100%; }
+        .input-table:focus { border-color: #ddd; background: #fff; outline: none; }
+    </style>
+</head>
+<body>
+    <div class="container-admin">
+        <h1>Painel do Administrador - Sabor Cearense</h1>
+        <a href="index.html" class="btn-voltar">← Voltar para o Cardápio</a>
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
+        <!-- Formulário para Adicionar Prato -->
+        <div class="form-container">
+            <h2>Adicionar Novo Item ao Cardápio</h2>
+            <form id="form-prato">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nome">Nome do Prato:</label>
+                        <input type="text" id="nome" required placeholder="Ex: Baião de Dois">
+                    </div>
+                    <div class="form-group">
+                        <label for="preco">Preço (R$):</label>
+                        <input type="number" id="preco" step="0.01" required placeholder="0,00">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="descricao">Descrição / Acompanhamentos:</label>
+                        <textarea id="descricao" rows="2" placeholder="Ex: Arroz, feijão de corda, queijo coalho..."></textarea>
+                    </div>
+                </div>
+                <button type="submit">Cadastrar Item</button>
+            </form>
+        </div>
 
-@RestController
-@RequestMapping("/api/admin/pratos")
-@CrossOrigin(origins = "*") // Permite que o seu HTML acesse a API
-public class AdminPratoController {
+        <!-- Tabela de Gerenciamento -->
+        <h2>Gerenciar Itens Cadastrados</h2>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Descrição</th>
+                        <th style="width: 110px;">Preço</th>
+                        <th style="width: 110px;">Status</th>
+                        <th style="width: 260px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-pratos">
+                    <!-- Preenchido dinamicamente pelo JavaScript (Parte 2) -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        // IMPORTANTE: Insira aqui a URL real do seu backend no Render
+        const API_URL = "https://saborcearense-5.onrender.com/"; 
 
-    @Autowired 
-    private PratoRepository pratoRepository; // Substitua pelo seu Repository
+        // Carrega a listagem assim que a tela abre
+        document.addEventListener("DOMContentLoaded", carregarItens);
 
-    // Listar todos os pratos no painel
-    @GetMapping
-    public ResponseEntity<List<Prato>> listarTodos() {
-        return ResponseEntity.ok(pratoRepository.findAll());
-    }
+        // 1. LISTAR ITENS DO CARDÁPIO
+        async function carregarItens() {
+            try {
+                const res = await fetch(API_URL);
+                const itens = await res.json();
+                const tbody = document.getElementById("lista-pratos");
+                tbody.innerHTML = "";
 
-    // Adicionar novo prato
-    @PostMapping
-    public ResponseEntity<Prato> adicionar(@RequestBody Prato novoPrato) {
-        return ResponseEntity.ok(pratoRepository.save(novoPrato));
-    }
-
-    // Alterar dados e status (Esgotado)
-    @PutMapping("/{id}")
-    public ResponseEntity<Prato> atualizar(@PathVariable Long id, @RequestBody Prato pratoAtualizado) {
-        return pratoRepository.findById(id)
-            .map(prato -> {
-                prato.setNome(pratoAtualizado.getNome());
-                prato.setPreco(pratoAtualizado.getPreco());
-                prato.setEsgotado(pratoAtualizado.isEsgotado());
-                return ResponseEntity.ok(pratoRepository.save(prato));
-            })
-            .orElse(ResponseEntity.notFound().build());
-    }
-
-    // Retirar (Deletar) prato
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        if (pratoRepository.existsById(id)) {
-            pratoRepository.deleteById(id);
-            return ResponseEntity.noContent().build();
+                itens.forEach(item => {
+                    tbody.innerHTML += `
+                        <tr id="linha-${item.id}">
+                            <td>
+                                <input type="text" class="input-table" value="${item.nome}" id="nome-${item.id}">
+                            </td>
+                            <td>
+                                <input type="text" class="input-table" value="${item.descricao || ''}" id="desc-${item.id}">
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" class="input-table" value="${item.preco}" id="preco-${item.id}">
+                            </td>
+                            <td>
+                                <span class="status-badge ${item.esgotado ? 'status-esgotado' : 'status-disponivel'}">
+                                    ${item.esgotado ? 'Esgotado' : 'Disponível'}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn-acao btn-save" onclick="salvarAlteracoes(${item.id}, ${item.esgotado})">Salvar</button>
+                                <button class="btn-acao btn-status ${item.esgotado ? 'esgotado' : ''}" onclick="alternarStatus(${item.id}, ${item.esgotado})">
+                                    ${item.esgotado ? 'Disponibilizar' : 'Esgotar'}
+                                </button>
+                                <button class="btn-acao btn-delete" onclick="deletarItem(${item.id})">Retirar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("Erro ao carregar itens do cardápio:", err);
+            }
         }
-        return ResponseEntity.notFound().build();
-    }
-}
+
+        // 2. ADICIONAR NOVO ITEM
+        document.getElementById("form-prato").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById("nome").value;
+            const preco = parseFloat(document.getElementById("preco").value);
+            const descricao = document.getElementById("descricao").value;
+
+            try {
+                const resposta = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nome, preco, descricao, esgotado: false })
+                });
+
+                if (resposta.ok) {
+                    document.getElementById("form-prato").reset();
+                    carregarItens();
+                } else {
+                    alert("Erro ao cadastrar o item. Verifique os dados.");
+                }
+            } catch (err) {
+                console.error("Erro na requisição:", err);
+            }
+        });
+
+        // 3. SALVAR ALTERAÇÕES DE VALOR, NOME E DESCRIÇÃO
+        async function salvarAlteracoes(id, statusEsgotado) {
+            const nome = document.getElementById(`nome-${id}`).value;
+            const descricao = document.getElementById(`desc-${id}`).value;
+            const preco = parseFloat(document.getElementById(`preco-${id}`).value);
+
+            try {
+                const resposta = await fetch(`${API_URL}/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nome, descricao, preco, esgotado: statusEsgotado })
+                });
+
+                if (resposta.ok) {
+                    alert("Item atualizado com sucesso!");
+                    carregarItens();
+                }
+            } catch (err) {
+                console.error("Erro ao atualizar o item:", err);
+            }
+        }
+
+        // 4. MUDAR STATUS (DISPONÍVEL <=> ESGOTADO)
+        async function alternarStatus(id, statusAtual) {
+            const nome = document.getElementById(`nome-${id}`).value;
+            const descricao = document.getElementById(`desc-${id}`).value;
+            const preco = parseFloat(document.getElementById(`preco-${id}`).value);
+
+            try {
+                await fetch(`${API_URL}/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nome, descricao, preco, esgotado: !statusAtual })
+                });
+                carregarItens();
+            } catch (err) {
+                console.error("Erro ao mudar o status:", err);
+            }
+        }
+
+        // 5. RETIRAR ITEM DO CARDÁPIO (DELETAR)
+        async function deletarItem(id) {
+            if (confirm("Deseja realmente remover este item definitivamente do cardápio?")) {
+                try {
+                    const resposta = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+                    if (resposta.ok) {
+                        carregarItens();
+                    }
+                } catch (err) {
+                    console.error("Erro ao deletar o item:", err);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
