@@ -83,67 +83,64 @@
 
         <!-- SOBREMESAS -->
         <section class="menu-section">
-            <h2>😋 Sobremesas - R\$ 8,00</h2>
+            <h2>😋 Sobremesas - R$ 8,00</h2>
             <div id="section-SOBREMESA" class="menu-items"></div>
         </section>
 
         <!-- BARRA DO CARRINHO FLUTUANTE ESTILO IFOOD -->
         <div class="barra-carrinho">
-            <div>Total dos itens: <span id="total-flutuante">R\$ 0,00</span></div>
-            <button onclick="irParaOFechamento()" class="btn-avancar">Avançar para o Carrinho ➔</button>
+            <div>Total dos itens: <span id="total-flutuante">R$ 0,00</span></div>
+            <!-- Atualizado para chamar a função correta ao invés de ir para outra tela vazia -->
+            <button onclick="enviarPedidoParaOZap()" class="btn-avancar">Avançar para o Carrinho ➔</button>
         </div>
     </main>
 
+    <!-- ÁREA JAVASCRIPT CORRIGIDA (Sem tags duplicadas ou comentários inválidos) -->
     <script>
-        <!-- Cole este bloco de código dentro da sua tag <script> existente no seu HTML -->
-<script>
-    // 1. IMPORTANTE: Substitua pela URL real que o Render te deu para o seu backend Java
-    const URL_BACKEND = "https://onrender.com"; 
+        // 1. IMPORTANTE: Substitua pela URL real que o Render te deu para o seu backend Java
+        const URL_BACKEND = "https://onrender.com"; 
 
-    // Altere o nome desta função para o mesmo nome que está no seu botão de finalizar (ex: onclick="finalizar()")
-    async function enviarPedidoParaOZap() {
-        
-        // [OPCIONAL] Se você tiver validações de campos vazios, deixe-as aqui em cima.
+        async function enviarPedidoParaOZap() {
+            try {
+                // 2. Faz uma requisição ao Spring Boot para gerar o código do pedido
+                const resposta = await fetch(URL_BACKEND + "/api/pedidos/criar", {
+                    method: 'POST'
+                });
+                
+                const pedidoCriado = await resposta.json();
+                const pedidoId = pedidoCriado.id; // Recebe o ID de 6 dígitos
 
-        try {
-            // 2. Faz uma requisição ao Spring Boot para gerar o código do pedido antes de ir pro Whats
-            const resposta = await fetch(`${URL_BACKEND}/api/pedidos/criar`, {
-                method: 'POST'
-            });
-            
-            const pedidoCriado = await resposta.json();
-            const pedidoId = pedidoCriado.id; // Recebe o ID de 6 dígitos (Ex: X7R9B2)
+                // 3. Monta o link que o restaurante usará para confirmar o pedido
+                const linkDeConfirmacao = URL_BACKEND + "/api/pedidos/" + pedidoId + "/confirmar";
 
-            // 3. Monta o link que o restaurante usará para confirmar o pedido com apenas 1 clique
-            const linkDeConfirmacao = `${URL_BACKEND}/api/pedidos/${pedidoId}/confirmar`;
+                // 4. Cria a mensagem do WhatsApp injetando o ID e o Link gerados
+                let textoWhatsapp = "*NOVO PEDIDO - SABORCEARENSE (#" + pedidoId + ")*\n\n";
+                
+                // Exemplo de integração dos dados atuais coletados do carrinho
+                const totalPedido = document.getElementById('total-flutuante').innerText;
+                textoWhatsapp += "*Total do Pedido:* " + totalPedido + "\n";
+                
+                // Adiciona o link de confirmação no final da mensagem
+                textoWhatsapp += "\n👉 *CLIQUE AQUI PARA CONFIRMAR O PEDIDO:* " + linkDeConfirmacao;
 
-            // 4. Cria a mensagem do WhatsApp injetando o ID e o Link gerados
-            let textoWhatsapp = `*NOVO PEDIDO - SABORCEARENSE (#${pedidoId})*\n\n`;
-            
-            // ------------------------------------------------------------------------
-            // MANTENHA A SUA LÓGICA ATUAL DE CAPTURA DOS DADOS AQUI. EXEMPlO:
-            // const nome = document.getElementById('nome').value;
-            // textoWhatsapp += `Cliente: ${nome}\n`;
-            // ------------------------------------------------------------------------
-            
-            // Adiciona o link de confirmação no final da mensagem que o restaurante vai ler
-            textoWhatsapp += `\n👉 *CLIQUE AQUI PARA CONFIRMAR O PEDIDO:* ${linkDeConfirmacao}`;
+                // 5. Salva o ID no navegador do cliente para a tela de acompanhamento
+                localStorage.setItem('idPedidoSaborcearense', pedidoId);
 
-            // 5. Salva o ID no navegador do cliente para a próxima tela saber o que monitorar
-            localStorage.setItem('idPedidoSaborcearense', pedidoId);
+                // 6. Configuração segura do número oficial do restaurante (Modificado para evitar erros de concatenação)
+                const numeroRestaurante = "5521969179343"; 
+                const urlWhatsappFinal = "https://whatsapp.com" + numeroRestaurante + "&text=" + encodeURIComponent(textoWhatsapp);
+                
+                // Abre o WhatsApp na aba secundária de forma nativa e sem travas de pop-up
+                window.open(urlWhatsappFinal, '_blank');
 
-            // 6. Abre o WhatsApp para enviar a mensagem ao restaurante
-            const numeroRestaurante = "55XXXXXXXXXXX"; // Insira o número do restaurante com DDD
-            window.open(`https://wa.me{numeroRestaurante}?text=${encodeURIComponent(textoWhatsapp)}`, '_blank');
+                // 7. Redireciona o cliente na mesma aba para a tela de acompanhamento
+                window.location.href = 'acompanhar.html';
 
-            // 7. Redireciona o cliente na mesma aba para a tela de acompanhamento que criamos
-            window.location.href = 'acompanhar.html';
-
-        } catch (erro) {
-            console.error("Erro ao processar o fluxo do pedido:", erro);
-            alert("Ops! Tivemos um problema de conexão com o servidor. Tente finalizar novamente.");
+            } catch (erro) {
+                console.error("Erro ao processar o fluxo do pedido:", erro);
+                alert("Ops! Tivemos um problema de conexão com o servidor. Tente finalizar novamente.");
+            }
         }
-    }
     </script>
 </body>
 </html>
