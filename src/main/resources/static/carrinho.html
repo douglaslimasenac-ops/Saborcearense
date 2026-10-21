@@ -4,13 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carrinho - Sabor Cearense</title>
-    <!-- Importando o estilo global do projeto -->
     <link rel="stylesheet" href="style.css"> 
     <style>
-        /* Estilos específicos da página de carrinho alinhados à paleta da logo */
         body {
-            background-color: #fffcf5; /* Fundo Creme/Bege Claro */
-            color: #111111; /* Preto Rústico */
+            background-color: #fffcf5; /* Fundo Creme/Bege Claro oficial */
+            color: #111111; /* Preto Rústico oficial */
             font-family: Arial, sans-serif;
             padding: 20px;
         }
@@ -24,7 +22,7 @@
         }
         h2, h3 {
             color: #111111;
-            border-bottom: 2px solid #f5a623; /* Amarelo Alaranjado */
+            border-bottom: 2px solid #f5a623; /* Amarelo Alaranjado oficial */
             padding-bottom: 8px;
         }
         .item-resumo {
@@ -87,7 +85,7 @@
         
         <h2>Seu Pedido</h2>
         <div id="lista-itens-carrinho">
-            <!-- Itens do localStorage serão injetados aqui -->
+            <!-- Itens injetados via JS -->
         </div>
         <div class="total-container">
             Total: <span id="valor-total">R\$ 0,00</span>
@@ -125,25 +123,21 @@
     </div>
 
     <script>
-        // Configuração do restaurante
-        const WHATSAPP_NUMERO = "5585999999999"; // Substitua pelo número real do restaurante (com DDD)
+        // Configuração do WhatsApp do Restaurante (Substitua pelo número correto com DDD)
+        const WHATSAPP_NUMERO = "5585999999999"; 
+        let totalCalculado = 0;
 
-        // Executa ao carregar a página
         document.addEventListener("DOMContentLoaded", () => {
             renderizarResumo();
-            
-            // Ouvinte do formulário
             document.getElementById("form-pedido").addEventListener("submit", enviarPedido);
         });
 
-        // Função para ler o localStorage e montar a tela
         function renderizarResumo() {
             const container = document.getElementById("lista-itens-carrinho");
             const totalTxt = document.getElementById("valor-total");
             
-            // Puxa os dados salvos do index.html
-            const itens = JSON.parse(localStorage.getItem("carrinhoItens")) || [];
-            const total = localStorage.getItem("carrinhoTotal") || "0.00";
+            // Lendo a chave exata gerada pelo seu index.html
+            const itens = JSON.parse(localStorage.getItem("itensCarrinhoSaborCearense")) || [];
 
             if (itens.length === 0) {
                 container.innerHTML = "<p>Seu carrinho está vazio.</p>";
@@ -152,38 +146,40 @@
             }
 
             container.innerHTML = "";
+            totalCalculado = 0;
+
             itens.forEach(item => {
+                const subtotalItem = item.preco * item.qtd; // Ajustado para .qtd conforme o seu index.html
+                totalCalculado += subtotalItem;
+
                 const div = document.createElement("div");
                 div.className = "item-resumo";
                 div.innerHTML = `
-                    <span>${item.quantidade}x ${item.nome}</span>
-                    <span>R$ ${(item.preco * item.quantidade).toFixed(2).replace('.', ',')}</span>
+                    <span>${item.qtd}x ${item.nome}</span>
+                    <span>R$ ${subtotalItem.toFixed(2).replace('.', ',')}</span>
                 `;
                 container.appendChild(div);
             });
 
-            totalTxt.innerText = `R$ ${parseFloat(total).toFixed(2).replace('.', ',')}`;
+            totalTxt.innerText = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
         }
 
-        // Função para formatar o texto e disparar o WhatsApp
         function enviarPedido(e) {
             e.preventDefault();
 
-            const itens = JSON.parse(localStorage.getItem("carrinhoItens")) || [];
-            const total = localStorage.getItem("carrinhoTotal") || "0.00";
+            const itens = JSON.parse(localStorage.getItem("itensCarrinhoSaborCearense")) || [];
 
             if (itens.length === 0) {
                 alert("Seu carrinho está vazio!");
                 return;
             }
 
-            // Captura os dados do formulário
             const nome = document.getElementById("nome").value;
             const endereco = document.getElementById("endereco").value;
             const ref = document.getElementById("ponto-referencia").value || "Não informado";
             const pagamento = document.getElementById("pagamento").value;
 
-            // Montagem do texto formatado para o WhatsApp
+            // Montagem da mensagem formatada para o WhatsApp
             let mensagem = `🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n`;
             mensagem += `👤 *Cliente:* ${nome}\n`;
             mensagem += `📍 *Endereço:* ${endereco}\n`;
@@ -192,24 +188,15 @@
             mensagem += `🛒 *Itens do Pedido:*\n`;
 
             itens.forEach(item => {
-                const subtotal = (item.preco * item.quantidade).toFixed(2).replace('.', ',');
-                mensagem += `• ${item.quantidade}x _${item.nome}_ - R$ ${subtotal}\n`;
+                const subtotal = (item.preco * item.qtd).toFixed(2).replace('.', ',');
+                mensagem += `• ${item.qtd}x _${item.nome}_ - R$ ${subtotal}\n`;
             });
 
-            mensagem += `\n💰 *Total do Pedido:* R$ ${parseFloat(total).toFixed(2).replace('.', ',')}\n\n`;
+            mensagem += `\n💰 *Total do Pedido:* R$ ${totalCalculado.toFixed(2).replace('.', ',')}\n\n`;
             mensagem += `_Aguardando confirmação do restaurante pelo painel..._`;
 
-            // Codifica o texto para formato de URL
-            const mensagemCodificada = encodeURIComponent(mensagem);
-            
-            // Link oficial da API do WhatsApp
-            const urlWhatsapp = `https://whatsapp.com/{WHATSAPP_NUMERO}&text=${mensagemCodificada}`;
-
-            // Redireciona para o WhatsApp (abre em nova aba ou aplicativo)
+            const urlWhatsapp = `https://whatsapp.com/{WHATSAPP_NUMERO}&text=${encodeURIComponent(mensagem)}`;
             window.open(urlWhatsapp, '_blank');
-
-            // [OPCIONAL]: Redireciona o cliente para a tela de acompanhar o status do pedido
-            // window.location.href = "acompanhar.html";
         }
     </script>
 </body>
