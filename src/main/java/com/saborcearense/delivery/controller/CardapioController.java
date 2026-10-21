@@ -28,30 +28,32 @@ public class CardapioController {
 
     @PostConstruct
     public void inicializarCardapio() {
-        if(repository.count() == 0) {
-            // Pratos do Dia
-            repository.save(new ItemCardapio("Baião de Dois Simples", 22.00, "PRATOS_DO_DIA", "SEGUNDA"));
-            repository.save(new ItemCardapio("Frango Grelhado Ceará", 20.00, "PRATOS_DO_DIA", "SEGUNDA"));
-            repository.save(new ItemCardapio("Carne de Sol Acebolada", 28.50, "PRATOS_DO_DIA", "TERCA"));
-            repository.save(new ItemCardapio("Escondidinho de Frango", 21.00, "PRATOS_DO_DIA", "TERCA"));
-            repository.save(new ItemCardapio("Feijoada Cearense", 26.00, "PRATOS_DO_DIA", "QUARTA"));
-            repository.save(new ItemCardapio("Filé de Merluza Empanado", 23.00, "PRATOS_DO_DIA", "QUARTA"));
-            repository.save(new ItemCardapio("Panelada Tradicional", 25.00, "PRATOS_DO_DIA", "QUINTA"));
-            repository.save(new ItemCardapio("Bife a Cavalo", 24.00, "PRATOS_DO_DIA", "QUINTA"));
-            repository.save(new ItemCardapio("Vatapá de Frango", 22.00, "PRATOS_DO_DIA", "SEXTA"));
-            repository.save(new ItemCardapio("Carne de Sol com Queijo", 30.00, "PRATOS_DO_DIA", "SEXTA"));
-            repository.save(new ItemCardapio("Mão de Vaca Cozida", 27.00, "PRATOS_DO_DIA", "SABADO"));
-            repository.save(new ItemCardapio("Baião de Dois Especial", 25.00, "PRATOS_DO_DIA", "SABADO"));
+        // Limpa o banco antigo para carregar o cardápio oficial novo sem duplicações
+        repository.deleteAll();
+        
+        // --- CATEGORIA: FRANGO (FIXOS) ---
+        repository.save(new ItemCardapio("Grelhado de Frango", 22.00, "FRANGO", "TODOS"));
+        repository.save(new ItemCardapio("Frango à Milanesa", 24.00, "FRANGO", "TODOS"));
+        repository.save(new ItemCardapio("Frango à Parmegiana", 26.00, "FRANGO", "TODOS"));
 
-            // Pratos Fixos nas Categorias
-            repository.save(new ItemCardapio("Grelhado de Frango", 22.00, "FRANGO", "TODOS"));
-            repository.save(new ItemCardapio("Frango à Milanesa", 24.00, "FRANGO", "TODOS"));
-            repository.save(new ItemCardapio("Bife Acebolado", 28.00, "CARNE", "TODOS"));
-            
-            // Bebidas e Sobremesas
-            repository.save(new ItemCardapio("Coca-Cola Lata", 6.00, "BEBIDA", "TODOS"));
-            repository.save(new ItemCardapio("Bolo de Pote", 8.00, "SOBREMESA", "TODOS"));
-        }
+        // --- CATEGORIA: CARNE (FIXOS) ---
+        repository.save(new ItemCardapio("Fígado Acebolado", 20.00, "CARNE", "TODOS"));
+        repository.save(new ItemCardapio("Bife Acebolado", 28.00, "CARNE", "TODOS"));
+        repository.save(new ItemCardapio("Bife à Milanesa", 30.00, "CARNE", "TODOS"));
+        repository.save(new ItemCardapio("Bife à Parmegiana", 32.00, "CARNE", "TODOS"));
+        repository.save(new ItemCardapio("Contra Filé", 32.00, "CARNE", "TODOS"));
+
+        // --- CATEGORIA: OUTROS (FIXOS) ---
+        repository.save(new ItemCardapio("Filé de Peixe", 26.00, "OUTROS", "TODOS"));
+        repository.save(new ItemCardapio("Carré", 22.00, "OUTROS", "TODOS"));
+        repository.save(new ItemCardapio("Linguiça de Churrasco", 20.00, "OUTROS", "TODOS"));
+        repository.save(new ItemCardapio("Omelete", 22.00, "OUTROS", "TODOS"));
+        
+        // --- CATEGORIA: SOBREMESAS (FIXOS) ---
+        repository.save(new ItemCardapio("Bolo de Pote", 8.00, "SOBREMESA", "TODOS"));
+        repository.save(new ItemCardapio("Mini Pudim", 8.00, "SOBREMESA", "TODOS"));
+        repository.save(new ItemCardapio("Mousse", 8.00, "SOBREMESA", "TODOS"));
+        repository.save(new ItemCardapio("Pavê de Chocolate", 8.00, "SOBREMESA", "TODOS"));
     }
 
     @GetMapping
@@ -67,7 +69,7 @@ public class CardapioController {
             default -> "DOMINGO";
         };
 
-        // Retorna os itens fixos ("TODOS") ou os pratos rotativos específicos do dia de hoje
+        // Retorna todos os itens fixos ("TODOS") e os pratos variáveis cadastrados para o dia de hoje
         return repository.findAll().stream()
                 .filter(item -> item.getDiasDisponiveis() != null && (
                        item.getDiasDisponiveis().trim().equalsIgnoreCase("TODOS") || 
