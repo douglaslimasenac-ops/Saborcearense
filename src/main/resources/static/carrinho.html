@@ -3,221 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sabor Cearense - Fechamento do Pedido</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Carrinho - Sabor Cearense</title>
+    <!-- Importando o estilo global do projeto -->
+    <link rel="stylesheet" href="style.css"> 
+    <style>
+        /* Estilos específicos da página de carrinho alinhados à paleta da logo */
+        body {
+            background-color: #fffcf5; /* Fundo Creme/Bege Claro */
+            color: #111111; /* Preto Rústico */
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .container-carrinho {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        h2, h3 {
+            color: #111111;
+            border-bottom: 2px solid #f5a623; /* Amarelo Alaranjado */
+            padding-bottom: 8px;
+        }
+        .item-resumo {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .total-container {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: right;
+            margin-top: 15px;
+            color: #111111;
+        }
+        .form-grupo {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        .form-grupo label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .form-grupo input, .form-grupo select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .btn-enviar {
+            background-color: #f5a623; /* Amarelo Alaranjado */
+            color: #111111; /* Preto Rústico */
+            border: none;
+            padding: 15px;
+            width: 100%;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        .btn-enviar:hover {
+            background-color: #e0941f;
+        }
+        .btn-voltar {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #f5a623;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
-    <header>
-        <h1>🛒 Meu Carrinho</h1>
-        <p class="subtitle">Revise seus itens e confirme os dados de entrega</p>
-    </header>
-
-    <main class="container">
-        <!-- BOTÃO VOLTAR -->
-        <a href="index.html" class="btn-voltar">⬅ Voltar ao Cardápio</a>
-
-        <!-- RESUMO DOS ITENS ESCOLHIDOS -->
-        <section class="form-section">
-            <h2>📋 Itens Selecionados</h2>
-            <div id="lista-carrinho-revisao"></div>
-        </section>
+    <div class="container-carrinho">
+        <a href="index.html" class="btn-voltar">← Voltar ao Cardápio</a>
         
-        <!-- IDENTIFICAÇÃO DO CLIENTE -->
-        <section class="form-section">
-            <h2>👤 Identificação</h2>
-            <div class="input-group text-input">
-                <input type="tel" id="telefone" placeholder="Telefone com DDD (Ex: 85999999999)" required onblur="buscarCadastroPorTelefone()">
-                <input type="text" id="nome" placeholder="Seu Nome Completo" required>
-            </div>
-        </section>
+        <h2>Seu Pedido</h2>
+        <div id="lista-itens-carrinho">
+            <!-- Itens do localStorage serão injetados aqui -->
+        </div>
+        <div class="total-container">
+            Total: <span id="valor-total">R\$ 0,00</span>
+        </div>
 
-        <!-- CONFIGURAÇÕES DE ENTREGA -->
-        <section class="form-section">
-            <h2>🛵 Entrega ou Retirada</h2>
-            <div class="input-group text-input">
-                <select id="tipoEntrega" onchange="alternarTipoEntrega()" required>
-                    <option value="Entrega" selected>Receber em Casa (Entrega)</option>
-                    <option value="Retirada">Retirar na Loja</option>
-                </select>
+        <h3>Dados de Entrega</h3>
+        <form id="form-pedido">
+            <div class="form-grupo">
+                <label for="nome">Nome completo:</label>
+                <input type="text" id="nome" required placeholder="Digite seu nome">
             </div>
 
-            <div id="blocoEndereco">
-                <h2>📍 Endereço de Entrega</h2>
-                <div class="input-group text-input">
-                    <select id="bairro" onchange="calcularValoresFinais()" required>
-                        <option value="">Selecione o seu Bairro</option>
-                        <option value="Centro">Centro - R$ 5,00</option>
-                        <option value="Aldeota">Aldeota - R$ 7,00</option>
-                        <option value="Meireles">Meireles - R$ 8,00</option>
-                        <option value="Fatima">Fátima - R$ 6,00</option>
-                        <option value="Parquelanda">Parquelanda - R$ 9,00</option>
-                    </select>
-                    <input type="text" id="endereco" placeholder="Rua, Número, Bloco, Apto" required>
-                </div>
+            <div class="form-grupo">
+                <label for="endereco">Endereço (Rua, Número, Bairro):</label>
+                <input type="text" id="endereco" required placeholder="Ex: Rua Floriano Peixoto, 123 - Centro">
             </div>
 
-            <h2>📝 Observações Gerais</h2>
-            <div class="input-group text-input">
-                <input type="text" id="acompanhamentos" placeholder="Acompanhamentos (Ex: Maionese e Batata frita)">
-                <textarea id="observacoes" rows="2" placeholder="Ex: Sem cebola, bife bem passado..."></textarea>
+            <div class="form-grupo">
+                <label for="ponto-referencia">Ponto de Referência (Opcional):</label>
+                <input type="text" id="ponto-referencia" placeholder="Ex: Próximo à igreja matriz">
             </div>
 
-            <h2>💳 Forma de Pagamento</h2>
-            <div class="input-group text-input">
+            <div class="form-grupo">
+                <label for="pagamento">Forma de Pagamento:</label>
                 <select id="pagamento" required>
-                    <option value="">Selecione a Forma de Pagamento</option>
-                    <option value="Pix">Pix (CNPJ: 59361228000150)</option>
+                    <option value="Pix">Pix</option>
+                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                    <option value="Cartão de Débito">Cartão de Débito</option>
                     <option value="Dinheiro">Dinheiro</option>
-                    <option value="Cartão">Cartão Crédito/Débito</option>
                 </select>
             </div>
 
-            <!-- TABELA DE VALORES FINAIS -->
-            <div class="resumo-valores">
-                <div class="linha-valor"><span>Subtotal itens:</span> <span id="val-subtotal">R$ 0,00</span></div>
-                <div class="linha-valor"><span>Taxa de entrega:</span> <span id="val-taxa">R$ 0,00</span></div>
-                <div class="linha-valor total-geral"><span>TOTAL GERAL:</span> <span id="val-total">R$ 0,00</span></div>
-            </div>
+            <button type="submit" class="btn-enviar">Finalizar e Enviar para o WhatsApp 🌵</button>
+        </form>
+    </div>
 
-            <button onclick="finalizarEPushPedido()" class="btn-submit">🚀 Confirmar e Enviar Pedido</button>
-        </section>
-    </main>
     <script>
-        const taxasBairros = { "Centro": 5.0, "Aldeota": 7.0, "Meireles": 8.0, "Fatima": 6.0, "Parquelanda": 9.0 };
-        let itensCarrinho = [];
-        let subtotalItens = 0;
+        // Configuração do restaurante
+        const WHATSAPP_NUMERO = "5585999999999"; // Substitua pelo número real do restaurante (com DDD)
 
+        // Executa ao carregar a página
         document.addEventListener("DOMContentLoaded", () => {
-            const dadosSalvos = localStorage.getItem('carrinho_itens');
-            if (!dadosSalvos) {
-                alert("Nenhum item no carrinho!");
-                window.location.href = "index.html";
+            renderizarResumo();
+            
+            // Ouvinte do formulário
+            document.getElementById("form-pedido").addEventListener("submit", enviarPedido);
+        });
+
+        // Função para ler o localStorage e montar a tela
+        function renderizarResumo() {
+            const container = document.getElementById("lista-itens-carrinho");
+            const totalTxt = document.getElementById("valor-total");
+            
+            // Puxa os dados salvos do index.html
+            const itens = JSON.parse(localStorage.getItem("carrinhoItens")) || [];
+            const total = localStorage.getItem("carrinhoTotal") || "0.00";
+
+            if (itens.length === 0) {
+                container.innerHTML = "<p>Seu carrinho está vazio.</p>";
+                totalTxt.innerText = "R\$ 0,00";
                 return;
             }
 
-            itensCarrinho = JSON.parse(dadosSalvos);
-            const containerRevisao = document.getElementById('lista-carrinho-revisao');
-            
-            itensCarrinho.forEach(item => {
-                const sub = item.preco * item.quantidade;
-                subtotalItens += sub;
-                containerRevisao.innerHTML += `
-                    <div class="linha-revisao-item">
-                        <span><strong>${item.quantidade}x</strong> ${item.nome}</span>
-                        <span>R$ ${sub.toFixed(2)}</span>
-                    </div>`;
+            container.innerHTML = "";
+            itens.forEach(item => {
+                const div = document.createElement("div");
+                div.className = "item-resumo";
+                div.innerHTML = `
+                    <span>${item.quantidade}x ${item.nome}</span>
+                    <span>R$ ${(item.preco * item.quantidade).toFixed(2).replace('.', ',')}</span>
+                `;
+                container.appendChild(div);
             });
 
-            if(localStorage.getItem('cliente_telefone')) {
-                document.getElementById('telefone').value = localStorage.getItem('cliente_telefone');
-                document.getElementById('nome').value = localStorage.getItem('cliente_nome');
-                document.getElementById('endereco').value = localStorage.getItem('cliente_endereco');
-                document.getElementById('bairro').value = localStorage.getItem('cliente_bairro') || "";
+            totalTxt.innerText = `R$ ${parseFloat(total).toFixed(2).replace('.', ',')}`;
+        }
+
+        // Função para formatar o texto e disparar o WhatsApp
+        function enviarPedido(e) {
+            e.preventDefault();
+
+            const itens = JSON.parse(localStorage.getItem("carrinhoItens")) || [];
+            const total = localStorage.getItem("carrinhoTotal") || "0.00";
+
+            if (itens.length === 0) {
+                alert("Seu carrinho está vazio!");
+                return;
             }
 
-            calcularValoresFinais();
-        });
+            // Captura os dados do formulário
+            const nome = document.getElementById("nome").value;
+            const endereco = document.getElementById("endereco").value;
+            const ref = document.getElementById("ponto-referencia").value || "Não informado";
+            const pagamento = document.getElementById("pagamento").value;
 
-        function alternarTipoEntrega() {
-            const tipo = document.getElementById('tipoEntrega').value;
-            document.getElementById('blocoEndereco').style.display = (tipo === 'Retirada') ? 'none' : 'block';
-            if (tipo === 'Retirada') {
-                document.getElementById('bairro').value = "";
-                document.getElementById('endereco').value = "";
-            }
-            calcularValoresFinais();
-        }
+            // Montagem do texto formatado para o WhatsApp
+            let mensagem = `🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n`;
+            mensagem += `👤 *Cliente:* ${nome}\n`;
+            mensagem += `📍 *Endereço:* ${endereco}\n`;
+            mensagem += `🔍 *Referência:* ${ref}\n`;
+            mensagem += `💳 *Pagamento:* ${pagamento}\n\n`;
+            mensagem += `🛒 *Itens do Pedido:*\n`;
 
-        function calcularValoresFinais() {
-            const tipoEntrega = document.getElementById('tipoEntrega').value;
-            const bairro = document.getElementById('bairro').value;
-            let taxa = (tipoEntrega === 'Entrega' && bairro) ? (taxasBairros[bairro] || 0) : 0;
-            let total = subtotalItens + taxa;
-
-            document.getElementById('val-subtotal').innerText = "R\$ " + subtotalItens.toFixed(2);
-            document.getElementById('val-taxa').innerText = taxa > 0 ? "R\$ " + taxa.toFixed(2) : "Grátis / Retirada";
-            document.getElementById('val-total').innerText = "R\$ " + total.toFixed(2);
-        }
-
-        function buscarCadastroPorTelefone() {
-            const t = document.getElementById('telefone').value.replace(/\D/g, '');
-            if(t.length < 10) return;
-            fetch(`/api/clientes/${t}`).then(res => res.json()).then(c => {
-                document.getElementById('nome').value = c.nome;
-                document.getElementById('endereco').value = c.endereco;
-                if(c.bairro) document.getElementById('bairro').value = c.bairro;
-                calcularValoresFinais();
-            }).catch(() => {});
-        }
-
-        async function finalizarEPushPedido() {
-            const numeroWhatsapp = "5521974720736";
-            const telefone = document.getElementById('telefone').value;
-            const nomeCliente = document.getElementById('nome').value;
-            const tipoEntrega = document.getElementById('tipoEntrega').value;
-            const pagamento = document.getElementById('pagamento').value;
-            const bairro = document.getElementById('bairro').value;
-            const endereco = document.getElementById('endereco').value;
-            const acompanhamentos = document.getElementById('acompanhamentos').value || "Nenhum";
-            const observacoes = document.getElementById('observacoes').value || "Nenhuma";
-
-            if (!telefone || !nomeCliente || !pagamento) return alert("Preencha a Identificação e o Pagamento!");
-            if (tipoEntrega === 'Entrega' && (!bairro || !endereco)) return alert("Preencha o Bairro e o Endereço de entrega!");
-
-            let taxa = tipoEntrega === 'Entrega' ? (taxasBairros[bairro] || 0) : 0;
-            let totalGeral = subtotalItens + taxa;
-
-            localStorage.setItem('cliente_telefone', telefone);
-            localStorage.setItem('cliente_nome', nomeCliente);
-            localStorage.setItem('cliente_endereco', endereco);
-            localStorage.setItem('cliente_bairro', bairro);
-
-            try {
-                await fetch('/api/clientes', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ telefone, nome: nomeCliente, endereco, bairro })
-                });
-            } catch (e) {}
-
-            let resumoTextoLog = "";
-            let resumoTextoZap = "";
-            itensCarrinho.forEach(item => {
-                resumoTextoLog += `${item.quantidade}x ${item.nome} | `;
-                resumoTextoZap += `- ${item.quantidade}x ${item.nome} (R$ ${(item.preco * item.quantidade).toFixed(2)})\n`;
+            itens.forEach(item => {
+                const subtotal = (item.preco * item.quantidade).toFixed(2).replace('.', ',');
+                mensagem += `• ${item.quantidade}x _${item.nome}_ - R$ ${subtotal}\n`;
             });
 
-            try {
-                await fetch('/api/pedidos', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        cliente: nomeCliente, tipoEntrega, bairro, taxaEntrega: taxa, resumoItens: resumoTextoLog, total: totalGeral
-                    })
-                });
-            } catch (e) {}
+            mensagem += `\n💰 *Total do Pedido:* R$ ${parseFloat(total).toFixed(2).replace('.', ',')}\n\n`;
+            mensagem += `_Aguardando confirmação do restaurante pelo painel..._`;
 
-            let mensagem = `☀️ *SABOR CEARENSE - PEDIDO* ☀️\n\n` +
-                           `*Cliente:* ${nomeCliente}\n` +
-                           `*Telefone:* ${telefone}\n` +
-                           `*Tipo:* ${tipoEntrega}\n`;
+            // Codifica o texto para formato de URL
+            const mensagemCodificada = encodeURIComponent(mensagem);
             
-            if(tipoEntrega === 'Entrega') {
-                mensagem += `*Bairro:* ${bairro}\n*Endereço:* ${endereco}\n`;
-            }
+            // Link oficial da API do WhatsApp
+            const urlWhatsapp = `https://whatsapp.com/{WHATSAPP_NUMERO}&text=${mensagemCodificada}`;
 
-            mensagem += `\n*Itens do Pedido:*\n${resumoTextoZap}\n` +
-                        `*Acompanhamentos:* ${acompanhamentos}\n` +
-                        `*Observações:* ${observacoes}\n\n` +
-                        `*Pagamento:* ${pagamento}\n` +
-                        `---------------------------\n` +
-                        `*Subtotal itens:* R$ ${subtotalItens.toFixed(2)}\n` +
-                        `*Taxa de Entrega:* R$ ${taxa.toFixed(2)}\n` +
-                        `*TOTAL GERAL:* R$ ${totalGeral.toFixed(2)}`;
+            // Redireciona para o WhatsApp (abre em nova aba ou aplicativo)
+            window.open(urlWhatsapp, '_blank');
 
-            localStorage.removeItem('carrinho_itens');
-           window.open("https://wa.me/" + encodeURIComponent(textoWhatsapp), '_blank');
+            // [OPCIONAL]: Redireciona o cliente para a tela de acompanhar o status do pedido
+            // window.location.href = "acompanhar.html";
         }
     </script>
 </body>
