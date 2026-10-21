@@ -20,7 +20,7 @@
 		<java.version>17</java.version>
 	</properties>
 	
-	<dependencies>
+		<dependencies>
 		<!-- Web Starter para criação das rotas REST APIs -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -33,16 +33,16 @@
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 
-		<!-- 🛠️ CORREÇÃO PRINCIPAL: Adicionada a dependência oficial do WebSocket -->
+		<!-- Dependência do WebSocket para tempo real -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
 
-		<!-- Driver de conexão oficial do PostgreSQL para o Render -->
+		<!-- 🎯 ADICIONADO: Driver Oficial do Banco H2 Embutido -->
 		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 	</dependencies>
