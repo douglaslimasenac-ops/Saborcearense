@@ -30,37 +30,27 @@ public class CardapioController {
     public void inicializarCardapio() {
         if(repository.count() == 0) {
             // Pratos do Dia
-            repository.save(new ItemCardapio("Churrasco Misto", 30.00, "PRATOS_DO_DIA", "SABADO"));
-            repository.save(new ItemCardapio("Bobó de Camarão", 35.00, "PRATOS_DO_DIA", "SABADO"));
-            repository.save(new ItemCardapio("Virado à Paulista", 25.00, "PRATOS_DO_DIA", "SEGUNDA"));
-            repository.save(new ItemCardapio("Feijoada Especial", 32.00, "PRATOS_DO_DIA", "QUARTA"));
-            repository.save(new ItemCardapio("Peixada Cearense", 35.00, "PRATOS_DO_DIA", "SEXTA"));
+            repository.save(new ItemCardapio("Baião de Dois Simples", 22.00, "Arroz, feijão de corda, queijo coalho e tempero verde.", "SEGUNDA"));
+            repository.save(new ItemCardapio("Frango Grelhado Ceará", 20.00, "Peito de frango com purê de macaxeira e arroz.", "SEGUNDA"));
+            repository.save(new ItemCardapio("Carne de Sol Acebolada", 28.50, "Acompanha baião de dois, macaxeira frita e paçoca.", "TERCA"));
+            repository.save(new ItemCardapio("Escondidinho de Frango", 21.00, "Purê de macaxeira cremoso com recheio de frango.", "TERCA"));
+            repository.save(new ItemCardapio("Feijoada Cearense", 26.00, "Feijão preto com carnes selecionadas, arroz e couve.", "QUARTA"));
+            repository.save(new ItemCardapio("Filé de Merluza Empanado", 23.00, "Peixe crocante com arroz branco e salada.", "QUARTA"));
+            repository.save(new ItemCardapio("Panelada Tradicional", 25.00, "Prato típico bem temperado, acompanha arroz e cuscuz.", "QUINTA"));
+            repository.save(new ItemCardapio("Bife a Cavalo", 24.00, "Bife de alcatra com ovo frito, arroz e feijão.", "QUINTA"));
+            repository.save(new ItemCardapio("Vatapá de Frango", 22.00, "Vatapá cremoso legítimo, arroz branco e salada.", "SEXTA"));
+            repository.save(new ItemCardapio("Carne de Sol com Queijo", 30.00, "Carne de sol coberta com queijo coalho derretido.", "SEXTA"));
+            repository.save(new ItemCardapio("Mão de Vaca Cozida", 27.00, "Caldo grosso e forte com pirão e arroz branco.", "SABADO"));
+            repository.save(new ItemCardapio("Baião de Dois Especial", 25.00, "Baião completo com bacon, linguiça e carne de sol.", "SABADO"));
 
-            // Pratos Fixos
-            repository.save(new ItemCardapio("Grelhado", 22.00, "FRANGO", "TODOS"));
-            repository.save(new ItemCardapio("À milanesa", 24.00, "FRANGO", "TODOS"));
-            repository.save(new ItemCardapio("À parmegiana", 26.00, "FRANGO", "TODOS"));
-            repository.save(new ItemCardapio("Fígado acebolado", 20.00, "CARNE", "TODOS"));
-            repository.save(new ItemCardapio("Bife acebolado", 28.00, "CARNE", "TODOS"));
-            repository.save(new ItemCardapio("Bife à milanesa", 30.00, "CARNE", "TODOS"));
-            repository.save(new ItemCardapio("Bife à parmegiana", 32.00, "CARNE", "TODOS"));
-            repository.save(new ItemCardapio("Contra filé", 32.00, "CARNE", "TODOS"));
-            repository.save(new ItemCardapio("Filé de peixe", 26.00, "OUTROS", "TODOS"));
-            repository.save(new ItemCardapio("Carré", 22.00, "OUTROS", "TODOS"));
-            repository.save(new ItemCardapio("Linguiça de churrasco", 20.00, "OUTROS", "TODOS"));
-            repository.save(new ItemCardapio("Omelete", 22.00, "OUTROS", "TODOS"));
+            // Pratos Fixos nas Categorias
+            repository.save(new ItemCardapio("Grelhado de Frango", 22.00, "Acompanha arroz, feijão e farofa", "TODOS"));
+            repository.save(new ItemCardapio("Frango à Milanesa", 24.00, "Acompanha arroz, feijão e farofa", "TODOS"));
+            repository.save(new ItemCardapio("Bife Acebolado", 28.00, "Acompanha arroz, feijão e farofa", "TODOS"));
             
-            // BEBIDAS (Nova Categoria)
-            repository.save(new ItemCardapio("Coca-Cola Lata", 6.00, "BEBIDA", "TODOS"));
-            repository.save(new ItemCardapio("Guaraná Antarctica Lata", 5.50, "BEBIDA", "TODOS"));
-            repository.save(new ItemCardapio("Suco de Laranja 500ml", 8.00, "BEBIDA", "TODOS"));
-            repository.save(new ItemCardapio("Água Mineral sem Gás", 3.50, "BEBIDA", "TODOS"));
-
-            // Sobremesas
-            repository.save(new ItemCardapio("Bolo de pote", 8.00, "SOBREMESA", "TODOS"));
-            repository.save(new ItemCardapio("Mini pudim", 8.00, "SOBREMESA", "TODOS"));
-            repository.save(new ItemCardapio("Mousse", 8.00, "SOBREMESA", "TODOS"));
-            repository.save(new ItemCardapio("Pavê de chocolate", 8.00, "SOBREMESA", "TODOS"));
+            // Bebidas e Sobremesas
+            repository.save(new ItemCardapio("Coca-Cola Lata", 6.00, "Bebida gelada", "TODOS"));
+            repository.save(new ItemCardapio("Bolo de Pote", 8.00, "Sobremesa do dia", "TODOS"));
         }
     }
 
@@ -78,7 +68,8 @@ public class CardapioController {
         };
 
         return repository.findAll().stream()
-                .filter(item -> item.getDiasDisponiveis().equals("TODOS") || item.getDiasDisponiveis().contains(diaFiltro))
+                .filter(item -> item.getDiasDisponiveis() != null && 
+                       (item.getDiasDisponiveis().equals("TODOS") || item.getDiasDisponiveis().contains(diaFiltro)))
                 .collect(Collectors.toList());
     }
 
