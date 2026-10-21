@@ -78,121 +78,142 @@
             </table>
         </div>
     </div>
+        <!-- ÁREA JAVASCRIPT CORRIGIDA - MAPEAMENTO COMPLETO DE CATEGORIAS -->
     <script>
-        // ATENÇÃO: Substitua pelo link gerado pelo seu Render (Ex: https://onrender.com)
-        // ALTERE DE: const URL_PRODUCAO = "https://onrender.com";
-// PARA ISTO:
-        const URL_PRODUCAO = "https://saborcearense-5.onrender.com"; 
+        // URL Oficial do seu projeto hospedado no Render
+        const URL_BACKEND = "https://saborcearense-5.onrender.com"; 
 
-        const API_URL = URL_PRODUCAO + "/api/admin/pratos"; 
+        let carrinho = {};
 
-        document.addEventListener("DOMContentLoaded", carregarItens);
-
-        async function carregarItens() {
-            try {
-                const res = await fetch(API_URL);
-                const itens = await res.json();
-                const tbody = document.getElementById("lista-pratos");
-                tbody.innerHTML = "";
-
-                itens.forEach(item => {
-                    tbody.innerHTML += `
-                        <tr id="linha-${item.id}">
-                            <td><input type="text" class="input-table" value="${item.nome}" id="nome-${item.id}"></td>
-                            <td><input type="text" class="input-table" value="${item.descricao || ''}" id="desc-${item.id}"></td>
-                            <td><input type="number" step="0.01" class="input-table" value="${item.preco}" id="preco-${item.id}"></td>
-                            <td>
-                                <span class="status-badge ${item.esgotado ? 'status-esgotado' : 'status-disponivel'}">
-                                    ${item.esgotado ? 'Esgotado' : 'Disponível'}
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn-acao btn-save" onclick="salvarAlteracoes(${item.id}, ${item.esgotado})">Salvar</button>
-                                <button class="btn-acao btn-status ${item.esgotado ? 'esgotado' : ''}" onclick="alternarStatus(${item.id}, ${item.esgotado})">
-                                    ${item.esgotado ? 'Disponibilizar' : 'Esgotar'}
-                                </button>
-                                <button class="btn-acao btn-delete" onclick="deletarItem(${item.id})">Retirar</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            } catch (err) {
-                console.error("Erro ao carregar itens do cardápio:", err);
-            }
-        }
-
-        document.getElementById("form-prato").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const nome = document.getElementById("nome").value;
-            const preco = parseFloat(document.getElementById("preco").value);
-            const descricao = document.getElementById("descricao").value;
-
-            try {
-                const resposta = await fetch(API_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ nome, preco, descricao, esgotado: false })
-                });
-
-                if (resposta.ok) {
-                    document.getElementById("form-prato").reset();
-                    carregarItens();
-                } else {
-                    alert("Erro ao cadastrar o item. Verifique os dados.");
-                }
-            } catch (err) {
-                console.error("Erro na requisição:", err);
-            }
+        // Dispara as consultas ao servidor assim que a página termina de carregar
+        document.addEventListener("DOMContentLoaded", () => {
+            verificarStatusLoja();
+            carregarCardapio();
         });
 
-        async function salvarAlteracoes(id, statusEsgotado) {
-            const nome = document.getElementById(`nome-${id}`).value;
-            const descricao = document.getElementById(`desc-${id}`).value;
-            const preco = parseFloat(document.getElementById(`preco-${id}`).value);
-
+        // 1. ATUALIZA A BARRA DE STATUS DE FUNCIONAMENTO (ABERTO/FECHADO)
+        async function verificarStatusLoja() {
             try {
-                const resposta = await fetch(`${API_URL}/${id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ nome, descricao, preco, esgotado: statusEsgotado })
-                });
-
-                if (resposta.ok) {
-                    alert("Item atualizado com sucesso!");
-                    carregarItens();
-                }
-            } catch (err) {
-                console.error("Erro ao atualizar o item:", err);
+                const resposta = await fetch(URL_BACKEND + "/api/cardapio/status");
+                const dadosStatus = await resposta.json();
+                document.getElementById("status-loja").innerText = dadosStatus.mensagem;
+            } catch (erro) {
+                console.error("Erro ao carregar status da loja:", erro);
+                document.getElementById("status-loja").innerText = "Não foi possível carregar o status.";
             }
         }
 
-        async function alternarStatus(id, statusAtual) {
-            const nome = document.getElementById(`nome-${id}`).value;
-            const descricao = document.getElementById(`desc-${id}`).value;
-            const preco = parseFloat(document.getElementById(`preco-${id}`).value);
-
+        // 2. CARREGA OS PRATOS FILTRADOS NA ROTA CORRETA DO CLIENTE
+        async function carregarCardapio() {
             try {
-                await fetch(`${API_URL}/${id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ nome, descricao, preco, esgotado: !statusAtual })
-                });
-                carregarItens();
-            } catch (err) {
-                console.error("Erro ao mudar o status:", err);
-            }
-        }
+                const resposta = await fetch(URL_BACKEND + "/api/cardapio");
+                const pratos = await resposta.json();
 
-        async function deletarItem(id) {
-            if (confirm("Deseja realmente remover este item definitivamente do cardápio?")) {
-                try {
-                    const resposta = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-                    if (resposta.ok) {
-                        carregarItens();
+                // Limpa todas as seções mapeadas na tela antes de renderizar
+                const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "BEBIDA", "SOBREMESA"];
+                secoes.forEach(sec => {
+                    const el = document.getElementById("section-" + sec);
+                    if (el) el.innerHTML = "";
+                });
+
+                pratos.forEach(prato => {
+                    // Mapeia os pratos baseando-se no campo 'descricao' (onde o Java salva a categoria)
+                    let secaoAlvo = prato.descricao; 
+                    
+                    // Se o prato for rotativo de dias específicos (ex: SEGUNDA, TERCA, SABADO)
+                    if (prato.diasDisponiveis && prato.diasDisponiveis !== "TODOS") {
+                        secaoAlvo = "PRATOS_DO_DIA";
                     }
-                } catch (err) {
-                    console.error("Erro ao deletar o item:", err);
-                }
+                    
+                    const container = document.getElementById("section-" + secaoAlvo);
+                    if (container) {
+                        let controleQuantidadeHTML = "";
+                        let classeEsgotado = "";
+
+                        // Verifica se o prato está marcado como esgotado no painel admin
+                        if (prato.esgotado) {
+                            classeEsgotado = "item-esgotado";
+                            controleQuantidadeHTML = `<span class="badge-esgotado">Esgotado</span>`;
+                        } else {
+                            controleQuantidadeHTML = `
+                                <div class="seletor-quantidade">
+                                    <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, -1, ${prato.preco})">-</button>
+                                    <span class="qtd-numero" id="qtd-${prato.id}">0</span>
+                                    <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, 1, ${prato.preco})">+</button>
+                                </div>
+                            `;
+                        }
+
+                        container.innerHTML += `
+                            <div class="menu-item ${classeEsgotado}" id="item-${prato.id}">
+                                <div class="item-info">
+                                    <h4>${prato.nome}</h4>
+                                    <span class="preco">R$ ${prato.preco.toFixed(2).replace('.', ',')}</span>
+                                </div>
+                                <div class="item-controles">
+                                    ${controleQuantidadeHTML}
+                                }
+                            </div>
+                        `;
+                    }
+                });
+            } catch (erro) {
+                console.error("Erro ao carregar cardápio:", erro);
+                document.getElementById("status-loja").innerText = "Erro ao carregar o cardápio.";
+            }
+        }
+
+        function mudarQuantidade(id, alteracao, preco) {
+            if (!carrinho[id]) carrinho[id] = { qtd: 0, preco: preco };
+            
+            carrinho[id].qtd += alteracao;
+
+            if (carrinho[id].qtd <= 0) {
+                carrinho[id].qtd = 0;
+                document.getElementById(`item-${id}`).classList.remove("selecionado");
+            } else {
+                document.getElementById(`item-${id}`).classList.add("selecionado");
+            }
+
+            document.getElementById(`qtd-${id}`).innerText = carrinho[id].qtd;
+            atualizarTotalFlutuante();
+        }
+
+        function atualizarTotalFlutuante() {
+            let total = 0;
+            for (let id in carrinho) {
+                total += carrinho[id].qtd * carrinho[id].preco;
+            }
+            document.getElementById("total-flutuante").innerText = "R\$ " + total.toFixed(2).replace('.', ',');
+        }
+
+        async function enviarPedidoParaOZap() {
+            try {
+                const resposta = await fetch(URL_BACKEND + "/api/pedidos/criar", {
+                    method: 'POST'
+                });
+                
+                const pedidoCriado = await resposta.json();
+                const pedidoId = pedidoCriado.id; 
+
+                const linkDeConfirmacao = URL_BACKEND + "/api/pedidos/" + pedidoId + "/confirmar";
+
+                let textoWhatsapp = "*NOVO PEDIDO - SABORCEARENSE (#" + pedidoId + ")*\n\n";
+                const totalPedido = document.getElementById('total-flutuante').innerText;
+                textoWhatsapp += "*Total do Pedido:* " + totalPedido + "\n";
+                textoWhatsapp += "\n👉 *CLIQUE AQUI PARA CONFIRMAR O PEDIDO:* " + linkDeConfirmacao;
+
+                localStorage.setItem('idPedidoSaborcearense', pedidoId);
+
+                const numeroRestaurante = "5521969179343"; 
+                const urlWhatsappFinal = "https://wa.me" + numeroRestaurante + "?text=" + encodeURIComponent(textoWhatsapp);
+                
+                window.open(urlWhatsappFinal, '_blank');
+                window.location.href = 'acompanhar.html';
+
+            } catch (erro) {
+                console.error("Erro ao processar o fluxo do pedido:", erro);
+                alert("Ops! Tivemos um problema de conexão com o servidor. Tente finalizar novamente.");
             }
         }
     </script>
