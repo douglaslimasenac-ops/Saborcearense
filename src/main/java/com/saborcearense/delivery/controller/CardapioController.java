@@ -54,7 +54,7 @@ public class CardapioController {
         }
     }
 
-    @GetMapping
+            @GetMapping
     public List<ItemCardapio> listarDoDia() {
         String diaAtual = LocalDate.now().getDayOfWeek().toString();
         String diaFiltro = switch (diaAtual) {
@@ -68,22 +68,15 @@ public class CardapioController {
         };
 
         return repository.findAll().stream()
-                .filter(item -> item.getDiasDisponiveis() != null && 
-                       (item.getDiasDisponiveis().equals("TODOS") || item.getDiasDisponiveis().contains(diaFiltro)))
+                .filter(item -> item.getDiasDisponiveis() != null && (
+                       item.getDiasDisponiveis().equals("TODOS") || 
+                       item.getDiasDisponiveis().contains(diaFiltro) ||
+                       // Garante que se o item for de uma seção fixa, ele também passe no filtro
+                       item.getDescricao().equals("FRANGO") || 
+                       item.getDescricao().equals("CARNE") || 
+                       item.getDescricao().equals("OUTROS") || 
+                       item.getDescricao().equals("BEBIDA") || 
+                       item.getDescricao().equals("SOBREMESA")
+                ))
                 .collect(Collectors.toList());
-    }
-
-    @GetMapping("/status")
-    public Map<String, Object> obterStatusFuncionamento() {
-        DayOfWeek dia = LocalDate.now().getDayOfWeek();
-        LocalTime hora = LocalTime.now();
-        boolean diaValido = (dia != DayOfWeek.SUNDAY);
-        boolean horaValida = (!hora.isBefore(LocalTime.of(11, 30)) && !hora.isAfter(LocalTime.of(15, 0)));
-        boolean aberto = diaValido && horaValida;
-
-        return Map.of(
-            "aberto", aberto,
-            "mensagem", aberto ? "🟢 Aberto - Faça seu pedido!" : "🔴 Fechado - Atendimento de Seg a Sáb, 11:30 às 15h"
-        );
-    }
 }
