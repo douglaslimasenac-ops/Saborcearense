@@ -1,63 +1,86 @@
 package com.saborcearense.delivery.controller;
 
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.saborcearense.delivery.model.Pedido;
+import com.saborcearense.delivery.config.WebSocketConfig;
 
 @RestController
 @RequestMapping("/api/pedidos")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 public class PedidoController {
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+    private static final Map<Long, PedidoSimulado> bancoPedidos = new ConcurrentHashMap<>();
+    private static long idContador = 1;
 
-    // Repositório em memória para guardar temporariamente os estados dos pedidos ativos
-    private final ConcurrentHashMap<String, Pedido> pedidosTemporarios = new ConcurrentHashMap<>();
-
-    // Endpoint chamado pelo Front para gerar o ID do pedido antes de abrir o WhatsApp
-    @PostMapping("/criar")
-    public Pedido criarPedido() {
-        // Gera um código alfanumérico único de 6 caracteres (Ex: D83F1A)
-        String idUnico = UUID.randomUUID().toString().substring(0, 6).toUpperCase(); 
-        
-        Pedido novoPedido = new Pedido();
-        novoPedido.setId(idUnico);
-        novoPedido.setStatus("PENDENTE");
-        
-        pedidosTemporarios.put(idUnico, novoPedido);
-        return novoPedido;
+    static {
+        bancoPedidos.put(idContador, new PedidoSimulado(idContador++, "Maria da Silva", "Rua Floriano Peixoto, 123 - Centro", "Pix", "RECEBIDO"));
+        bancoPedidos.put(idContador, new PedidoSimulado(idContador, "João Neto", "Av. Beira Mar, 450 - Ap 302", "Dinheiro", "RECEBIDO"));
     }
 
-    // O link que o restaurante vai clicar no WhatsApp para mudar o status para confirmado
-    @GetMapping("/{id}/confirmar")
-    @ResponseBody
-    public String confirmarPedido(@PathVariable String id) {
-        Pedido pedido = pedidosTemporarios.get(id);
-        if (pedido != null) {
-            pedido.setStatus("CONFIRMADO");
-            
-            // Notifica o frontend (acompanhar.html) via WebSocket em tempo real
-            messagingTemplate.convertAndSend("/topic/pedido/" + id, "CONFIRMADO");
-            
-            return "<html><body style='text-align:center;font-family:sans-serif;margin-top:50px;color:#2c3e50;'>"
-                 + "<h2>✅ Pedido #" + id + " confirmado com sucesso!</h2>"
-                 + "<p style='font-size:1.1rem;color:#7f8c8d;'>O cliente já foi notificado na tela dele em tempo real.</p>"
-                 + "</body></html>";
+    @GetMapping("/ativos")
+    public ResponseEntity<List<PedidoSimulado>> listarPedidosAtivos() {
+        return ResponseEntity.ok(new ArrayList<>(bancoPedidos.values()));
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> atualizarStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String novoStatus = body.get("status");
+        
+        if (novoStatus == null || novoStatus.isEmpty()) {
+            return ResponseEntity.badRequest().body("O campo 'status' é obrigatório.");
         }
-        return "<html><body style='text-align:center;font-family:sans-serif;margin-top:50px;color:#c0392b;'>"
-             + "<h2>❌ Erro: Pedido não encontrado ou código expirado.</h2>"
-             + "</body></html>";
+
+        PedidoSimulado pedido = bancoPedidos.get(id);
+        if (pedido == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        pedido.setStatus(novoStatus.toUpperCase());
+        WebSocketConfig.notificarTodos(pedido.getStatus());
+
+        if ("ENTREGUE".equalsIgnoreCase(novoStatus)) {
+            bancoPedidos.remove(id);
+        }
+
+        return ResponseEntity.ok(pedido);
+    }
+
+    public static class PedidoSimulado {
+        private Long id;
+        private String clienteNome;
+        private String endereco;
+        private String formaPagamento;
+        private String status;
+
+        public PedidoSimulado(Long id, String clienteNome, String endereco, String formaPagamento, String status) {
+            this.id = id;
+            this.clienteNome = clienteNome;
+            this.endereco = endereco;
+            this.formaPagamento = formaPagamento;
+            this.status = status;
+        }
+
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+        public String getClienteNome() { return clienteNome; }
+        public void setClienteNome(String clienteNome) { this.clienteNome = clienteNome; }
+        public String getEndereco() { return endereco; }
+        public void setEndereco(String endereco) { this.endereco = endereco; }
+        public String getFormaPagamento() { return formaPagamento; }
+        public void setFormaPagamento(String formaPagamento) { this.formaPagamento = formaPagamento; }
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
     }
 }

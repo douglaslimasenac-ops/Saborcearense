@@ -3,125 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carrinho - Sabor Cearense</title>
+    <title>Checkout - Sabor Cearense</title>
     <link rel="stylesheet" href="style.css"> 
     <style>
+        :root {
+            --primary: #f5a623;
+            --dark: #111111;
+            --bg: #fffcf5;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --success: #27ae60;
+        }
+
         body {
-            background-color: #fffcf5; /* Fundo Creme/Bege Claro oficial */
-            color: #111111; /* Preto Rústico oficial */
-            font-family: Arial, sans-serif;
-            padding: 20px;
+            background-color: var(--bg);
+            color: var(--dark);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 30px 20px;
+            margin: 0;
         }
-        .container-carrinho {
-            max-width: 600px;
+
+        .container-checkout {
+            max-width: 650px;
             margin: 0 auto;
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
-        h2, h3 {
-            color: #111111;
-            border-bottom: 2px solid #f5a623; /* Amarelo Alaranjado oficial */
-            padding-bottom: 8px;
+
+        .btn-voltar {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            color: #718096;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: color 0.2s;
         }
+        .btn-voltar:hover {
+            color: var(--dark);
+        }
+
+        .secao-card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-top: 0;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid var(--bg);
+            padding-bottom: 12px;
+        }
+
+        /* Lista de Itens do Carrinho */
         .item-resumo {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f7fafc;
         }
-        .total-container {
-            font-size: 1.2rem;
+        .item-resumo:last-child {
+            border-bottom: none;
+        }
+        .item-nome {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        .item-qtd-tag {
+            background: #edf2f7;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-right: 6px;
             font-weight: bold;
-            text-align: right;
-            margin-top: 15px;
-            color: #111111;
         }
+        .item-preco-sub {
+            font-weight: 700;
+            color: #4a5568;
+        }
+
+        /* Bloco de Destaque para o Valor Total */
+        .total-container {
+            background: #fffdf5;
+            border: 2px dashed var(--primary);
+            border-radius: 8px;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 15px;
+        }
+        .total-preco {
+            font-size: 1.4rem;
+            color: var(--success);
+        }
+
+        /* Formulários Organizados */
         .form-grupo {
-            margin-bottom: 15px;
+            margin-bottom: 18px;
             display: flex;
             flex-direction: column;
         }
         .form-grupo label {
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            color: #4a5568;
         }
         .form-grupo input, .form-grupo select {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1rem;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            background: #fafafa;
         }
+        .form-grupo input:focus, .form-grupo select:focus {
+            border-color: var(--primary);
+            outline: none;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
+        }
+
+        /* Botão de Finalização Principal */
         .btn-enviar {
-            background-color: #f5a623; /* Amarelo Alaranjado */
-            color: #111111; /* Preto Rústico */
+            background-color: var(--primary);
+            color: var(--dark);
             border: none;
-            padding: 15px;
+            padding: 16px;
             width: 100%;
             font-size: 1.1rem;
-            font-weight: bold;
+            font-weight: 800;
             cursor: pointer;
-            border-radius: 4px;
-            transition: background 0.2s;
-            margin-top: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(245, 166, 35, 0.3);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
         .btn-enviar:hover {
             background-color: #e0941f;
-        }
-        .btn-voltar {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #f5a623;
-            text-decoration: none;
-            font-weight: bold;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(245, 166, 35, 0.4);
         }
     </style>
 </head>
 <body>
 
-    <div class="container-carrinho">
-        <a href="index.html" class="btn-voltar">← Voltar ao Cardápio</a>
+    <div class="container-checkout">
+        <!-- Botão Voltar Alinhado -->
+        <a href="index.html" class="btn-voltar">← Voltar para o Cardápio</a>
         
-        <h2>Seu Pedido</h2>
-        <div id="lista-itens-carrinho">
-            <!-- Itens injetados via JS -->
+        <!-- CARD 1: RESUMO DO PEDIDO -->
+        <div class="secao-card">
+            <h2>🛒 Itens Selecionados</h2>
+            <div id="lista-itens-carrinho">
+                <!-- Injeção de itens via JS -->
+            </div>
+            
+            <div class="total-container">
+                <span>Valor Total:</span>
+                <span id="valor-total" class="total-preco">R$ 0,00</span>
+            </div>
         </div>
-        <div class="total-container">
-            Total: <span id="valor-total">R\$ 0,00</span>
+
+        <!-- CARD 2: DADOS DE ENTREGA -->
+        <div class="secao-card">
+            <h2>📍 Dados de Entrega e Pagamento</h2>
+            <form id="form-pedido">
+                <div class="form-grupo">
+                    <label for="nome">Nome Completo</label>
+                    <input type="text" id="nome" required placeholder="Digite o nome de quem vai receber">
+                </div>
+
+                <div class="form-grupo">
+                    <label for="endereco">Endereço Completo</label>
+                    <input type="text" id="endereco" required placeholder="Rua, Número, Bloco, Apartamento e Bairro">
+                </div>
+
+                <div class="form-grupo">
+                    <label for="ponto-referencia">Ponto de Referência (Opcional)</label>
+                    <input type="text" id="ponto-referencia" placeholder="Ex: Próximo à praça principal ou mercadinho">
+                </div>
+
+                <div class="form-grupo">
+                    <label for="pagamento">Forma de Pagamento</label>
+                    <select id="pagamento" required>
+                        <option value="Pix">Pix (Rápido e Seguro)</option>
+                        <option value="Dinheiro">Dinheiro</option>
+                        <option value="Cartão de Crédito">Cartão de Crédito</option>
+                        <option value="Cartão de Débito">Cartão de Débito</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-enviar">Finalizar e Enviar para o WhatsApp 🌵</button>
+            </form>
         </div>
-
-        <h3>Dados de Entrega</h3>
-        <form id="form-pedido">
-            <div class="form-grupo">
-                <label for="nome">Nome completo:</label>
-                <input type="text" id="nome" required placeholder="Digite seu nome">
-            </div>
-
-            <div class="form-grupo">
-                <label for="endereco">Endereço (Rua, Número, Bairro):</label>
-                <input type="text" id="endereco" required placeholder="Ex: Rua Floriano Peixoto, 123 - Centro">
-            </div>
-
-            <div class="form-grupo">
-                <label for="ponto-referencia">Ponto de Referência (Opcional):</label>
-                <input type="text" id="ponto-referencia" placeholder="Ex: Próximo à igreja matriz">
-            </div>
-
-            <div class="form-grupo">
-                <label for="pagamento">Forma de Pagamento:</label>
-                <select id="pagamento" required>
-                    <option value="Pix">Pix</option>
-                    <option value="Cartão de Crédito">Cartão de Crédito</option>
-                    <option value="Cartão de Débito">Cartão de Débito</option>
-                    <option value="Dinheiro">Dinheiro</option>
-                </select>
-            </div>
-
-            <button type="submit" class="btn-enviar">Finalizar e Enviar para o WhatsApp 🌵</button>
-        </form>
     </div>
-
     <script>
         // Configuração do WhatsApp do Restaurante (Substitua pelo número correto com DDD)
         const WHATSAPP_NUMERO = "5585999999999"; 
@@ -132,6 +224,7 @@
             document.getElementById("form-pedido").addEventListener("submit", enviarPedido);
         });
 
+        // Função Premium: Renderiza os itens e faz o cálculo automático do preço
         function renderizarResumo() {
             const container = document.getElementById("lista-itens-carrinho");
             const totalTxt = document.getElementById("valor-total");
@@ -140,7 +233,7 @@
             const itens = JSON.parse(localStorage.getItem("itensCarrinhoSaborCearense")) || [];
 
             if (itens.length === 0) {
-                container.innerHTML = "<p>Seu carrinho está vazio.</p>";
+                container.innerHTML = `<p style="text-align: center; color: #718096; margin: 20px 0;">Seu carrinho está vazio no momento.</p>`;
                 totalTxt.innerText = "R\$ 0,00";
                 return;
             }
@@ -149,14 +242,17 @@
             totalCalculado = 0;
 
             itens.forEach(item => {
-                const subtotalItem = item.preco * item.qtd; // Ajustado para .qtd conforme o seu index.html
+                const subtotalItem = item.preco * item.qtd; 
                 totalCalculado += subtotalItem;
 
                 const div = document.createElement("div");
                 div.className = "item-resumo";
                 div.innerHTML = `
-                    <span>${item.qtd}x ${item.nome}</span>
-                    <span>R$ ${subtotalItem.toFixed(2).replace('.', ',')}</span>
+                    <div>
+                        <span class="item-qtd-tag">${item.qtd}x</span>
+                        <span class="item-nome">${item.nome}</span>
+                    </div>
+                    <span class="item-preco-sub">R$ ${subtotalItem.toFixed(2).replace('.', ',')}</span>
                 `;
                 container.appendChild(div);
             });
@@ -164,6 +260,7 @@
             totalTxt.innerText = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
         }
 
+        // Função de envio de dados e formatação para o WhatsApp
         function enviarPedido(e) {
             e.preventDefault();
 
@@ -179,7 +276,7 @@
             const ref = document.getElementById("ponto-referencia").value || "Não informado";
             const pagamento = document.getElementById("pagamento").value;
 
-            // Montagem da mensagem formatada para o WhatsApp
+            // Formatação Premium da mensagem enviada
             let mensagem = `🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n`;
             mensagem += `👤 *Cliente:* ${nome}\n`;
             mensagem += `📍 *Endereço:* ${endereco}\n`;
@@ -195,8 +292,14 @@
             mensagem += `\n💰 *Total do Pedido:* R$ ${totalCalculado.toFixed(2).replace('.', ',')}\n\n`;
             mensagem += `_Aguardando confirmação do restaurante pelo painel..._`;
 
+            // Link Oficial de Envio
             const urlWhatsapp = `https://whatsapp.com/{WHATSAPP_NUMERO}&text=${encodeURIComponent(mensagem)}`;
-            window.open(urlWhatsapp, '_blank');
+            // Abre o WhatsApp em uma nova aba para enviar a mensagem do pedido
+window.open(urlWhatsapp, '_blank');
+
+// Redireciona a página atual do cliente para a linha do tempo
+window.location.href = "acompanhar.html";
+
         }
     </script>
 </body>
