@@ -3,217 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Admin - Sabor Cearense</title>
+    <title>Painel Administrativo - Sabor Cearense</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; background-color: #f5f6fa; color: #333; }
-        .container-admin { max-width: 1000px; margin: 0 auto; }
-        h1, h2 { color: #2c3e50; }
-        .btn-voltar { display: inline-block; margin-bottom: 20px; color: #e67e22; text-decoration: none; font-weight: bold; }
-        .form-container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        .form-row { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; }
-        .form-group { flex: 1; min-width: 200px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
-        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { background: #e67e22; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: background 0.2s; }
-        button:hover { background: #d35400; }
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        th, td { padding: 12px 15px; border-bottom: 1px solid #eee; text-align: left; }
-        th { background-color: #2c3e50; color: white; }
-        .btn-acao { padding: 6px 12px; font-size: 0.85rem; margin-right: 5px; }
-        .btn-save { background: #2ecc71; }
-        .btn-save:hover { background: #27ae60; }
-        .btn-status { background: #3498db; }
-        .btn-status.esgotado { background: #95a5a6; }
-        .btn-delete { background: #e74c3c; }
-        .btn-delete:hover { background: #c0392b; }
-        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
-        .status-disponivel { background: #e8f8f5; color: #2ecc71; }
-        .status-esgotado { background: #fce4e4; color: #e74c3c; }
-        .input-table { border: 1px solid transparent; padding: 6px; background: transparent; font-size: 0.95rem; width: 100%; }
-        .input-table:focus { border-color: #ddd; background: #fff; outline: none; }
+        :root {
+            --primary: #ea1d2c;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+            --gray: #95a5a6;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        h1 { margin: 0; color: var(--dark); }
+        .btn-voltar {
+            text-decoration: none;
+            color: #7f8c8d;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        /* Card de status da loja */
+        .status-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-info { display: flex; align-items: center; gap: 10px; font-weight: bold; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .status-aberto { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .status-fechado { background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+        
+        /* Listagem de itens */
+        .secao-admin {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+        .secao-admin h2 { margin-top: 0; color: var(--dark); border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .tabela-pratos { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .tabela-pratos th, .tabela-pratos td { padding: 12px; text-align: left; border-bottom: 1px solid #f2f2f2; }
+        .tabela-pratos th { background-color: #fafafa; color: #7f8c8d; font-size: 0.85rem; text-transform: uppercase; }
+        
+        /* Botões de Ação */
+        .badge-esgotado {
+            background: #fbe7e7;
+            color: var(--primary);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .badge-disponivel {
+            background: #eafaf1;
+            color: var(--success);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .btn-acao {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+        .btn-esgotar { background-color: #feecee; color: var(--primary); }
+        .btn-esgotar:hover { background-color: var(--primary); color: #fff; }
+        .btn-ativar { background-color: #eafaf1; color: var(--success); }
+        .btn-ativar:hover { background-color: var(--success); color: #fff; }
     </style>
 </head>
 <body>
-    <div class="container-admin">
-        <h1>Painel do Administrador - Sabor Cearense</h1>
-        <a href="index.html" class="btn-voltar">← Voltar para o Cardápio</a>
 
-        <div class="form-container">
-            <h2>Adicionar Novo Item ao Cardápio</h2>
-            <form id="form-prato">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nome">Nome do Prato:</label>
-                        <input type="text" id="nome" required placeholder="Ex: Baião de Dois">
-                    </div>
-                    <div class="form-group">
-                        <label for="preco">Preço (R$):</label>
-                        <input type="number" id="preco" step="0.01" required placeholder="0,00">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="descricao">Descrição / Acompanhamentos:</label>
-                        <textarea id="descricao" rows="2" placeholder="Ex: Arroz, feijão de corda..."></textarea>
-                    </div>
-                </div>
-                <button type="submit">Cadastrar Item</button>
-            </form>
+    <div class="container">
+        <header>
+            <h1>⚙ Painel do Administrador</h1>
+            <a href="index.html" class="btn-voltar">➔ Voltar para o Cardápio</a>
+        </header>
+
+        <!-- Controle de funcionamento em tempo real -->
+        <div class="status-card">
+            <div class="status-info">
+                <span id="admin-status-dot" class="status-dot status-fechado"></span>
+                <span id="admin-status-texto">Carregando status do estabelecimento...</span>
+            </div>
+            <div id="area-botoes-status">
+                <!-- Botões injetados dinamicamente via JS -->
+            </div>
         </div>
 
-        <h2>Gerenciar Itens Cadastrados</h2>
-        <div style="overflow-x: auto;">
-            <table>
+        <!-- Gerenciador do Menu -->
+        <div class="secao-admin">
+            <h2>Gestão de Itens do Cardápio</h2>
+            <table class="tabela-pratos">
                 <thead>
                     <tr>
-                        <th>Nome</th>
-                        <th>Descrição</th>
-                        <th style="width: 110px;">Preço</th>
-                        <th style="width: 110px;">Status</th>
-                        <th style="width: 260px;">Ações</th>
+                        <th>Nome do Item</th>
+                        <th>Categoria</th>
+                        <th>Preço</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="lista-pratos">
+                <tbody id="tabela-corpo-itens">
+                    <!-- Itens carregados via API -->
                 </tbody>
             </table>
         </div>
     </div>
-        <!-- ÁREA JAVASCRIPT CORRIGIDA - MAPEAMENTO COMPLETO DE CATEGORIAS -->
+
+            <!-- LÓGICA DE INTEGRAÇÃO DO PAINEL ADMINISTRATIVO COM O BACKEND CORRIGIDO -->
     <script>
-        // URL Oficial do seu projeto hospedado no Render
-        const URL_BACKEND = "https://saborcearense-5.onrender.com"; 
+        const URL_BACKEND = "https://saborcearense-5.onrender.com";
 
-        let carrinho = {};
-
-        // Dispara as consultas ao servidor assim que a página termina de carregar
+        // Inicializa o painel buscando as informações do servidor
         document.addEventListener("DOMContentLoaded", () => {
-            verificarStatusLoja();
-            carregarCardapio();
+            obterStatusLojaAdmin();
+            carregarItensAdmin();
         });
 
-        // 1. ATUALIZA A BARRA DE STATUS DE FUNCIONAMENTO (ABERTO/FECHADO)
-        async function verificarStatusLoja() {
+        // 1. BUSCA E EXIBE O STATUS DE FUNCIONAMENTO ATUAL DA LOJA
+        async function obterStatusLojaAdmin() {
             try {
                 const resposta = await fetch(URL_BACKEND + "/api/cardapio/status");
-                const dadosStatus = await resposta.json();
-                document.getElementById("status-loja").innerText = dadosStatus.mensagem;
+                const dados = await resposta.json();
+                
+                const dot = document.getElementById("admin-status-dot");
+                const texto = document.getElementById("admin-status-texto");
+                
+                if (dados.aberto) {
+                    dot.className = "status-dot status-aberto";
+                    texto.innerText = "Sua loja está ABERTA e recebendo pedidos!";
+                } else {
+                    dot.className = "status-dot status-fechado";
+                    texto.innerText = dados.mensagem || "Sua loja está FECHADA no momento.";
+                }
             } catch (erro) {
-                console.error("Erro ao carregar status da loja:", erro);
-                document.getElementById("status-loja").innerText = "Não foi possível carregar o status.";
+                console.error("Erro ao buscar status no painel:", erro);
+                document.getElementById("admin-status-texto").innerText = "Não foi possível se conectar ao servidor.";
             }
         }
 
-        // 2. CARREGA OS PRATOS FILTRADOS NA ROTA CORRETA DO CLIENTE
-        async function carregarCardapio() {
+        // 2. BUSCA TODOS OS ITENS CADASTRADOS PARA GESTÃO DE DISPONIBILIDADE
+        async function carregarItensAdmin() {
             try {
                 const resposta = await fetch(URL_BACKEND + "/api/cardapio");
                 const pratos = await resposta.json();
+                
+                const tabelaCorpo = document.getElementById("tabela-corpo-itens");
+                tabelaCorpo.innerHTML = ""; // Limpa a tabela
 
-                // Limpa todas as seções mapeadas na tela antes de renderizar
-                const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "BEBIDA", "SOBREMESA"];
-                secoes.forEach(sec => {
-                    const el = document.getElementById("section-" + sec);
-                    if (el) el.innerHTML = "";
-                });
+                if (pratos.length === 0) {
+                    tabelaCorpo.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#999;">Nenhum prato encontrado no banco de dados.</td></tr>`;
+                    return;
+                }
 
                 pratos.forEach(prato => {
-                    // Mapeia os pratos baseando-se no campo 'descricao' (onde o Java salva a categoria)
-                    let secaoAlvo = prato.descricao; 
+                    const statusHTML = prato.esgotado 
+                        ? `<span class="badge-esgotado">Esgotado</span>` 
+                        : `<span class="badge-disponivel">Disponível</span>`;
                     
-                    // Se o prato for rotativo de dias específicos (ex: SEGUNDA, TERCA, SABADO)
-                    if (prato.diasDisponiveis && prato.diasDisponiveis !== "TODOS") {
-                        secaoAlvo = "PRATOS_DO_DIA";
-                    }
-                    
-                    const container = document.getElementById("section-" + secaoAlvo);
-                    if (container) {
-                        let controleQuantidadeHTML = "";
-                        let classeEsgotado = "";
+                    const botaoHTML = prato.esgotado
+                        ? `<button class="btn-acao btn-ativar" onclick="alternarDisponibilidadePrato(${prato.id}, false)">Reativar Item</button>`
+                        : `<button class="btn-acao btn-esgotar" onclick="alternarDisponibilidadePrato(${prato.id}, true)">Marcar Esgotado</button>`;
 
-                        // Verifica se o prato está marcado como esgotado no painel admin
-                        if (prato.esgotado) {
-                            classeEsgotado = "item-esgotado";
-                            controleQuantidadeHTML = `<span class="badge-esgotado">Esgotado</span>`;
-                        } else {
-                            controleQuantidadeHTML = `
-                                <div class="seletor-quantidade">
-                                    <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, -1, ${prato.preco})">-</button>
-                                    <span class="qtd-numero" id="qtd-${prato.id}">0</span>
-                                    <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, 1, ${prato.preco})">+</button>
-                                </div>
-                            `;
-                        }
-
-                        container.innerHTML += `
-                            <div class="menu-item ${classeEsgotado}" id="item-${prato.id}">
-                                <div class="item-info">
-                                    <h4>${prato.nome}</h4>
-                                    <span class="preco">R$ ${prato.preco.toFixed(2).replace('.', ',')}</span>
-                                </div>
-                                <div class="item-controles">
-                                    ${controleQuantidadeHTML}
-                                }
-                            </div>
-                        `;
-                    }
+                    tabelaCorpo.innerHTML += `
+                        <tr>
+                            <td style="font-weight: 600; color: #2c3e50;">${prato.nome}</td>
+                            <td><span style="font-size:0.85rem; background:#eee; padding:3px 8px; border-radius:10px; font-weight:bold;">${prato.descricao}</span></td>
+                            <td style="font-weight: 600;">R$ ${prato.preco.toFixed(2).replace('.', ',')}</td>
+                            <td>${statusHTML}</td>
+                            <td style="text-align: right;">${botaoHTML}</td>
+                        </tr>
+                    `;
                 });
             } catch (erro) {
-                console.error("Erro ao carregar cardápio:", erro);
-                document.getElementById("status-loja").innerText = "Erro ao carregar o cardápio.";
+                console.error("Erro ao listar pratos no admin:", erro);
+                document.getElementById("tabela-corpo-itens").innerHTML = `
+                    <tr><td colspan="5" style="text-align:center; color:#c0392b; font-weight:bold;">Erro ao carregar os itens do servidor.</td></tr>
+                `;
             }
         }
 
-        function mudarQuantidade(id, alteracao, preco) {
-            if (!carrinho[id]) carrinho[id] = { qtd: 0, preco: preco };
-            
-            carrinho[id].qtd += alteracao;
-
-            if (carrinho[id].qtd <= 0) {
-                carrinho[id].qtd = 0;
-                document.getElementById(`item-${id}`).classList.remove("selecionado");
-            } else {
-                document.getElementById(`item-${id}`).classList.add("selecionado");
-            }
-
-            document.getElementById(`qtd-${id}`).innerText = carrinho[id].qtd;
-            atualizarTotalFlutuante();
-        }
-
-        function atualizarTotalFlutuante() {
-            let total = 0;
-            for (let id in carrinho) {
-                total += carrinho[id].qtd * carrinho[id].preco;
-            }
-            document.getElementById("total-flutuante").innerText = "R\$ " + total.toFixed(2).replace('.', ',');
-        }
-
-        async function enviarPedidoParaOZap() {
+        // 3. ALTERNA O STATUS DE DISPONIBILIDADE (ESGOTADO) NO BACKEND
+        async function alternarDisponibilidadePrato(id, marcarComoEsgotado) {
             try {
-                const resposta = await fetch(URL_BACKEND + "/api/pedidos/criar", {
-                    method: 'POST'
+                // Rota configurada mapeando o ID do item para atualizar seu estado lógico
+                const urlToken = marcarComoEsgotado ? "/esgotar" : "/ativar";
+                
+                // Caso o seu backend use uma rota PUT genérica envie desta forma, 
+                // se usar uma rota direta ajustamos ela aqui:
+                const resposta = await fetch(`${URL_BACKEND}/api/cardapio/${id}${urlToken}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' }
                 });
-                
-                const pedidoCriado = await resposta.json();
-                const pedidoId = pedidoCriado.id; 
 
-                const linkDeConfirmacao = URL_BACKEND + "/api/pedidos/" + pedidoId + "/confirmar";
+                // Se a sua API atualizar direto enviando o objeto completo pelo corpo:
+                if (!resposta.ok) {
+                    // Fallback automático caso sua rota atualize pelo endpoint genérico de salvar:
+                    await fetch(`${URL_BACKEND}/api/cardapio/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: id, esgotado: marcarComoEsgotado })
+                    });
+                }
 
-                let textoWhatsapp = "*NOVO PEDIDO - SABORCEARENSE (#" + pedidoId + ")*\n\n";
-                const totalPedido = document.getElementById('total-flutuante').innerText;
-                textoWhatsapp += "*Total do Pedido:* " + totalPedido + "\n";
-                textoWhatsapp += "\n👉 *CLIQUE AQUI PARA CONFIRMAR O PEDIDO:* " + linkDeConfirmacao;
-
-                localStorage.setItem('idPedidoSaborcearense', pedidoId);
-
-                const numeroRestaurante = "5521969179343"; 
-                const urlWhatsappFinal = "https://wa.me" + numeroRestaurante + "?text=" + encodeURIComponent(textoWhatsapp);
-                
-                window.open(urlWhatsappFinal, '_blank');
-                window.location.href = 'acompanhar.html';
-
+                // Atualiza a listagem na tela do administrador instantaneamente
+                carregarItensAdmin();
             } catch (erro) {
-                console.error("Erro ao processar o fluxo do pedido:", erro);
-                alert("Ops! Tivemos um problema de conexão com o servidor. Tente finalizar novamente.");
+                console.error("Erro ao mudar status do prato:", erro);
+                alert("Não foi possível atualizar o status do item. Verifique a conexão.");
             }
         }
     </script>
