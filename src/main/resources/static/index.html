@@ -152,7 +152,7 @@
     </footer>
     <!-- ÁREA JAVASCRIPT CORRIGIDA E INTEGRADA COM AS ROTAS PÚBLICAS DO CARDÁPIO -->
     <script>
-        const URL_BACKEND = "https://onrender.com";
+        const URL_BACKEND = "https://saborcearense-5.onrender.com";
         let carrinho = {};
 
         // Inicia as consultas ao servidor assim que o DOM estiver pronto
@@ -183,132 +183,60 @@
         }
 
         // 2. CARREGA OS PRATOS FILTRADOS NA ROTA CORRETA DO CLIENTE
-        async function carregarCardapio() {
-            try {
-                const resposta = await fetch(URL_BACKEND + "/api/cardapio");
-                const pratos = await resposta.json();
+async function carregarCardapio() {
+    try {
+        // Dispara a requisição para a URL oficial configurada
+        const resposta = await fetch(URL_BACKEND + "/api/cardapio");
+        const pratos = await resposta.json();
 
-                // Limpa as seções mapeadas para evitar duplicações
-                const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "BEBIDA", "SOBREMESA"];
-                secoes.forEach(sec => {
-                    const el = document.getElementById("section-" + sec);
-                    if (el) el.innerHTML = "";
-                });
+        // Limpa todas as seções mapeadas na tela antes de renderizar para evitar duplicações
+        const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "BEBIDA", "SOBREMESA"];
+        secoes.forEach(sec => {
+            const el = document.getElementById("section-" + sec);
+            if (el) el.innerHTML = "";
+        });
 
-                pratos.forEach(prato => {
-                    // TRATAMENTO IMPEDIR QUEBRA: Remove espaços ocultos e padroniza em caixa alta
-                    let secaoAlvo = String(prato.descricao).trim().toUpperCase(); 
-                    
-                    // Se o prato for rotativo (dias específicos da semana)
-                    if (prato.diasDisponiveis !== "TODOS") {
-                        secaoAlvo = "PRATOS_DO_DIA";
-                    }
-                    
-                    const container = document.getElementById("section-" + secaoAlvo);
-                    if (container) {
-                        let controleQuantidadeHTML = "";
-                        let classeEsgotado = "";
-
-                        if (prato.esgotado) {
-                            classeEsgotado = "item-esgotado";
-                            controleQuantidadeHTML = `<span class="badge-esgotado">Esgotado</span>`;
-                        } else {
-                            controleQuantidadeHTML = `
-                                <div class="seletor-quantidade">
-                                    <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, -1, ${prato.preco})">-</button>
-                                    <span class="qtd-numero" id="qtd-${prato.id}">0</span>
-                                    <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, 1, ${prato.preco})">+</button>
-                                </div>
-                            `;
-                        }
-
-                        container.innerHTML += `
-                            <div class="menu-item ${classeEsgotado}" id="item-${prato.id}">
-                                <div class="item-info">
-                                    <h4>${prato.nome}</h4>
-                                    <span class="preco">R$ ${prato.preco.toFixed(2).replace('.', ',')}</span>
-                                </div>
-                                <div class="item-controles">
-                                    ${controleQuantidadeHTML}
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        console.warn(`Aviso de Mapeamento: Nenhuma seção encontrada no HTML para: section-${secaoAlvo}`);
-                    }
-                });
-            } catch (erro) {
-                console.error("Erro ao carregar cardápio:", erro);
-                document.getElementById("section-PRATOS_DO_DIA").innerHTML = "<p>Erro ao carregar o cardápio.</p>";
-            }
-        }
-
-        // 3. CONTROLE DE QUANTIDADE DO CARRINHO
-        function mudarQuantidade(id, alteracao, preco) {
-            if (!carrinho[id]) carrinho[id] = { qtd: 0, preco: preco };
+        pratos.forEach(prato => {
+            // SOLUÇÃO: O JavaScript agora segue estritamente a categoria ('descricao') vinda do Java
+            let secaoAlvo = String(prato.descricao).trim().toUpperCase(); 
             
-            carrinho[id].qtd += alteracao;
+            const container = document.getElementById("section-" + secaoAlvo);
+            if (container) {
+                
+                let controleQuantidadeHTML = "";
+                let classeEsgotado = "";
 
-            if (carrinho[id].qtd <= 0) {
-                carrinho[id].qtd = 0;
-                const el = document.getElementById(`item-${id}`);
-                if (el) el.classList.remove("selecionado");
-            } else {
-                const el = document.getElementById(`item-${id}`);
-                if (el) el.classList.add("selecionado");
-            }
-
-            const txtQtd = document.getElementById(`qtd-${id}`);
-            if (txtQtd) txtQtd.innerText = carrinho[id].qtd;
-            atualizarTotalFlutuante();
-        }
-
-        // 4. CALCULA O VALOR TOTAL DO CARRINHO FLUTUANTE
-        function atualizarTotalFlutuante() {
-            let total = 0;
-            for (let id in carrinho) {
-                total += carrinho[id].qtd * carrinho[id].preco;
-            }
-            document.getElementById("total-flutuante").innerText = "R\$ " + total.toFixed(2).replace('.', ',');
-        }
-
-        // 5. PROCESSAMENTO E ENVIO DO PEDIDO
-        async function enviarPedidoParaOZap() {
-            try {
-                // Valida se há itens selecionados antes de disparar a requisição
-                let temItens = Object.values(carrinho).some(item => item.qtd > 0);
-                if (!temItens) {
-                    alert("Adicione pelo menos um item ao seu carrinho antes de avançar.");
-                    return;
+                // Verifica se o prato está marcado como esgotado no painel admin
+                if (prato.esgotado) {
+                    classeEsgotado = "item-esgotado";
+                    controleQuantidadeHTML = `<span class="badge-esgotado">Esgotado</span>`;
+                } else {
+                    controleQuantidadeHTML = `
+                        <div class="seletor-quantidade">
+                            <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, -1, ${prato.preco})">-</button>
+                            <span class="qtd-numero" id="qtd-${prato.id}">0</span>
+                            <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, 1, ${prato.preco})">+</button>
+                        </div>
+                    `;
                 }
 
-                const resposta = await fetch(URL_BACKEND + "/api/pedidos/criar", {
-                    method: 'POST'
-                });
-                
-                const pedidoCriado = await resposta.json();
-                const pedidoId = pedidoCriado.id; 
-
-                const linkDeConfirmacao = URL_BACKEND + "/api/pedidos/" + pedidoId + "/confirmar";
-
-                let textoWhatsapp = "*NOVO PEDIDO - SABOR CEARENSE (#" + pedidoId + ")*\n\n";
-                const totalPedido = document.getElementById('total-flutuante').innerText;
-                textoWhatsapp += "*Total do Pedido:* " + totalPedido + "\n";
-                textoWhatsapp += "\n👉 *CLIQUE AQUI PARA CONFIRMAR O PEDIDO:* " + linkDeConfirmacao;
-
-                localStorage.setItem('idPedidoSaborcearense', pedidoId);
-
-                const numeroRestaurante = "5521969179343"; 
-                const urlWhatsappFinal = "https://wa.me" + numeroRestaurante + "?text=" + encodeURIComponent(textoWhatsapp);
-                
-                window.open(urlWhatsappFinal, '_blank');
-                window.location.href = 'acompanhar.html';
-
-            } catch (erro) {
-                console.error("Erro ao processar o fluxo do pedido:", erro);
-                alert("Ops! Tivemos um problema de conexão com o servidor. Tente finalizar novamente.");
+                container.innerHTML += `
+                    <div class="menu-item ${classeEsgotado}" id="item-${prato.id}">
+                        <div class="item-info">
+                            <h4>${prato.nome}</h4>
+                            <span class="preco">R$ ${prato.preco.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                        <div class="item-controles">
+                            ${controleQuantidadeHTML}
+                        </div>
+                    </div>
+                `;
+            } else {
+                console.warn(`Aviso: Nenhuma seção correspondente encontrada para o ID: section-${secaoAlvo}`);
             }
-        }
-    </script>
-</body>
-</html>
+        });
+    } catch (erro) {
+        console.error("Erro ao carregar cardápio:", erro);
+        document.getElementById("status-loja").innerText = "Erro ao carregar o cardápio.";
+    }
+}
