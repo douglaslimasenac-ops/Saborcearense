@@ -70,9 +70,24 @@
         .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
         .status-aberto { background-color: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
         .status-fechado { background-color: #e74c3c; box-shadow: 0 0 6px #e74c3c; }
+
+        .btn-avancar {
+            background-color: #f5a623 !important; /* Amarelo Alaranjado corrigido */
+            color: #111111 !important; /* Preto Rústico */
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-avancar:hover {
+            background-color: #e0941f !important;
+        }
     </style>
 </head>
-<body>
+<body style="padding-bottom: 90px;">
 
     <div class="container">
         <header class="header-app">
@@ -84,13 +99,11 @@
         <div id="status-loja" class="status-barra">Carregando funcionamento...</div>
 
         <main>
-            <!-- PRATOS DO DIA -->
             <section class="menu-section">
                 <h2>🌹 Pratos do Dia</h2>
                 <div id="section-PRATOS_DO_DIA" class="menu-items"></div>
             </section>
 
-            <!-- PRATOS PRINCIPAIS -->
             <section class="menu-section">
                 <h2>📌 Pratos Principais</h2>
                 <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px;"><em>Todos acompanham arroz, feijão e farofa</em></p>
@@ -105,10 +118,15 @@
                 <div id="section-OUTROS" class="menu-items"></div>
             </section>
 
-            <!-- SOBREMESAS -->
             <section class="menu-section">
                 <h2>😋 Sobremesas - R\$ 8,00</h2>
                 <div id="section-SOBREMESA" class="menu-items"></div>
+            </section>
+
+            <!-- Nova Seção de Bebidas Geladas -->
+            <section class="menu-section">
+                <h2>🥤 Bebidas Geladas</h2>
+                <div id="section-BEBIDA" class="menu-items"></div>
             </section>
         </main>
 
@@ -117,14 +135,12 @@
         </footer>
     </div>
 
-    <!-- Barra do Carrinho Flutuante corrigida conforme o Resumo Técnico -->
-    <div class="barra-carrinho" style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999; display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px; box-shadow: 0 -3px 10px rgba(0,0,0,0.1);">
-        <div style="font-size: 1.05rem; font-weight: 500;">Total selecionado: <span id="total-flutuante" style="color: var(--primary); font-weight: bold; font-size: 1.2rem;">R\$ 0,00</span></div>
+    <div class="barra-carrinho" style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999; display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); box-sizing: border-box;">
+        <div style="font-size: 1.05rem; font-weight: 500; color: #111111;">Total selecionado: <span id="total-flutuante" style="color: #f5a623; font-weight: bold; font-size: 1.2rem;">R\$ 0,00</span></div>
         <button onclick="irParaFinalizacao()" class="btn-avancar">Avançar para o Carrinho ➔</button>
     </div>
-
     <script>
-        const URL_BACKEND = "https://saborcearense-5.onrender.com";
+        const URL_BACKEND = "https://onrender.com";
         let carrinho = {};
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -148,7 +164,7 @@
             try {
                 const resposta = await fetch(URL_BACKEND + "/api/cardapio");
                 const pratos = await resposta.json();
-                const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "SOBREMESA"];
+                const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "SOBREMESA", "BEBIDA"];
                 secoes.forEach(sec => { if(document.getElementById("section-"+sec)) document.getElementById("section-"+sec).innerHTML = ""; });
 
                 pratos.forEach(prato => {
