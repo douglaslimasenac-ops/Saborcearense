@@ -1,4 +1,4 @@
-package com.saborcearense.config;
+package com.saborcearense.delivery.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -12,16 +12,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Define o prefixo para o cliente escutar as atualizações
+        // Ativa o broker de mensagens para enviar atualizações aos clientes
         config.enableSimpleBroker("/topic");
         config.setApplicationDestinationPrefixes("/app");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Endpoint onde o frontend vai se conectar inicialmente
-        registry.addEndpoint("/ws-saborcearense")
-                .setAllowedOriginPatterns("*") // Permite conexões externas (importante para o Render)
-                .withSockJS();
+        // Endpoint que o frontend (acompanhar.html) vai conectar
+        registry.addEndpoint("/ws-delivery")
+                .setAllowedOrigins("*"); // Evita bloqueios de conexão no ambiente web
     }
 }
