@@ -1,6 +1,6 @@
-package com.saborcearense.controller;
+package com.saborcearense.delivery.controller;
 
-import com.saborcearense.model.Pedido;
+import com.saborcearense.delivery.model.Pedido;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/pedidos")
-@CrossOrigin(origins = "*") // Permite que seu Front HTML acesse o Back no Render
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 public class PedidoController {
 
     @Autowired
@@ -24,7 +24,12 @@ public class PedidoController {
     public Pedido criarPedido() {
         // Gera um código único de 6 caracteres (Ex: X7R9B2)
         String idUnico = UUID.randomUUID().toString().substring(0, 6).toUpperCase(); 
-        Pedido novoPedido = new Pedido(idUnico);
+        
+        // CORREÇÃO 1: Usa o construtor padrão e injeta o ID via Setter (ou adiciona no mapa)
+        Pedido novoPedido = new Pedido();
+        novoPedido.setId(idUnico); // Certifique-se de que a sua classe Pedido possui setId()
+        novoPedido.setStatus("PENDENTE"); // Certifique-se de que possui setStatus()
+        
         pedidosTemporarios.put(idUnico, novoPedido);
         return novoPedido;
     }
@@ -35,6 +40,7 @@ public class PedidoController {
     public String confirmarPedido(@PathVariable String id) {
         Pedido pedido = pedidosTemporarios.get(id);
         if (pedido != null) {
+            // CORREÇÃO 2: Atualiza o status do objeto
             pedido.setStatus("CONFIRMADO");
             
             // Dispara a mensagem via WebSocket para o canal específico deste pedido
@@ -45,6 +51,8 @@ public class PedidoController {
                  + "<p>O cliente já foi notificado na tela dele em tempo real.</p>"
                  + "</body></html>";
         }
-        return "<html><body><h2>❌ Erro: Pedido não encontrado ou já expirou.</h2></body></html>";
+        return "<html><body style='text-align:center;font-family:sans-serif;margin-top:50px;color:#c0392b;'>"
+             + "<h2>❌ Erro: Pedido não encontrado ou já expirou.</h2>"
+             + "</body></html>";
     }
 }
