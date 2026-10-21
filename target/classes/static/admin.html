@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Pro - Sabor Cearense</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --primary: #f5a623;
+            --dark: #111111;
+            --bg: #fffcf5;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --text-muted: #718096;
+        }
+
+        body { 
+            background-color: var(--bg); 
+            color: var(--dark); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            padding: 30px 20px;
+            margin: 0;
+        }
+
+        .container-admin { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: var(--card-bg); 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.03); 
+        }
+
+        h2 { font-size: 1.8rem; font-weight: 800; display: flex; align-items: center; gap: 10px; margin-top: 0; }
+        h3 { font-size: 1.3rem; margin-top: 30px; padding-bottom: 8px; border-bottom: 2px solid var(--primary); color: var(--dark); }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1.5fr;
+            gap: 15px;
+            align-items: end;
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        .form-grupo { display: flex; flex-direction: column; }
+        .form-grupo label { font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; color: #4a5568; }
+        .form-grupo input, .form-grupo select { 
+            padding: 12px; 
+            border: 1px solid var(--border); 
+            border-radius: 6px; 
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        .form-grupo input:focus, .form-grupo select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.2);
+        }
+
+        .btn-acao { 
+            background-color: var(--primary); 
+            color: var(--dark); 
+            border: none; 
+            padding: 12px 20px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            font-size: 1rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-acao:hover { background-color: #e0941f; transform: translateY(-1px); }
+
+        /* Estilização da Lista Organizada por Cards */
+        .grid-produtos { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
+        
+        .card-produto { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 16px; 
+            background: #fff;
+            border-radius: 8px; 
+            border: 1px solid var(--border); 
+            transition: all 0.2s;
+        }
+        .card-produto:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.02); border-color: #cbd5e0; }
+        .card-produto.esgotado-style { background: #f8fafc; border-left: 4px solid var(--text-muted); opacity: 0.7; }
+        .card-produto.disponivel-style { border-left: 4px solid var(--success); }
+
+        .info-prod h4 { margin: 0 0 4px 0; font-size: 1.1rem; }
+        .badge-cat { font-size: 0.75rem; background: #e2e8f0; padding: 2px 8px; border-radius: 12px; color: #4a5568; font-weight: bold; }
+
+        /* Inputs de preço rápido */
+        .input-preco-rapido {
+            width: 90px;
+            padding: 6px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-weight: bold;
+            color: #27ae60;
+            text-align: center;
+        }
+
+        .controles-prod { display: flex; align-items: center; gap: 10px; }
+        
+        .btn-status-toggle { 
+            border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; 
+        }
+        .btn-status-toggle.ativo { background: #e6fffa; color: #234e52; border: 1px solid #b2f5ea; }
+        .btn-status-toggle.inativo { background: #fff5f5; color: #742a2a; border: 1px solid #fed7d7; }
+        
+        .btn-mini-deletar { background: transparent; border: none; color: #a0aec0; cursor: pointer; padding: 8px; border-radius: 6px; }
+        .btn-mini-deletar:hover { color: var(--danger); background: #fff5f5; }
+
+        #login-admin { max-width: 380px; margin: 80px auto; background: white; padding: 35px; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+
+    <!-- TELA DE LOGIN -->
+    <div id="login-admin">
+        <h2>🔒 Painel Administrativo</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: -5px; margin-bottom: 25px;">Insira suas credenciais para gerenciar o cardápio.</p>
+        <div class="form-grupo" style="margin-bottom: 15px;">
+            <label>Usuário:</label>
+            <input type="text" id="usuario-login" placeholder="Ex: admin">
+        </div>
+        <div class="form-grupo" style="margin-bottom: 25px;">
+            <label>Senha:</label>
+            <input type="password" id="senha-login" placeholder="••••••••">
+        </div>
+        <button class="btn-acao" onclick="autenticarAdmin()" style="width: 100%;">Entrar no Sistema</button>
+    </div>
+    <!-- PAINEL PRINCIPAL (ESCONDIDO ATÉ O LOGIN) -->
+    <div id="conteudo-painel" class="container-admin" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>⚙️ Painel de Controle Sabor Cearense</h2>
+            <a href="index.html" style="color: var(--primary); font-weight: bold; text-decoration: none; font-size: 0.95rem; border: 1px solid var(--primary); padding: 6px 12px; border-radius: 6px; transition: all 0.2s;">🪟 Ver Cardápio</a>
+        </div>
+
+        <!-- CADASTRAR NOVO ITEM -->
+        <h3>➕ Adicionar Novo Item ao Cardápio</h3>
+        <form id="form-novo-prato" class="form-grid">
+            <div class="form-grupo">
+                <label for="nome">Nome do Prato ou Bebida</label>
+                <input type="text" id="nome" required placeholder="Ex: Cerveja Skol Lata / Baião de Dois Pro">
+            </div>
+            
+            <div class="form-grupo">
+                <label for="preco">Preço Inicial (R$)</label>
+                <input type="number" step="0.01" id="preco" required placeholder="0,00">
+            </div>
+            
+            <div class="form-grupo">
+                <label for="descricao">Categoria</label>
+                <select id="descricao" required>
+                    <option value="PRATOS_DO_DIA">🌹 Pratos do Dia</option>
+                    <option value="FRANGO">🐔 Pratos Principais - Frango</option>
+                    <option value="CARNE">🥩 Pratos Principais - Carne</option>
+                    <option value="OUTROS">🐟 Pratos Principais - Outros</option>
+                    <option value="SOBREMESA">😋 Sobremesas</option>
+                    <option value="BEBIDA">🥤 Bebidas Geladas</option>
+                </select>
+            </div>
+            
+            <div style="grid-column: span 3; text-align: right; margin-top: 10px;" class="mobile-full-width">
+                <button type="submit" class="btn-acao">Salvar Item no Banco 🌵</button>
+            </div>
+        </form>
+
+        <!-- LISTA DE ITENS GERENCIÁVEIS -->
+        <h3>📋 Produtos Cadastrados e Alteração de Preço</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: -5px; margin-bottom: 15px;">💡 Dica: Você pode digitar e alterar o preço direto nas caixas de texto. O salvamento é automático ao mudar de campo!</p>
+        
+        <div id="lista-itens-admin" class="grid-produtos">
+                    <!-- NOVA SEÇÃO: GERENCIADOR DE PEDIDOS EM TEMPO REAL -->
+        <h3 style="margin-top: 50px;">🔔 Pedidos Ativos e Controle de Entrega (Tempo Real)</h3>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: -5px; margin-bottom: 25px;">
+            💡 Quando o cliente mandar o pedido no WhatsApp, ele aparecerá aqui automaticamente. Use os botões para atualizar a linha do tempo dele instantaneamente!
+        </p>
+
+        <div id="lista-pedidos-ativos" style="display: flex; flex-direction: column; gap: 15px;">
+            <!-- Os cards de pedidos dinâmicos serão inseridos aqui pelo JavaScript -->
+            <p style="text-align: center; color: var(--text-muted); padding: 20px; background: #fafafa; border-radius: 8px; border: 1px dashed var(--border);">
+                Nenhum pedido ativo no momento. Aguardando transmissões...
+            </p>
+        </div>
+
+    <script>
+                // ==========================================
+        // CONFIGURAÇÕES GLOBAIS E LINKS DO BACKEND
+        // ==========================================
+        const URL_BACKEND = "https://saborcearense-5.onrender.com";
+        const URL_BACKEND_WS = "wss://://onrender.com";
+        
+        let socketAdmin;
+
+        const dicionarioCategorias = {
+            "PRATOS_DO_DIA": "🌹 Prato do Dia",
+            "FRANGO": "🐔 Frango",
+            "CARNE": "🥩 Carne",
+            "OUTROS": "🐟 Outros Pratos",
+            "SOBREMESA": "😋 Sobremesa",
+            "BEBIDA": "🥤 Bebida Gelada"
+        };
+
+        // ==========================================
+        // AUTENTICAÇÃO E LOGIN
+        // ==========================================
+        function autenticarAdmin() {
+            const u = document.getElementById("usuario-login").value;
+            const s = document.getElementById("senha-login").value;
+            if(u === "admin" && s === "sabor123") {
+                document.getElementById("login-admin").style.display = "none";
+                document.getElementById("conteudo-painel").style.display = "block";
+                carregarItensAdmin();
+                inicializarControlePedidos();
+            } else {
+                alert("Usuário ou senha incorretos!");
+            }
+        }
+
+        // ==========================================
+        // GESTÃO DE PRODUTOS DO CARDÁPIO (CRUD)
+        // ==========================================
+        async function carregarItensAdmin() {
+            const container = document.getElementById("lista-itens-admin");
+            try {
+                const res = await fetch(URL_BACKEND + "/api/cardapio");
+                const itens = await res.json();
+                container.innerHTML = "";
+
+                if(itens.length === 0) {
+                    container.innerHTML = `<p style="text-align: center; padding: 20px; color: var(--text-muted);">Nenhum produto cadastrado no momento.</p>`;
+                    return;
+                }
+
+                itens.forEach(item => {
+                    const div = document.createElement("div");
+                    div.className = `card-produto ${item.esgotado ? 'esgotado-style' : 'disponivel-style'}`;
+                    
+                    const nomeCategoria = dicionarioCategorias[item.descricao] || item.descricao;
+
+                    div.innerHTML = `
+                        <div class="info-prod">
+                            <h4>${item.nome} <span class="badge-cat">${nomeCategoria}</span></h4>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; color: #4a5568;">
+                                <span>Preço: R$</span>
+                                <input type="number" step="0.01" value="${item.preco.toFixed(2)}" 
+                                    class="input-preco-rapido" 
+                                    onchange="atualizarPrecoRapido(${item.id}, this.value)"
+                                    title="Altere o valor e clique fora para salvar automaticamente">
+                            </div>
+                        </div>
+                        <div class="controles-prod">
+                            <button class="btn-status-toggle ${item.esgotado ? 'inativo' : 'ativo'}" 
+                                onclick="alternarDisponibilidade(${item.id})">
+                                ${item.esgotado ? '🔴 Esgotado' : '🟢 Disponível'}
+                            </button>
+                            <button class="btn-mini-deletar" onclick="deletarItem(${item.id})" title="Excluir item permanentemente">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch(e) { 
+                container.innerHTML = `<p style="text-align: center; color: var(--danger); font-weight: bold;">Erro ao conectar com o servidor backend.</p>`; 
+            }
+        }
+
+        async function atualizarPrecoRapido(id, novoPreco) {
+            const valorFormatado = parseFloat(novoPreco);
+            if (isNaN(valorFormatado) || valorFormatado < 0) {
+                alert("Por favor, insira um preço válido.");
+                carregarItensAdmin();
+                return;
+            }
+            try {
+                const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/editar`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ preco: valorFormatado })
+                });
+                if(!res.ok) {
+                    alert("Erro ao salvar o novo preço.");
+                    carregarItensAdmin();
+                }
+            } catch(err) {
+                alert("Erro na conexão ao alterar preço.");
+                carregarItensAdmin();
+            }
+        }
+
+        document.getElementById("form-novo-prato").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById("nome").value;
+            const preco = parseFloat(document.getElementById("preco").value);
+            const descricao = document.getElementById("descricao").value;
+
+            try {
+                const res = await fetch(URL_BACKEND + "/api/cardapio/novo", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nome, preco, descricao, esgotado: false })
+                });
+
+                if(res.ok) {
+                    document.getElementById("form-novo-prato").reset();
+                    carregarItensAdmin();
+                } else { alert("Erro ao criar novo produto."); }
+            } catch(err) { alert("Erro na conexão com o servidor."); }
+        });
+
+        async function alternarDisponibilidade(id) {
+            try {
+                const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/status-disponibilidade`, {
+                    method: "PUT"
+                });
+                if(res.ok) carregarItensAdmin();
+            } catch(e) { alert("Erro ao mudar disponibilidade."); }
+        }
+
+        async function deletarItem(id) {
+            if(!confirm("Deseja apagar esse item permanentemente do cardápio?")) return;
+            try {
+                const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/deletar`, {
+                    method: "DELETE"
+                });
+                if(res.ok) carregarItensAdmin();
+            } catch(e) { alert("Erro ao deletar item."); }
+        }
+        // ==========================================
+        // SISTEMA DE CONTROLE DE PEDIDOS (WEBSOCKET)
+        // ==========================================
+        function inicializarControlePedidos() {
+            conectarWebSocketAdmin();
+            carregarPedidosAtivos();
+        }
+
+        function conectarWebSocketAdmin() {
+            socketAdmin = new WebSocket(URL_BACKEND_WS);
+            socketAdmin.onopen = () => {
+                console.log("Painel conectado ao WebSocket de controle de pedidos.");
+            };
+            socketAdmin.onclose = () => {
+                setTimeout(conectarWebSocketAdmin, 5000);
+            };
+        }
+
+        async function carregarPedidosAtivos() {
+            const container = document.getElementById("lista-pedidos-ativos");
+            try {
+                const res = await fetch(URL_BACKEND + "/api/pedidos/ativos");
+                const pedidos = await res.json();
+                
+                if (pedidos.length === 0) {
+                    container.innerHTML = `
+                        <p style="text-align: center; color: var(--text-muted); padding: 20px; background: #fafafa; border-radius: 8px; border: 1px dashed var(--border);">
+                            Nenhum pedido ativo no momento. Aguardando transmissões...
+                        </p>`;
+                    return;
+                }
+
+                container.innerHTML = "";
+                pedidos.forEach(pedido => {
+                    const card = document.createElement("div");
+                    card.className = "card-produto";
+                    card.style.borderLeft = "4px solid var(--primary)";
+                    card.style.flexDirection = "column";
+                    card.style.alignItems = "stretch";
+                    card.style.gap = "12px";
+
+                    card.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <h4 style="margin: 0 0 5px 0;">📋 Pedido #${pedido.id} - Cliente: ${pedido.clienteNome}</h4>
+                                <small style="color: var(--text-muted); display: block; margin-bottom: 4px;">📍 Endereço: ${pedido.endereco}</small>
+                                <small style="color: var(--text-muted); display: block;">💳 Pagamento: ${pedido.formaPagamento}</small>
+                            </div>
+                            <span class="badge-cat" style="background: #fff3cd; color: #856404;">Status: ${pedido.status}</span>
+                        </div>
+                        
+                        <div style="border-top: 1px solid #f1f5f9; padding-top: 10px; display: flex; gap: 8px; justify-content: flex-end;">
+                            <button class="btn-status-toggle ativo" style="background: #e3f2fd; color: #0d47a1; border-color: #bbdefb;" 
+                                onclick="mudarStatusPedido(${pedido.id}, 'PREPARO')">👨‍🍳 Iniciar Preparo</button>
+                            <button class="btn-status-toggle ativo" style="background: #e8f5e9; color: #1b5e20; border-color: #c8e6c9;" 
+                                onclick="mudarStatusPedido(${pedido.id}, 'ENTREGA')">🛵 Saiu p/ Entrega</button>
+                            <button class="btn-status-toggle inativo" style="background: #fafafa; color: #212121; border-color: #e0e0e0;" 
+                                onclick="mudarStatusPedido(${pedido.id}, 'ENTREGUE')">✅ Finalizar Pedido</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (e) {
+                console.log("Erro ao carregar lista de pedidos ativos do servidor.");
+            }
+        }
+
+        async function mudarStatusPedido(pedidoId, proximoStatus) {
+            try {
+                const res = await fetch(`${URL_BACKEND}/api/pedidos/${pedidoId}/status`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ status: proximoStatus })
+                });
+
+                if (res.ok) {
+                    carregarPedidosAtivos();
+                    if (socketAdmin && socketAdmin.readyState === WebSocket.OPEN) {
+                        socketAdmin.send(JSON.stringify({ id: pedidoId, status: proximoStatus }));
+                    }
+                } else {
+                    alert("Erro ao atualizar o status do pedido.");
+                }
+            } catch (err) {
+                alert("Erro de conexão ao atualizar status.");
+            }
+        }
+    </script>
+</body>
+</html>

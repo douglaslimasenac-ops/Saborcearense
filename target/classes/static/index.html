@@ -6,144 +6,215 @@
     <title>Sabor Cearense - Cardápio</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Estilos para os novos seletores de quantidade estilo iFood */
+        .header-app { text-align: center; margin: 20px 0; color: var(--dark); }
+        .header-app h1 { font-size: 2.2rem; margin-bottom: 5px; font-weight: 900; }
+        .menu-section h2 { background: var(--dark); color: var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 1.25rem; margin-top: 25px; }
+        .menu-section h3 { color: var(--dark); border-bottom: 3px solid var(--primary); padding-bottom: 4px; margin-top: 20px; font-size: 1.15rem; }
+        
         .seletor-quantidade {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            padding: 2px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 2px solid var(--primary);
+            border-radius: 6px;
+            padding: 2px 8px;
+            min-width: 85px;
+            height: 32px;
         }
         .btn-qtd {
-            background-color: transparent;
+            background: transparent;
             border: none;
-            color: var(--primary);
-            font-size: 1.2rem;
+            color: var(--dark);
+            font-size: 1.4rem;
             font-weight: bold;
-            width: 32px;
-            height: 32px;
             cursor: pointer;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.1s;
         }
-        .btn-qtd:active { transform: scale(0.9); }
-        .qtd-numero {
+        .qtd-numero { font-weight: bold; color: var(--dark); font-size: 1.05rem; }
+
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            padding: 14px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .menu-item.selecionado { border-left: 6px solid var(--primary); background: #fffdf7; }
+        .item-info h4 { margin: 0 0 6px 0; font-size: 1.05rem; color: var(--dark); }
+        .preco { color: #27ae60; font-weight: bold; font-size: 1.1rem; }
+        .item-esgotado { opacity: 0.4; background: #f2f2f2!important; border-left: 4px solid #95a5a6!important; }
+        .badge-esgotado { color: #7f8c8d; font-weight: bold; background: #e0e0e0; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; }
+        
+        .status-barra {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin: 15px 0;
+            background-color: #fff;
+            color: var(--dark);
+            border: 2px solid var(--border-color);
+        }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .status-aberto { background-color: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
+        .status-fechado { background-color: #e74c3c; box-shadow: 0 0 6px #e74c3c; }
+
+        .btn-avancar {
+            background-color: #f5a623 !important; /* Amarelo Alaranjado corrigido */
+            color: #111111 !important; /* Preto Rústico */
+            border: none;
+            padding: 10px 20px;
             font-size: 1rem;
             font-weight: bold;
-            min-width: 24px;
-            text-align: center;
-            color: var(--dark);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
         }
-        /* Destaque visual quando o item tem quantidade maior que zero */
-        .menu-item.selecionado {
-            background-color: #fff9f4;
-            border-left: 4px solid var(--primary);
-            padding-left: 8px;
+        .btn-avancar:hover {
+            background-color: #e0941f !important;
         }
     </style>
 </head>
-<body>
+<body style="padding-bottom: 90px;">
 
-    <header>
-        <h1>☀ Sabor Cearense ☀</h1>
-        <p class="subtitle">Faça seu pedido online de forma rápida!</p>
-        <p class="info-header">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
-    </header>
+    <div class="container">
+        <header class="header-app">
+            <h1>🌵 Sabor Cearense 🌵</h1>
+            <p style="font-weight: 500; font-size: 1.1rem; margin-top: -5px;">Comida Caseira Legítima</p>
+            <p style="font-size: 0.9rem; font-weight: bold; color: #555; background: var(--primary); display: inline-block; padding: 4px 12px; border-radius: 20px;">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
+        </header>
 
-    <div id="status-loja" class="status-barra">Carregando status...</div>
+        <div id="status-loja" class="status-barra">Carregando funcionamento...</div>
 
-    <main class="container">
-        <!-- PRATOS DO DIA -->
-        <section class="menu-section">
-            <h2>🌹 Pratos do Dia</h2>
-            <div id="section-PRATOS_DO_DIA" class="menu-items"></div>
-        </section>
+        <main>
+            <section class="menu-section">
+                <h2>🌹 Pratos do Dia</h2>
+                <div id="section-PRATOS_DO_DIA" class="menu-items"></div>
+            </section>
 
-        <!-- PRATOS PRINCIPAIS -->
-        <section class="menu-section">
-            <h2>📌 Pratos Principais</h2>
-            <p class="section-note">*Acompanham arroz, feijão e farofa</p>
-            <h3>🐔 Frango</h3>
-            <div id="section-FRANGO" class="menu-items"></div>
-            <h3>🥩 Carne</h3>
-            <div id="section-CARNE" class="menu-items"></div>
-            <h3>🐟 Outros</h3>
-            <div id="section-OUTROS" class="menu-items"></div>
-        </section>
+            <section class="menu-section">
+                <h2>📌 Pratos Principais</h2>
+                <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px;"><em>Todos acompanham arroz, feijão e farofa</em></p>
+                
+                <h3>🐔 Frango</h3>
+                <div id="section-FRANGO" class="menu-items"></div>
+                
+                <h3>🥩 Carne</h3>
+                <div id="section-CARNE" class="menu-items"></div>
+                
+                <h3>🐟 Outros</h3>
+                <div id="section-OUTROS" class="menu-items"></div>
+            </section>
 
-        <!-- BEBIDAS -->
-        <section class="menu-section">
-            <h2>🥤 Bebidas Geladas</h2>
-            <div id="section-BEBIDA" class="menu-items"></div>
-        </section>
+            <section class="menu-section">
+                <h2>😋 Sobremesas - R\$ 8,00</h2>
+                <div id="section-SOBREMESA" class="menu-items"></div>
+            </section>
 
-        <!-- SOBREMESAS -->
-        <section class="menu-section">
-            <h2>😋 Sobremesas - R\$ 8,00</h2>
-            <div id="section-SOBREMESA" class="menu-items"></div>
-        </section>
+            <!-- Nova Seção de Bebidas Geladas -->
+            <section class="menu-section">
+                <h2>🥤 Bebidas Geladas</h2>
+                <div id="section-BEBIDA" class="menu-items"></div>
+            </section>
+        </main>
 
-        <!-- BARRA DO CARRINHO FLUTUANTE ESTILO IFOOD -->
-        <div class="barra-carrinho">
-            <div>Total dos itens: <span id="total-flutuante">R\$ 0,00</span></div>
-            <button onclick="irParaOFechamento()" class="btn-avancar">Avançar para o Carrinho ➔</button>
-        </div>
-    </main>
+        <footer style="text-align: center; margin-top: 40px;">
+            <a href="admin.html" style="color: #999; text-decoration: none; font-size: 0.85rem; font-weight: bold;">⚙ Acessar Painel do Administrador</a>
+        </footer>
+    </div>
 
+    <div class="barra-carrinho" style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999; display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); box-sizing: border-box;">
+        <div style="font-size: 1.05rem; font-weight: 500; color: #111111;">Total selecionado: <span id="total-flutuante" style="color: #f5a623; font-weight: bold; font-size: 1.2rem;">R\$ 0,00</span></div>
+        <button onclick="irParaFinalizacao()" class="btn-avancar">Avançar para o Carrinho ➔</button>
+    </div>
     <script>
-        <!-- Cole este bloco de código dentro da sua tag <script> existente no seu HTML -->
-<script>
-    // 1. IMPORTANTE: Substitua pela URL real que o Render te deu para o seu backend Java
-    const URL_BACKEND = "https://onrender.com"; 
+        const URL_BACKEND = "https://saborcearense-5.onrender.com";
+        let carrinho = {};
 
-    // Altere o nome desta função para o mesmo nome que está no seu botão de finalizar (ex: onclick="finalizar()")
-    async function enviarPedidoParaOZap() {
-        
-        // [OPCIONAL] Se você tiver validações de campos vazios, deixe-as aqui em cima.
+        document.addEventListener("DOMContentLoaded", () => {
+            verificarStatusLoja();
+            carregarCardapio();
+        });
 
-        try {
-            // 2. Faz uma requisição ao Spring Boot para gerar o código do pedido antes de ir pro Whats
-            const resposta = await fetch(`${URL_BACKEND}/api/pedidos/criar`, {
-                method: 'POST'
-            });
-            
-            const pedidoCriado = await resposta.json();
-            const pedidoId = pedidoCriado.id; // Recebe o ID de 6 dígitos (Ex: X7R9B2)
-
-            // 3. Monta o link que o restaurante usará para confirmar o pedido com apenas 1 clique
-            const linkDeConfirmacao = `${URL_BACKEND}/api/pedidos/${pedidoId}/confirmar`;
-
-            // 4. Cria a mensagem do WhatsApp injetando o ID e o Link gerados
-            let textoWhatsapp = `*NOVO PEDIDO - SABORCEARENSE (#${pedidoId})*\n\n`;
-            
-            // ------------------------------------------------------------------------
-            // MANTENHA A SUA LÓGICA ATUAL DE CAPTURA DOS DADOS AQUI. EXEMPlO:
-            // const nome = document.getElementById('nome').value;
-            // textoWhatsapp += `Cliente: ${nome}\n`;
-            // ------------------------------------------------------------------------
-            
-            // Adiciona o link de confirmação no final da mensagem que o restaurante vai ler
-            textoWhatsapp += `\n👉 *CLIQUE AQUI PARA CONFIRMAR O PEDIDO:* ${linkDeConfirmacao}`;
-
-            // 5. Salva o ID no navegador do cliente para a próxima tela saber o que monitorar
-            localStorage.setItem('idPedidoSaborcearense', pedidoId);
-
-            // 6. Abre o WhatsApp para enviar a mensagem ao restaurante
-            const numeroRestaurante = "55XXXXXXXXXXX"; // Insira o número do restaurante com DDD
-            window.open(`https://wa.me/{numeroRestaurante}?text=${encodeURIComponent(textoWhatsapp)}`, '_blank');
-
-            // 7. Redireciona o cliente na mesma aba para a tela de acompanhamento que criamos
-            window.location.href = 'acompanhar.html';
-
-        } catch (erro) {
-            console.error("Erro ao processar o fluxo do pedido:", erro);
-            alert("Ops! Tivemos um problema de conexão com o servidor. Tente finalizar novamente.");
+        async function verificarStatusLoja() {
+            try {
+                const resposta = await fetch(URL_BACKEND + "/api/cardapio/status");
+                const dadosStatus = await resposta.json();
+                const msg = dadosStatus.mensagem || "";
+                const classeCor = msg.toLowerCase().includes("fechado") ? "status-fechado" : "status-aberto";
+                document.getElementById("status-loja").innerHTML = `<span class="status-dot ${classeCor}"></span> <span>${msg}</span>`;
+            } catch (erro) {
+                document.getElementById("status-loja").innerHTML = `<span class="status-dot status-fechado"></span> <span>Servidor Offline</span>`;
+            }
         }
-    }
+
+        async function carregarCardapio() {
+            try {
+                const resposta = await fetch(URL_BACKEND + "/api/cardapio");
+                const pratos = await resposta.json();
+                const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "SOBREMESA", "BEBIDA"];
+                secoes.forEach(sec => { if(document.getElementById("section-"+sec)) document.getElementById("section-"+sec).innerHTML = ""; });
+
+                pratos.forEach(prato => {
+                    let secaoAlvo = String(prato.descricao).trim().toUpperCase(); 
+                    const container = document.getElementById("section-" + secaoAlvo);
+                    if (container) {
+                        let controleHTML = prato.esgotado 
+                            ? `<span class="badge-esgotado">Esgotado</span>` 
+                            : `<div class="seletor-quantidade">
+                                <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, -1, '${prato.nome}', ${prato.preco})">-</button>
+                                <span class="qtd-numero" id="qtd-${prato.id}">0</span>
+                                <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, 1, '${prato.nome}', ${prato.preco})">+</button>
+                               </div>`;
+
+                        container.innerHTML += `
+                            <div class="menu-item ${prato.esgotado ? 'item-esgotado' : ''}" id="item-${prato.id}">
+                                <div class="item-info"><h4>${prato.nome}</h4><span class="preco">R$ ${prato.preco.toFixed(2).replace('.', ',')}</span></div>
+                                <div class="item-controles">${controleHTML}</div>
+                            </div>`;
+                    }
+                });
+            } catch (erro) { console.error(erro); }
+        }
+
+        function mudarQuantidade(id, alteracao, nome, preco) {
+            if (!carrinho[id]) carrinho[id] = { id: id, nome: nome, qtd: 0, preco: preco };
+            carrinho[id].qtd += alteracao;
+            if (carrinho[id].qtd <= 0) {
+                delete carrinho[id];
+                if(document.getElementById(`item-${id}`)) document.getElementById(`item-${id}`).classList.remove("selecionado");
+                if(document.getElementById(`qtd-${id}`)) document.getElementById(`qtd-${id}`).innerText = "0";
+            } else {
+                if(document.getElementById(`item-${id}`)) document.getElementById(`item-${id}`).classList.add("selecionado");
+                if(document.getElementById(`qtd-${id}`)) document.getElementById(`qtd-${id}`).innerText = carrinho[id].qtd;
+            }
+            atualizarTotalFlutuante();
+        }
+
+        function atualizarTotalFlutuante() {
+            let total = 0;
+            for (let id in carrinho) { total += carrinho[id].qtd * carrinho[id].preco; }
+            document.getElementById("total-flutuante").innerText = "R\$ " + total.toFixed(2).replace('.', ',');
+        }
+
+        function irParaFinalizacao() {
+            let itensLista = Object.values(carrinho).filter(item => item.qtd > 0);
+            if (itensLista.length === 0) { alert("Por favor, adicione um item antes de avançar."); return; }
+            localStorage.setItem('itensCarrinhoSaborCearense', JSON.stringify(itensLista));
+            window.location.href = "carrinho.html";
+        }
     </script>
 </body>
 </html>

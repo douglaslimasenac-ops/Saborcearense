@@ -1,7 +1,11 @@
 package com.saborcearense.delivery.repository;
 
-import com.saborcearense.delivery.model.ItemCardapio;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface ItemCardapioRepository extends JpaRepository<ItemCardapio, Long> {
+import com.saborcearense.model.Produto;
+
+@Repository
+public interface ItemCardapioRepository extends JpaRepository<Produto, Long> {
+    // O JpaRepository já gera automaticamente os métodos principais de banco de dados
 }
