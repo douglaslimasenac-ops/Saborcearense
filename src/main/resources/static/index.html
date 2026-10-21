@@ -193,9 +193,9 @@
     <footer>
         <a href="admin.html">⚙ Acessar Painel do Administrador</a>
     </footer>
-    <!-- ÁREA JAVASCRIPT CORRIGIDA E INTEGRADA COM AS ROTAS PÚBLICAS DO CARDÁPIO -->
+        <!-- ÁREA JAVASCRIPT CORRIGIDA E INTEGRADA COM AS ROTAS PÚBLICAS DO CARDÁPIO -->
     <script>
-        const URL_BACKEND = "https://onrender.com";
+        const URL_BACKEND = "https://saborcearense-5.onrender.com";
         let carrinho = {};
 
         // Inicia as consultas ao servidor assim que o DOM estiver pronto
@@ -204,9 +204,11 @@
             carregarCardapio();
         });
 
-        // 1. ATUALIZA A BARRA DE STATUS DE FUNCIONAMENTO (ABERTO/FECHADO)
+
+                // 1. ATUALIZA A BARRA DE STATUS DE FUNCIONAMENTO (ABERTO/FECHADO)
         async function verificarStatusLoja() {
             try {
+                // CORREÇÃO: Garante o uso estrito da variável URL_BACKEND sem apontar para onrender.com puro
                 const resposta = await fetch(URL_BACKEND + "/api/cardapio/status");
                 const dadosStatus = await resposta.json();
                 
@@ -227,6 +229,7 @@
         // 2. CARREGA OS PRATOS FILTRADOS NA ROTA CORRETA DO CLIENTE
         async function carregarCardapio() {
             try {
+                // CORREÇÃO: Garante a consulta no endpoint da sua API hospedada
                 const resposta = await fetch(URL_BACKEND + "/api/cardapio");
                 const pratos = await resposta.json();
 
@@ -278,6 +281,7 @@
                 document.getElementById("status-loja").innerText = "Erro ao carregar o cardápio.";
             }
         }
+
 
         // 3. CONTROLE DE QUANTIDADE DO CARRINHO
         function mudarQuantidade(id, alteracao, preco) {
