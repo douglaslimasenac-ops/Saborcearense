@@ -18,10 +18,8 @@ public class ItemCardapio {
     private Double preco;
     private boolean esgotado = false; 
 
-    // Construtor Padrão (Obrigatório para o JPA/Hibernate)
     public ItemCardapio() {}
 
-    // Construtor Completo
     public ItemCardapio(String nome, String descricao, Double preco, boolean esgotado) {
         this.nome = nome;
         this.descricao = descricao;
@@ -29,7 +27,6 @@ public class ItemCardapio {
         this.esgotado = esgotado;
     }
 
-    // Métodos Getters e Setters de todos os atributos
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

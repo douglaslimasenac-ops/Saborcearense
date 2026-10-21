@@ -38,7 +38,6 @@
         <h1>Painel do Administrador - Sabor Cearense</h1>
         <a href="index.html" class="btn-voltar">← Voltar para o Cardápio</a>
 
-        <!-- Formulário para Adicionar Prato -->
         <div class="form-container">
             <h2>Adicionar Novo Item ao Cardápio</h2>
             <form id="form-prato">
@@ -55,14 +54,13 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="descricao">Descrição / Acompanhamentos:</label>
-                        <textarea id="descricao" rows="2" placeholder="Ex: Arroz, feijão de corda, queijo coalho..."></textarea>
+                        <textarea id="descricao" rows="2" placeholder="Ex: Arroz, feijão de corda..."></textarea>
                     </div>
                 </div>
                 <button type="submit">Cadastrar Item</button>
             </form>
         </div>
 
-        <!-- Tabela de Gerenciamento -->
         <h2>Gerenciar Itens Cadastrados</h2>
         <div style="overflow-x: auto;">
             <table>
@@ -76,19 +74,18 @@
                     </tr>
                 </thead>
                 <tbody id="lista-pratos">
-                    <!-- Preenchido dinamicamente pelo JavaScript (Parte 2) -->
                 </tbody>
             </table>
         </div>
     </div>
     <script>
-        // IMPORTANTE: Insira aqui a URL real do seu backend no Render
-        const API_URL = "https://saborcearense-5.onrender.com/"; 
+        // ATENÇÃO: Substitua pelo link gerado pelo seu Render (Ex: https://onrender.com)
+        const URL_PRODUCAO = "https://onrender.com"; 
 
-        // Carrega a listagem assim que a tela abre
+        const API_URL = URL_PRODUCAO + "/api/admin/pratos"; 
+
         document.addEventListener("DOMContentLoaded", carregarItens);
 
-        // 1. LISTAR ITENS DO CARDÁPIO
         async function carregarItens() {
             try {
                 const res = await fetch(API_URL);
@@ -99,15 +96,9 @@
                 itens.forEach(item => {
                     tbody.innerHTML += `
                         <tr id="linha-${item.id}">
-                            <td>
-                                <input type="text" class="input-table" value="${item.nome}" id="nome-${item.id}">
-                            </td>
-                            <td>
-                                <input type="text" class="input-table" value="${item.descricao || ''}" id="desc-${item.id}">
-                            </td>
-                            <td>
-                                <input type="number" step="0.01" class="input-table" value="${item.preco}" id="preco-${item.id}">
-                            </td>
+                            <td><input type="text" class="input-table" value="${item.nome}" id="nome-${item.id}"></td>
+                            <td><input type="text" class="input-table" value="${item.descricao || ''}" id="desc-${item.id}"></td>
+                            <td><input type="number" step="0.01" class="input-table" value="${item.preco}" id="preco-${item.id}"></td>
                             <td>
                                 <span class="status-badge ${item.esgotado ? 'status-esgotado' : 'status-disponivel'}">
                                     ${item.esgotado ? 'Esgotado' : 'Disponível'}
@@ -128,7 +119,6 @@
             }
         }
 
-        // 2. ADICIONAR NOVO ITEM
         document.getElementById("form-prato").addEventListener("submit", async (e) => {
             e.preventDefault();
             const nome = document.getElementById("nome").value;
@@ -153,7 +143,6 @@
             }
         });
 
-        // 3. SALVAR ALTERAÇÕES DE VALOR, NOME E DESCRIÇÃO
         async function salvarAlteracoes(id, statusEsgotado) {
             const nome = document.getElementById(`nome-${id}`).value;
             const descricao = document.getElementById(`desc-${id}`).value;
@@ -175,7 +164,6 @@
             }
         }
 
-        // 4. MUDAR STATUS (DISPONÍVEL <=> ESGOTADO)
         async function alternarStatus(id, statusAtual) {
             const nome = document.getElementById(`nome-${id}`).value;
             const descricao = document.getElementById(`desc-${id}`).value;
@@ -193,7 +181,6 @@
             }
         }
 
-        // 5. RETIRAR ITEM DO CARDÁPIO (DELETAR)
         async function deletarItem(id) {
             if (confirm("Deseja realmente remover este item definitivamente do cardápio?")) {
                 try {

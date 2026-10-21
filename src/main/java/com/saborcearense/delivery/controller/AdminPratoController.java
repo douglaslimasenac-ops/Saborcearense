@@ -25,19 +25,16 @@ public class AdminPratoController {
     @Autowired 
     private ItemCardapioRepository itemCardapioRepository; 
 
-    // Listar todos os pratos no painel
     @GetMapping
     public ResponseEntity<List<ItemCardapio>> listarTodos() {
         return ResponseEntity.ok(itemCardapioRepository.findAll());
     }
 
-    // Adicionar novo prato
     @PostMapping
     public ResponseEntity<ItemCardapio> adicionar(@RequestBody ItemCardapio novoPrato) {
         return ResponseEntity.ok(itemCardapioRepository.save(novoPrato));
     }
 
-    // Alterar dados e status (Esgotado)
     @PutMapping("/{id}")
     public ResponseEntity<ItemCardapio> atualizar(@PathVariable Long id, @RequestBody ItemCardapio pratoAtualizado) {
         return itemCardapioRepository.findById(id)
@@ -51,7 +48,6 @@ public class AdminPratoController {
             .orElse(ResponseEntity.notFound().build());
     }
 
-    // Retirar (Deletar) prato
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         if (itemCardapioRepository.existsById(id)) {

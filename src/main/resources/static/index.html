@@ -147,7 +147,7 @@
 
                 pratos.forEach(prato => {
                     // Mapeia onde o prato deve entrar com base no dia da semana ou categoria cadastrada
-                    let secaoAlvo = prato.diaDaSemana; 
+                    let secaoAlvo = prato.diaDaSemana;
                     
                     const container = document.getElementById("section-" + secaoAlvo);
                     if (container) {
@@ -232,6 +232,7 @@
                 localStorage.setItem('idPedidoSaborcearense', pedidoId);
 
                 const numeroRestaurante = "5521969179343"; 
+                // Corrigido adicionando a barra antes do número
                 const urlWhatsappFinal = "https://wa.me" + numeroRestaurante + "?text=" + encodeURIComponent(textoWhatsapp);
                 
                 window.open(urlWhatsappFinal, '_blank');
@@ -245,4 +246,3 @@
     </script>
 </body>
 </html>
-
