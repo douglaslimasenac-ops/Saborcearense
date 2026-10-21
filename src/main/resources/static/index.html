@@ -6,53 +6,53 @@
     <title>Sabor Cearense - Cardápio</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        :root {
-            --primary: #ea1d2c; /* Vermelho oficial estilo iFood */
-            --dark: #3e3e3e;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 0 16px 100px 16px;
-        }
-
+        .header-app { text-align: center; margin: 20px 0; color: var(--dark); }
+        .header-app h1 { font-size: 2.2rem; margin-bottom: 5px; font-weight: 900; }
+        .menu-section h2 { background: var(--dark); color: var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 1.25rem; margin-top: 25px; }
+        .menu-section h3 { color: var(--dark); border-bottom: 3px solid var(--primary); padding-bottom: 4px; margin-top: 20px; font-size: 1.15rem; }
+        
         .seletor-quantidade {
             display: flex;
             align-items: center;
             justify-content: space-between;
             background-color: #fff;
-            border: 1px solid #e8e9ea;
-            border-radius: 4px;
-            padding: 4px 8px;
+            border: 2px solid var(--primary);
+            border-radius: 6px;
+            padding: 2px 8px;
             min-width: 85px;
             height: 32px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
         }
         .btn-qtd {
-            background-color: transparent;
+            background: transparent;
             border: none;
-            color: var(--primary);
-            font-size: 1.3rem;
+            color: var(--dark);
+            font-size: 1.4rem;
             font-weight: bold;
+            cursor: pointer;
             width: 24px;
             height: 24px;
-            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .btn-qtd:hover {
-            background-color: #feecee;
-            border-radius: 4px;
+        .qtd-numero { font-weight: bold; color: var(--dark); font-size: 1.05rem; }
+
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            padding: 14px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
         }
-        .qtd-numero {
-            font-size: 0.95rem;
-            font-weight: 600;
-            min-width: 18px;
-            text-align: center;
-            color: var(--dark);
-        }
+        .menu-item.selecionado { border-left: 6px solid var(--primary); background: #fffdf7; }
+        .item-info h4 { margin: 0 0 6px 0; font-size: 1.05rem; color: var(--dark); }
+        .preco { color: #27ae60; font-weight: bold; font-size: 1.1rem; }
+        .item-esgotado { opacity: 0.4; background: #f2f2f2!important; border-left: 4px solid #95a5a6!important; }
+        .badge-esgotado { color: #7f8c8d; font-weight: bold; background: #e0e0e0; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; }
         
         .status-barra {
             display: flex;
@@ -63,86 +63,25 @@
             font-weight: bold;
             border-radius: 8px;
             margin: 15px 0;
-            background-color: #f7f7f7;
+            background-color: #fff;
             color: var(--dark);
-            border: 1px solid #ebebeb;
+            border: 2px solid var(--border-color);
         }
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-        }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
         .status-aberto { background-color: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
         .status-fechado { background-color: #e74c3c; box-shadow: 0 0 6px #e74c3c; }
-
-        .menu-items {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .menu-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            border-bottom: 1px solid #f2f2f2;
-            background: #fff;
-        }
-        .menu-item.selecionado {
-            background-color: #fff9f9;
-            border-left: 4px solid var(--primary);
-        }
-        .item-info h4 {
-            margin: 0 0 4px 0;
-            color: #2c3e50;
-        }
-        .preco {
-            color: #2ecc71;
-            font-weight: bold;
-        }
-
-        .barra-carrinho {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            box-sizing: border-box;
-            background: #2c3e50;
-            color: #fff;
-            padding: 16px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
-            z-index: 9999;
-        }
-        .btn-avancar {
-            background: #ea1d2c;
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        footer { text-align: center; margin: 40px 0 80px 0; }
-        footer a { color: #999; text-decoration: none; font-size: 0.85rem; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <header style="text-align: center; margin-top: 20px;">
-            <h1>☀ Sabor Cearense ☀</h1>
-            <p class="subtitle">Faça seu pedido online de forma rápida!</p>
-            <p class="info-header">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
+        <header class="header-app">
+            <h1>🌵 Sabor Cearense 🌵</h1>
+            <p style="font-weight: 500; font-size: 1.1rem; margin-top: -5px;">Comida Caseira Legítima</p>
+            <p style="font-size: 0.9rem; font-weight: bold; color: #555; background: var(--primary); display: inline-block; padding: 4px 12px; border-radius: 20px;">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
         </header>
 
-        <div id="status-loja" class="status-barra">
-            <span class="status-dot status-fechado"></span> Carregando status...
-        </div>
+        <div id="status-loja" class="status-barra">Carregando funcionamento...</div>
 
         <main>
             <!-- PRATOS DO DIA -->
@@ -154,7 +93,7 @@
             <!-- PRATOS PRINCIPAIS -->
             <section class="menu-section">
                 <h2>📌 Pratos Principais</h2>
-                <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px;">*Acompanham arroz, feijão e farofa</p>
+                <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px;">_Todos acompanham arroz, feijão e farofa_</p>
                 
                 <h3>🐔 Frango</h3>
                 <div id="section-FRANGO" class="menu-items"></div>
@@ -168,159 +107,95 @@
 
             <!-- SOBREMESAS -->
             <section class="menu-section">
-                <h2>😋 Sobremesas - R$ 8,00</h2>
+                <h2>😋 Sobremesas - R\$ 8,00</h2>
                 <div id="section-SOBREMESA" class="menu-items"></div>
             </section>
         </main>
 
-        <footer>
-            <a href="admin.html">⚙ Acessar Painel do Administrador</a>
+        <footer style="text-align: center; margin-top: 40px;">
+            <a href="admin.html" style="color: #999; text-decoration: none; font-size: 0.85rem; font-weight: bold;">⚙ Acessar Painel do Administrador</a>
         </footer>
     </div>
 
     <div class="barra-carrinho">
-        <div>Total dos itens: <span id="total-flutuante" style="color: #2ecc71; font-weight: bold;">R$ 0,00</span></div>
+        <div style="font-size: 1.05rem; font-weight: 500;">Total selecionado: <span id="total-flutuante" style="color: var(--primary); font-weight: bold; font-size: 1.2rem;">R\$ 0,00</span></div>
         <button onclick="irParaFinalizacao()" class="btn-avancar">Avançar para o Carrinho ➔</button>
     </div>
-    <!-- ÁREA JAVASCRIPT INTEGRADA E CORRIGIDA COM DIRECIONAMENTO PARA O CARRINHO -->
+
     <script>
-        const URL_BACKEND = "https://saborcearense-5.onrender.com";
+        const URL_BACKEND = "https://onrender.com";
         let carrinho = {};
 
-        // Executa as consultas ao servidor assim que a página carrega
         document.addEventListener("DOMContentLoaded", () => {
             verificarStatusLoja();
             carregarCardapio();
         });
 
-        // 1. ATUALIZA A BARRA DE STATUS DE FUNCIONAMENTO (ABERTO/FECHADO)
         async function verificarStatusLoja() {
             try {
                 const resposta = await fetch(URL_BACKEND + "/api/cardapio/status");
                 const dadosStatus = await resposta.json();
-                
                 const msg = dadosStatus.mensagem || "";
                 const classeCor = msg.toLowerCase().includes("fechado") ? "status-fechado" : "status-aberto";
-                
-                document.getElementById("status-loja").innerHTML = `
-                    <span class="status-dot ${classeCor}"></span> <span>${msg}</span>
-                `;
+                document.getElementById("status-loja").innerHTML = `<span class="status-dot ${classeCor}"></span> <span>${msg}</span>`;
             } catch (erro) {
-                console.error("Erro ao carregar status da loja:", erro);
-                document.getElementById("status-loja").innerHTML = `
-                    <span class="status-dot status-fechado"></span> <span>Servidor Offline</span>
-                `;
+                document.getElementById("status-loja").innerHTML = `<span class="status-dot status-fechado"></span> <span>Servidor Offline</span>`;
             }
         }
 
-        // 2. CARREGA OS PRATOS FILTRADOS NA ROTA CORRETA DO CLIENTE
         async function carregarCardapio() {
             try {
                 const resposta = await fetch(URL_BACKEND + "/api/cardapio");
                 const pratos = await resposta.json();
-
-                // Limpa todas as seções mapeadas na tela antes de renderizar para evitar duplicações
                 const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "SOBREMESA"];
-                secoes.forEach(sec => {
-                    const el = document.getElementById("section-" + sec);
-                    if (el) el.innerHTML = "";
-                });
+                secoes.forEach(sec => { if(document.getElementById("section-"+sec)) document.getElementById("section-"+sec).innerHTML = ""; });
 
                 pratos.forEach(prato => {
                     let secaoAlvo = String(prato.descricao).trim().toUpperCase(); 
-                    
                     const container = document.getElementById("section-" + secaoAlvo);
                     if (container) {
-                        let controleQuantidadeHTML = "";
-                        let classeEsgotado = "";
-
-                        if (prato.esgotado) {
-                            classeEsgotado = "item-esgotado";
-                            controleQuantidadeHTML = `<span class="badge-esgotado">Esgotado</span>`;
-                        } else {
-                            controleQuantidadeHTML = `
-                                <div class="seletor-quantidade">
-                                    <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, -1, '${prato.nome}', ${prato.preco})">-</button>
-                                    <span class="qtd-numero" id="qtd-${prato.id}">0</span>
-                                    <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, 1, '${prato.nome}', ${prato.preco})">+</button>
-                                </div>
-                            `;
-                        }
+                        let controleHTML = prato.esgotado 
+                            ? `<span class="badge-esgotado">Esgotado</span>` 
+                            : `<div class="seletor-quantidade">
+                                <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, -1, '${prato.nome}', ${prato.preco})">-</button>
+                                <span class="qtd-numero" id="qtd-${prato.id}">0</span>
+                                <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, 1, '${prato.nome}', ${prato.preco})">+</button>
+                               </div>`;
 
                         container.innerHTML += `
-                            <div class="menu-item ${classeEsgotado}" id="item-${prato.id}">
-                                <div class="item-info">
-                                    <h4>${prato.nome}</h4>
-                                    <span class="preco">R$ ${prato.preco.toFixed(2).replace('.', ',')}</span>
-                                </div>
-                                <div class="item-controles">
-                                    ${controleQuantidadeHTML}
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        console.warn(`Aviso: Nenhuma seção correspondente encontrada para o ID: section-${secaoAlvo}`);
+                            <div class="menu-item ${prato.esgotado ? 'item-esgotado' : ''}" id="item-${prato.id}">
+                                <div class="item-info"><h4>${prato.nome}</h4><span class="preco">R$ ${prato.preco.toFixed(2).replace('.', ',')}</span></div>
+                                <div class="item-controles">${controleHTML}</div>
+                            </div>`;
                     }
                 });
-            } catch (erro) {
-                console.error("Erro ao carregar cardápio:", erro);
-                document.getElementById("status-loja").innerText = "Erro ao carregar o cardápio.";
-            }
+            } catch (erro) { console.error(erro); }
         }
 
-        // 3. CONTROLE DE QUANTIDADE DO CARRINHO (GRAVA NOME E PREÇO)
         function mudarQuantidade(id, alteracao, nome, preco) {
             if (!carrinho[id]) carrinho[id] = { id: id, nome: nome, qtd: 0, preco: preco };
-            
             carrinho[id].qtd += alteracao;
-
             if (carrinho[id].qtd <= 0) {
                 delete carrinho[id];
-                const el = document.getElementById(`item-${id}`);
-                if (el) el.classList.remove("selecionado");
-                const txtQtd = document.getElementById(`qtd-${id}`);
-                if (txtQtd) txtQtd.innerText = "0";
+                if(document.getElementById(`item-${id}`)) document.getElementById(`item-${id}`).classList.remove("selecionado");
+                if(document.getElementById(`qtd-${id}`)) document.getElementById(`qtd-${id}`).innerText = "0";
             } else {
-                const el = document.getElementById(`item-${id}`);
-                if (el) el.classList.add("selecionado");
-                const txtQtd = document.getElementById(`qtd-${id}`);
-                if (txtQtd) txtQtd.innerText = carrinho[id].qtd;
+                if(document.getElementById(`item-${id}`)) document.getElementById(`item-${id}`).classList.add("selecionado");
+                if(document.getElementById(`qtd-${id}`)) document.getElementById(`qtd-${id}`).innerText = carrinho[id].qtd;
             }
-
             atualizarTotalFlutuante();
         }
 
-        // 4. ATUALIZA VALOR TOTAL DO CARRINHO FLUTUANTE
         function atualizarTotalFlutuante() {
             let total = 0;
-            for (let id in carrinho) {
-                total += carrinho[id].qtd * carrinho[id].preco;
-            }
+            for (let id in carrinho) { total += carrinho[id].qtd * carrinho[id].preco; }
             document.getElementById("total-flutuante").innerText = "R\$ " + total.toFixed(2).replace('.', ',');
         }
 
-        // 5. ENCAMINHA O PEDIDO DIRETO PARA A SUA PASTA/PÁGINA DO CARRINHO
         function irParaFinalizacao() {
-            let total = 0;
-            let itensLista = [];
-
-            for (let id in carrinho) {
-                if (carrinho[id].qtd > 0) {
-                    total += carrinho[id].qtd * carrinho[id].preco;
-                    itensLista.push(carrinho[id]);
-                }
-            }
-
-            if (itensLista.length === 0) {
-                alert("Por favor, adicione pelo menos um item ao seu carrinho antes de avançar.");
-                return;
-            }
-
-            // Grava os dados da seleção no armazenamento local do navegador para a tela carrinho.html ler
+            let itensLista = Object.values(carrinho).filter(item => item.qtd > 0);
+            if (itensLista.length === 0) { alert("Por favor, adicione um item antes de avançar."); return; }
             localStorage.setItem('itensCarrinhoSaborCearense', JSON.stringify(itensLista));
-            localStorage.setItem('totalCarrinhoSaborCearense', total.toFixed(2));
-
-            // REDIRECIONAMENTO CORRIGIDO: Abre a sua página de informações de entrega
             window.location.href = "carrinho.html";
         }
     </script>

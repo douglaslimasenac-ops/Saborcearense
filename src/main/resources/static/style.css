@@ -1,241 +1,56 @@
-/* ==========================================================================
-   CONFIGURAÇÕES GLOBAIS E PALETA DE CORES (Baseada na Logo)
-   ========================================================================== */
 :root {
-    --primary: #f59e2f;       /* Laranja Quente da Logo (Sol/Cacto) */
-    --primary-hover: #dd8416; /* Laranja mais escuro para cliques e hovers */
-    --dark: #111111;          /* Preto Sólido da Logo para textos e títulos */
-    --muted: #555555;         /* Cinza escuro para descrições legíveis */
-    --background: #fdfaf6;    /* Fundo off-white caloroso que combina com o tema */
-    --surface: #ffffff;       /* Branco limpo para blocos de conteúdo e cards */
-    --success: #27ae60;       /* Verde para indicadores de sucesso (Loja aberta) */
-    --border: #f0e6da;        /* Divisores sutis em tom areia/creme */
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
+    --primary: #f5a623;       /* Amarelo Alaranjado do logotipo */
+    --primary-hover: #d48a17; /* Mostarda um pouco mais escuro para o hover */
+    --dark: #111111;          /* Preto rústico dos textos da logo */
+    --light-bg: #fffcf5;      /* Fundo bege bem suave estilo comida caseira quentinha */
+    --border-color: #ebdcb9;  /* Bordas em tom pastel combinando */
 }
 
 body {
-    background-color: var(--background);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--light-bg);
+    margin: 0;
+    padding: 0;
     color: var(--dark);
-    line-height: 1.5;
 }
 
 .container {
-    width: 100%;
     max-width: 600px;
     margin: 0 auto;
-    padding: 16px;
-    padding-bottom: 110px; /* Evita que o carrinho flutuante cubra as sobremesas */
+    padding: 16px 16px 140px 16px; /* Espaço para não cobrir o conteúdo com a barra */
 }
 
-/* ==========================================================================
-   HEADER COM LOGO REDONDA
-   ========================================================================== */
-header {
-    background: var(--surface);
-    text-align: center;
-    padding: 24px 16px;
-    border-bottom: 1px solid var(--border);
-}
-
-.logo-restaurante {
-    width: 120px;
-    height: 120px;
-    object-fit: contain;
-    border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    margin-bottom: 10px;
-}
-
-header .subtitle {
-    font-size: 1.05rem;
-    color: var(--muted);
-    font-weight: 600;
-}
-
-header .info-header {
-    font-size: 0.85rem;
-    color: var(--dark);
-    margin-top: 8px;
-    font-weight: 700;
-}
-
-/* Status de Funcionamento */
-.status-barra {
-    text-align: center;
-    color: #ffffff;
-    font-weight: bold;
-    font-size: 0.9rem;
-    padding: 8px;
-    transition: background-color 0.3s ease;
-}
-
-/* ==========================================================================
-   ELEMENTOS DE CARDÁPIO E SELETORES ESTILO IFOOD
-   ========================================================================== */
-.menu-section {
-    margin-top: 24px;
-}
-
-.menu-section h2 {
-    font-size: 1.3rem;
-    font-weight: 800;
-    margin-bottom: 12px;
-    color: var(--dark);
-}
-
-.menu-section h3 {
-    font-size: 1rem;
-    color: var(--muted);
-    margin: 16px 0 8px 0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 700;
-}
-
-.section-note {
-    font-size: 0.85rem;
-    color: var(--primary-hover);
-    margin-top: -8px;
-    margin-bottom: 12px;
-    font-weight: 600;
-}
-
-.menu-items {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.menu-item {
-    background-color: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.menu-item:hover {
-    box-shadow: 0 4px 10px rgba(245, 158, 47, 0.08);
-}
-
-/* Destaque visual do iFood adaptado ao tom quente da logo */
-.menu-item.selecionado {
-    background-color: #fffbf4;
-    border-left: 4px solid var(--primary);
-}
-
-.item-details h3 {
-    font-size: 1.05rem;
-    color: var(--dark);
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-
-.item-details p.price {
-    font-size: 1.1rem;
-    color: var(--dark);
-    font-weight: 800;
-}
-
-.btn-qtd {
-    color: var(--primary); /* Botões de + e - em laranja */
-}
-
-/* ==========================================================================
-   BARRA DO CARRINHO FLUTUANTE RENOVADA
-   ========================================================================== */
+/* Barra do Carrinho Flutuante Travada no Rodapé */
 .barra-carrinho {
     position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 540px;
-    background-color: var(--dark); /* Barra escura destaca muito bem o texto */
-    color: #ffffff;
-    border-radius: 16px;
-    padding: 16px 20px;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--dark);
+    color: #fff;
+    padding: 16px 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
     z-index: 9999;
-}
-
-.barra-carrinho #total-flutuante {
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: var(--primary); /* Preço total brilha em laranja no fundo preto */
+    border-top: 3px solid var(--primary);
 }
 
 .btn-avancar {
-    background-color: var(--primary);
-    color: var(--dark);
+    background: var(--primary);
     border: none;
-    padding: 12px 20px;
-    font-weight: 800;
-    border-radius: 8px;
+    color: var(--dark); /* Texto escuro para dar contraste no botão amarelo */
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 1rem;
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: background-color 0.2s;
+    transition: all 0.2s;
 }
 
 .btn-avancar:hover {
-    background-color: var(--primary-hover);
-}
-
-/* ==========================================================================
-   FORMULÁRIOS E BOTÃO DE SUBMIT (CARRINHO)
-   ========================================================================== */
-.form-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-}
-
-.form-section h2 {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--dark);
-    border-bottom: 2px solid var(--background);
-    padding-bottom: 6px;
-    margin-bottom: 16px;
-}
-
-.text-input input:focus, 
-.text-input select:focus, 
-.text-input textarea:focus {
-    border-color: var(--primary); /* Bordas focadas acendem em laranja */
-}
-
-.total-geral {
-    font-size: 1.15rem;
-    font-weight: 900;
-}
-
-.btn-submit {
-    width: 100%;
-    background-color: var(--success);
-    color: #ffffff;
-    border: none;
-    padding: 16px;
-    font-size: 1.1rem;
-    font-weight: 800;
-    border-radius: 12px;
-    cursor: pointer;
-    margin-top: 20px;
-    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
+    background: var(--primary-hover);
+    transform: scale(1.02);
 }
