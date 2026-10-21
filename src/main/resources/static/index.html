@@ -140,7 +140,8 @@
         <button onclick="irParaFinalizacao()" class="btn-avancar">Avançar para o Carrinho ➔</button>
     </div>
     <script>
-        const URL_BACKEND = "https://saborcearense-5.onrender.com";
+        // 🌟 CORREÇÃO 1: Esvaziado para usar caminhos relativos nativos dentro do próprio contêiner do Render
+        const URL_BACKEND = "";
         let carrinho = {};
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -160,24 +161,21 @@
             }
         }
 
-                async function carregarCardapio() {
+        async function carregarCardapio() {
             try {
                 const resposta = await fetch(URL_BACKEND + "/api/cardapio");
                 const pratos = await resposta.json();
                 
-                // Limpa todas as seções antes de injetar os itens do banco
                 const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "SOBREMESA", "BEBIDA"];
                 secoes.forEach(sec => { 
                     if(document.getElementById("section-"+sec)) document.getElementById("section-"+sec).innerHTML = ""; 
                 });
 
                 pratos.forEach(prato => {
-                    // 🎯 Correção 1: Lê o campo 'categoria' vindo do banco PostgreSQL ao invés da 'descricao'
                     let secaoAlvo = String(prato.categoria).trim().toUpperCase(); 
                     const container = document.getElementById("section-" + secaoAlvo);
                     
                     if (container) {
-                        // 🎯 Correção 2: Inverte a lógica antiga para ler o campo '.disponivel' real do banco
                         const estaEsgotado = !prato.disponivel; 
 
                         let controleHTML = estaEsgotado 
@@ -188,11 +186,14 @@
                                 <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, 1, '${prato.nome}', ${prato.preco})">+</button>
                                </div>`;
 
+                        // 🌟 CORREÇÃO 2: Convertendo o preço usando Number() para evitar quebras de toFixed com o banco
+                        const precoFormatado = Number(prato.preco || 0).toFixed(2).replace('.', ',');
+
                         container.innerHTML += `
                             <div class="menu-item ${estaEsgotado ? 'item-esgotado' : ''}" id="item-${prato.id}">
                                 <div class="item-info">
                                     <h4>${prato.nome}</h4>
-                                    <span class="preco">R$ ${prato.preco.toFixed(2).replace('.', ',')}</span>
+                                    <span class="preco">R$ ${precoFormatado}</span>
                                 </div>
                                 <div class="item-controles">${controleHTML}</div>
                             </div>`;
@@ -202,3 +203,43 @@
                 console.error("Erro ao carregar o cardápio do banco:", erro); 
             }
         }
+
+        // 🌟 ADICIONADO: Controla dinamicamente a adição/remoção de itens e soma o total da barra flutuante
+        function mudarQuantidade(id, alteracao, nome, preco) {
+            if (!carrinho[id]) {
+                carrinho[id] = { id: id, nome: nome, preco: Number(preco), quantidade: 0 };
+            }
+
+            carrinho[id].quantidade += alteracao;
+
+            if (carrinho[id].quantidade <= 0) {
+                delete carrinho[id];
+                if(document.getElementById(`qtd-${id}`)) document.getElementById(`qtd-${id}`).innerText = "0";
+                if(document.getElementById(`item-${id}`)) document.getElementById(`item-${id}`).classList.remove("selecionado");
+            } else {
+                if(document.getElementById(`qtd-${id}`)) document.getElementById(`qtd-${id}`).innerText = carrinho[id].quantidade;
+                if(document.getElementById(`item-${id}`)) document.getElementById(`item-${id}`).classList.add("selecionado");
+            }
+
+            atualizarTotalFlutuante();
+        }
+
+        // 🌟 ADICIONADO: Calcula o somatório dos pratos escolhidos em tempo real na tela
+        function atualizarTotalFlutuante() {
+            let total = 0;
+            Object.values(carrinho).forEach(item => {
+                total += item.preco * item.quantidade;
+            });
+            document.getElementById("total-flutuante").innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+        }
+
+        // 🌟 ADICIONADO: Persiste a escolha do usuário no LocalStorage e redireciona para a tela do carrinho
+        function irParaFinalizacao() {
+            if (Object.keys(carrinho).length === 0) {
+                alert("Por favor, selecione pelo menos um prato antes de avançar!");
+                return;
+            }
+            localStorage.setItem("carrinhoSaborCearense", JSON.stringify(Object.values(carrinho)));
+            window.location.href = "carrinho.html";
+        }
+</script>
