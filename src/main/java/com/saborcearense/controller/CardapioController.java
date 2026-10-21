@@ -1,6 +1,8 @@
 package com.saborcearense.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -43,8 +45,18 @@ public class CardapioController {
         return p;
     }
 
+    // 🌟 REINSERIDO: Este método é obrigatório para alimentar a função carregarCardapio() do JavaScript
     @GetMapping
     public List<Produto> listarCardapio() {
         return repository.findAll();
+    }
+
+    @GetMapping("/status")
+    public Map<String, String> obterStatusLoja() {
+        Map<String, String> status = new HashMap<>();
+        // O JavaScript procura a palavra "fechado" para mudar a cor. 
+        // Retornando "Aberto", a bolinha ficará verde automaticamente.
+        status.put("mensagem", "Loja Aberta - Sabor Cearense");
+        return status;
     }
 }
