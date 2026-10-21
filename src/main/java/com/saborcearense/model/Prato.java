@@ -1,14 +1,7 @@
 package com.saborcearense.model;
 
 import java.time.DayOfWeek;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "pratos")
@@ -17,12 +10,19 @@ public class Prato {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @Column(nullable = false)
     private String nome;
+    
     private String descricao;
+    
+    @Column(nullable = false)
     private Double preco;
-    private boolean esgotado = false; // Novo campo: começa como disponível (false)
+    
+    private boolean esgotado = false;
     
     @Enumerated(EnumType.STRING)
+    @Column(name = "dia_da_semana")
     private DayOfWeek diaDaSemana;
 
     public Prato() {}
@@ -35,16 +35,17 @@ public class Prato {
         this.esgotado = false;
     }
 
+    // --- GETTERS E SETTERS ---
     public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
     public String getNome() { return nome; }
-    public String getDescricao() { return descricao; }
-    public Double getPreco() { return preco; }
-    public boolean isEsgotado() { return esgotado; } // Getter do novo campo
-    public DayOfWeek getDiaDaSemana() { return diaDaSemana; }
-    
     public void setNome(String nome) { this.nome = nome; }
+    public String getDescricao() { return descricao; }
     public void setDescricao(String descricao) { this.descricao = descricao; }
+    public Double getPreco() { return preco; }
     public void setPreco(Double preco) { this.preco = preco; }
-    public void setEsgotado(boolean esgotado) { this.esgotado = esgotado; } // Setter do novo campo
+    public boolean isEsgotado() { return esgotado; }
+    public void setEsgotado(boolean esgotado) { this.esgotado = esgotado; }
+    public DayOfWeek getDiaDaSemana() { return diaDaSemana; }
     public void setDiaDaSemana(DayOfWeek diaDaSemana) { this.diaDaSemana = diaDaSemana; }
 }

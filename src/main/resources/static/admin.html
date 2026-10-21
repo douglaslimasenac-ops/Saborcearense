@@ -352,14 +352,26 @@
             carregarPedidosAtivos();
         }
 
-        function conectarWebSocketAdmin() {
-            socketAdmin = new WebSocket(URL_BACKEND_WS);
-            socketAdmin.onopen = () => {
-                console.log("Painel conectado ao WebSocket de controle de pedidos.");
-            };
-            socketAdmin.onclose = () => {
-                setTimeout(conectarWebSocketAdmin, 5000);
-            };
+                function conectarWebSocketAdmin() {
+            try {
+                // 🛠️ Correção: Aponta para a rota exata configurada no seu WebSocketConfig.java do Spring Boot
+                socketAdmin = new WebSocket(`${URL_BACKEND_WS}/ws-status`);
+                
+                socketAdmin.onopen = () => {
+                    console.log("Painel conectado ao WebSocket de controle de pedidos.");
+                };
+                
+                socketAdmin.onmessage = (event) => {
+                    // Se o cliente enviar alguma mensagem ou houver movimentação, atualiza a lista na tela
+                    carregarPedidosAtivos();
+                };
+                
+                socketAdmin.onclose = () => {
+                    setTimeout(conectarWebSocketAdmin, 5000);
+                };
+            } catch (e) {
+                console.error("Falha ao abrir canal WebSocket corporativo:", e);
+            }
         }
 
         async function carregarPedidosAtivos() {
@@ -368,6 +380,8 @@
                 const res = await fetch(URL_BACKEND + "/api/pedidos/ativos");
                 const pedidos = await res.json();
                 
+                if (!container) return;
+
                 if (pedidos.length === 0) {
                     container.innerHTML = `
                         <p style="text-align: center; color: var(--text-muted); padding: 20px; background: #fafafa; border-radius: 8px; border: 1px dashed var(--border);">
@@ -421,6 +435,7 @@
 
                 if (res.ok) {
                     carregarPedidosAtivos();
+                    // Transmite o novo status via WebSocket para atualizar a linha do tempo do cliente imediatamente
                     if (socketAdmin && socketAdmin.readyState === WebSocket.OPEN) {
                         socketAdmin.send(JSON.stringify({ id: pedidoId, status: proximoStatus }));
                     }

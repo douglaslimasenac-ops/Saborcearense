@@ -169,24 +169,31 @@
         
         <a href="index.html" class="btn-inicio">← Voltar para a Página Inicial</a>
     </div>
-    <script>
-        // Configurações de Conexão com o Backend
-        const URL_BACKEND_HTTP = "https://onrender.com";
-        // Convertendo a URL HTTP para o protocolo WS (WebSocket) oficial do Render
+        <script>
+        // ==========================================
+        // CONFIGURAÇÕES GLOBAIS DE CONEXÃO
+        // ==========================================
+        const URL_BACKEND_HTTP = "https://saborcearense-5.onrender.com";
+        // 🛠️ Correção 1: Ajuste na sintaxe e apontamento para a rota oficial do WebSocketConfig.java
         const URL_BACKEND_WS = "wss://://onrender.com";
 
         let socket;
+        let meuPedidoId = null;
 
         document.addEventListener("DOMContentLoaded", () => {
-            // Gera um ID simulado ou captura o ID real do pedido guardado no fluxo
-            const idPedidoAleatorio = Math.floor(1000 + Math.random() * 9000);
-            document.getElementById("pedido-id").innerText = `Pedido #${idPedidoAleatorio}`;
+            // 🛠️ Correção 2: Captura o ID real gerado pelo banco de dados PostgreSQL no checkout
+            meuPedidoId = localStorage.getItem("ultimoPedidoIdSaborCearense");
+
+            if (meuPedidoId) {
+                document.getElementById("pedido-id").innerText = `Pedido #${meuPedidoId}`;
+            } else {
+                document.getElementById("pedido-id").innerText = `Nenhum pedido recente localizado`;
+            }
 
             conectarWebSocket();
         });
 
         function conectarWebSocket() {
-            // Cria a conexão estável de WebSocket com o Spring Boot
             socket = new WebSocket(URL_BACKEND_WS);
 
             socket.onopen = () => {
@@ -195,46 +202,52 @@
             };
 
             socket.onmessage = (evento) => {
-                // Recebe o status do backend (Ex: "PREPARO", "ENTREGA", "ENTREGUE")
-                const novoStatus = evento.data.trim().toUpperCase();
-                atualizarLinhaDoTempo(novoStatus);
+                try {
+                    // 🛠️ Correção 3: Decodifica o JSON vindo do painel admin e valida o ID do pedido
+                    const dados = JSON.parse(evento.data);
+                    
+                    // Verifica se a atualização de status pertence ao pedido aberto nesta aba
+                    if (dados && String(dados.id) === String(meuPedidoId)) {
+                        const novoStatus = String(dados.status).trim().toUpperCase();
+                        atualizarLinhaDoTempo(novoStatus);
+                    }
+                } catch (e) {
+                    // Fallback de segurança caso o servidor envie texto puro em vez de JSON estruturado
+                    const textoPuro = evento.data.trim().toUpperCase();
+                    if (["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"].includes(textoPuro)) {
+                        atualizarLinhaDoTempo(textoPuro);
+                    }
+                }
             };
 
             socket.onclose = () => {
                 document.getElementById("msg-conexao").innerText = "🔴 Conexão perdida. Tentando reconectar...";
                 document.getElementById("msg-conexao").style.color = "#e74c3c";
-                // Tenta reconectar automaticamente a cada 5 segundos se o servidor cair
-                setTimeout(conectarWebSocket, 5000);
+                setTimeout(conectarWebSocket, 5000); // Garante a reconexão automática de segurança
             };
 
             socket.onerror = (erro) => {
-                console.error("Erro no WebSocket:", erro);
+                console.error("Erro na comunicação do rastreador:", erro);
             };
         }
 
-        // Função Inteligente: Move a bolinha laranja e pinta as anteriores de verde
         function atualizarLinhaDoTempo(status) {
             const passosOrdem = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
             const indiceAlvo = passosOrdem.indexOf(status);
 
-            if (indiceAlvo === -1) return; // Status inválido ou desconhecido ignorado
+            if (indiceAlvo === -1) return;
 
             passosOrdem.forEach((idPasso, index) => {
                 const elemento = document.getElementById(`passo-${idPasso}`);
                 if (!elemento) return;
 
-                // Limpa as classes de estado anteriores
                 elemento.classList.remove("atual", "concluido");
 
                 if (index < indiceAlvo) {
-                    // Passos passados ficam marcados em verde (concluído)
                     elemento.classList.add("concluido");
                 } else if (index === indiceAlvo) {
-                    // Passo atual ganha o destaque pulsante em laranja (atual)
                     elemento.classList.add("atual");
                 }
             });
         }
     </script>
-</body>
-</html>

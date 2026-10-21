@@ -1,21 +1,12 @@
-package com.saborcearense.delivery.controller;
+package com.saborcearense.controller;
 
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.saborcearense.delivery.model.ItemCardapio;
-import com.saborcearense.delivery.repository.ItemCardapioRepository;
+import com.saborcearense.model.Produto;
+import com.saborcearense.repository.ItemCardapioRepository;
 
 @RestController
 @RequestMapping("/api/admin/pratos")
@@ -26,23 +17,23 @@ public class AdminPratoController {
     private ItemCardapioRepository itemCardapioRepository; 
 
     @GetMapping
-    public ResponseEntity<List<ItemCardapio>> listarTodos() {
+    public ResponseEntity<List<Produto>> listarTodos() {
         return ResponseEntity.ok(itemCardapioRepository.findAll());
     }
 
     @PostMapping
-    public ResponseEntity<ItemCardapio> adicionar(@RequestBody ItemCardapio novoPrato) {
+    public ResponseEntity<Produto> adicionar(@RequestBody Produto novoPrato) {
         return ResponseEntity.ok(itemCardapioRepository.save(novoPrato));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ItemCardapio> atualizar(@PathVariable Long id, @RequestBody ItemCardapio pratoAtualizado) {
+    public ResponseEntity<Produto> atualizar(@PathVariable Long id, @RequestBody Produto pratoAtualizado) {
         return itemCardapioRepository.findById(id)
             .map(prato -> {
                 prato.setNome(pratoAtualizado.getNome());
                 prato.setDescricao(pratoAtualizado.getDescricao());
                 prato.setPreco(pratoAtualizado.getPreco());
-                prato.setEsgotado(pratoAtualizado.isEsgotado()); 
+                prato.setDisponivel(pratoAtualizado.isDisponivel()); 
                 return ResponseEntity.ok(itemCardapioRepository.save(prato));
             })
             .orElse(ResponseEntity.notFound().build());

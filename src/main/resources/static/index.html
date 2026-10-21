@@ -160,18 +160,27 @@
             }
         }
 
-        async function carregarCardapio() {
+                async function carregarCardapio() {
             try {
                 const resposta = await fetch(URL_BACKEND + "/api/cardapio");
                 const pratos = await resposta.json();
+                
+                // Limpa todas as seções antes de injetar os itens do banco
                 const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "SOBREMESA", "BEBIDA"];
-                secoes.forEach(sec => { if(document.getElementById("section-"+sec)) document.getElementById("section-"+sec).innerHTML = ""; });
+                secoes.forEach(sec => { 
+                    if(document.getElementById("section-"+sec)) document.getElementById("section-"+sec).innerHTML = ""; 
+                });
 
                 pratos.forEach(prato => {
-                    let secaoAlvo = String(prato.descricao).trim().toUpperCase(); 
+                    // 🎯 Correção 1: Lê o campo 'categoria' vindo do banco PostgreSQL ao invés da 'descricao'
+                    let secaoAlvo = String(prato.categoria).trim().toUpperCase(); 
                     const container = document.getElementById("section-" + secaoAlvo);
+                    
                     if (container) {
-                        let controleHTML = prato.esgotado 
+                        // 🎯 Correção 2: Inverte a lógica antiga para ler o campo '.disponivel' real do banco
+                        const estaEsgotado = !prato.disponivel; 
+
+                        let controleHTML = estaEsgotado 
                             ? `<span class="badge-esgotado">Esgotado</span>` 
                             : `<div class="seletor-quantidade">
                                 <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, -1, '${prato.nome}', ${prato.preco})">-</button>
@@ -180,41 +189,16 @@
                                </div>`;
 
                         container.innerHTML += `
-                            <div class="menu-item ${prato.esgotado ? 'item-esgotado' : ''}" id="item-${prato.id}">
-                                <div class="item-info"><h4>${prato.nome}</h4><span class="preco">R$ ${prato.preco.toFixed(2).replace('.', ',')}</span></div>
+                            <div class="menu-item ${estaEsgotado ? 'item-esgotado' : ''}" id="item-${prato.id}">
+                                <div class="item-info">
+                                    <h4>${prato.nome}</h4>
+                                    <span class="preco">R$ ${prato.preco.toFixed(2).replace('.', ',')}</span>
+                                </div>
                                 <div class="item-controles">${controleHTML}</div>
                             </div>`;
                     }
                 });
-            } catch (erro) { console.error(erro); }
-        }
-
-        function mudarQuantidade(id, alteracao, nome, preco) {
-            if (!carrinho[id]) carrinho[id] = { id: id, nome: nome, qtd: 0, preco: preco };
-            carrinho[id].qtd += alteracao;
-            if (carrinho[id].qtd <= 0) {
-                delete carrinho[id];
-                if(document.getElementById(`item-${id}`)) document.getElementById(`item-${id}`).classList.remove("selecionado");
-                if(document.getElementById(`qtd-${id}`)) document.getElementById(`qtd-${id}`).innerText = "0";
-            } else {
-                if(document.getElementById(`item-${id}`)) document.getElementById(`item-${id}`).classList.add("selecionado");
-                if(document.getElementById(`qtd-${id}`)) document.getElementById(`qtd-${id}`).innerText = carrinho[id].qtd;
+            } catch (erro) { 
+                console.error("Erro ao carregar o cardápio do banco:", erro); 
             }
-            atualizarTotalFlutuante();
         }
-
-        function atualizarTotalFlutuante() {
-            let total = 0;
-            for (let id in carrinho) { total += carrinho[id].qtd * carrinho[id].preco; }
-            document.getElementById("total-flutuante").innerText = "R\$ " + total.toFixed(2).replace('.', ',');
-        }
-
-        function irParaFinalizacao() {
-            let itensLista = Object.values(carrinho).filter(item => item.qtd > 0);
-            if (itensLista.length === 0) { alert("Por favor, adicione um item antes de avançar."); return; }
-            localStorage.setItem('itensCarrinhoSaborCearense', JSON.stringify(itensLista));
-            window.location.href = "carrinho.html";
-        }
-    </script>
-</body>
-</html>

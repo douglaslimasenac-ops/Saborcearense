@@ -214,8 +214,9 @@
             </form>
         </div>
     </div>
-    <script>
-        // Configuração do WhatsApp do Restaurante (Substitua pelo número correto com DDD)
+        <script>
+        // Altere para a URL base do seu servidor backend hospedado no Render
+        const URL_API_BACKEND = "https://saborcearense-5.onrender.com"; 
         const WHATSAPP_NUMERO = "5585999999999"; 
         let totalCalculado = 0;
 
@@ -224,12 +225,9 @@
             document.getElementById("form-pedido").addEventListener("submit", enviarPedido);
         });
 
-        // Função Premium: Renderiza os itens e faz o cálculo automático do preço
         function renderizarResumo() {
             const container = document.getElementById("lista-itens-carrinho");
             const totalTxt = document.getElementById("valor-total");
-            
-            // Lendo a chave exata gerada pelo seu index.html
             const itens = JSON.parse(localStorage.getItem("itensCarrinhoSaborCearense")) || [];
 
             if (itens.length === 0) {
@@ -260,12 +258,11 @@
             totalTxt.innerText = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
         }
 
-        // Função de envio de dados e formatação para o WhatsApp
-        function enviarPedido(e) {
+        // Função assíncrona para salvar no Postgres e disparar para a Web
+        async function enviarPedido(e) {
             e.preventDefault();
 
             const itens = JSON.parse(localStorage.getItem("itensCarrinhoSaborCearense")) || [];
-
             if (itens.length === 0) {
                 alert("Seu carrinho está vazio!");
                 return;
@@ -276,31 +273,63 @@
             const ref = document.getElementById("ponto-referencia").value || "Não informado";
             const pagamento = document.getElementById("pagamento").value;
 
-            // Formatação Premium da mensagem enviada
-            let mensagem = `🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n`;
-            mensagem += `👤 *Cliente:* ${nome}\n`;
-            mensagem += `📍 *Endereço:* ${endereco}\n`;
-            mensagem += `🔍 *Referência:* ${ref}\n`;
-            mensagem += `💳 *Pagamento:* ${pagamento}\n\n`;
-            mensagem += `🛒 *Itens do Pedido:*\n`;
+            // 📦 1. Monta o payload exatamente como sua classe Pedido.java espera receber
+            const dadosPedido = {
+                clienteNome: nome,
+                endereco: `${endereco} (Ref: ${ref})`,
+                formaPagamento: pagamento,
+                valorTotal: totalCalculado
+            };
 
-            itens.forEach(item => {
-                const subtotal = (item.preco * item.qtd).toFixed(2).replace('.', ',');
-                mensagem += `• ${item.qtd}x _${item.nome}_ - R$ ${subtotal}\n`;
-            });
+            try {
+                // 📡 2. Salva o pedido de forma persistente no banco do Render via HTTP POST
+                const response = await fetch(`${URL_API_BACKEND}/api/pedidos`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(dadosPedido)
+                });
 
-            mensagem += `\n💰 *Total do Pedido:* R$ ${totalCalculado.toFixed(2).replace('.', ',')}\n\n`;
-            mensagem += `_Aguardando confirmação do restaurante pelo painel..._`;
+                if (!response.ok) {
+                    throw new Error("Falha ao registrar o pedido no servidor do restaurante.");
+                }
 
-            // Link Oficial de Envio
-            const urlWhatsapp = `https://whatsapp.com/{WHATSAPP_NUMERO}&text=${encodeURIComponent(mensagem)}`;
-            // Abre o WhatsApp em uma nova aba para enviar a mensagem do pedido
-window.open(urlWhatsapp, '_blank');
+                const pedidoSalvo = await response.json();
+                
+                // Salva o ID do pedido gerado pelo banco para a tela acompanhar.html ler depois
+                localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoSalvo.id);
 
-// Redireciona a página atual do cliente para a linha do tempo
-window.location.href = "acompanhar.html";
+                // 💬 3. Formatação da mensagem para o WhatsApp do estabelecimento
+                let mensagem = `🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n`;
+                mensagem += `🆔 *Pedido Nº:* #${pedidoSalvo.id}\n`;
+                mensagem += `👤 *Cliente:* ${nome}\n`;
+                mensagem += `📍 *Endereço:* ${endereco}\n`;
+                mensagem += `🔍 *Referência:* ${ref}\n`;
+                mensagem += `💳 *Pagamento:* ${pagamento}\n\n`;
+                mensagem += `🛒 *Itens do Pedido:*\n`;
 
+                itens.forEach(item => {
+                    const subtotal = (item.preco * item.qtd).toFixed(2).replace('.', ',');
+                    mensagem += `• ${item.qtd}x _${item.nome}_ - R$ ${subtotal}\n`;
+                });
+
+                mensagem += `\n💰 *Total do Pedido:* R$ ${totalCalculado.toFixed(2).replace('.', ',')}\n\n`;
+                mensagem += `_Acompanhe o status do meu pedido em tempo real pelo site!_`;
+
+                // Link oficial de envio corrigido utilizando a API oficial do WhatsApp
+                const urlWhatsapp = `https://whatsapp.com/{WHATSAPP_NUMERO}&text=${encodeURIComponent(mensagem)}`;
+                window.open(urlWhatsapp, '_blank');
+
+                // Limpa o carrinho local para evitar compras duplicadas por acidente
+                localStorage.removeItem("itensCarrinhoSaborCearense");
+
+                // Redireciona para o painel de rastreamento em tempo real
+                window.location.href = "acompanhar.html";
+
+            } catch (error) {
+                console.error(error);
+                alert("Ocorreu um erro ao enviar o seu pedido: " + error.message);
+            }
         }
     </script>
-</body>
-</html>
