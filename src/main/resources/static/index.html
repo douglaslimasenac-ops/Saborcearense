@@ -120,25 +120,39 @@
     <footer>
         <a href="admin.html">⚙ Acessar Painel do Administrador</a>
     </footer>
-    <!-- ÁREA JAVASCRIPT CORRIGIDA E INTEGRADA COM O STATUS DE ESGOTADO -->
+    <!-- ÁREA JAVASCRIPT CORRIGIDA E INTEGRADA COM AS ROTAS PÚBLICAS DO CARDÁPIO -->
     <script>
-        // 1. IMPORTANTE: Substitua pela URL real que o Render te deu para o seu backend Java
-        const URL_BACKEND = "https://saborcearense-5.onrender.com"; 
+        // URL Oficial do seu projeto hospedado no Render
+        const URL_BACKEND = "https://onrender.com"; 
 
         let carrinho = {};
 
-        // Carrega o cardápio assim que a página abre
+        // Dispara as consultas ao servidor assim que a página termina de carregar
         document.addEventListener("DOMContentLoaded", () => {
+            verificarStatusLoja();
             carregarCardapio();
         });
 
+        // 1. ATUALIZA A BARRA DE STATUS DE FUNCIONAMENTO (ABERTO/FECHADO)
+        async function verificarStatusLoja() {
+            try {
+                const resposta = await fetch(URL_BACKEND + "/api/cardapio/status");
+                const dadosStatus = await resposta.json();
+                document.getElementById("status-loja").innerText = dadosStatus.mensagem;
+            } catch (erro) {
+                console.error("Erro ao carregar status da loja:", erro);
+                document.getElementById("status-loja").innerText = "Não foi possível carregar o status.";
+            }
+        }
+
+        // 2. CARREGA OS PRATOS FILTRADOS NA ROTA CORRETA DO CLIENTE
         async function carregarCardapio() {
             try {
-                // Rota que busca todos os pratos no seu backend
-                const resposta = await fetch(URL_BACKEND + "/api/admin/pratos");
+                // Rota corrigida de /api/admin/pratos para a rota pública /api/cardapio
+                const resposta = await fetch(URL_BACKEND + "/api/cardapio");
                 const pratos = await resposta.json();
 
-                // Lista das seções do cardápio mapeadas
+                // Limpa todas as seções mapeadas na tela antes de renderizar
                 const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "BEBIDA", "SOBREMESA"];
                 secoes.forEach(sec => {
                     const el = document.getElementById("section-" + sec);
@@ -146,8 +160,13 @@
                 });
 
                 pratos.forEach(prato => {
-                    // Mapeia onde o prato deve entrar com base no dia da semana ou categoria cadastrada
-                    let secaoAlvo = prato.diaDaSemana;
+                    // Mapeia os pratos fixos baseando-se no campo 'descricao' inserido pelo Java
+                    let secaoAlvo = prato.descricao; 
+                    
+                    // Se o prato for rotativo de dias específicos (ex: SEGUNDA, SABADO)
+                    if (prato.diasDisponiveis !== "TODOS") {
+                        secaoAlvo = "PRATOS_DO_DIA";
+                    }
                     
                     const container = document.getElementById("section-" + secaoAlvo);
                     if (container) {
@@ -155,7 +174,7 @@
                         let controleQuantidadeHTML = "";
                         let classeEsgotado = "";
 
-                        // Verifica se o backend marcou o prato como esgotado
+                        // Verifica se o prato está marcado como esgotado no painel admin
                         if (prato.esgotado) {
                             classeEsgotado = "item-esgotado";
                             controleQuantidadeHTML = `<span class="badge-esgotado">Esgotado</span>`;
@@ -173,7 +192,6 @@
                             <div class="menu-item ${classeEsgotado}" id="item-${prato.id}">
                                 <div class="item-info">
                                     <h4>${prato.nome}</h4>
-                                    <p>${prato.descricao || ''}</p>
                                     <span class="preco">R$ ${prato.preco.toFixed(2).replace('.', ',')}</span>
                                 </div>
                                 <div class="item-controles">
@@ -232,7 +250,6 @@
                 localStorage.setItem('idPedidoSaborcearense', pedidoId);
 
                 const numeroRestaurante = "5521969179343"; 
-                // Corrigido adicionando a barra antes do número
                 const urlWhatsappFinal = "https://wa.me/" + numeroRestaurante + "?text=" + encodeURIComponent(textoWhatsapp);
                 
                 window.open(urlWhatsappFinal, '_blank');
