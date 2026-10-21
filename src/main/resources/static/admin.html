@@ -201,9 +201,14 @@
         </div>
 
     <script>
+                // ==========================================
+        // CONFIGURAÇÕES GLOBAIS E LINKS DO BACKEND
+        // ==========================================
         const URL_BACKEND = "https://saborcearense-5.onrender.com";
+        const URL_BACKEND_WS = "wss://://onrender.com";
+        
+        let socketAdmin;
 
-        // Mapeamento visual das tags de categoria
         const dicionarioCategorias = {
             "PRATOS_DO_DIA": "🌹 Prato do Dia",
             "FRANGO": "🐔 Frango",
@@ -213,18 +218,25 @@
             "BEBIDA": "🥤 Bebida Gelada"
         };
 
+        // ==========================================
+        // AUTENTICAÇÃO E LOGIN
+        // ==========================================
         function autenticarAdmin() {
             const u = document.getElementById("usuario-login").value;
             const s = document.getElementById("senha-login").value;
-                    if(u === "admin" && s === "sabor123") {
-            document.getElementById("login-admin").style.display = "none";
-            document.getElementById("conteudo-painel").style.display = "block";
-            carregarItensAdmin();
-            inicializarControlePedidos(); // <--- COLOQUE ESTA LINHA AQUI!
+            if(u === "admin" && s === "sabor123") {
+                document.getElementById("login-admin").style.display = "none";
+                document.getElementById("conteudo-painel").style.display = "block";
+                carregarItensAdmin();
+                inicializarControlePedidos();
+            } else {
+                alert("Usuário ou senha incorretos!");
+            }
         }
 
-        }
-
+        // ==========================================
+        // GESTÃO DE PRODUTOS DO CARDÁPIO (CRUD)
+        // ==========================================
         async function carregarItensAdmin() {
             const container = document.getElementById("lista-itens-admin");
             try {
@@ -239,7 +251,6 @@
 
                 itens.forEach(item => {
                     const div = document.createElement("div");
-                    // Adiciona classes baseadas no status de disponibilidade
                     div.className = `card-produto ${item.esgotado ? 'esgotado-style' : 'disponivel-style'}`;
                     
                     const nomeCategoria = dicionarioCategorias[item.descricao] || item.descricao;
@@ -272,7 +283,6 @@
             }
         }
 
-        // Função Premium: Altera o preço direto no input e salva sozinho!
         async function atualizarPrecoRapido(id, novoPreco) {
             const valorFormatado = parseFloat(novoPreco);
             if (isNaN(valorFormatado) || valorFormatado < 0) {
@@ -280,15 +290,12 @@
                 carregarItensAdmin();
                 return;
             }
-
             try {
-                // Rota PUT /{id}/editar configurada no Spring Boot
                 const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/editar`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ preco: valorFormatado })
                 });
-
                 if(!res.ok) {
                     alert("Erro ao salvar o novo preço.");
                     carregarItensAdmin();
@@ -337,14 +344,9 @@
                 if(res.ok) carregarItensAdmin();
             } catch(e) { alert("Erro ao deletar item."); }
         }
-                // ==========================================
+        // ==========================================
         // SISTEMA DE CONTROLE DE PEDIDOS (WEBSOCKET)
         // ==========================================
-
-        let socketAdmin;
-        const URL_BACKEND_WS = "wss://://onrender.com";
-
-        // Inicializa a escuta de novos pedidos assim que o admin faz login
         function inicializarControlePedidos() {
             conectarWebSocketAdmin();
             carregarPedidosAtivos();
@@ -352,18 +354,14 @@
 
         function conectarWebSocketAdmin() {
             socketAdmin = new WebSocket(URL_BACKEND_WS);
-
             socketAdmin.onopen = () => {
                 console.log("Painel conectado ao WebSocket de controle de pedidos.");
             };
-
             socketAdmin.onclose = () => {
-                // Tenta reconectar automaticamente se a conexão cair
                 setTimeout(conectarWebSocketAdmin, 5000);
             };
         }
 
-        // Busca a lista de pedidos pendentes que vieram do banco/backend
         async function carregarPedidosAtivos() {
             const container = document.getElementById("lista-pedidos-ativos");
             try {
@@ -413,7 +411,6 @@
             }
         }
 
-        // Dispara a alteração para o backend. O backend altera no banco e avisa o cliente via WS
         async function mudarStatusPedido(pedidoId, proximoStatus) {
             try {
                 const res = await fetch(`${URL_BACKEND}/api/pedidos/${pedidoId}/status`, {
@@ -423,10 +420,7 @@
                 });
 
                 if (res.ok) {
-                    // Atualiza a listagem do admin na hora
                     carregarPedidosAtivos();
-                    
-                    // Dispara através do canal aberto do WebSocket para atualizar o cliente
                     if (socketAdmin && socketAdmin.readyState === WebSocket.OPEN) {
                         socketAdmin.send(JSON.stringify({ id: pedidoId, status: proximoStatus }));
                     }
@@ -437,7 +431,6 @@
                 alert("Erro de conexão ao atualizar status.");
             }
         }
-
     </script>
 </body>
 </html>
