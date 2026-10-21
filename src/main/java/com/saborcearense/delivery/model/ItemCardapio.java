@@ -17,16 +17,21 @@ public class ItemCardapio {
     private String descricao;
     private Double preco;
     private boolean esgotado = false; 
+    private String diasDisponiveis;
 
+    // Construtor obrigatório para o banco de dados
     public ItemCardapio() {}
 
-    public ItemCardapio(String nome, String descricao, Double preco, boolean esgotado) {
+    // Construtor customizado para bater exatamente com a ordem do CardapioController
+    public ItemCardapio(String nome, Double preco, String descricao, String diasDisponiveis) {
         this.nome = nome;
-        this.descricao = descricao;
         this.preco = preco;
-        this.esgotado = esgotado;
+        this.descricao = descricao;
+        this.diasDisponiveis = diasDisponiveis;
+        this.esgotado = false; // Todo item inicia disponível por padrão
     }
 
+    // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -41,4 +46,7 @@ public class ItemCardapio {
 
     public boolean isEsgotado() { return esgotado; }
     public void setEsgotado(boolean esgotado) { this.esgotado = esgotado; }
+
+    public String getDiasDisponiveis() { return diasDisponiveis; }
+    public void setDiasDisponiveis(String diasDisponiveis) { this.diasDisponiveis = diasDisponiveis; }
 }
