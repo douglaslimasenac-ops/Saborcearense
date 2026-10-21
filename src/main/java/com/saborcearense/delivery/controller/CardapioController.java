@@ -20,7 +20,7 @@ import jakarta.annotation.PostConstruct;
 
 @RestController
 @RequestMapping("/api/cardapio")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*", allowedHeaders = "*") 
 public class CardapioController {
 
     @Autowired
@@ -36,7 +36,7 @@ public class CardapioController {
             repository.save(new ItemCardapio("Escondidinho de Frango", 21.00, "Purê de macaxeira cremoso com recheio de frango.", "TERCA"));
             repository.save(new ItemCardapio("Feijoada Cearense", 26.00, "Feijão preto com carnes selecionadas, arroz e couve.", "QUARTA"));
             repository.save(new ItemCardapio("Filé de Merluza Empanado", 23.00, "Peixe crocante com arroz branco e salada.", "QUARTA"));
-            repository.save(new ItemCardapio("Panelada Tradicional", 25.00, "Prato típico bem temperado, acompanha arroz e cuscuz.", "QUINTA"));
+            repository.save(new ItemCardapio("Panelada Tradicional", 25.00, "Prato típico bem tempo, acompanha arroz e cuscuz.", "QUINTA"));
             repository.save(new ItemCardapio("Bife a Cavalo", 24.00, "Bife de alcatra com ovo frito, arroz e feijão.", "QUINTA"));
             repository.save(new ItemCardapio("Vatapá de Frango", 22.00, "Vatapá cremoso legítimo, arroz branco e salada.", "SEXTA"));
             repository.save(new ItemCardapio("Carne de Sol com Queijo", 30.00, "Carne de sol coberta com queijo coalho derretido.", "SEXTA"));
