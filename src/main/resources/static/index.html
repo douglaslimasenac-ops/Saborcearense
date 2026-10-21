@@ -5,96 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sabor Cearense - Cardápio</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Fallbacks de variáveis de cor caso o style.css externo falhe */
+        <style>
+        /* Cores base forçadas para evitar dependência do style.css externo */
         :root {
-            --primary: #e67e22; /* Laranja padrão iFood/Delivery */
-            --dark: #2c3e50;
+            --primary: #ea1d2c; /* Vermelho oficial estilo iFood */
+            --dark: #3e3e3e;
         }
 
-        /* Estilos corrigidos para os seletores de quantidade estilo iFood */
+        /* Estilos estruturais para os seletores de quantidade */
         .seletor-quantidade {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             background-color: #fff;
-            border: 1px solid #e67e22; /* Borda explícita na cor principal */
-            border-radius: 20px;
-            padding: 2px 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            border: 1px solid #e8e9ea;
+            border-radius: 4px;
+            padding: 4px 8px;
+            min-width: 85px;
+            height: 32px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
         }
         .btn-qtd {
             background-color: transparent;
             border: none;
             color: var(--primary);
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: bold;
-            width: 32px;
-            height: 32px;
+            width: 24px;
+            height: 24px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.1s;
         }
-        .btn-qtd:active { transform: scale(0.9); }
+        .btn-qtd:hover {
+            background-color: #feecee;
+            border-radius: 4px;
+        }
         .qtd-numero {
-            font-size: 1.1rem;
-            font-weight: bold;
-            min-width: 24px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            min-width: 18px;
             text-align: center;
             color: var(--dark);
         }
         
-        /* Ajuste visual para a barra de status com indicador */
+        /* Ajuste visual completo para a barra de status */
         .status-barra {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            padding: 10px;
+            padding: 12px;
             font-weight: bold;
             border-radius: 8px;
-            margin-bottom: 20px;
-            background-color: #f8f9fa;
+            margin: 15px 0;
+            background-color: #f7f7f7;
+            color: var(--dark);
+            border: 1px solid #ebebeb;
         }
         .status-dot {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             display: inline-block;
         }
-        .status-aberto { background-color: #2ecc71; box-shadow: 0 0 8px #2ecc71; }
-        .status-fechado { background-color: #e74c3c; box-shadow: 0 0 8px #e74c3c; }
+        .status-aberto { background-color: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
+        .status-fechado { background-color: #e74c3c; box-shadow: 0 0 6px #e74c3c; }
 
-        /* Destaque visual quando o item tem quantidade maior que zero */
         .menu-item.selecionado {
-            background-color: #fff9f4;
+            background-color: #fff9f9;
             border-left: 4px solid var(--primary);
-            padding-left: 8px;
         }
-        /* Estilo para itens esgotados */
         .item-esgotado {
-            opacity: 0.6;
-            background-color: #eaeaea !important;
-            border-left: 4px solid #7f8c8d !important;
+            opacity: 0.5;
+            background-color: #f5f5f5 !important;
         }
         .badge-esgotado {
-            color: #c0392b;
+            color: #bc2525;
             font-weight: bold;
-            font-size: 0.9rem;
-            background: #f9d5d5;
+            font-size: 0.85rem;
+            background: #fbe7e7;
             padding: 4px 10px;
-            border-radius: 12px;
+            border-radius: 4px;
         }
-        footer {
-            text-align: center;
-            margin: 40px 0 80px 0;
-        }
-        footer a {
-            color: #7f8c8d;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
+        footer { text-align: center; margin: 40px 0 80px 0; }
+        footer a { color: #999; text-decoration: none; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -161,26 +157,27 @@
             carregarCardapio();
         });
 
-        // 1. ATUALIZA A BARRA DE STATUS DE FUNCIONAMENTO (ABERTO/FECHADO)
+                // 1. ATUALIZA A BARRA DE STATUS DE FUNCIONAMENTO (ABERTO/FECHADO)
         async function verificarStatusLoja() {
             try {
                 const resposta = await fetch(URL_BACKEND + "/api/cardapio/status");
                 const dadosStatus = await resposta.json();
                 
                 const msg = dadosStatus.mensagem || "";
-                // Define a classe CSS de acordo com o texto retornado
+                // Confere se o estabelecimento está fechado para aplicar a cor correspondente
                 const classeCor = msg.toLowerCase().includes("fechado") ? "status-fechado" : "status-aberto";
                 
                 document.getElementById("status-loja").innerHTML = `
-                    <span class="status-dot ${classeCor}"></span> ${msg}
+                    <span class="status-dot ${classeCor}"></span> <span>${msg}</span>
                 `;
             } catch (erro) {
                 console.error("Erro ao carregar status da loja:", erro);
                 document.getElementById("status-loja").innerHTML = `
-                    <span class="status-dot status-fechado"></span> Não foi possível carregar o status.
+                    <span class="status-dot status-fechado"></span> <span>Servidor Offline</span>
                 `;
             }
         }
+
 
         // 2. CARREGA OS PRATOS FILTRADOS NA ROTA CORRETA DO CLIENTE
 async function carregarCardapio() {

@@ -67,15 +67,11 @@ public class CardapioController {
             default -> "DOMINGO";
         };
 
+        // Retorna os itens fixos ("TODOS") ou os pratos rotativos específicos do dia de hoje
         return repository.findAll().stream()
                 .filter(item -> item.getDiasDisponiveis() != null && (
-                       item.getDiasDisponiveis().equals("TODOS") || 
-                       item.getDiasDisponiveis().contains(diaFiltro) ||
-                       item.getDescricao().equals("FRANGO") || 
-                       item.getDescricao().equals("CARNE") || 
-                       item.getDescricao().equals("OUTROS") || 
-                       item.getDescricao().equals("BEBIDA") || 
-                       item.getDescricao().equals("SOBREMESA")
+                       item.getDiasDisponiveis().trim().equalsIgnoreCase("TODOS") || 
+                       item.getDiasDisponiveis().trim().equalsIgnoreCase(diaFiltro)
                 ))
                 .collect(Collectors.toList());
     }
