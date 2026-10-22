@@ -32,13 +32,15 @@ public class Produto {
     @Column(nullable = false)
     private boolean disponible = true;
 
+    @Column(name = "imagem_url", length = 500)
+    private String imagemUrl;
+
     // --- GETTERS E SETTERS ---
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
-        // Alinhado ao nome do atributo privado
         this.id = id;
     }
 
@@ -80,5 +82,13 @@ public class Produto {
 
     public void setDisponivel(boolean disponivel) {
         this.disponible = disponivel;
+    }
+
+    public String getImagemUrl() {
+        return imagemUrl;
+    }
+
+    public void setImagemUrl(String imagemUrl) {
+        this.imagemUrl = imagemUrl;
     }
 }

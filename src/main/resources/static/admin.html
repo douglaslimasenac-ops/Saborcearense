@@ -50,7 +50,7 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr 1.5fr;
+            grid-template-columns: 2fr 1fr 1fr 1.5fr;
             gap: 20px;
             align-items: end;
             background: #f8fafc;
@@ -143,7 +143,6 @@
 </head>
 <body>
 
-    <!-- TELA DE LOGIN -->
     <div id="login-admin">
         <h2 style="justify-content: center; margin-bottom: 10px;">🔒 Gestão Executiva</h2>
         <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-bottom: 30px;">Sabor Cearense Delivery</p>
@@ -155,17 +154,15 @@
             <label>Senha de Acesso</label>
             <input type="password" id="senha-login" placeholder="••••••••">
         </div>
-        <button class="btn-acao" onclick="autenticarAdmin()" style="width: 100%; justify-content: center;">Autenticar no Painel</button>
+        <button class="btn-acao" onclick="autenticarAdmin()" style="width: 100%; justify-content: center;">Autenticar no Panel</button>
     </div>
 
-    <!-- PAINEL PRINCIPAL (SISTEMA INTEGRADO) -->
     <div id="conteudo-painel" class="container-admin" style="display: none;">
         <div class="admin-header">
             <h2>⚙️ Painel Multi-Controle Profissional</h2>
             <a href="index.html" style="color: var(--primary); font-weight: 700; text-decoration: none; font-size: 0.9rem; border: 2px solid var(--primary); padding: 8px 16px; border-radius: 8px; transition: all 0.2s; background: #fff;">🪟 Visualizar Cardápio</a>
         </div>
 
-        <!-- NOVO PAINEL DE CONFIRMAÇÃO DE PEDIDOS (IMPLANTADO) -->
         <h3>🔔 Painel Union de Confirmação de Pedidos (Tempo Real)</h3>
         <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: -5px; margin-bottom: 20px;">Gerencie as entregas e valide os pedidos recebidos de forma centralizada.</p>
         <div id="lista-pedidos-ativos" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 40px;">
@@ -174,7 +171,6 @@
             </p>
         </div>
 
-        <!-- CADASTRAR NOVO ITEM -->
         <h3>➕ Adicionar Novo Item ao Cardápio</h3>
         <form id="form-novo-prato" class="form-grid">
             <div class="form-grupo">
@@ -184,6 +180,10 @@
             <div class="form-grupo">
                 <label for="preco">Preço de Venda (R$)</label>
                 <input type="number" step="0.01" id="preco" required placeholder="0.00">
+            </div>
+            <div class="form-grupo">
+                <label for="imagem">URL da Imagem</label>
+                <input type="text" id="imagem" placeholder="https://link-da-foto.com">
             </div>
             <div class="form-grupo">
                 <label for="categoria">Definir Categoria</label>
@@ -196,19 +196,18 @@
                     <option value="BEBIDA">🥤 Bebidas Geladas</option>
                 </select>
             </div>
-            <div style="grid-column: span 3; text-align: right; margin-top: 10px;">
+            <div style="grid-column: span 4; text-align: right; margin-top: 10px;">
                 <button type="submit" class="btn-acao">Salvar Produto no Banco 🌵</button>
             </div>
         </form>
 
-        <!-- LISTA DE ITENS GERENCIÁVEIS -->
         <h3>📋 Produtos Cadastrados e Alteração Ágil</h3>
         <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: -5px; margin-bottom: 20px;">Os preços e a disponibilidade alterados aqui são atualizados no banco de dados.</p>
         
         <div id="lista-itens-admin" class="grid-produtos"></div>
     </div>
     <script>
-        const URL_BACKEND = ""; // Caminhos relativos nativos para evitar falhas de CORS no Render
+        const URL_BACKEND = ""; 
         const URL_BACKEND_WS = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host;
         let socketAdmin;
 
@@ -241,12 +240,13 @@
                 const nome = document.getElementById("nome").value;
                 const preco = parseFloat(document.getElementById("preco").value);
                 const categoria = document.getElementById("categoria").value;
+                const imagemUrl = document.getElementById("imagem").value;
 
                 try {
                     const res = await fetch(URL_BACKEND + "/api/cardapio", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ nome, preco, categoria, descricao: "Item profissional.", disponivel: true })
+                        body: JSON.stringify({ nome, preco, categoria, imagemUrl, descricao: "Item profissional.", disponivel: true })
                     });
 
                     if(res.ok) {
@@ -264,11 +264,6 @@
                 const itens = await res.json();
                 container.innerHTML = "";
 
-                if(itens.length === 0) {
-                    container.innerHTML = `<p style="text-align: center; padding: 20px; color: var(--text-muted);">Nenhum produto cadastrado no momento.</p>`;
-                    return;
-                }
-
                 itens.forEach(item => {
                     const div = document.createElement("div");
                     const esgotado = !item.disponivel;
@@ -277,13 +272,17 @@
                     const nomeCategoria = dicionarioCategorias[item.categoria] || item.categoria || "Geral";
 
                     div.innerHTML = `
-                        <div class="info-prod">
-                            <h4>${item.nome} <span class="badge-cat">${nomeCategoria}</span></h4>
-                            <div style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; color: #4a5568;">
-                                <span>Preço: R$</span>
-                                <input type="number" step="0.01" value="${Number(item.preco || 0).toFixed(2)}" 
-                                    class="input-preco-rapido" 
-                                    onchange="atualizarPrecoRapido(${item.id}, this.value)">
+                        <div style="display: flex; gap: 15px; align-items: center;">
+                            <img src="${item.imagemUrl || 'https://unsplash.com'}" 
+                                 style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc;">
+                            <div class="info-prod">
+                                <h4>${item.nome} <span class="badge-cat">${nomeCategoria}</span></h4>
+                                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; color: #4a5568;">
+                                    <span>Preço: R$</span>
+                                    <input type="number" step="0.01" value="${Number(item.preco || 0).toFixed(2)}" 
+                                        class="input-preco-rapido" 
+                                        onchange="atualizarPrecoRapido(${item.id}, this.value)">
+                                </div>
                             </div>
                         </div>
                         <div class="controles-prod">
@@ -385,8 +384,13 @@
                     if (socketAdmin && socketAdmin.readyState === WebSocket.OPEN) {
                         socketAdmin.send(JSON.stringify({ id, status: novoStatus }));
                     }
+                } else {
+                    alert("Não foi possível atualizar o status do pedido.");
                 }
-            } catch (e) { alert("Erro ao mudar status do pedido."); }
+            } catch (e) { 
+                console.error("Erro ao mudar status do pedido:", e);
+                alert("Erro de conexão ao mudar status do pedido."); 
+            }
         }
     </script>
 </body>

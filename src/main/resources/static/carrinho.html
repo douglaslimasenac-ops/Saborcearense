@@ -90,7 +90,6 @@
             font-weight: 700;
             color: #4a5568;
         }
-
         .total-container {
             background: #fffdf5;
             border: 2px dashed var(--primary);
@@ -157,7 +156,6 @@
             box-shadow: 0 6px 15px rgba(245, 166, 35, 0.4);
         }
 
-        /* Estilo da caixa dinâmica Pix Copia e Cola */
         .box-pix {
             background: #f0fdf4;
             border: 1px dashed #bbf7d0;
@@ -173,7 +171,6 @@
     <div class="container-checkout">
         <a href="index.html" class="btn-voltar">← Voltar para o Cardápio</a>
         
-        <!-- RESUMO DO PEDIDO -->
         <div class="secao-card">
             <h2>🛒 Itens Selecionados</h2>
             <div id="lista-itens-carrinho"></div>
@@ -185,7 +182,6 @@
         </div>
 
         <form id="form-pedido">
-            <!-- ETAPA 1: DADOS DO CLIENTE -->
             <div class="secao-card">
                 <h2>👤 Passo 1: Seus Dados de Entrega</h2>
                 <div class="form-grupo">
@@ -208,8 +204,6 @@
                     <input type="text" id="ponto-referencia" placeholder="Ex: Próximo ao mercadinho ou praça">
                 </div>
             </div>
-
-            <!-- ETAPA 2: FORMAS DE PAGAMENTO -->
             <div class="secao-card">
                 <h2>💳 Passo 2: Forma de Pagamento</h2>
                 <div class="form-grupo">
@@ -222,7 +216,6 @@
                     </select>
                 </div>
 
-                <!-- BOX DO PIX DINÂMICO -->
                 <div id="container-pix-dinamico" class="box-pix" style="display: block;">
                     <p style="margin: 0 0 8px 0; font-weight: bold; color: #166534; font-size: 0.95rem;">🔑 Chave CNPJ do Sabor Cearense:</p>
                     <div style="display: flex; gap: 8px;">
@@ -238,9 +231,10 @@
             </div>
         </form>
     </div>
-        <script>
-        const URL_API_BACKEND = ""; // Caminhos nativos relativos para evitar erros no Render
-        const WHATSAPP_NUMERO = "5521974720736"; // Seu WhatsApp Oficial unificado do Rio de Janeiro
+
+    <script>
+        const URL_API_BACKEND = ""; 
+        const WHATSAPP_NUMERO = "5521974720736"; 
         let totalCalculado = 0;
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -268,7 +262,6 @@
         function renderizarResumo() {
             const container = document.getElementById("lista-itens-carrinho");
             const totalTxt = document.getElementById("valor-total");
-            // Lê exatamente a chave sincronizada com a página inicial
             const itens = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || [];
 
             if (itens.length === 0) {
@@ -298,10 +291,18 @@
 
             totalTxt.innerText = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
         }
-                async function enviarPedido(e) {
+
+        async function enviarPedido(e) {
             e.preventDefault();
 
-            // Lê exatamente a chave sincronizada com a página inicial
+            const agora = new Date();
+            const diaSemana = agora.getDay();
+            const minutosAtuais = (agora.getHours() * 60) + agora.getMinutes();
+            if (diaSemana === 0 || minutosAtuais < (11 * 60 + 30) || minutosAtuais > (15 * 60)) {
+                alert("Desculpe! O restaurante acabou de fechar o expediente de entregas. Não é possível enviar ou fechar novos pedidos agora.");
+                return;
+            }
+
             const itens = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || [];
             if (itens.length === 0) {
                 alert("Seu carrinho está vazio!");
@@ -314,7 +315,6 @@
             const ref = document.getElementById("ponto-referencia").value || "Não informado";
             const pagamento = document.getElementById("pagamento").value;
 
-            // Formata o endereço completo com telefone e referência para enviar ao banco Java
             const dadosPedido = {
                 clienteNome: nome,
                 endereco: endereco + " (Tel: " + contatoTelefone + ") (Ref: " + ref + ")",
@@ -323,7 +323,6 @@
             };
 
             try {
-                // Sincroniza salvando o registro no banco via POST
                 const response = await fetch(URL_API_BACKEND + "/api/pedidos", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -337,7 +336,6 @@
                     localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
                 }
 
-                // Montagem da mensagem estruturada profissional do WhatsApp
                 let mensagem = "🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n";
                 if (pedidoIdGerado !== "NOVO") {
                     mensagem += "🆔 *Pedido Nº:* #" + pedidoIdGerado + "\n";
@@ -351,22 +349,16 @@
 
                 itens.forEach(item => {
                     const subtotal = (item.preco * item.quantidade).toFixed(2).replace('.', ',');
-                    mensagem += "• " + item.quantidade + "x _" + item.nome + "_ - R$ " + subtotal + "\n";
+                    mensagem += "• " + item.quantidade + "x _" + item.nome + "_ - R\$ " + subtotal + "\n";
                 });
 
-                mensagem += "\n💰 *Total do Pedido:* R$ " + totalCalculado.toFixed(2).replace('.', ',') + "\n\n";
+                mensagem += "\n💰 *Total do Pedido:* R\$ " + totalCalculado.toFixed(2).replace('.', ',') + "\n\n";
                 mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
 
-               // 🚀 CORREÇÃO DEFINITIVA DA URL: API oficial com número + texto parametrizado
-                     const urlWhatsapp = "https://wa.me" + encodeURIComponent(mensagem);
+                const urlWhatsapp = "https://wa.me" + WHATSAPP_NUMERO + "?text=" + encodeURIComponent(mensagem);
                 
-                // Abre o WhatsApp diretamente na conversa com o restaurante
                 window.open(urlWhatsapp, '_blank');
-
-                // Limpa o carrinho local com segurança
                 localStorage.removeItem("carrinhoSaborCearense");
-
-                // Redireciona para o painel de rastreamento
                 window.location.href = "acompanhar.html";
 
             } catch (error) {
@@ -374,7 +366,6 @@
                 alert("Ocorreu uma falha ao enviar o pedido para o servidor, mas você pode tentar reenviar.");
             }
         }
-
     </script>
 </body>
 </html>
