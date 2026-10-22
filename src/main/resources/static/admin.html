@@ -200,12 +200,12 @@
             </p>
         </div>
 
-    <script>
-                // ==========================================
+        <script>
+        // ==========================================
         // CONFIGURAÇÕES GLOBAIS E LINKS DO BACKEND
         // ==========================================
-        const URL_BACKEND = "https://saborcearense-5.onrender.com";
-        const URL_BACKEND_WS = "wss://://onrender.com";
+        const URL_BACKEND = ""; // Vazio para usar rotas relativas automáticas no Render
+        const URL_BACKEND_WS = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host;
         
         let socketAdmin;
 
@@ -251,25 +251,26 @@
 
                 itens.forEach(item => {
                     const div = document.createElement("div");
-                    div.className = `card-produto ${item.esgotado ? 'esgotado-style' : 'disponivel-style'}`;
+                    const esgotado = !item.disponivel;
+                    div.className = `card-produto ${esgotado ? 'esgotado-style' : 'disponivel-style'}`;
                     
-                    const nomeCategoria = dicionarioCategorias[item.descricao] || item.descricao;
+                    const nomeCategoria = dicionarioCategorias[item.categoria] || item.categoria || "Geral";
 
                     div.innerHTML = `
                         <div class="info-prod">
                             <h4>${item.nome} <span class="badge-cat">${nomeCategoria}</span></h4>
                             <div style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; color: #4a5568;">
                                 <span>Preço: R$</span>
-                                <input type="number" step="0.01" value="${item.preco.toFixed(2)}" 
+                                <input type="number" step="0.01" value="${Number(item.preco || 0).toFixed(2)}" 
                                     class="input-preco-rapido" 
                                     onchange="atualizarPrecoRapido(${item.id}, this.value)"
                                     title="Altere o valor e clique fora para salvar automaticamente">
                             </div>
                         </div>
                         <div class="controles-prod">
-                            <button class="btn-status-toggle ${item.esgotado ? 'inativo' : 'ativo'}" 
-                                onclick="alternarDisponibilidade(${item.id})">
-                                ${item.esgotado ? '🔴 Esgotado' : '🟢 Disponível'}
+                            <button class="btn-status-toggle ${esgotado ? 'inativo' : 'ativo'}" 
+                                onclick="alternarDisponibilidade(${item.id}, ${item.disponivel})">
+                                ${esgotado ? '🔴 Esgotado' : '🟢 Disponível'}
                             </button>
                             <button class="btn-mini-deletar" onclick="deletarItem(${item.id})" title="Excluir item permanentemente">
                                 🗑️
@@ -282,7 +283,6 @@
                 container.innerHTML = `<p style="text-align: center; color: var(--danger); font-weight: bold;">Erro ao conectar com o servidor backend.</p>`; 
             }
         }
-
         async function atualizarPrecoRapido(id, novoPreco) {
             const valorFormatado = parseFloat(novoPreco);
             if (isNaN(valorFormatado) || valorFormatado < 0) {
@@ -291,15 +291,14 @@
                 return;
             }
             try {
-                const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/editar`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ preco: valorFormatado })
+                // Alinhado para rotas REST nativas do Spring Boot
+                const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/preco?preco=${valorFormatado}`, {
+                    method: "PUT"
                 });
                 if(!res.ok) {
                     alert("Erro ao salvar o novo preço.");
-                    carregarItensAdmin();
                 }
+                carregarItensAdmin();
             } catch(err) {
                 alert("Erro na conexão ao alterar preço.");
                 carregarItensAdmin();
@@ -310,40 +309,56 @@
             e.preventDefault();
             const nome = document.getElementById("nome").value;
             const preco = parseFloat(document.getElementById("preco").value);
-            const descricao = document.getElementById("descricao").value;
+            const categoriaEscolhida = document.getElementById("descricao").value; // Correção: envia para o campo categoria
 
             try {
-                const res = await fetch(URL_BACKEND + "/api/cardapio/novo", {
+                const res = await fetch(URL_BACKEND + "/api/cardapio", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ nome, preco, descricao, esgotado: false })
+                    body: JSON.stringify({ 
+                        nome: nome, 
+                        preco: preco, 
+                        categoria: categoriaEscolhida, 
+                        descricao: "Adicionado via painel profissional.", 
+                        disponivel: true 
+                    })
                 });
 
                 if(res.ok) {
                     document.getElementById("form-novo-prato").reset();
                     carregarItensAdmin();
-                } else { alert("Erro ao criar novo produto."); }
-            } catch(err) { alert("Erro na conexão com o servidor."); }
+                } else { 
+                    alert("Erro ao criar novo produto."); 
+                }
+            } catch(err) { 
+                alert("Erro na conexão com o servidor."); 
+            }
         });
 
-        async function alternarDisponibilidade(id) {
+        async function alternarDisponibilidade(id, statusAtual) {
             try {
-                const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/status-disponibilidade`, {
+                // Inverte o booleano de disponível para manter compatibilidade com o Spring Boot
+                const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/disponibilidade?disponivel=${!statusAtual}`, {
                     method: "PUT"
                 });
                 if(res.ok) carregarItensAdmin();
-            } catch(e) { alert("Erro ao mudar disponibilidade."); }
+            } catch(e) { 
+                alert("Erro ao mudar disponibilidade."); 
+            }
         }
 
         async function deletarItem(id) {
             if(!confirm("Deseja apagar esse item permanentemente do cardápio?")) return;
             try {
-                const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/deletar`, {
+                const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}`, {
                     method: "DELETE"
                 });
                 if(res.ok) carregarItensAdmin();
-            } catch(e) { alert("Erro ao deletar item."); }
+            } catch(e) { 
+                alert("Erro ao deletar item."); 
+            }
         }
+
         // ==========================================
         // SISTEMA DE CONTROLE DE PEDIDOS (WEBSOCKET)
         // ==========================================
@@ -352,9 +367,8 @@
             carregarPedidosAtivos();
         }
 
-                function conectarWebSocketAdmin() {
+        function conectarWebSocketAdmin() {
             try {
-                // 🛠️ Correção: Aponta para a rota exata configurada no seu WebSocketConfig.java do Spring Boot
                 socketAdmin = new WebSocket(`${URL_BACKEND_WS}/ws-status`);
                 
                 socketAdmin.onopen = () => {
@@ -362,7 +376,6 @@
                 };
                 
                 socketAdmin.onmessage = (event) => {
-                    // Se o cliente enviar alguma mensagem ou houver movimentação, atualiza a lista na tela
                     carregarPedidosAtivos();
                 };
                 
@@ -370,7 +383,7 @@
                     setTimeout(conectarWebSocketAdmin, 5000);
                 };
             } catch (e) {
-                console.error("Falha ao abrir canal WebSocket corporativo:", e);
+                console.error("Falha ao abrir canal WebSocket:", e);
             }
         }
 
@@ -425,25 +438,14 @@
             }
         }
 
-        async function mudarStatusPedido(pedidoId, proximoStatus) {
+        async function mudarStatusPedido(id, novoStatus) {
             try {
-                const res = await fetch(`${URL_BACKEND}/api/pedidos/${pedidoId}/status`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ status: proximoStatus })
+                await fetch(`${URL_BACKEND}/api/pedidos/${id}/status?status=${novoStatus}`, {
+                    method: "PUT"
                 });
-
-                if (res.ok) {
-                    carregarPedidosAtivos();
-                    // Transmite o novo status via WebSocket para atualizar a linha do tempo do cliente imediatamente
-                    if (socketAdmin && socketAdmin.readyState === WebSocket.OPEN) {
-                        socketAdmin.send(JSON.stringify({ id: pedidoId, status: proximoStatus }));
-                    }
-                } else {
-                    alert("Erro ao atualizar o status do pedido.");
-                }
-            } catch (err) {
-                alert("Erro de conexão ao atualizar status.");
+                carregarPedidosAtivos();
+            } catch (e) {
+                alert("Erro ao mudar status do pedido.");
             }
         }
     </script>
