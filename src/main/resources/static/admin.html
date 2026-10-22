@@ -143,6 +143,7 @@
 </head>
 <body>
 
+    <!-- TELA DE LOGIN CORRIGIDA -->
     <div id="login-admin">
         <h2 style="justify-content: center; margin-bottom: 10px;">🔒 Gestão Executiva</h2>
         <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-bottom: 30px;">Sabor Cearense Delivery</p>
@@ -154,7 +155,8 @@
             <label>Senha de Acesso</label>
             <input type="password" id="senha-login" placeholder="••••••••">
         </div>
-        <button class="btn-acao" onclick="autenticarAdmin()" style="width: 100%; justify-content: center;">Autenticar no Panel</button>
+        <!-- Botão corrigido e centralizado para garantir a renderização -->
+        <button class="btn-acao" onclick="autenticarAdmin()" style="width: 100%; justify-content: center; display: flex;">Autenticar no Painel</button>
     </div>
 
     <div id="conteudo-painel" class="container-admin" style="display: none;">
