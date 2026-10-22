@@ -357,8 +357,8 @@
                 mensagem += "\n💰 *Total do Pedido:* R$ " + totalCalculado.toFixed(2).replace('.', ',') + "\n\n";
                 mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
 
-                // 🚀 CORREÇÃO DA URL: API oficial do WhatsApp concatenando strings de forma limpa e sem chaves
-                const urlWhatsapp = "https://whatsapp.com/" + encodeURIComponent(mensagem);
+               // 🚀 CORREÇÃO DEFINITIVA DA URL: API oficial com número + texto parametrizado
+                     const urlWhatsapp = "https://wa.me" + encodeURIComponent(mensagem);
                 
                 // Abre o WhatsApp diretamente na conversa com o restaurante
                 window.open(urlWhatsapp, '_blank');
