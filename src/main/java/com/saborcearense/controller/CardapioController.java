@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -57,6 +56,7 @@ public class CardapioController {
             repository.save(criarProdutoInicial("Bife à Parmegiana", "CARNE", 32.00, "Bife empanado coberto com muito queijo derretido."));
             repository.save(criarProdutoInicial("Bife à Milanesa", "CARNE", 30.00, "Bife de carne empanado tradicional."));
             repository.save(criarProdutoInicial("Contra Bife", "CARNE", 32.00, "Bife de contra filé premium grelhado."));
+            
             // --- PRATOS PRINCIPAIS: OUTROS ---
             repository.save(criarProdutoInicial("Filé de Peixe", "OUTROS", 26.00, "Filé de peixe grelhado leve e saudável."));
             repository.save(criarProdutoInicial("Carré", "OUTROS", 22.00, "Porção de carré suíno temperado da casa."));
@@ -124,16 +124,62 @@ public class CardapioController {
         p.setDisponivel(true);
         return p;
     }
-
-    @GetMapping
+    // 🌐 LISTAR CARDÁPIO
+    @org.springframework.web.bind.annotation.GetMapping
     public List<Produto> listarCardapio() {
         return repository.findAll();
     }
 
-    @GetMapping("/status")
+    // 🟢/🔴 STATUS DE FUNCIONAMENTO DA LOJA
+    @org.springframework.web.bind.annotation.GetMapping("/status")
     public Map<String, String> obterStatusLoja() {
         Map<String, String> status = new HashMap<>();
         status.put("mensagem", "Loja Aberta - Sabor Cearense");
         return status;
+    }
+
+    // ➕ ADICIONAR NOVO PRODUTO VIA PAINEL ADMIN
+    @org.springframework.web.bind.annotation.PostMapping
+    public Produto adicionarItem(@org.springframework.web.bind.annotation.RequestBody Produto novoProduto) {
+        if (novoProduto.getDescricao() == null) {
+            novoProduto.setDescricao("Item adicionado via painel.");
+        }
+        return repository.save(novoProduto);
+    }
+
+    // 💰 ATUALIZAR PREÇO RÁPIDO DO INPUT
+    @org.springframework.web.bind.annotation.PutMapping("/{id}/preco")
+    public org.springframework.http.ResponseEntity<Void> atualizarPreco(
+            @org.springframework.web.bind.annotation.PathVariable Long id, 
+            @org.springframework.web.bind.annotation.RequestParam Double preco) {
+        
+        return repository.findById(id).map(produto -> {
+            produto.setPreco(java.math.BigDecimal.valueOf(preco));
+            repository.save(produto);
+            return org.springframework.http.ResponseEntity.ok().<Void>build();
+        }).orElse(org.springframework.http.ResponseEntity.notFound().build());
+    }
+
+    // 🔄 ALTERAR DISPONIBILIDADE (DISPONÍVEL / ESGOTADO)
+    @org.springframework.web.bind.annotation.PutMapping("/{id}/disponibilidade")
+    public org.springframework.http.ResponseEntity<Void> atualizarDisponibilidade(
+            @org.springframework.web.bind.annotation.PathVariable Long id, 
+            @org.springframework.web.bind.annotation.RequestParam Boolean disponible) {
+        
+        return repository.findById(id).map(produto -> {
+            produto.setDisponivel(disponible);
+            repository.save(produto);
+            return org.springframework.http.ResponseEntity.ok().<Void>build();
+        }).orElse(org.springframework.http.ResponseEntity.notFound().build());
+    }
+
+    // 🗑️ DELETAR ITEM PERMANENTEMENTE
+    @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
+    public org.springframework.http.ResponseEntity<Void> deletarItem(@org.springframework.web.bind.annotation.PathVariable Long id) {
+        if (repository.existsById(id)) {
+            repository.deleteById(id);
+            return org.springframework.http.ResponseEntity.ok().build();
+        }
+        return org.springframework.http.ResponseEntity.notFound().build();
     }
 }
