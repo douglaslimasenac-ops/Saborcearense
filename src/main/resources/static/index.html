@@ -1,3 +1,10 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sabor Cearense - Cardápio</title>
+    <link rel="stylesheet" href="style.css">
     <style>
         .header-app { text-align: center; margin: 20px 0; color: var(--dark); }
         .header-app h1 { font-size: 2.2rem; margin-bottom: 5px; font-weight: 900; }
@@ -79,7 +86,7 @@
             background-color: #e0941f !important;
         }
 
-        /* CSS adicionado para o Horário de funcionamento */
+        /* Container do Horário Ajustado */
         .horario-container {
             text-align: center;
             margin: 5px auto 20px auto;
@@ -103,6 +110,9 @@
             border: 1px solid #FFEBAA;
         }
     </style>
+</head>
+<body style="padding-bottom: 90px;">
+
     <div class="container">
         <header class="header-app">
             <h1>🌵 Sabor Cearense 🌵</h1>
@@ -110,26 +120,86 @@
             <p style="font-size: 0.9rem; font-weight: bold; color: #555; background: var(--primary); display: inline-block; padding: 4px 12px; border-radius: 20px;">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
         </header>
 
-        <!-- Barra de Status Dinâmica -->
         <div id="status-loja" class="status-barra">Carregando funcionamento...</div>
 
-        <!-- HTML inserido para exibir dias e horário de entrega -->
+        <!-- Bloco Informativo de Horário de Funcionamento e Entregas -->
         <div class="horario-container">
             <p class="horario-dias">📅 Segunda a Sábado</p>
             <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
         </div>
+
+        <main>
+            <section class="menu-section">
+                <h2>🌹 Pratos do Dia</h2>
+                <div id="section-PRATOS_DO_DIA" class="menu-items"></div>
+            </section>
+
+            <section class="menu-section">
+                <h2>📌 Pratos Principais</h2>
+                <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px;"><em>Todos acompanham arroz, feijão e farofa</em></p>
+                
+                <h3>🐔 Frango</h3>
+                <div id="section-FRANGO" class="menu-items"></div>
+                
+                <h3>🥩 Carne</h3>
+                <div id="section-CARNE" class="menu-items"></div>
+                
+                <h3>🐟 Outros</h3>
+                <div id="section-OUTROS" class="menu-items"></div>
+            </section>
+
+            <section class="menu-section">
+                <h2>😋 Sobremesas - R\$ 8,00</h2>
+                <div id="section-SOBREMESA" class="menu-items"></div>
+            </section>
+
+            <section class="menu-section">
+                <h2>🥤 Bebidas Geladas</h2>
+                <div id="section-BEBIDA" class="menu-items"></div>
+            </section>
+        </main>
+
+        <footer style="text-align: center; margin-top: 40px;">
+            <a href="admin.html" style="color: #999; text-decoration: none; font-size: 0.85rem; font-weight: bold;">⚙ Acessar Painel do Administrador</a>
+        </footer>
+    </div>
+
+    <div class="barra-carrinho" style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999; display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); box-sizing: border-box;">
+        <div style="font-size: 1.05rem; font-weight: 500; color: #111111;">Total selecionado: <span id="total-flutuante" style="color: #f5a623; font-weight: bold; font-size: 1.2rem;">R\$ 0,00</span></div>
+        <button onclick="irParaFinalizacao()" class="btn-avancar">Avançar para o Carrinho ➔</button>
+    </div>
+
+        <script>
+        const URL_BACKEND = "";
+        let carrinho = {};
+
+        document.addEventListener("DOMContentLoaded", () => {
+            verificarStatusLoja();
+            carregarCardapio();
+        });
+
+        async function verificarStatusLoja() {
+            try {
+                const resposta = await fetch(URL_BACKEND + "/api/cardapio/status");
+                const dadosStatus = await resposta.json();
+                const msg = dadosStatus.mensagem || "";
+                const classeCor = msg.toLowerCase().includes("fechado") ? "status-fechado" : "status-aberto";
+                document.getElementById("status-loja").innerHTML = '<span class="status-dot ' + classeCor + '"></span> <span>' + msg + '</span>';
+            } catch (erro) {
+                document.getElementById("status-loja").innerHTML = '<span class="status-dot status-fechado"></span> <span>Servidor Offline</span>';
+            }
+        }
+
         async function carregarCardapio() {
             try {
                 const resposta = await fetch(URL_BACKEND + "/api/cardapio");
                 const pratos = await resposta.json();
                 
-                // Limpa todos os blocos antes de renderizar para não duplicar na tela
                 const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "SOBREMESA", "BEBIDA"];
                 secoes.forEach(sec => { 
                     if(document.getElementById("section-"+sec)) document.getElementById("section-"+sec).innerHTML = ""; 
                 });
 
-                // Varre a lista distribuindo cada prato em sua respectiva div container
                 pratos.forEach(prato => {
                     let secaoAlvo = String(prato.categoria).trim().toUpperCase(); 
                     const container = document.getElementById("section-" + secaoAlvo);
@@ -137,27 +207,66 @@
                     if (container) {
                         const estaEsgotado = !prato.disponivel; 
 
-                        let controleHTML = estaEsgotado 
-                            ? `<span class="badge-esgotado">Esgotado</span>` 
-                            : `<div class="seletor-quantidade">
-                                <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, -1, '${prato.nome}', ${prato.preco})">-</button>
-                                <span class="qtd-numero" id="qtd-${prato.id}">0</span>
-                                <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, 1, '${prato.nome}', ${prato.preco})">+</button>
-                               </div>`;
+                        let controleHTML = "";
+                        if (estaEsgotado) {
+                            controleHTML = '<span class="badge-esgotado">Esgotado</span>';
+                        } else {
+                            controleHTML = '<div class="seletor-quantidade">' +
+                                '<button class="btn-qtd" onclick="mudarQuantidade(' + prato.id + ', -1, \'' + prato.nome + '\', ' + prato.preco + ')">-</button>' +
+                                '<span class="qtd-numero" id="qtd-' + prato.id + '">0</span>' +
+                                '<button class="btn-qtd" onclick="mudarQuantidade(' + prato.id + ', 1, \'' + prato.nome + '\', ' + prato.preco + ')">+</button>' +
+                               '</div>';
+                        }
 
                         const precoFormatado = Number(prato.preco || 0).toFixed(2).replace('.', ',');
 
-                        container.innerHTML += `
-                            <div class="menu-item ${estaEsgotado ? 'item-esgotado' : ''}" id="item-${prato.id}">
-                                <div class="item-info">
-                                    <h4>${prato.nome}</h4>
-                                    <span class="preco">R$ ${precoFormatado}</span>
-                                </div>
-                                <div class="item-controles">${controleHTML}</div>
-                            </div>`;
+                        container.innerHTML += 
+                            '<div class="menu-item ' + (estaEsgotado ? 'item-esgotado' : '') + '" id="item-' + prato.id + '">' +
+                                '<div class="item-info">' +
+                                    '<h4>' + prato.nome + '</h4>' +
+                                    '<span class="preco">R$ ' + precoFormatado + '</span>' +
+                                '</div>' +
+                                '<div class="item-controles">' + controleHTML + '</div>' +
+                            '</div>';
                     }
                 });
             } catch (erro) { 
                 console.error("Erro ao carregar o cardápio do banco:", erro); 
             }
         }
+        function mudarQuantidade(id, alteracao, nome, preco) {
+            if (!carrinho[id]) {
+                carrinho[id] = { id: id, nome: nome, preco: Number(preco), quantidade: 0 };
+            }
+
+            carrinho[id].quantidade += alteracao;
+
+            if (carrinho[id].quantidade <= 0) {
+                delete carrinho[id];
+                if(document.getElementById("qtd-" + id)) document.getElementById("qtd-" + id).innerText = "0";
+                if(document.getElementById("item-" + id)) document.getElementById("item-" + id).classList.remove("selecionado");
+            } else {
+                if(document.getElementById("qtd-" + id)) document.getElementById("qtd-" + id).innerText = carrinho[id].quantidade;
+                if(document.getElementById("item-" + id)) document.getElementById("item-" + id).classList.add("selecionado");
+            }
+
+            atualizarTotalFlutuante();
+        }
+
+        function atualizarTotalFlutuante() {
+            let total = 0;
+            Object.values(carrinho).forEach(item => {
+                total += item.preco * item.quantidade;
+            });
+            document.getElementById("total-flutuante").innerText = "R$ " + total.toFixed(2).replace('.', ',');
+        }
+
+        function irParaFinalizacao() {
+            if (Object.keys(carrinho).length === 0) {
+                alert("Por favor, selecione pelo menos um prato antes de avançar!");
+                return;
+            }
+            localStorage.setItem("carrinhoSaborCearense", JSON.stringify(Object.values(carrinho)));
+            window.location.href = "carrinho.html";
+        }
+    </script>
