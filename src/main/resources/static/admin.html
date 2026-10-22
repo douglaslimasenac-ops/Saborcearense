@@ -221,18 +221,23 @@
         };
 
         function autenticarAdmin() {
-            const u = document.getElementById("usuario-login").value;
-            const s = document.getElementById("senha-login").value;
-            if(u === "admin" && s === "sabor123") {
-                document.getElementById("login-admin").style.display = "none";
-                document.getElementById("conteudo-painel").style.display = "block";
-                carregarItensAdmin();
-                inicializarControlePedidos();
-                configurarFormularioCadastro();
-            } else {
-                alert("Usuário ou senha incorretos!");
-            }
-        }
+    const u = document.getElementById("usuario-login").value;
+    const s = document.getElementById("senha-login").value;
+    if(u === "admin" && s === "sabor123") {
+        // --- LINHA ADICIONADA: Salva a credencial de admin no navegador do dono ---
+        localStorage.setItem("adminAutenticado", "true");
+        // ------------------------------------------------------------------------
+        
+        document.getElementById("login-admin").style.display = "none";
+        document.getElementById("conteudo-painel").style.display = "block";
+        carregarItensAdmin();
+        inicializarControlePedidos();
+        configurarFormularioCadastro();
+    } else {
+        alert("Usuário ou senha incorretos!");
+    }
+}
+
 
         function configurarFormularioCadastro() {
             document.getElementById("form-novo-prato").onsubmit = async function(e) {
@@ -308,11 +313,27 @@
         }
 
         async function alternarDisponibilidade(id, statusAtual) {
-            try {
-                const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/disponibilidade?disponivel=${!statusAtual}`, { method: "PUT" });
-                if(res.ok) carregarItensAdmin();
-            } catch(e) { alert("Erro ao mudar disponibilidade."); }
+    try {
+        // Inverte o booleano de forma segura (!statusAtual)
+        const novoStatus = !statusAtual; 
+        
+        // Chamada ao endpoint correto do backend utilizando caminhos relativos nativos
+        const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/disponibilidade?disponivel=${novoStatus}`, { 
+            method: "PUT" 
+        });
+        
+        if (res.ok) {
+            // Força o re-carregamento imediato da lista para mudar o botão de verde para vermelho (ou vice-versa)
+            carregarItensAdmin(); 
+        } else {
+            alert("O servidor recusou a alteração de disponibilidade.");
         }
+    } catch (e) { 
+        console.error("Erro na requisição:", e);
+        alert("Erro de conexão ao mudar disponibilidade."); 
+    }
+}
+
 
         async function deletarItem(id) {
             if(!confirm("Deseja apagar esse item permanentemente?")) return;

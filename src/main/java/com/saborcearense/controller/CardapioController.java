@@ -86,7 +86,6 @@ public class CardapioController {
             repository.save(criarProdutoInicial("Guaraná Antarctica Zero 2L", "BEBIDA", 12.00, "Garrafa familiar de 2 litros zero."));
             repository.save(criarProdutoInicial("Fanta Laranja 2L", "BEBIDA", 12.00, "Garrafa familiar de 2 litros."));
             repository.save(criarProdutoInicial("Fanta Uva 2L", "BEBIDA", 12.00, "Garrafa familiar de 2 litros."));
-
             // --- BEBIDAS: DIVERSOS ---
             repository.save(criarProdutoInicial("Água sem Gás", "BEBIDA", 3.00, "Garrafa 500ml."));
             repository.save(criarProdutoInicial("Água com Gás", "BEBIDA", 4.00, "Garrafa 500ml com gás."));
@@ -124,6 +123,7 @@ public class CardapioController {
         p.setDisponivel(true);
         return p;
     }
+
     // 🌐 LISTAR CARDÁPIO
     @org.springframework.web.bind.annotation.GetMapping
     public List<Produto> listarCardapio() {
@@ -160,11 +160,11 @@ public class CardapioController {
         }).orElse(org.springframework.http.ResponseEntity.notFound().build());
     }
 
-    // 🔄 ALTERAR DISPONIBILIDADE (DISPONÍVEL / ESGOTADO)
+    // 🔄 ALTERAR DISPONIBILIDADE (DISPONÍVEL / ESGOTADO) - Nome do RequestParam ajustado para "disponivel" para sincronizar com o front-end
     @org.springframework.web.bind.annotation.PutMapping("/{id}/disponibilidade")
     public org.springframework.http.ResponseEntity<Void> atualizarDisponibilidade(
             @org.springframework.web.bind.annotation.PathVariable Long id, 
-            @org.springframework.web.bind.annotation.RequestParam Boolean disponible) {
+            @org.springframework.web.bind.annotation.RequestParam(name = "disponivel") Boolean disponible) {
         
         return repository.findById(id).map(produto -> {
             produto.setDisponivel(disponible);

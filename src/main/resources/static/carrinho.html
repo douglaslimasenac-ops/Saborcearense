@@ -293,17 +293,24 @@
         }
 
         async function enviarPedido(e) {
-            e.preventDefault();
+    e.preventDefault();
 
-            const agora = new Date();
-            const diaSemana = agora.getDay();
-            const minutosAtuais = (agora.getHours() * 60) + agora.getMinutes();
-            if (diaSemana === 0 || minutosAtuais < (11 * 60 + 30) || minutosAtuais > (15 * 60)) {
-                alert("Desculpe! O restaurante acabou de fechar o expediente de entregas. Não é possível enviar ou fechar novos pedidos agora.");
-                return;
-            }
+    const agora = new Date();
+    const diaSemana = agora.getDay();
+    const minutosAtuais = (agora.getHours() * 60) + agora.getMinutes();
+    const isAdmin = localStorage.getItem("adminAutenticado") === "true"; // <- NOVO: Verifica se é admin
 
-            const itens = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || [];
+    // Restrição de horário padrão
+    if (diaSemana === 0 || minutosAtuais < (11 * 60 + 30) || minutosAtuais > (15 * 60)) {
+        // Se NÃO for o administrador, bloqueia o envio
+        if (!isAdmin) {
+            alert("Desculpe! O restaurante acabou de fechar o expediente de entregas. Não é possível enviar ou fechar novos pedidos agora.");
+            return;
+        }
+    }
+
+    const itens = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || [];
+    // ... restante do seu código original da função enviarPedido ...
             if (itens.length === 0) {
                 alert("Seu carrinho está vazio!");
                 return;

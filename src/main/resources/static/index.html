@@ -233,31 +233,45 @@
             } catch(e) { console.error("Erro ao carregar cardápio:", e); }
         }
 
-        function verificarHorarioFuncionamento() {
-            const agora = new Date();
-            const diaSemana = agora.getDay(); 
-            const hora = agora.getHours();
-            const minuto = agora.getMinutes();
-            
-            const minutosAtuais = (hora * 60) + minuto;
-            const aberturaMinutos = (11 * 60) + 30; 
-            const fechamentoMinutos = (15 * 60) + 0;  
+       function verificarHorarioFuncionamento() {
+    const agora = new Date();
+    const diaSemana = agora.getDay(); 
+    const hora = agora.getHours();
+    const minuto = agora.getMinutes();
+    
+    const minutosAtuais = (hora * 60) + minuto;
+    const aberturaMinutos = (11 * 60) + 30; 
+    const fechamentoMinutos = (15 * 60) + 0;  
 
-            const statusLoja = document.getElementById("status-loja");
+    const statusLoja = document.getElementById("status-loja");
+    const isAdmin = localStorage.getItem("adminAutenticado") === "true"; // <- NOVO: Verifica se é admin
 
-            if (diaSemana === 0 || minutosAtuais < aberturaMinutos || minutosAtuais > fechamentoMinutos) {
-                estabelecimentoAberto = false;
-                if(statusLoja) {
-                    statusLoja.innerHTML = `<span class="status-dot status-fechado"></span> FECHADO NO MOMENTO`;
-                }
-                aplicarBloqueioInterfaceFechado();
-            } else {
-                estabelecimentoAberto = true;
-                if(statusLoja) {
-                    statusLoja.innerHTML = `<span class="status-dot status-aberto"></span> ABERTO AGORA`;
-                }
+    // Se estiver fora do horário comercial
+    if (diaSemana === 0 || minutosAtuais < aberturaMinutos || minutosAtuais > fechamentoMinutos) {
+        
+        // Se for o Administrador testando, mantém o funcionamento aberto na tela dele
+        if (isAdmin) {
+            estabelecimentoAberto = true;
+            if(statusLoja) {
+                statusLoja.innerHTML = `<span class="status-dot status-aberto"></span> ABERTO AGORA <small style="color: #f5a623; margin-left: 5px;">(Modo Admin Ativo)</small>`;
             }
+            return; // Sai da função sem bloquear nada
         }
+
+        // Se for um cliente comum, bloqueia normalmente
+        estabelecimentoAberto = false;
+        if(statusLoja) {
+            statusLoja.innerHTML = `<span class="status-dot status-fechado"></span> FECHADO NO MOMENTO`;
+        }
+        aplicarBloqueioInterfaceFechado();
+    } else {
+        estabelecimentoAberto = true;
+        if(statusLoja) {
+            statusLoja.innerHTML = `<span class="status-dot status-aberto"></span> ABERTO AGORA`;
+        }
+    }
+}
+
 
         function aplicarBloqueioInterfaceFechado() {
             document.querySelectorAll(".btn-qtd").forEach(btn => {
