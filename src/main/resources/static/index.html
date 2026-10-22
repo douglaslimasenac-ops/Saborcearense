@@ -114,11 +114,15 @@
 <body style="padding-bottom: 90px;">
 
     <div class="container">
-        <header class="header-app">
+                <header class="header-app" style="position: relative;">
+            <!-- Novo botão do Admin discreto no topo superior direito -->
+            <a href="admin.html" title="Acessar Painel do Administrador" style="position: absolute; top: -10px; right: 10px; text-decoration: none; font-size: 1.4rem; color: #a0aec0; transition: color 0.2s;">⚙️</a>
+            
             <h1>🌵 Sabor Cearense 🌵</h1>
             <p style="font-weight: 500; font-size: 1.1rem; margin-top: -5px;">Comida Caseira Legítima</p>
             <p style="font-size: 0.9rem; font-weight: bold; color: #555; background: var(--primary); display: inline-block; padding: 4px 12px; border-radius: 20px;">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
         </header>
+
 
         <!-- Status da Loja -->
         <div id="status-loja" class="status-barra">Carregando funcionamento...</div>
@@ -167,9 +171,6 @@
             </section>
         </main>
 
-        <footer style="text-align: center; margin-top: 40px;">
-            <a href="admin.html" style="color: #999; text-decoration: none; font-size: 0.85rem; font-weight: bold;">⚙ Acessar Painel do Administrador</a>
-        </footer>
     </div>
 
     <div class="barra-carrinho" style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999; display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); box-sizing: border-box;">
