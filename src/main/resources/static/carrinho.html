@@ -298,23 +298,28 @@
     const agora = new Date();
     const diaSemana = agora.getDay();
     const minutosAtuais = (agora.getHours() * 60) + agora.getMinutes();
-    const isAdmin = localStorage.getItem("adminAutenticado") === "true"; // <- NOVO: Verifica se é admin
+    
+    // Captura se você está no modo admin pela URL ou se veio do index com o parâmetro
+    const parametrosUrl = new URLSearchParams(window.location.search);
+    const modoAdminSecreto = parametrosUrl.get("admin") === "1" || localStorage.getItem("adminAutenticado") === "true";
 
-    // Restrição de horário padrão
+    // Se estiver fora do horário de entregas
     if (diaSemana === 0 || minutosAtuais < (11 * 60 + 30) || minutosAtuais > (15 * 60)) {
-        // Se NÃO for o administrador, bloqueia o envio
-        if (!isAdmin) {
+        // Se NÃO for o administrador, bloqueia. Se for o admin, ele deixa passar o teste!
+        if (!modoAdminSecreto) {
             alert("Desculpe! O restaurante acabou de fechar o expediente de entregas. Não é possível enviar ou fechar novos pedidos agora.");
             return;
         }
     }
 
     const itens = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || [];
-    // ... restante do seu código original da função enviarPedido ...
-            if (itens.length === 0) {
-                alert("Seu carrinho está vazio!");
-                return;
-            }
+    if (itens.length === 0) {
+        alert("Seu carrinho está vazio!");
+        return;
+    }
+    
+    // ... restante do seu código original que envia para a API e abre o wa.me ...
+
 
             const nome = document.getElementById("nome").value;
             const contatoTelefone = document.getElementById("telefone").value;
