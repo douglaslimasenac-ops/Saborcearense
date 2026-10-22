@@ -302,5 +302,49 @@
                 botaoClicado.style.background = 'var(--primary)';
             }
         }
+        // 🌟 ADICIONADO: Controla a adição/remoção de itens e soma o total do carrinho
+        function mudarQuantidade(id, alteracao, nome, preco) {
+            if (!carrinho[id]) {
+                carrinho[id] = { id: id, nome: nome, preco: Number(preco), quantidade: 0 };
+            }
+
+            carrinho[id].quantidade += alteracao;
+
+            if (carrinho[id].quantidade <= 0) {
+                delete carrinho[id];
+                if(document.getElementById("qtd-" + id)) document.getElementById("qtd-" + id).innerText = "0";
+                if(document.getElementById("item-" + id)) document.getElementById("item-" + id).classList.remove("selecionado");
+            } else {
+                if(document.getElementById("qtd-" + id)) document.getElementById("qtd-" + id).innerText = carrinho[id].quantidade;
+                if(document.getElementById("item-" + id)) document.getElementById("item-" + id).classList.add("selecionado");
+            }
+
+            atualizarTotalFlutuante();
+        }
+
+        // 🌟 ADICIONADO: Calcula o somatório dos pratos escolhidos em tempo real na barra flutuante
+        function atualizarTotalFlutuante() {
+            let total = 0;
+            Object.values(carrinho).forEach(item => {
+                total += item.preco * item.quantidade;
+            });
+            document.getElementById("total-flutuante").innerText = "R$ " + total.toFixed(2).replace('.', ',');
+        }
+
+        // 🌟 ADICIONADO: A função que estava faltando para fazer o botão avançar funcionar!
+        function irParaFinalizacao() {
+            const chavesCarrinho = Object.keys(carrinho);
+            
+            if (chavesCarrinho.length === 0) {
+                alert("Por favor, selecione pelo menos um prato antes de avançar!");
+                return;
+            }
+
+            // Guarda os itens selecionados para a página carrinho.html ler
+            localStorage.setItem("carrinhoSaborCearense", JSON.stringify(Object.values(carrinho)));
+            
+            // Redireciona para a tela do carrinho
+            window.location.href = "carrinho.html";
+        }
 
     </script>
