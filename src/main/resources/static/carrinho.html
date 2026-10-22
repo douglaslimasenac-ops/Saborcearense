@@ -367,7 +367,7 @@
                 mensagem += "\n💰 *Total do Pedido:* R\$ " + totalCalculado.toFixed(2).replace('.', ',') + "\n\n";
                 mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
 
-                const urlWhatsapp = "https://wa.me" + WHATSAPP_NUMERO + "?text=" + encodeURIComponent(mensagem);
+                const urlWhatsapp = "https://wa.me/" + WHATSAPP_NUMERO + "?text=" + encodeURIComponent(mensagem);
                 
                 window.open(urlWhatsapp, '_blank');
                 localStorage.removeItem("carrinhoSaborCearense");
