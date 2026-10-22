@@ -127,14 +127,30 @@
             <p class="horario-dias">📅 Segunda a Sábado</p>
             <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
         </div>
+        <!-- Navegação por Abas Clicáveis -->
+<div class="abas-navegacao">
+    <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')">🌹 Do Dia</button>
+    <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')">📌 Principais</button>
+    <button class="btn-aba" onclick="alternarAba('SOBREMESA')">😋 Doces</button>
+    <button class="btn-aba" onclick="alternarAba('BEBIDA')">🥤 Bebidas</button>
+</div>
+
+
+               <!-- Barra de Abas Clicáveis estilo Aplicativo -->
+        <div class="abas-navegacao" style="display: flex; justify-content: space-between; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px;">
+            <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: var(--primary); color: var(--dark); cursor: pointer; white-space: nowrap;">🌹 Do Dia</button>
+            <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">📌 Principais</button>
+            <button class="btn-aba" onclick="alternarAba('SOBREMESA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">😋 Doces</button>
+            <button class="btn-aba" onclick="alternarAba('BEBIDA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">🥤 Bebidas</button>
+        </div>
 
         <main>
-            <section class="menu-section">
+            <section id="aba-PRATOS_DO_DIA" class="menu-section">
                 <h2>🌹 Pratos do Dia</h2>
                 <div id="section-PRATOS_DO_DIA" class="menu-items"></div>
             </section>
 
-            <section class="menu-section">
+            <section id="aba-PRINCIPAIS" class="menu-section" style="display: none;">
                 <h2>📌 Pratos Principais</h2>
                 <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px;"><em>Todos acompanham arroz, feijão e farofa</em></p>
                 
@@ -148,12 +164,12 @@
                 <div id="section-OUTROS" class="menu-items"></div>
             </section>
 
-            <section class="menu-section">
+            <section id="aba-SOBREMESA" class="menu-section" style="display: none;">
                 <h2>😋 Sobremesas - R\$ 8,00</h2>
                 <div id="section-SOBREMESA" class="menu-items"></div>
             </section>
 
-            <section class="menu-section">
+            <section id="aba-BEBIDA" class="menu-section" style="display: none;">
                 <h2>🥤 Bebidas Geladas</h2>
                 <div id="section-BEBIDA" class="menu-items"></div>
             </section>
@@ -168,8 +184,7 @@
         <div style="font-size: 1.05rem; font-weight: 500; color: #111111;">Total selecionado: <span id="total-flutuante" style="color: #f5a623; font-weight: bold; font-size: 1.2rem;">R\$ 0,00</span></div>
         <button onclick="irParaFinalizacao()" class="btn-avancar">Avançar para o Carrinho ➔</button>
     </div>
-
-        <script>
+    <script>
         const URL_BACKEND = "";
         let carrinho = {};
 
@@ -199,6 +214,7 @@
                 secoes.forEach(sec => { 
                     if(document.getElementById("section-"+sec)) document.getElementById("section-"+sec).innerHTML = ""; 
                 });
+
 
                 pratos.forEach(prato => {
                     let secaoAlvo = String(prato.categoria).trim().toUpperCase(); 
@@ -261,12 +277,37 @@
             document.getElementById("total-flutuante").innerText = "R$ " + total.toFixed(2).replace('.', ',');
         }
 
-        function irParaFinalizacao() {
-            if (Object.keys(carrinho).length === 0) {
-                alert("Por favor, selecione pelo menos um prato antes de avançar!");
-                return;
+                // 🌟 ETAPA 3: Função responsável por esconder as seções e destacar o botão ativo
+        function alternarAba(nomeAba) {
+            // 1. Lista de todas as seções que representam abas no HTML
+            const todasAbas = ['PRATOS_DO_DIA', 'PRINCIPAIS', 'SOBREMESA', 'BEBIDA'];
+            
+            // 2. Varre todas as seções escondendo-as
+            todasAbas.forEach(aba => {
+                const elementoAba = document.getElementById('aba-' + aba);
+                if (elementoAba) {
+                    elementoAba.style.display = 'none';
+                }
+            });
+            
+            // 3. Mostra apenas a seção que o usuário clicou
+            const abaAtiva = document.getElementById('aba-' + nomeAba);
+            if (abaAtiva) {
+                abaAtiva.style.display = 'block';
             }
-            localStorage.setItem("carrinhoSaborCearense", JSON.stringify(Object.values(carrinho)));
-            window.location.href = "carrinho.html";
+            
+            // 4. Remove o destaque visual (cor amarela) de todos os botões e redefine o fundo para branco
+            const botoes = document.querySelectorAll('.btn-aba');
+            botoes.forEach(btnResult => {
+                btnResult.style.background = '#ffffff';
+            });
+            
+            // 5. Aplica o destaque visual (cor principal var(--primary) ou amarelo) no botão clicado
+            // Captura o botão pelo evento de clique ou pela posição dele
+            const botaoClicado = event.currentTarget;
+            if (botaoClicado) {
+                botaoClicado.style.background = 'var(--primary)';
+            }
         }
+
     </script>
