@@ -238,9 +238,9 @@
             </div>
         </form>
     </div>
-    <script>
-        const URL_API_BACKEND = ""; // Vazio para usar rotas nativas automáticas do Render
-        const WHATSAPP_NUMERO = "5521974720736"; // Número oficial unificado das fotos (Engenho Novo - RJ)
+        <script>
+        const URL_API_BACKEND = ""; // Caminhos nativos relativos para evitar erros no Render
+        const WHATSAPP_NUMERO = "5521974720736"; // Seu WhatsApp Oficial unificado do Rio de Janeiro
         let totalCalculado = 0;
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -261,14 +261,14 @@
                 inputChave.select();
                 inputChave.setSelectionRange(0, 99999);
                 navigator.clipboard.writeText(inputChave.value);
-                alert("Chave Pix (Telefone) copiada com sucesso! Basta colar no app do seu banco.");
+                alert("Chave Pix copiada com sucesso! Só colar no app do seu banco.");
             }
         }
 
         function renderizarResumo() {
             const container = document.getElementById("lista-itens-carrinho");
             const totalTxt = document.getElementById("valor-total");
-            // Correção: Lê a chave exata 'carrinhoSaborCearense' do index.html
+            // Lê exatamente a chave sincronizada com a página inicial
             const itens = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || [];
 
             if (itens.length === 0) {
@@ -281,7 +281,6 @@
             totalCalculado = 0;
 
             itens.forEach(item => {
-                // Correção: Mapeia para a propriedade '.quantidade' vinda do cardápio anterior
                 const subtotalItem = item.preco * item.quantidade; 
                 totalCalculado += subtotalItem;
 
@@ -299,7 +298,6 @@
 
             totalTxt.innerText = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
         }
-
         async function enviarPedido(e) {
             e.preventDefault();
 
@@ -315,31 +313,32 @@
             const ref = document.getElementById("ponto-referencia").value || "Não informado";
             const pagamento = document.getElementById("pagamento").value;
 
+            // Formata o endereço com as novas informações para enviar ao banco Java
             const dadosPedido = {
                 clienteNome: nome,
-                endereco: `${endereco} (Contato: ${contatoTelefone}) (Ref: ${ref})`,
+                endereco: `${endereco} (Tel: ${contatoTelefone}) (Ref: ${ref})`,
                 formaPagamento: pagamento,
                 valorTotal: totalCalculado
             };
 
             try {
-                // Sincroniza salvando o registro no banco via POST
+                // Envia e salva o pedido na API do seu Spring Boot no Render
                 const response = await fetch(`${URL_API_BACKEND}/api/pedidos`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(dadosPedido)
                 });
 
-                let pedidoIdGerado = "MENSAGEM";
+                let pedidoIdGerado = "NOVO";
                 if (response.ok) {
                     const pedidoSalvo = await response.json();
                     pedidoIdGerado = pedidoSalvo.id;
                     localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
                 }
 
-                // Montagem da mensagem estruturada profissional do WhatsApp
+                // 🌟 Construção da mensagem estruturada e limpa para o seu WhatsApp corporativo
                 let mensagem = `🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n`;
-                if(pedidoIdGerado !== "MENSAGEM") {
+                if (pedidoIdGerado !== "NOVO") {
                     mensagem += `🆔 *Pedido Nº:* #${pedidoIdGerado}\n`;
                 }
                 mensagem += `👤 *Cliente:* ${nome}\n`;
@@ -357,19 +356,19 @@
                 mensagem += `\n💰 *Total do Pedido:* R$ ${totalCalculado.toFixed(2).replace('.', ',')}\n\n`;
                 mensagem += `_Por favor, confirme o recebimento do meu pedido!_`;
 
-                // Correção: Rota oficial de redirecionamento direto para a janela de chat do número
+                // 🚀 Correção definitiva do redirecionamento do WhatsApp usando parâmetros oficiais text e phone
                 const urlWhatsapp = `https://whatsapp.com{WHATSAPP_NUMERO}&text=${encodeURIComponent(mensagem)}`;
                 window.open(urlWhatsapp, '_blank');
 
-                // Limpa o carrinho local com segurança
+                // Limpa o carrinho local para evitar duplicidades nas próximas compras
                 localStorage.removeItem("carrinhoSaborCearense");
 
-                // Redireciona para o painel de rastreamento
+                // Redireciona o cliente para a tela de linha do tempo
                 window.location.href = "acompanhar.html";
 
             } catch (error) {
-                console.error("Erro no processamento do pedido:", error);
-                alert("Ocorreu uma falha, mas você pode tentar reenviar.");
+                console.error("Erro ao processar pedido:", error);
+                alert("Houve uma falha de comunicação, mas você pode tentar enviar novamente.");
             }
         }
     </script>
