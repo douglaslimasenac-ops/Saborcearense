@@ -298,9 +298,10 @@
 
             totalTxt.innerText = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
         }
-        async function enviarPedido(e) {
+                async function enviarPedido(e) {
             e.preventDefault();
 
+            // Lê exatamente a chave sincronizada com a página inicial
             const itens = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || [];
             if (itens.length === 0) {
                 alert("Seu carrinho está vazio!");
@@ -313,17 +314,17 @@
             const ref = document.getElementById("ponto-referencia").value || "Não informado";
             const pagamento = document.getElementById("pagamento").value;
 
-            // Formata o endereço com as novas informações para enviar ao banco Java
+            // Formata o endereço completo com telefone e referência para enviar ao banco Java
             const dadosPedido = {
                 clienteNome: nome,
-                endereco: `${endereco} (Tel: ${contatoTelefone}) (Ref: ${ref})`,
+                endereco: endereco + " (Tel: " + contatoTelefone + ") (Ref: " + ref + ")",
                 formaPagamento: pagamento,
                 valorTotal: totalCalculado
             };
 
             try {
-                // Envia e salva o pedido na API do seu Spring Boot no Render
-                const response = await fetch(`${URL_API_BACKEND}/api/pedidos`, {
+                // Sincroniza salvando o registro no banco via POST
+                const response = await fetch(URL_API_BACKEND + "/api/pedidos", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(dadosPedido)
@@ -336,41 +337,44 @@
                     localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
                 }
 
-                // 🌟 Construção da mensagem estruturada e limpa para o seu WhatsApp corporativo
-                let mensagem = `🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n`;
+                // Montagem da mensagem estruturada profissional do WhatsApp
+                let mensagem = "🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n";
                 if (pedidoIdGerado !== "NOVO") {
-                    mensagem += `🆔 *Pedido Nº:* #${pedidoIdGerado}\n`;
+                    mensagem += "🆔 *Pedido Nº:* #" + pedidoIdGerado + "\n";
                 }
-                mensagem += `👤 *Cliente:* ${nome}\n`;
-                mensagem += `📞 *Contato:* ${contatoTelefone}\n`;
-                mensagem += `📍 *Endereço:* ${endereco}\n`;
-                mensagem += `🔍 *Referência:* ${ref}\n`;
-                mensagem += `💳 *Pagamento:* ${pagamento}\n\n`;
-                mensagem += `🛒 *Itens do Pedido:*\n`;
+                mensagem += "👤 *Cliente:* " + nome + "\n";
+                mensagem += "📞 *Contato:* " + contatoTelefone + "\n";
+                mensagem += "📍 *Endereço:* " + endereco + "\n";
+                mensagem += "🔍 *Referência:* " + ref + "\n";
+                mensagem += "💳 *Pagamento:* " + pagamento + "\n\n";
+                mensagem += "🛒 *Itens do Pedido:*\n";
 
                 itens.forEach(item => {
                     const subtotal = (item.preco * item.quantidade).toFixed(2).replace('.', ',');
-                    mensagem += `• ${item.quantidade}x _${item.nome}_ - R$ ${subtotal}\n`;
+                    mensagem += "• " + item.quantidade + "x _" + item.nome + "_ - R$ " + subtotal + "\n";
                 });
 
-                mensagem += `\n💰 *Total do Pedido:* R$ ${totalCalculado.toFixed(2).replace('.', ',')}\n\n`;
-                mensagem += `_Por favor, confirme o recebimento do meu pedido!_`;
+                mensagem += "\n💰 *Total do Pedido:* R$ " + totalCalculado.toFixed(2).replace('.', ',') + "\n\n";
+                mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
 
-                // 🚀 Correção definitiva do redirecionamento do WhatsApp usando parâmetros oficiais text e phone
-                const urlWhatsapp = `https://whatsapp.com{WHATSAPP_NUMERO}&text=${encodeURIComponent(mensagem)}`;
+                // 🚀 CORREÇÃO DA URL: API oficial do WhatsApp concatenando strings de forma limpa e sem chaves
+                const urlWhatsapp = "https://whatsapp.com/" + encodeURIComponent(mensagem);
+                
+                // Abre o WhatsApp diretamente na conversa com o restaurante
                 window.open(urlWhatsapp, '_blank');
 
-                // Limpa o carrinho local para evitar duplicidades nas próximas compras
+                // Limpa o carrinho local com segurança
                 localStorage.removeItem("carrinhoSaborCearense");
 
-                // Redireciona o cliente para a tela de linha do tempo
+                // Redireciona para o painel de rastreamento
                 window.location.href = "acompanhar.html";
 
             } catch (error) {
-                console.error("Erro ao processar pedido:", error);
-                alert("Houve uma falha de comunicação, mas você pode tentar enviar novamente.");
+                console.error("Erro no processamento do pedido:", error);
+                alert("Ocorreu uma falha ao enviar o pedido para o servidor, mas você pode tentar reenviar.");
             }
         }
+
     </script>
 </body>
 </html>
