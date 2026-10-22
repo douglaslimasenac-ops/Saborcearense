@@ -120,22 +120,22 @@
             <p style="font-size: 0.9rem; font-weight: bold; color: #555; background: var(--primary); display: inline-block; padding: 4px 12px; border-radius: 20px;">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
         </header>
 
+        <!-- Status da Loja -->
         <div id="status-loja" class="status-barra">Carregando funcionamento...</div>
 
-        <!-- Bloco Informativo de Horário de Funcionamento e Entregas -->
+        <!-- Horário de Funcionamento Único -->
         <div class="horario-container">
             <p class="horario-dias">📅 Segunda a Sábado</p>
             <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
         </div>
-        <!-- Navegação por Abas Clicáveis -->
-<div class="abas-navegacao">
-    <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')">🌹 Do Dia</button>
-    <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')">📌 Principais</button>
-    <button class="btn-aba" onclick="alternarAba('SOBREMESA')">😋 Doces</button>
-    <button class="btn-aba" onclick="alternarAba('BEBIDA')">🥤 Bebidas</button>
-</div>
 
-
+        <!-- ÚNICA BARRA DE BOTÕES: Limpa e sem repetições -->
+        <div class="abas-navegacao" style="display: flex; justify-content: space-between; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px;">
+            <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: var(--primary); color: var(--dark); cursor: pointer; white-space: nowrap;">🌹 Do Dia</button>
+            <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">📌 Principais</button>
+            <button class="btn-aba" onclick="alternarAba('SOBREMESA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">😋 Doces</button>
+            <button class="btn-aba" onclick="alternarAba('BEBIDA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">🥤 Bebidas</button>
+        </div>
         <main>
             <section id="aba-PRATOS_DO_DIA" class="menu-section">
                 <h2>🌹 Pratos do Dia</h2>
