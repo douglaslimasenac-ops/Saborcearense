@@ -245,39 +245,42 @@
 
     const statusLoja = document.getElementById("status-loja");
     
-    // Captura o valor da memória do navegador removendo qualquer espaço invisível
+    // --- PORTA SECRETA VIA URL ---
+    // Captura o que está escrito na URL do navegador
+    const parametrosUrl = new URLSearchParams(window.location.search);
+    // Verifica se você digitou o código secreto admin=1 na URL
+    const modoAdminSecreto = parametrosUrl.get("admin") === "1";
+    
+    // Mantém também a checagem pelo localStorage por segurança
     const adminStorage = localStorage.getItem("adminAutenticado");
-    const isAdmin = adminStorage && adminStorage.trim() === "true"; 
+    const isAdmin = modoAdminSecreto || (adminStorage && adminStorage.trim() === "true"); 
+    // ------------------------------
 
-    // Se estiver fora do horário das 11:30 às 15:00 ou for Domingo (0)
+    // Se estiver fora do horário comercial (Segunda a Sábado, das 11:30 às 15:00)
     if (diaSemana === 0 || minutosAtuais < aberturaMinutos || minutosAtuais > fechamentoMinutos) {
         
-        // --- SE FOR O ADMINISTRADOR, FORÇA O DESTRAVAMENTO COMPLETO ---
+        // Se for você acessando pela porta secreta, destrava o site na hora
         if (isAdmin) {
             estabelecimentoAberto = true;
             if(statusLoja) {
                 statusLoja.innerHTML = `<span class="status-dot status-aberto"></span> ABERTO AGORA <small style="color: #f5a623; margin-left: 5px; font-weight: bold;">(Modo Admin Ativo)</small>`;
             }
-            return; // Sai da função imediatamente, liberando todos os botões e seletores
+            return; // Interrompe o bloqueio e libera os botões de + e -
         }
-        // -------------------------------------------------------------
 
-        // Se for um cliente comum, aplica o bloqueio padrão de fechamento
+        // Se for um cliente comum, bloqueia normalmente
         estabelecimentoAberto = false;
         if(statusLoja) {
             statusLoja.innerHTML = `<span class="status-dot status-fechado"></span> FECHADO NO MOMENTO`;
         }
         aplicarBloqueioInterfaceFechado();
     } else {
-        // Se estiver dentro do horário comercial
         estabelecimentoAberto = true;
         if(statusLoja) {
             statusLoja.innerHTML = `<span class="status-dot status-aberto"></span> ABERTO AGORA`;
         }
     }
 }
-
-
 
         function aplicarBloqueioInterfaceFechado() {
             document.querySelectorAll(".btn-qtd").forEach(btn => {
