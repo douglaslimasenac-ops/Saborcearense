@@ -401,61 +401,85 @@
             } catch (e) { console.error("Falha ao abrir canal WebSocket:", e); }
         }
 
-        async function carregarPedidosAtivos() {
+                async function carregarPedidosAtivos() {
             const containerAtivos = document.getElementById("lista-pedidos-ativos");
             const containerHistorico = document.getElementById("lista-pedidos-finalizados");
+            
+            if (containerAtivos) containerAtivos.innerHTML = "";
+            if (containerHistorico) containerHistorico.innerHTML = "";
+
+            // 1. CARREGA OS PEDIDOS EM ANDAMENTO (Fila Ativa)
             try {
-                const res = await fetch(URL_BACKEND + "/api/pedidos/ativos");
-                const pedidos = await res.json();
-                
-                if (containerAtivos) containerAtivos.innerHTML = "";
-                if (containerHistorico) containerHistorico.innerHTML = "";
+                const resAtivos = await fetch(URL_BACKEND + "/api/pedidos/ativos");
+                if (resAtivos.ok) {
+                    const pedidosAtivos = await resAtivos.json();
+                    let temAtivos = false;
 
-                let temAtivos = false;
-                let temFinalizados = false;
-
-                pedidos.forEach(pedido => {
-                    const card = document.createElement("div");
-                    card.className = "card-pedido";
-                    
-                    const botoesControle = pedido.status === 'ENTREGUE' ? '' : `
-                        <div style="border-top: 1px solid #f1f5f9; padding-top: 14px; display: flex; gap: 10px; justify-content: flex-end;">
-                            <button class="btn-status-toggle ativo" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;" onclick="mudarStatusPedido(${pedido.id}, 'PREPARO')">👨‍🍳 Preparar</button>
-                            <button class="btn-status-toggle ativo" style="background: #f0fdf4; color: #166534; border-color: #bbf7d0;" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGA')">🛵 Despachar</button>
-                            <button class="btn-status-toggle inativo" style="background: #f8fafc; color: #1e293b; border-color: #cbd5e1;" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGUE')">✅ Finalizar</button>
-                        </div>
-                    `;
-
-                    card.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                            <div>
-                                <h4 style="margin: 0 0 6px 0; color: #1e293b;">📋 Pedido #${pedido.id} - Cliente: ${pedido.clienteNome}</h4>
-                                <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
-                                <small style="color: #0f766e; font-weight: 700; font-size: 0.9rem;">💳 Forma de Pagamento: ${pedido.formaPagamento}</small>
-                            </div>
-                            <span class="badge-cat" style="background: #fffbeb; color: #b45309; border-color: #fde68a;">Status: ${pedido.status}</span>
-                        </div>
-                        ${botoesControle}
-                    `;
-
-                    if (pedido.status === 'ENTREGUE') {
-                        card.style.borderLeft = "5px solid var(--success)";
-                        if (containerHistorico) containerHistorico.appendChild(card);
-                        temFinalizados = true;
-                    } else {
-                        if (containerAtivos) containerAtivos.appendChild(card);
+                    pedidosAtivos.forEach(pedido => {
+                        if (pedido.status === 'ENTREGUE') return; // Segurança caso venha misturado
                         temAtivos = true;
-                    }
-                });
 
-                if (!temAtivos && containerAtivos) {
-                    containerAtivos.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px; background: #f8fafc; border-radius: 10px; border: 2px dashed #e2e8f0; margin: 0;">Nenhum pedido em andamento.</p>`;
+                        const card = document.createElement("div");
+                        card.className = "card-pedido";
+                        card.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div>
+                                    <h4 style="margin: 0 0 6px 0; color: #1e293b;">📋 Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente}</h4>
+                                    <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
+                                    <small style="color: #0f766e; font-weight: 700; font-size: 0.9rem;">💳 Forma de Pagamento: ${pedido.formaPagamento}</small>
+                                </div>
+                                <span class="badge-cat" style="background: #fffbeb; color: #b45309; border-color: #fde68a;">Status: ${pedido.status}</span>
+                            </div>
+                            <div style="border-top: 1px solid #f1f5f9; padding-top: 14px; display: flex; gap: 10px; justify-content: flex-end;">
+                                <button class="btn-status-toggle ativo" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;" onclick="mudarStatusPedido(${pedido.id}, 'PREPARO')">👨‍🍳 Preparar</button>
+                                <button class="btn-status-toggle ativo" style="background: #f0fdf4; color: #166534; border-color: #bbf7d0;" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGA')">🛵 Despachar</button>
+                                <button class="btn-status-toggle inativo" style="background: #f8fafc; color: #1e293b; border-color: #cbd5e1;" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGUE')">✅ Finalizar</button>
+                            </div>
+                        `;
+                        if (containerAtivos) containerAtivos.appendChild(card);
+                    });
+
+                    if (!temAtivos && containerAtivos) {
+                        containerAtivos.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px; background: #f8fafc; border-radius: 10px; border: 2px dashed #e2e8f0; margin: 0;">Nenhum pedido em andamento.</p>`;
+                    }
                 }
-                if (!temFinalizados && containerHistorico) {
-                    containerHistorico.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px; background: #f8fafc; border-radius: 10px; border: 2px dashed #e2e8f0; margin: 0;">Nenhum pedido finalizado no histórico.</p>`;
+            } catch (e) { console.log("Erro ao carregar pedidos ativos:", e); }
+
+            // 2. CARREGA O HISTÓRICO DE FINALIZADOS (Chama o endpoint geral /api/pedidos)
+            try {
+                const resTodos = await fetch(URL_BACKEND + "/api/pedidos");
+                if (resTodos.ok) {
+                    const todosPedidos = await resTodos.json();
+                    let temFinalizados = false;
+
+                    todosPedidos.forEach(pedido => {
+                        // Filtra apenas o que de fato já foi finalizado
+                        if (pedido.status !== 'ENTREGUE') return;
+                        temFinalizados = true;
+
+                        const card = document.createElement("div");
+                        card.className = "card-pedido";
+                        card.style.borderLeft = "5px solid var(--success)";
+                        card.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div>
+                                    <h4 style="margin: 0 0 6px 0; color: #1e293b;">✅ Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente}</h4>
+                                    <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
+                                    <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento}</small>
+                                </div>
+                                <span class="badge-cat" style="background: #e6f4ea; color: #137333; border-color: #ceead6;">Status: ENTREGUE</span>
+                            </div>
+                        `;
+                        if (containerHistorico) containerHistorico.appendChild(card);
+                    });
+
+                    if (!temFinalizados && containerHistorico) {
+                        containerHistorico.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px; background: #f8fafc; border-radius: 10px; border: 2px dashed #e2e8f0; margin: 0;">Nenhum pedido finalizado no histórico.</p>`;
+                    }
                 }
-            } catch (e) { console.log("Erro ao carregar pedidos."); }
+            } catch (e) { console.log("Erro ao carregar histórico de finalizados:", e); }
         }
+        
 
         async function mudarStatusPedido(id, novoStatus) {
             try {

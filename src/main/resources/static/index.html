@@ -126,12 +126,15 @@
             <p class="horario-dias">📅 Segunda a Sábado</p>
             <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
         </div>
+                <!-- Localize a div class="abas-navegacao" e substitua por esta, incluindo o botão de rastreio -->
         <div class="abas-navegacao" style="display: flex; justify-content: space-between; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px;">
             <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: var(--primary); color: var(--dark); cursor: pointer; white-space: nowrap;">🌹 Do Dia</button>
             <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">📌 Principais</button>
             <button class="btn-aba" onclick="alternarAba('SOBREMESA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">😋 Doces</button>
             <button class="btn-aba" onclick="alternarAba('BEBIDA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">🥤 Bebidas</button>
+            <button class="btn-aba" onclick="alternarAba('RASTREIO')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap; border-left: 3px solid var(--primary);">🔍 Rastrear</button>
         </div>
+
         
         <main>
             <section id="aba-PRATOS_DO_DIA" class="menu-section">
@@ -162,6 +165,50 @@
                 <h2>🥤 Bebidas Geladas</h2>
                 <div id="section-BEBIDA" class="menu-items"></div>
             </section>
+                        <!-- Adicione esta nova section logo abaixo da seção de BEBIDA no index.html -->
+            <section id="aba-RASTREIO" class="menu-section" style="display: none; background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.01); margin-top: 25px;">
+                <h2 style="background: var(--dark); color: var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 1.25rem; margin-top: 0; margin-bottom: 20px;">🔍 Acompanhar Meu Pedido</h2>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 25px; display: flex; gap: 10px;">
+                    <input type="number" id="input-rastreio-index" placeholder="Digite o Nº do seu Pedido" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; text-align: center; font-size: 1rem;">
+                    <button onclick="buscarRastreioAbas()" style="background: var(--primary); border: none; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer;">Consultar</button>
+                </div>
+
+                <div id="wrapper-linha-tempo" style="display: none;">
+                    <div style="background: #edf2f7; display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; margin-bottom: 20px;">Pedido #<span id="txt-index-id">...</span></div>
+                    
+                    <div class="linha-tempo" style="display: flex; justify-content: space-between; position: relative; margin: 30px 0; padding: 0 10px;">
+                        <style>
+                            .linha-tempo::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 4px; background: #e2e8f0; z-index: 1; }
+                            .passo-front { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; width: 60px; }
+                            .circulo-front { width: 34px; height: 34px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #718096; border: 3px solid #ffffff; transition: all 0.3s; }
+                            .legenda-front { font-size: 0.7rem; font-weight: bold; color: #a0aec0; margin-top: 8px; white-space: nowrap; }
+                            .passo-front.concluido .circulo-front { background: #27ae60; color: white; }
+                            .passo-front.concluido .legenda-front { color: #27ae60; }
+                            .passo-front.atual .circulo-front { background: var(--primary); color: var(--dark); box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.25); }
+                            .passo-front.atual .legenda-front { color: var(--primary); font-size: 0.75rem; }
+                        </style>
+                        <div id="p-RECEBIDO" class="passo-front">
+                            <div class="circulo-front">1</div>
+                            <div class="legenda-front">Recebido</div>
+                        </div>
+                        <div id="p-PREPARO" class="passo-front">
+                            <div class="circulo-front">2</div>
+                            <div class="legenda-front">Preparo</div>
+                        </div>
+                        <div id="p-ENTREGA" class="passo-front">
+                            <div class="circulo-front">3</div>
+                            <div class="legenda-front">A caminho</div>
+                        </div>
+                        <div id="p-ENTREGUE" class="passo-front">
+                            <div class="circulo-front">4</div>
+                            <div class="legenda-front">Entregue</div>
+                        </div>
+                    </div>
+                    <div id="txt-index-status" style="font-size: 1.2rem; font-weight: 800; margin: 20px 0; color: #2d3748;">Consultando...</div>
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -232,6 +279,47 @@
 
             } catch(e) { console.error("Erro ao carregar cardápio:", e); }
         }
+                async function buscarRastreioAbas() {
+            const inputId = document.getElementById("input-rastreio-index").value.trim();
+            if (!inputId) return;
+
+            localStorage.setItem("ultimoPedidoIdSaborCearense", inputId);
+            document.getElementById("txt-index-id").innerText = inputId;
+            document.getElementById("wrapper-linha-tempo").style.display = "block";
+
+            try {
+                const res = await fetch(`${URL_BACKEND}/api/pedidos/${inputId}`);
+                if (res.ok) {
+                    const pedido = await res.json();
+                    
+                    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+                    const dicionarioNomes = {
+                        "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
+                        "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
+                        "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
+                        "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
+                    };
+
+                    document.getElementById("txt-index-status").innerText = dicionarioNomes[pedido.status] || pedido.status;
+                    const indexAtual = ordens.indexOf(pedido.status);
+
+                    ordens.forEach((st, idx) => {
+                        const elemento = document.getElementById("p-" + st);
+                        if (!elemento) return;
+                        elemento.classList.remove("concluido", "atual");
+                        if (idx < indexAtual) elemento.classList.add("concluido");
+                        else if (idx === indexAtual) elemento.classList.add("atual");
+                    });
+                } else {
+                    document.getElementById("txt-index-status").innerText = "Pedido não localizado no sistema.";
+                    ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"].forEach(st => {
+                        const el = document.getElementById("p-" + st);
+                        if(el) el.classList.remove("concluido", "atual");
+                    });
+                }
+            } catch (e) { console.error(e); }
+        }
+
 
        function verificarHorarioFuncionamento() {
     const agora = new Date();
@@ -298,8 +386,8 @@
             }
         }
 
-        function alternarAba(nomeAba) {
-            const todasAbas = ['PRATOS_DO_DIA', 'PRINCIPAIS', 'SOBREMESA', 'BEBIDA'];
+                function alternarAba(nomeAba) {
+            const todasAbas = ['PRATOS_DO_DIA', 'PRINCIPAIS', 'SOBREMESA', 'BEBIDA', 'RASTREIO'];
             todasAbas.forEach(aba => {
                 const elementoAba = document.getElementById('aba-' + aba);
                 if (elementoAba) elementoAba.style.display = 'none';
@@ -315,7 +403,16 @@
             
             const botaoClicado = event.currentTarget;
             if (botaoClicado) botaoClicado.style.background = 'var(--primary)';
+
+            // NOVO: Se o usuário estiver na aba de Rastreio, esconde o carrinho temporariamente para dar harmonia
+            const barraFlutuante = document.getElementById("barra-flutuante");
+            if(barraFlutuante) {
+                barraFlutuante.style.display = (nomeAba === 'RASTREIO') ? 'none' : 'flex';
+            }
+            
+            if(nomeAba === 'RASTREIO') buscarRastreioAbas(); // Roda a busca automaticamente se já tiver ID salvo
         }
+
 
         function mudarQuantidade(id, alteracao, nome, preco) {
             if(!estabelecimentoAberto) {
