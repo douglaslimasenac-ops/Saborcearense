@@ -279,15 +279,23 @@
 
             } catch(e) { console.error("Erro ao carregar cardápio:", e); }
         }
-                async function buscarRastreioAbas() {
-            const inputId = document.getElementById("input-rastreio-index").value.trim();
+                        // Variável de controle global para gerenciar o temporizador automático
+        let rastreioTimerAutomatizado = null;
+
+        async function buscarRastreioAbas() {
+            const inputElement = document.getElementById("input-rastreio-index");
+            if (!inputElement) return;
+            
+            const inputId = inputElement.value.trim();
             if (!inputId) return;
 
+            // Salva o ID pesquisado para persistência permanente da sessão
             localStorage.setItem("ultimoPedidoIdSaborCearense", inputId);
             document.getElementById("txt-index-id").innerText = inputId;
             document.getElementById("wrapper-linha-tempo").style.display = "block";
 
             try {
+                // Requisição nativa para buscar o status atualizado do pedido
                 const res = await fetch(`${URL_BACKEND}/api/pedidos/${inputId}`);
                 if (res.ok) {
                     const pedido = await res.json();
@@ -300,26 +308,54 @@
                         "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
                     };
 
+                    // Atualiza o texto descritivo do status
                     document.getElementById("txt-index-status").innerText = dicionarioNomes[pedido.status] || pedido.status;
                     const indexAtual = ordens.indexOf(pedido.status);
 
+                    // Atualiza as cores e estados de cada bolinha da linha de tempo
                     ordens.forEach((st, idx) => {
                         const elemento = document.getElementById("p-" + st);
                         if (!elemento) return;
                         elemento.classList.remove("concluido", "atual");
-                        if (idx < indexAtual) elemento.classList.add("concluido");
-                        else if (idx === indexAtual) elemento.classList.add("atual");
+                        if (idx < indexAtual) {
+                            elemento.classList.add("concluido");
+                        } else if (idx === indexAtual) {
+                            elemento.classList.add("atual");
+                        }
                     });
+
+                    // Ativa o loop de checagem automática a cada 7 segundos, caso já não esteja rodando
+                    if (!rastreioTimerAutomatizado) {
+                        console.log("Sabor Cearense: Ativando atualização em tempo real para o pedido #" + inputId);
+                        rastreioTimerAutomatizado = setInterval(buscarRastreioAbas, 7000);
+                    }
+
+                    // Se o pedido já chegou no estado final de ENTREGUE, encerra o loop para poupar processamento
+                    if (pedido.status === 'ENTREGUE' && rastreioTimerAutomatizado) {
+                        clearInterval(rastreioTimerAutomatizado);
+                        rastreioTimerAutomatizado = null;
+                        console.log("Sabor Cearense: Pedido finalizado. Desligando monitoramento ativo.");
+                    }
+
                 } else {
                     document.getElementById("txt-index-status").innerText = "Pedido não localizado no sistema.";
-                    ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"].forEach(st => {
-                        const el = document.getElementById("p-" + st);
-                        if(el) el.classList.remove("concluido", "atual");
-                    });
+                    desativarTemporizadorEInterface();
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error("Erro no polling de rastreamento:", e); 
+            }
         }
 
+        function desativarTemporizadorEInterface() {
+            if (rastreioTimerAutomatizado) {
+                clearInterval(rastreioTimerAutomatizado);
+                rastreioTimerAutomatizado = null;
+            }
+            ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"].forEach(st => {
+                const el = document.getElementById("p-" + st);
+                if(el) el.classList.remove("concluido", "atual");
+            });
+        }
 
        function verificarHorarioFuncionamento() {
     const agora = new Date();
@@ -386,7 +422,15 @@
             }
         }
 
-                function alternarAba(nomeAba) {
+                        function alternarAba(nomeAba) {
+            // --- ADICIONADO: Se mudar de aba, desliga temporariamente o monitoramento automático ---
+            if (nomeAba !== 'RASTREIO' && rastreioTimerAutomatizado) {
+                clearInterval(rastreioTimerAutomatizado);
+                rastreioTimerAutomatizado = null;
+                console.log("Sabor Cearense: Cliente mudou de aba. Monitoramento pausado.");
+            }
+            // -------------------------------------------------------------------------------------
+
             const todasAbas = ['PRATOS_DO_DIA', 'PRINCIPAIS', 'SOBREMESA', 'BEBIDA', 'RASTREIO'];
             todasAbas.forEach(aba => {
                 const elementoAba = document.getElementById('aba-' + aba);
@@ -404,14 +448,14 @@
             const botaoClicado = event.currentTarget;
             if (botaoClicado) botaoClicado.style.background = 'var(--primary)';
 
-            // NOVO: Se o usuário estiver na aba de Rastreio, esconde o carrinho temporariamente para dar harmonia
             const barraFlutuante = document.getElementById("barra-flutuante");
             if(barraFlutuante) {
                 barraFlutuante.style.display = (nomeAba === 'RASTREIO') ? 'none' : 'flex';
             }
             
-            if(nomeAba === 'RASTREIO') buscarRastreioAbas(); // Roda a busca automaticamente se já tiver ID salvo
+            if(nomeAba === 'RASTREIO') buscarRastreioAbas(); 
         }
+
 
 
         function mudarQuantidade(id, alteracao, nome, preco) {
