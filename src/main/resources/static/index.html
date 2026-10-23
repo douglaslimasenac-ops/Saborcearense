@@ -126,14 +126,31 @@
             <p class="horario-dias">📅 Segunda a Sábado</p>
             <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
         </div>
+        <!-- Localize o fechamento da sua div horario-container -->
+<div class="horario-container">
+    <p class="horario-dias">📅 Segunda a Sábado</p>
+    <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
+</div>
+
+<!-- ADICIONE ESTE BLOCO LOGO ABAIXO DA TRAVA DE HORÁRIO -->
+<div style="text-align: center; margin: -10px auto 20px auto; max-width: 650px; padding: 0 10px;">
+    <button type="button" 
+            onclick="abrirAbaRastreioOculta()" 
+            style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 10px 20px; font-weight: bold; border-radius: 30px; cursor: pointer; color: #4a5568; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);"
+            onmouseover="this.style.background='#fff3cd'; this.style.borderColor='#f5a623';"
+            onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1';">
+        🔍 Já fez um pedido? Clique aqui para rastrear
+    </button>
+</div>
+
                 <!-- Localize a div class="abas-navegacao" e substitua por esta, incluindo o botão de rastreio -->
-        <div class="abas-navegacao" style="display: flex; justify-content: space-between; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px;">
-            <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: var(--primary); color: var(--dark); cursor: pointer; white-space: nowrap;">🌹 Do Dia</button>
-            <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">📌 Principais</button>
-            <button class="btn-aba" onclick="alternarAba('SOBREMESA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">😋 Doces</button>
-            <button class="btn-aba" onclick="alternarAba('BEBIDA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">🥤 Bebidas</button>
-            <button class="btn-aba" onclick="alternarAba('RASTREIO')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap; border-left: 3px solid var(--primary);">🔍 Rastrear</button>
-        </div>
+        <!-- Substitua a sua div abas-navegacao por esta, limpando o botão de rastreio de lá -->
+<div class="abas-navegacao" style="display: flex; justify-content: space-between; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px;">
+    <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: var(--primary); color: var(--dark); cursor: pointer; white-space: nowrap;">🌹 Do Dia</button>
+    <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">📌 Principais</button>
+    <button class="btn-aba" onclick="alternarAba('SOBREMESA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">😋 Doces</button>
+    <button class="btn-aba" onclick="alternarAba('BEBIDA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">🥤 Bebidas</button>
+</div>
 
         
         <main>
@@ -421,6 +438,31 @@
                 btnAvancar.innerText = "Fechado no Momento 🔒";
             }
         }
+        function abrirAbaRastreioOculta() {
+    // 1. Esconde todas as seções de comida e bebida
+    const todasAbas = ['PRATOS_DO_DIA', 'PRINCIPAIS', 'SOBREMESA', 'BEBIDA'];
+    todasAbas.forEach(aba => {
+        const elementoAba = document.getElementById('aba-' + aba);
+        if (elementoAba) elementoAba.style.display = 'none';
+    });
+    
+    // 2. Exibe a seção de rastreio em destaque
+    const abaRastreio = document.getElementById('aba-RASTREIO');
+    if (abaRastreio) abaRastreio.style.display = 'block';
+    
+    // 3. Remove a cor amarela dos botões do cardápio para não confundir o cliente
+    document.querySelectorAll('.btn-aba').forEach(btn => {
+        btn.style.background = '#ffffff';
+    });
+    
+    // 4. Oculta o carrinho temporariamente por harmonia
+    const barraFlutuante = document.getElementById("barra-flutuante");
+    if(barraFlutuante) barraFlutuante.style.display = 'none';
+    
+    // 5. Roda o buscador automático
+    buscarRastreioAbas();
+}
+
 
                         function alternarAba(nomeAba) {
             // --- ADICIONADO: Se mudar de aba, desliga temporariamente o monitoramento automático ---
