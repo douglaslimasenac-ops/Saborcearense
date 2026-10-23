@@ -187,6 +187,117 @@
             console.error("Erro ao buscar status:", e); 
         }
     }
+    // Injeta dinamicamente os estilos de animações profissionais para garantir o funcionamento
+(function injetarEstilosRastreio() {
+    if (document.getElementById("estilos-rastreio-moderno")) return;
+    const style = document.createElement("style");
+    style.id = "estilos-rastreio-moderno";
+    style.innerHTML = `
+        /* Força suavidade na transição de todos os itens da esteira */
+        [id^="p-"], [id^="step-"], .timeline-item {
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        /* 1. ESTADO ATUAL/ATIVO - Efeito Pulsante de Radar (Glow) */
+        .atual, .active {
+            opacity: 1 !important;
+            transform: scale(1.03) translateY(0px) !important;
+            filter: drop-shadow(0 4px 12px rgba(230, 57, 70, 0.15)) !important;
+        }
+
+        /* Aplica o pulso na bolinha/ícone da etapa ativa */
+        .atual .timeline-badge, .active .timeline-badge,
+        .atual .badge, .active .badge,
+        .atual [class*="badge"], .active [class*="badge"],
+        .atual [class*="icon"], .active [class*="icon"] {
+            background-color: #e63946 !important;
+            border-color: #e63946 !important;
+            animation: pulsoRadarSabor 2s infinite ease-in-out !important;
+        }
+
+        /* Destaca sutilmente os textos da etapa ativa */
+        .atual h4, .active h4, .atual span, .active span {
+            color: #e63946 !important;
+            font-weight: 700 !important;
+        }
+
+        /* 2. ESTADO CONCLUÍDO - Tom verde elegante e estático */
+        .concluido, .completed {
+            opacity: 0.85 !important;
+            transform: translateY(0) !important;
+        }
+
+        .concluido .timeline-badge, .completed .timeline-badge,
+        .concluido .badge, .completed .badge,
+        .concluido [class*="badge"], .completed [class*="badge"] {
+            background-color: #10b981 !important;
+            border-color: #10b981 !important;
+        }
+
+        /* Keyframes da animação de pulso */
+        @keyframes pulsoRadarSabor {
+            0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.6); }
+            70% { box-shadow: 0 0 0 10px rgba(230, 57, 70, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
+function atualizarInterfaceLinhaTempo(statusOriginal) {
+    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+    
+    const dicionarioNomes = {
+        "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
+        "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
+        "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
+        "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
+    };
+
+    let statusDoBanco = statusOriginal ? statusOriginal.toUpperCase() : "RECEBIDO";
+    if (statusDoBanco === "PREPARANDO") statusDoBanco = "PREPARO";
+    if (statusDoBanco === "SAIU_ENTREGA") statusDoBanco = "ENTREGA";
+
+    const txtStatus = document.getElementById("txt-index-status") || document.getElementById("txt-status-nome");
+    if (txtStatus) {
+        txtStatus.innerText = dicionarioNomes[statusDoBanco] || statusDoBanco;
+    }
+
+    const indexAtual = ordens.indexOf(statusDoBanco);
+
+    ordens.forEach((st, idx) => {
+        const elemento = document.getElementById("p-" + st) || 
+                         document.getElementById("step-" + st) || 
+                         document.getElementById("step-" + (st === "PREPARO" ? "PREPARANDO" : st === "ENTREGA" ? "SAIU_ENTREGA" : st));
+                         
+        if (!elemento) return;
+        
+        // Remove as classes limpando o frame de animação anterior
+        elemento.classList.remove("concluido", "atual", "completed", "active");
+        
+        // Timeout sequencial para criar o efeito "acendimento de luzes" (cascata)
+        setTimeout(() => {
+            if (idx < indexAtual) {
+                elemento.classList.add("concluido", "completed");
+            } else if (idx === indexAtual) {
+                elemento.classList.add("atual", "active");
+                
+                // Rola a tela suavemente até a etapa ativa
+                elemento.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }
+        }, idx * 150); // 150 milissegundos de delay por etapa
+    });
+}
+
+function limparLinhaTempo() {
+    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+    ordens.forEach(st => {
+        const elemento = document.getElementById("p-" + st) || document.getElementById("step-" + st);
+        if (elemento) {
+            elemento.classList.remove("concluido", "atual", "completed", "active");
+        }
+    });
+}
 
     function atualizarInterfaceLinhaTempo(statusOriginal) {
     const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
