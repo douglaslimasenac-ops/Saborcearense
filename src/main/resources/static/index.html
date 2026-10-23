@@ -642,59 +642,29 @@ function restaurarCardapioOriginal() {
 const URL_BACKEND_JAVA = "https://saborcearense-5.onrender.com"; 
 
 // Função para abrir e fechar a aba de rastreio de forma fluida
-function toggleRastreio() {
-    const painel = document.getElementById('painel-rastreio');
-    painel.classList.toggle('active');
-    
-    if(painel.classList.contains('active')) {
-        document.getElementById('codigo-rastreio-input').focus();
-    }
-}
-
-// Função que valida o ID e redireciona para a tela dinâmica
-function executarBuscaRastreio() {
-    const input = document.getElementById('codigo-rastreio-input');
-    const pedidoId = input.value.trim().replace('#', ''); 
-    
-    if (!pedidoId) {
-        alert('Por favor, digite o número do pedido.');
-        return;
-    }
-    
-    // Fecha a gaveta
-    toggleRastreio();
-    
-    // Redireciona o cliente enviando o ID pela URL
-    window.location.href = `acompanhar.html?id=${pedidoId}`;
-}
-
-    try {   
-        
-        if (res.ok) {
-            const pedido = await res.json();
-            
-            const dicionarioNomes = {
-                "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
-                "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
-                "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
-                "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
-            };
-
-            const statusFormatado = pedido.status ? pedido.status.toUpperCase() : "RECEBIDO";
-            const mensagemStatus = dicionarioNomes[statusFormatado] || statusFormatado;
-
-            alert(`Pedido #${pedidoId}\nStatus: ${mensagemStatus}`);
-            
-        } else if (res.status === 404) {
-            alert("Pedido não localizado no sistema. Verifique o número.");
-        } else {
-            alert("Erro ao buscar o pedido. Tente novamente mais tarde.");
+        // Abre e fecha a gaveta de rastreio de forma fluida
+        function toggleRastreio() {
+            const painel = document.getElementById('painel-rastreio');
+            painel.classList.toggle('active');
+            if(painel.classList.contains('active')) {
+                document.getElementById('codigo-rastreio-input').focus();
+            }
         }
-    } catch (e) {
-        console.error("Erro na busca:", e);
-        alert("Não foi possível conectar ao servidor no Render. Verifique se o servidor está ativo.");
-    }
- </script>
 
+        // Valida o número e envia para a tela dinâmica acompanhar.html
+        function executarBuscaRastreio() {
+            const input = document.getElementById('codigo-rastreio-input');
+            const pedidoId = input.value.trim().replace('#', ''); 
+            
+            if (!pedidoId) {
+                alert('Por favor, digite o número do pedido.');
+                return;
+            }
+            
+            toggleRastreio();
+            window.location.href = `acompanhar.html?id=${pedidoId}`;
+        }
+        
+    </script>
 </body>
 </html>
