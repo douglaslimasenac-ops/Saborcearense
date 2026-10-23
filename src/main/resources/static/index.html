@@ -127,10 +127,6 @@
             <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
         </div>
         <!-- Localize o fechamento da sua div horario-container -->
-<div class="horario-container">
-    <p class="horario-dias">📅 Segunda a Sábado</p>
-    <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
-</div>
 
 <!-- ADICIONE ESTE BLOCO LOGO ABAIXO DA TRAVA DE HORÁRIO -->
 <div style="text-align: center; margin: -10px auto 20px auto; max-width: 650px; padding: 0 10px;">
@@ -229,13 +225,26 @@
         </main>
     </div>
 
-    <div id="barra-flutuante" style="position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -4px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; max-width: 650px; margin: 0 auto; border-radius: 12px 12px 0 0; z-index: 100;">
-        <div>
-            <span style="font-size: 0.9rem; color: #64748b;">Total do Pedido:</span>
-            <div id="total-flutuante" style="font-weight: bold; color: #27ae60; font-size: 1.3rem;">R$ 0,00</div>
+        <!-- SUBSTITUA A SUA DIV BARRA-FLUTUANTE POR ESTA INTEIRA -->
+    <div id="barra-flutuante" style="position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px 15px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; max-width: 650px; margin: 0 auto; border-radius: 16px 16px 0 0; z-index: 100; gap: 10px;">
+        
+        <!-- BOTÃO DE RASTREIO MINIMALISTA INTEGRADO NO RODAPÉ -->
+        <button onclick="abrirAbaRastreioOculta()" 
+                id="btn-rodape-rastreio"
+                style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; color: #475569; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;">
+            🔍 Rastrear Pedido
+        </button>
+
+        <!-- TOTAL DO CARRINHO (Ajustado com margem automática para alinhar à direita) -->
+        <div style="margin-left: auto; text-align: right; padding-right: 5px;">
+            <span style="font-size: 0.8rem; color: #64748b; display: block; font-weight: 500;">Total:</span>
+            <div id="total-flutuante" style="font-weight: 800; color: #27ae60; font-size: 1.15rem; line-height: 1;">R$ 0,00</div>
         </div>
-        <button onclick="irParaFinalizacao()" class="btn-avancar" id="botao-avancar-checkout">Avançar para o Carrinho ➔</button>
+
+        <!-- BOTÃO AVANÇAR ORIGINAL -->
+        <button onclick="irParaFinalizacao()" class="btn-avancar" id="botao-avancar-checkout" style="padding: 10px 16px; font-size: 0.95rem; white-space: nowrap;">Avançar ➔</button>
     </div>
+
     <script>
         const URL_BACKEND = "";
         let carrinho = {};
@@ -299,69 +308,55 @@
                         // Variável de controle global para gerenciar o temporizador automático
         let rastreioTimerAutomatizado = null;
 
-        async function buscarRastreioAbas() {
-            const inputElement = document.getElementById("input-rastreio-index");
-            if (!inputElement) return;
-            
-            const inputId = inputElement.value.trim();
-            if (!inputId) return;
+        async function abrirAbaRastreioOculta() {
+    // 1. Esconde todas as seções de pratos e bebidas
+    const todasAbas = ['PRATOS_DO_DIA', 'PRINCIPAIS', 'SOBREMESA', 'BEBIDA'];
+    todasAbas.forEach(aba => {
+        const elementoAba = document.getElementById('aba-' + aba);
+        if (elementoAba) elementoAba.style.display = 'none';
+    });
+    
+    // 2. Exibe a seção interna de rastreamento do cliente
+    const abaRastreio = document.getElementById('aba-RASTREIO');
+    if (abaRastreio) abaRastreio.style.display = 'block';
+    
+    // 3. Remove as cores de seleção das abas superiores
+    document.querySelectorAll('.btn-aba').forEach(btn => {
+        btn.style.background = '#ffffff';
+    });
+    
+    // 4. Modifica o botão do rodapé para permitir que o cliente retorne ao menu facilmente
+    const btnRastreio = document.getElementById("btn-rodape-rastreio");
+    if (btnRastreio) {
+        btnRastreio.innerHTML = "📋 Voltar ao Cardápio";
+        // Altera a função do clique temporariamente para restaurar a tela inicial
+        btnRastreio.setAttribute("onclick", "restaurarCardapioOriginal()");
+        btnRastreio.style.background = "#fff3cd";
+        btnRastreio.style.borderColor = "#f5a623";
+    }
 
-            // Salva o ID pesquisado para persistência permanente da sessão
-            localStorage.setItem("ultimoPedidoIdSaborCearense", inputId);
-            document.getElementById("txt-index-id").innerText = inputId;
-            document.getElementById("wrapper-linha-tempo").style.display = "block";
+    buscarRastreioAbas();
+}
 
-            try {
-                // Requisição nativa para buscar o status atualizado do pedido
-                const res = await fetch(`${URL_BACKEND}/api/pedidos/${inputId}`);
-                if (res.ok) {
-                    const pedido = await res.json();
-                    
-                    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
-                    const dicionarioNomes = {
-                        "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
-                        "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
-                        "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
-                        "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
-                    };
+function restaurarCardapioOriginal() {
+    // 1. Desliga o monitoramento em tempo real se ele estiver rodando
+    if (typeof desativarTemporizadorEInterface === "function") {
+        desativarTemporizadorEInterface();
+    }
+    
+    // 2. Restaura o botão do rodapé para o estado original de rastreio
+    const btnRastreio = document.getElementById("btn-rodape-rastreio");
+    if (btnRastreio) {
+        btnRastreio.innerHTML = "🔍 Rastrear Pedido";
+        btnRastreio.setAttribute("onclick", "abrirAbaRastreioOculta()");
+        btnRastreio.style.background = "#f1f5f9";
+        btnRastreio.style.borderColor = "#cbd5e1";
+    }
 
-                    // Atualiza o texto descritivo do status
-                    document.getElementById("txt-index-status").innerText = dicionarioNomes[pedido.status] || pedido.status;
-                    const indexAtual = ordens.indexOf(pedido.status);
+    // 3. Reativa visualmente a primeira aba do menu (Pratos do Dia)
+    alternarAba('PRATOS_DO_DIA');
+}
 
-                    // Atualiza as cores e estados de cada bolinha da linha de tempo
-                    ordens.forEach((st, idx) => {
-                        const elemento = document.getElementById("p-" + st);
-                        if (!elemento) return;
-                        elemento.classList.remove("concluido", "atual");
-                        if (idx < indexAtual) {
-                            elemento.classList.add("concluido");
-                        } else if (idx === indexAtual) {
-                            elemento.classList.add("atual");
-                        }
-                    });
-
-                    // Ativa o loop de checagem automática a cada 7 segundos, caso já não esteja rodando
-                    if (!rastreioTimerAutomatizado) {
-                        console.log("Sabor Cearense: Ativando atualização em tempo real para o pedido #" + inputId);
-                        rastreioTimerAutomatizado = setInterval(buscarRastreioAbas, 7000);
-                    }
-
-                    // Se o pedido já chegou no estado final de ENTREGUE, encerra o loop para poupar processamento
-                    if (pedido.status === 'ENTREGUE' && rastreioTimerAutomatizado) {
-                        clearInterval(rastreioTimerAutomatizado);
-                        rastreioTimerAutomatizado = null;
-                        console.log("Sabor Cearense: Pedido finalizado. Desligando monitoramento ativo.");
-                    }
-
-                } else {
-                    document.getElementById("txt-index-status").innerText = "Pedido não localizado no sistema.";
-                    desativarTemporizadorEInterface();
-                }
-            } catch (e) { 
-                console.error("Erro no polling de rastreamento:", e); 
-            }
-        }
 
         function desativarTemporizadorEInterface() {
             if (rastreioTimerAutomatizado) {
