@@ -97,112 +97,150 @@
         <a href="index.html?admin=1" style="color: #f5a623; font-weight: bold; text-decoration: none; font-size: 0.9rem;">Ir para o Cardápio</a>
     </div>
     <script>
-        const URL_BACKEND = "";
-        let pedidoId = localStorage.getItem("ultimoPedidoIdSaborCearense");
+    // 1. Definição da URL oficial do seu backend no Render
+    const URL_BACKEND = "https://onrender.com";
 
-        document.addEventListener("DOMContentLoaded", () => {
-            if (pedidoId) {
-                document.getElementById("txt-pedido-id").innerText = pedidoId;
-                document.getElementById("input-busca-id").value = pedidoId;
-                consultarStatus();
-            } else {
-                document.getElementById("txt-status-nome").innerText = "Insira o número do pedido acima para rastrear.";
-            }
-            
-            // Polling seguro para atualizar o status a cada 7 segundos caso o cliente mude de aba
-            setInterval(consultarStatus, 7000);
-        });
+    // 2. Captura o ID vindo da gaveta (URL) ou do localStorage anterior
+    const urlParams = new URLSearchParams(window.location.search);
+    let idDaUrl = urlParams.get('id');
 
-        function buscarNovoPedido() {
-            const inputVal = document.getElementById("input-busca-id").value.trim();
-            if (!inputVal) {
-                alert("Por favor, digite um número de pedido válido.");
-                return;
-            }
-            
-            // Salva a nova pesquisa para que o cliente permaneça no mesmo pedido ao recarregar
-            pedidoId = inputVal;
+    let pedidoId = idDaUrl || localStorage.getItem("ultimoPedidoIdSaborCearense");
+
+    document.addEventListener("DOMContentLoaded", () => {
+        if (pedidoId) {
+            // Sincroniza o ID no localStorage para persistência
             localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoId);
-            document.getElementById("txt-pedido-id").innerText = pedidoId;
             
-            consultarStatus();
-        }
-
-        async function consultarStatus() {
-    if (!pedidoId) return;
-    try {
-        // Limpa o caractere '#' se o usuário tiver digitado por engano
-        const idLimpo = pedidoId.toString().replace('#', '').trim();
-        
-        const res = await fetch(`${URL_BACKEND}/api/pedidos/${idLimpo}`);
-        if (res.ok) {
-            const pedido = await res.json();
-            
-            // Exibe o ID do pedido na tela
             if (document.getElementById("txt-pedido-id")) {
-                document.getElementById("txt-pedido-id").innerText = idLimpo;
+                document.getElementById("txt-pedido-id").innerText = `#${pedidoId}`;
             }
-
-            // Envia o status para atualizar a linha do tempo visual
-            atualizarInterfaceLinhaTempo(pedido.status);
+            if (document.getElementById("input-busca-id")) {
+                document.getElementById("input-busca-id").value = pedidoId;
+            }
             
-        } else if (res.status === 404) {
+            // Executa a primeira busca imediatamente ao carregar
+            consultarStatus();
+            
+            // Configura a ATUALIZAÇÃO EM TEMPO REAL (Polling) a cada 7 segundos
+            setInterval(consultarStatus, 7000);
+        } else {
             const elementoStatus = document.getElementById("txt-status-nome") || document.getElementById("txt-index-status");
             if (elementoStatus) {
-                elementoStatus.innerText = "Pedido não localizado no sistema.";
+                elementoStatus.innerText = "Insira o número do pedido acima para rastrear.";
             }
-            limparLinhaTempo();
         }
-    } catch (e) { 
-        console.error("Erro ao buscar status:", e); 
-    }
-}
+    });
 
-// ESTA É A FUNÇÃO QUE JUNTA O DICIONÁRIO DA IA E ATUALIZA A TELA DO CLIENTE
-function atualizarInterfaceLinhaTempo(statusOriginal) {
-    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
-    const dicionarioNomes = {
-        "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
-        "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
-        "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
-        "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
-    };
+    function buscarNovoPedido() {
+        const inputElement = document.getElementById("input-busca-id");
+        if (!inputElement) return;
 
-    // Garante que o status vindo do Java seja convertido para maiúsculo
-    const statusDoBanco = statusOriginal ? statusOriginal.toUpperCase() : "RECEBIDO";
-
-    // Atualiza o texto principal do status (Tenta os dois IDs possíveis para evitar erros)
-    const txtStatus = document.getElementById("txt-index-status") || document.getElementById("txt-status-nome");
-    if (txtStatus) {
-        txtStatus.innerText = dicionarioNomes[statusDoBanco] || statusDoBanco;
-    }
-
-    // Calcula em qual etapa da linha do tempo o pedido está
-    const indexAtual = ordens.indexOf(statusDoBanco);
-
-    // Pinta as bolinhas/barras de progresso (RECEBIDO, PREPARO, etc.) no seu HTML
-    ordens.forEach((st, idx) => {
-        const elemento = document.getElementById("p-" + st);
-        if (!elemento) return;
+        const inputVal = inputElement.value.trim();
+        if (!inputVal) {
+            alert("Por favor, digite um número de pedido válido.");
+            return;
+        }
         
-        elemento.classList.remove("concluido", "atual");
-        if (idx < indexAtual) {
-            elemento.classList.add("concluido");
-        } else if (idx === indexAtual) {
-            elemento.classList.add("atual");
+        // Salva a nova pesquisa
+        pedidoId = inputVal.replace('#', '').trim();
+        localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoId);
+        
+        if (document.getElementById("txt-pedido-id")) {
+            document.getElementById("txt-pedido-id").innerText = `#${pedidoId}`;
         }
-    });
-}
+        
+        consultarStatus();
+    }
 
-function limparLinhaTempo() {
-    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
-    ordens.forEach(st => {
-        const elemento = document.getElementById("p-" + st);
-        if (elemento) elemento.classList.remove("concluido", "atual");
-    });
-}
+    async function consultarStatus() {
+        if (!pedidoId) return;
+        try {
+            const idLimpo = pedidoId.toString().replace('#', '').trim();
+            
+            const res = await fetch(`${URL_BACKEND}/api/pedidos/${idLimpo}`);
+            if (res.ok) {
+                const pedido = await res.json();
+                
+                if (document.getElementById("txt-pedido-id")) {
+                    document.getElementById("txt-pedido-id").innerText = `#${idLimpo}`;
+                }
 
-    </script>
+                // Atualiza a interface visual da linha do tempo
+                atualizarInterfaceLinhaTempo(pedido.status);
+                
+                // Atualiza o horário do último recebimento de sinal (Tempo Real)
+                const txtAtt = document.getElementById("txt-ultima-att");
+                if (txtAtt) {
+                    const agora = new Date();
+                    txtAtt.innerText = agora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                }
+                
+            } else if (res.status === 404) {
+                const elementoStatus = document.getElementById("txt-status-nome") || document.getElementById("txt-index-status");
+                if (elementoStatus) {
+                    elementoStatus.innerText = "Pedido não localizado no sistema.";
+                }
+                limparLinhaTempo();
+            }
+        } catch (e) { 
+            console.error("Erro ao buscar status:", e); 
+        }
+    }
+
+    // FUNÇÃO QUE UNE OS STATUS DO BACKEND E MAPEIA OS IDs COMPATÍVEIS (Antigos e Novos)
+    function atualizarInterfaceLinhaTempo(statusOriginal) {
+        // Sequência correspondente ao seu dicionário e banco de dados
+        const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+        
+        const dicionarioNomes = {
+            "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
+            "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
+            "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
+            "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
+        };
+
+        // Garante caixa alta e faz o mapeamento caso venha variações de escrita do Java
+        let statusDoBanco = statusOriginal ? statusOriginal.toUpperCase() : "RECEBIDO";
+        if (statusDoBanco === "PREPARANDO") statusDoBanco = "PREPARO";
+        if (statusDoBanco === "SAIU_ENTREGA") statusDoBanco = "ENTREGA";
+
+        const txtStatus = document.getElementById("txt-index-status") || document.getElementById("txt-status-nome");
+        if (txtStatus) {
+            txtStatus.innerText = dicionarioNomes[statusDoBanco] || statusDoBanco;
+        }
+
+        const indexAtual = ordens.indexOf(statusDoBanco);
+
+        ordens.forEach((st, idx) => {
+            // Mapeia de forma inteligente aceitando os IDs "p-STATUS" e "step-STATUS"
+            const elemento = document.getElementById("p-" + st) || 
+                             document.getElementById("step-" + st) || 
+                             document.getElementById("step-" + (st === "PREPARO" ? "PREPARANDO" : st === "ENTREGA" ? "SAIU_ENTREGA" : st));
+                             
+            if (!elemento) return;
+            
+            // Suporta ambas as classes de estilização (Antiga do seu CSS e a nova Mobile)
+            elemento.classList.remove("concluido", "atual", "completed", "active");
+            
+            if (idx < indexAtual) {
+                elemento.classList.add("concluido", "completed");
+            } else if (idx === indexAtual) {
+                elemento.classList.add("atual", "active");
+            }
+        });
+    }
+
+    function limparLinhaTempo() {
+        const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+        ordens.forEach(st => {
+            const elemento = document.getElementById("p-" + st) || document.getElementById("step-" + st);
+            if (elemento) {
+                elemento.classList.remove("concluido", "atual", "completed", "active");
+            }
+        });
+    }
+</script>
+
 </body>
 </html>
 
