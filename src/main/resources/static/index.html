@@ -668,9 +668,7 @@ function executarBuscaRastreio() {
     window.location.href = `acompanhar.html?id=${pedidoId}`;
 }
 
-    try {
-        // Agora ele vai buscar direto na nuvem do Render!
-        const res = await fetch(`${URL_BACKEND_JAVA}/api/pedidos/${pedidoId}`);
+    try {   
         
         if (res.ok) {
             const pedido = await res.json();
@@ -696,7 +694,7 @@ function executarBuscaRastreio() {
         console.error("Erro na busca:", e);
         alert("Não foi possível conectar ao servidor no Render. Verifique se o servidor está ativo.");
     }
-</script>
+ </script>
 
 </body>
 </html>
