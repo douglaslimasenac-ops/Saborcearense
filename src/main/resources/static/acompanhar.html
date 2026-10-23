@@ -189,54 +189,61 @@
     }
 
     function atualizarInterfaceLinhaTempo(statusOriginal) {
-        const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+    
+    const dicionarioNomes = {
+        "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
+        "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
+        "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
+        "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
+    };
+
+    let statusDoBanco = statusOriginal ? statusOriginal.toUpperCase() : "RECEBIDO";
+    if (statusDoBanco === "PREPARANDO") statusDoBanco = "PREPARO";
+    if (statusDoBanco === "SAIU_ENTREGA") statusDoBanco = "ENTREGA";
+
+    const txtStatus = document.getElementById("txt-index-status") || document.getElementById("txt-status-nome");
+    if (txtStatus) {
+        txtStatus.innerText = dicionarioNomes[statusDoBanco] || statusDoBanco;
+    }
+
+    const indexAtual = ordens.indexOf(statusDoBanco);
+
+    ordens.forEach((st, idx) => {
+        const elemento = document.getElementById("p-" + st) || 
+                         document.getElementById("step-" + st) || 
+                         document.getElementById("step-" + (st === "PREPARO" ? "PREPARANDO" : st === "ENTREGA" ? "SAIU_ENTREGA" : st));
+                         
+        if (!elemento) return;
         
-        const dicionarioNomes = {
-            "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
-            "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
-            "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
-            "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
-        };
-
-        let statusDoBanco = statusOriginal ? statusOriginal.toUpperCase() : "RECEBIDO";
-        if (statusDoBanco === "PREPARANDO") statusDoBanco = "PREPARO";
-        if (statusDoBanco === "SAIU_ENTREGA") statusDoBanco = "ENTREGA";
-
-        const txtStatus = document.getElementById("txt-index-status") || document.getElementById("txt-status-nome");
-        if (txtStatus) {
-            txtStatus.innerText = dicionarioNomes[statusDoBanco] || statusDoBanco;
-        }
-
-        const indexAtual = ordens.indexOf(statusDoBanco);
-
-        ordens.forEach((st, idx) => {
-            const elemento = document.getElementById("p-" + st) || 
-                             document.getElementById("step-" + st) || 
-                             document.getElementById("step-" + (st === "PREPARO" ? "PREPARANDO" : st === "ENTREGA" ? "SAIU_ENTREGA" : st));
-                             
-            if (!elemento) return;
-            
-            elemento.classList.remove("concluido", "atual", "completed", "active");
-            
+        // Remove classes antigas instantaneamente para limpar o estado visual
+        elemento.classList.remove("concluido", "atual", "completed", "active");
+        
+        // Injeta um delay milimétrico sequencial baseado no índice para criar o efeito cascata profissional
+        setTimeout(() => {
             if (idx < indexAtual) {
                 elemento.classList.add("concluido", "completed");
             } else if (idx === indexAtual) {
                 elemento.classList.add("atual", "active");
+                
+                // Rola a tela suavemente para manter o status atual sempre visível no smartphone
+                elemento.scrollIntoView({ behavior: "smooth", block: "nearest" });
             }
-        });
-    }
+        }, idx * 120); // 120ms de intervalo entre o acendimento de cada etapa
+    });
+}
 
-    function limparLinhaTempo() {
-        const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
-        ordens.forEach(st => {
-            const elemento = document.getElementById("p-" + st) || document.getElementById("step-" + st);
-            if (elemento) {
-                elemento.classList.remove("concluido", "atual", "completed", "active");
-            }
-        });
-    }
+function limparLinhaTempo() {
+    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+    ordens.forEach(st => {
+        const elemento = document.getElementById("p-" + st) || document.getElementById("step-" + st);
+        if (elemento) {
+            elemento.classList.remove("concluido", "atual", "completed", "active");
+        }
+    });
+}
+
 </script>
 
 </body>
 </html>
-
