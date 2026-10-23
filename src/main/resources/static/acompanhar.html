@@ -188,56 +188,74 @@
         }
     }
     // Injeta dinamicamente os estilos de animações profissionais para garantir o funcionamento
-(function injetarEstilosRastreio() {
-    if (document.getElementById("estilos-rastreio-moderno")) return;
+// Injeta os estilos profissionais milimetricamente calibrados para a sua linha do tempo horizontal
+(function injetarEstilosRastreioModerno() {
+    if (document.getElementById("estilos-rastreio-horizontal")) return;
     const style = document.createElement("style");
-    style.id = "estilos-rastreio-moderno";
+    style.id = "estilos-rastreio-horizontal";
     style.innerHTML = `
-        /* Força suavidade na transição de todos os itens da esteira */
-        [id^="p-"], [id^="step-"], .timeline-item {
-            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        /* Suaviza as transições de cor e tamanho de todas as etapas e textos */
+        [id^="p-"], [id^="step-"], .step, .timeline-item {
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
 
-        /* 1. ESTADO ATUAL/ATIVO - Efeito Pulsante de Radar (Glow) */
+        /* --------------------------------------------------------------------------
+           1. ESTADO ATUAL / ATIVO (Onde o pedido está agora - Efeito Glow Pulsante)
+           -------------------------------------------------------------------------- */
         .atual, .active {
             opacity: 1 !important;
-            transform: scale(1.03) translateY(0px) !important;
-            filter: drop-shadow(0 4px 12px rgba(230, 57, 70, 0.15)) !important;
+            transform: scale(1.08) !important; /* Destaca levemente o círculo atual */
         }
 
-        /* Aplica o pulso na bolinha/ícone da etapa ativa */
+        /* Encontra o círculo numérico da etapa atual e faz ele pulsar em vermelho com brilho */
         .atual .timeline-badge, .active .timeline-badge,
         .atual .badge, .active .badge,
-        .atual [class*="badge"], .active [class*="badge"],
-        .atual [class*="icon"], .active [class*="icon"] {
-            background-color: #e63946 !important;
+        .atual [class*="circle"], .active [class*="circle"],
+        .atual > div:first-child, .active > div:first-child,
+        .atual span:first-child, .active span:first-child {
+            background-color: #e63946 !important; /* Vermelho temático */
+            color: #ffffff !important;
             border-color: #e63946 !important;
-            animation: pulsoRadarSabor 2s infinite ease-in-out !important;
+            font-weight: bold !important;
+            animation: pulsoGlowHorizontal 2s infinite ease-in-out !important;
         }
 
-        /* Destaca sutilmente os textos da etapa ativa */
-        .atual h4, .active h4, .atual span, .active span {
+        /* Muda o texto da legenda abaixo da bolinha ativa para vermelho em negrito */
+        .atual p, .active p, .atual span, .active span, .atual div, .active div {
             color: #e63946 !important;
             font-weight: 700 !important;
         }
 
-        /* 2. ESTADO CONCLUÍDO - Tom verde elegante e estático */
+        /* --------------------------------------------------------------------------
+           2. ESTADO CONCLUÍDO (Etapas passadas - Verde Profissional estável)
+           -------------------------------------------------------------------------- */
         .concluido, .completed {
-            opacity: 0.85 !important;
-            transform: translateY(0) !important;
+            opacity: 0.9 !important;
         }
 
+        /* Transforma os círculos numéricos anteriores em verde */
         .concluido .timeline-badge, .completed .timeline-badge,
         .concluido .badge, .completed .badge,
-        .concluido [class*="badge"], .completed [class*="badge"] {
-            background-color: #10b981 !important;
+        .concluido [class*="circle"], .completed [class*="circle"],
+        .concluido > div:first-child, .completed > div:first-child,
+        .concluido span:first-child, .completed span:first-child {
+            background-color: #10b981 !important; /* Verde iFood / Mercado Livre */
+            color: #ffffff !important;
             border-color: #10b981 !important;
         }
 
-        /* Keyframes da animação de pulso */
-        @keyframes pulsoRadarSabor {
+        /* Deixa as legendas das etapas concluídas em um tom cinza escuro nítido */
+        .concluido p, .completed p, .concluido span, .completed span {
+            color: #475569 !important;
+            font-weight: 500 !important;
+        }
+
+        /* --------------------------------------------------------------------------
+           3. ANIMAÇÃO DE PULSO (EFEITO RADAR/GLOW)
+           -------------------------------------------------------------------------- */
+        @keyframes pulsoGlowHorizontal {
             0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.6); }
-            70% { box-shadow: 0 0 0 10px rgba(230, 57, 70, 0); }
+            70% { box-shadow: 0 0 0 12px rgba(230, 57, 70, 0); }
             100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
         }
     `;
@@ -275,72 +293,17 @@ function atualizarInterfaceLinhaTempo(statusOriginal) {
         // Remove as classes limpando o frame de animação anterior
         elemento.classList.remove("concluido", "atual", "completed", "active");
         
-        // Timeout sequencial para criar o efeito "acendimento de luzes" (cascata)
+        // Timeout dinâmico para criar o efeito "acendimento de luzes sequencial" ao carregar a página
         setTimeout(() => {
             if (idx < indexAtual) {
                 elemento.classList.add("concluido", "completed");
             } else if (idx === indexAtual) {
                 elemento.classList.add("atual", "active");
                 
-                // Rola a tela suavemente até a etapa ativa
+                // Centraliza a etapa atual suavemente no campo de visão se o usuário der zoom
                 elemento.scrollIntoView({ behavior: "smooth", block: "nearest" });
             }
-        }, idx * 150); // 150 milissegundos de delay por etapa
-    });
-}
-
-function limparLinhaTempo() {
-    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
-    ordens.forEach(st => {
-        const elemento = document.getElementById("p-" + st) || document.getElementById("step-" + st);
-        if (elemento) {
-            elemento.classList.remove("concluido", "atual", "completed", "active");
-        }
-    });
-}
-
-    function atualizarInterfaceLinhaTempo(statusOriginal) {
-    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
-    
-    const dicionarioNomes = {
-        "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
-        "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
-        "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
-        "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
-    };
-
-    let statusDoBanco = statusOriginal ? statusOriginal.toUpperCase() : "RECEBIDO";
-    if (statusDoBanco === "PREPARANDO") statusDoBanco = "PREPARO";
-    if (statusDoBanco === "SAIU_ENTREGA") statusDoBanco = "ENTREGA";
-
-    const txtStatus = document.getElementById("txt-index-status") || document.getElementById("txt-status-nome");
-    if (txtStatus) {
-        txtStatus.innerText = dicionarioNomes[statusDoBanco] || statusDoBanco;
-    }
-
-    const indexAtual = ordens.indexOf(statusDoBanco);
-
-    ordens.forEach((st, idx) => {
-        const elemento = document.getElementById("p-" + st) || 
-                         document.getElementById("step-" + st) || 
-                         document.getElementById("step-" + (st === "PREPARO" ? "PREPARANDO" : st === "ENTREGA" ? "SAIU_ENTREGA" : st));
-                         
-        if (!elemento) return;
-        
-        // Remove classes antigas instantaneamente para limpar o estado visual
-        elemento.classList.remove("concluido", "atual", "completed", "active");
-        
-        // Injeta um delay milimétrico sequencial baseado no índice para criar o efeito cascata profissional
-        setTimeout(() => {
-            if (idx < indexAtual) {
-                elemento.classList.add("concluido", "completed");
-            } else if (idx === indexAtual) {
-                elemento.classList.add("atual", "active");
-                
-                // Rola a tela suavemente para manter o status atual sempre visível no smartphone
-                elemento.scrollIntoView({ behavior: "smooth", block: "nearest" });
-            }
-        }, idx * 120); // 120ms de intervalo entre o acendimento de cada etapa
+        }, idx * 150); // 150ms de intervalo suave entre cada etapa
     });
 }
 
