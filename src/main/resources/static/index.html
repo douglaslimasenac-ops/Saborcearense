@@ -266,7 +266,7 @@
                 
                 <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 25px; display: flex; gap: 10px;">
                     <input type="number" id="input-rastreio-index" placeholder="Digite o Nº do seu Pedido" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; text-align: center; font-size: 1rem;">
-                    <button onclick="buscarRastreioAbas()" style="background: var(--primary); border: none; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer;">Consultar</button>
+                    <button onclick="toggleRastreio()" style="background: var(--primary); border: none; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer;">Consultar</button>
                 </div>
 
                 <div id="wrapper-linha-tempo" style="display: none;">
@@ -320,17 +320,17 @@
         <p>Digite o número do seu pedido para acompanhar o status:</p>
         <div class="tracking-input-group">
             <input type="text" id="codigo-rastreio-input" placeholder="Ex: #1234" autocomplete="off">
-            <button onclick="executarBuscaRastreio()" class="btn-search-tracking">Buscar</button>
+            <button onclick="toggleRastreio()" class="btn-search-tracking">Buscar</button>
         </div>
     </div>
 </div>
         
         <!-- BOTÃO DE RASTREIO MINIMALISTA INTEGRADO NO RODAPÉ -->
-        <button onclick="abrirAbaRastreioOculta()" 
-                id="btn-rodape-rastreio"
-                style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; color: #475569; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;">
-            🔍 Rastrear Pedido
-        </button>
+        <button onclick="toggleRastreio()" 
+        id="btn-rodape-rastreio"
+        style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; color: #475569; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;">
+    🔍 Rastrear Pedido
+</button>
 
         <!-- TOTAL DO CARRINHO (Ajustado com margem automática para alinhar à direita) -->
         <div style="margin-left: auto; text-align: right; padding-right: 5px;">
@@ -432,7 +432,7 @@
         btnRastreio.style.borderColor = "#f5a623";
     }
 
-    buscarRastreioAbas();
+    toggleRastreio();
 }
 
 function restaurarCardapioOriginal() {
@@ -551,7 +551,7 @@ function restaurarCardapioOriginal() {
     if(barraFlutuante) barraFlutuante.style.display = 'none';
     
     // 5. Roda o buscador automático
-    buscarRastreioAbas();
+    toggleRastreio();
 }
 
 
@@ -643,27 +643,39 @@ const URL_BACKEND_JAVA = "https://saborcearense-5.onrender.com";
 
 // Função para abrir e fechar a aba de rastreio de forma fluida
         // Abre e fecha a gaveta de rastreio de forma fluida
-        function toggleRastreio() {
-            const painel = document.getElementById('painel-rastreio');
-            painel.classList.toggle('active');
-            if(painel.classList.contains('active')) {
-                document.getElementById('codigo-rastreio-input').focus();
-            }
-        }
+        // Função para abrir e fechar a aba de rastreio moderna
+function toggleRastreio() {
+    const painel = document.getElementById('painel-rastreio');
+    if (!painel) {
+        console.error("Erro: O elemento 'painel-rastreio' não foi encontrado no HTML.");
+        return;
+    }
+    painel.classList.toggle('active');
+    
+    if(painel.classList.contains('active')) {
+        const inputId = document.getElementById('codigo-rastreio-input');
+        if (inputId) inputId.focus();
+    }
+}
 
-        // Valida o número e envia para a tela dinâmica acompanhar.html
-        function executarBuscaRastreio() {
-            const input = document.getElementById('codigo-rastreio-input');
-            const pedidoId = input.value.trim().replace('#', ''); 
-            
-            if (!pedidoId) {
-                alert('Por favor, digite o número do pedido.');
-                return;
-            }
-            
-            toggleRastreio();
-            window.location.href = `acompanhar.html?id=${pedidoId}`;
-        }
+// Função que pega o número digitado e envia para a tela dinâmica acompanhar.html
+function executarBuscaRastreio() {
+    const input = document.getElementById('codigo-rastreio-input');
+    if (!input) return;
+
+    const pedidoId = input.value.trim().replace('#', ''); 
+    
+    if (!pedidoId) {
+        alert('Por favor, digite o número do pedido.');
+        return;
+    }
+    
+    // Fecha a gaveta
+    toggleRastreio();
+    
+    // Envia o cliente direto para a tela interativa de tempo real passando o ID
+    window.location.href = `acompanhar.html?id=${pedidoId}`;
+}
         
     </script>
 </body>
