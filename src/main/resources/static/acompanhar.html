@@ -283,6 +283,20 @@ function atualizarInterfaceLinhaTempo(statusOriginal) {
 
     const indexAtual = ordens.indexOf(statusDoBanco);
 
+    // Garante que a animação pulsante exista na página
+    if (!document.getElementById("animacao-pulso-core")) {
+        const style = document.createElement("style");
+        style.id = "animacao-pulso-core";
+        style.innerHTML = `
+            @keyframes pulsoRealTime {
+                0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.6); transform: scale(1.08); }
+                70% { box-shadow: 0 0 0 12px rgba(230, 57, 70, 0); transform: scale(1.08); }
+                100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); transform: scale(1.08); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
     ordens.forEach((st, idx) => {
         const elemento = document.getElementById("p-" + st) || 
                          document.getElementById("step-" + st) || 
@@ -290,20 +304,43 @@ function atualizarInterfaceLinhaTempo(statusOriginal) {
                          
         if (!elemento) return;
         
-        // Remove as classes limpando o frame de animação anterior
+        // Remove classes para controle lógico
         elemento.classList.remove("concluido", "atual", "completed", "active");
         
-        // Timeout dinâmico para criar o efeito "acendimento de luzes sequencial" ao carregar a página
+        // Localiza especificamente o círculo numérico interno (seja uma div, span ou badge)
+        const circuloNumerico = elemento.querySelector("span, div, .badge, .circle") || elemento;
+
+        // Limpa qualquer estilo inline residual antes de aplicar o novo estado
+        circuloNumerico.style.backgroundColor = "";
+        circuloNumerico.style.borderColor = "";
+        circuloNumerico.style.color = "";
+        circuloNumerico.style.animation = "";
+        circuloNumerico.style.transform = "";
+        elemento.style.opacity = "0.4";
+
+        // Aplica os efeitos visuais forçados individualmente
         setTimeout(() => {
             if (idx < indexAtual) {
                 elemento.classList.add("concluido", "completed");
+                elemento.style.opacity = "0.9";
+                
+                // Força o círculo concluído a ficar verde
+                circuloNumerico.style.backgroundColor = "#10b981";
+                circuloNumerico.style.borderColor = "#10b981";
+                circuloNumerico.style.color = "#ffffff";
             } else if (idx === indexAtual) {
                 elemento.classList.add("atual", "active");
+                elemento.style.opacity = "1";
                 
-                // Centraliza a etapa atual suavemente no campo de visão se o usuário der zoom
+                // Força o círculo atual a ficar vermelho e ativa a animação de pulso
+                circuloNumerico.style.backgroundColor = "#e63946";
+                circuloNumerico.style.borderColor = "#e63946";
+                circuloNumerico.style.color = "#ffffff";
+                circuloNumerico.style.animation = "pulsoRealTime 2s infinite ease-in-out";
+                
                 elemento.scrollIntoView({ behavior: "smooth", block: "nearest" });
             }
-        }, idx * 150); // 150ms de intervalo suave entre cada etapa
+        }, idx * 100); 
     });
 }
 
@@ -313,9 +350,19 @@ function limparLinhaTempo() {
         const elemento = document.getElementById("p-" + st) || document.getElementById("step-" + st);
         if (elemento) {
             elemento.classList.remove("concluido", "atual", "completed", "active");
+            elemento.style.opacity = "";
+            const circuloNumerico = elemento.querySelector("span, div, .badge, .circle") || elemento;
+            if (circuloNumerico) {
+                circuloNumerico.style.backgroundColor = "";
+                circuloNumerico.style.borderColor = "";
+                circuloNumerico.style.color = "";
+                circuloNumerico.style.animation = "";
+                circuloNumerico.style.transform = "";
+            }
         }
     });
 }
+
 
 </script>
 
