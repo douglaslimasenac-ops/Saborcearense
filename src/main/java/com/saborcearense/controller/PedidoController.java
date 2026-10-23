@@ -32,7 +32,7 @@ public class PedidoController {
     @Autowired
     private PedidoRepository pedidoRepository;
 
-    // 📡 LISTAR PEDIDOS ATIVOS: Alimenta o painel administrativo em tempo real
+        // 📡 LISTAR PEDIDOS ATIVOS: Alimenta o painel administrativo em tempo real
     // Retorna todos os pedidos que NÃO foram finalizados (Status diferente de 'ENTREGUE')
     @GetMapping("/ativos")
     public List<Pedido> listarPedidosAtivos() {
@@ -41,6 +41,14 @@ public class PedidoController {
         return pedidoRepository.findAll().stream()
                 .filter(pedido -> ! "ENTREGUE".equalsIgnoreCase(pedido.getStatus()))
                 .toList();
+    } // <-- ESSA CHAVE ESTAVA FALTANDO AQUI PARA FECHAR A FUNÇÃO DOS ATIVOS!
+
+    // 🔍 BUSCAR STATUS POR ID: Chamado pelo site para rastrear o pedido
+    @GetMapping("/{id}")
+    public ResponseEntity<Pedido> buscarPedidoPorId(@PathVariable Long id) {
+        return pedidoRepository.findById(id)
+                .map(pedido -> ResponseEntity.ok(pedido))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     // 📥 RECEBER NOVO PEDIDO: Chamado via fetch POST pelo carrinho.html ao finalizar
@@ -53,6 +61,7 @@ public class PedidoController {
         System.out.println("Sabor Cearense: Novo pedido recebido do cliente " + novoPedido.getClienteNome());
         return pedidoRepository.save(novoPedido);
     }
+
     // 🔄 ATUALIZAR STATUS DO PEDIDO: Gerencia o fluxo de entrega (Preparo, Despacho, Finalização)
     @PutMapping("/{id}/status")
     public ResponseEntity<Pedido> mudarStatusPedido(
@@ -67,4 +76,3 @@ public class PedidoController {
         }).orElse(ResponseEntity.notFound().build());
     }
 }
-    
