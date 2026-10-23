@@ -538,6 +538,18 @@ function restaurarCardapioOriginal() {
             localStorage.setItem("carrinhoSaborCearense", JSON.stringify(Object.values(carrinho)));
             window.location.href = "carrinho.html";
         }
+        
+// Essa ponte resolve o erro e direciona o botão para a busca correta
+function buscarRastreioAbas() {
+    if (typeof buscarNovoPedido === "function") {
+        buscarNovoPedido();
+    } else if (typeof consultarStatus === "function") {
+        consultarStatus();
+    } else {
+        console.error("Nenhuma função de busca de pedido foi encontrada no script.");
+    }
+}
+
     </script>
 </body>
 </html>
