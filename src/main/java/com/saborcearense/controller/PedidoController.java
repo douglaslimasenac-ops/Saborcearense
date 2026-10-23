@@ -21,6 +21,13 @@ import com.saborcearense.repository.PedidoRepository;
 @RequestMapping("/api/pedidos")
 @CrossOrigin(origins = "*")
 public class PedidoController {
+        // --- ADICIONE ESTE ENDPOINT EXATAMENTE ASSIM NO SEU PEDIDOCONTROLLER ---
+    // Ele lista TODOS os pedidos do banco (ativos + entregues), permitindo alimentar o histórico
+    @org.springframework.web.bind.annotation.GetMapping
+    public java.util.List<com.saborcearense.model.Pedido> listarTodosOsPedidos() {
+        // Altere 'pedidoRepository' para o nome exato do repositório injetado na sua classe
+        return pedidoRepository.findAll(); 
+    }
 
     @Autowired
     private PedidoRepository pedidoRepository;
@@ -60,3 +67,4 @@ public class PedidoController {
         }).orElse(ResponseEntity.notFound().build());
     }
 }
+    
