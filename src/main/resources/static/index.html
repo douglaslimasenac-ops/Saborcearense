@@ -539,17 +539,57 @@ function restaurarCardapioOriginal() {
             window.location.href = "carrinho.html";
         }
         
-// Essa ponte resolve o erro e direciona o botão para a busca correta
-function buscarRastreioAbas() {
-    if (typeof buscarNovoPedido === "function") {
-        buscarNovoPedido();
-    } else if (typeof consultarStatus === "function") {
-        consultarStatus();
-    } else {
-        console.error("Nenhuma função de busca de pedido foi encontrada no script.");
+
+// Define a URL do seu backend Java (mude a porta 8080 se o seu Java rodar em outra)
+const URL_BACKEND_JAVA = "http://localhost:8080"; 
+
+// 1. Função que o seu botão chama indiretamente
+async function buscarRastreioAbas() {
+    // Abre uma janelinha para o cliente digitar o número do pedido
+    let pedidoId = prompt("Digite o número do seu pedido:");
+    
+    if (!pedidoId) return;
+    
+    // Limpa espaços e o caractere '#'
+    pedidoId = pedidoId.toString().replace('#', '').trim();
+    
+    if (pedidoId === "") {
+        alert("Por favor, digite um número válido.");
+        return;
+    }
+
+    try {
+        // Envia a busca para o seu servidor Java
+        const res = await fetch(`${URL_BACKEND_JAVA}/api/pedidos/${pedidoId}`);
+        
+        if (res.ok) {
+            const pedido = await res.json();
+            
+            // Cria o dicionário de status para exibir de forma bonita para o cliente
+            const dicionarioNomes = {
+                "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
+                "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
+                "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
+                "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
+            };
+
+            const statusFormatado = pedido.status ? pedido.status.toUpperCase() : "RECEBIDO";
+            const mensagemStatus = dicionarioNomes[statusFormatado] || statusFormatado;
+
+            // Mostra o resultado em um alerta na tela
+            alert(`Pedido #${pedidoId}\nStatus: ${mensagemStatus}`);
+            
+        } else if (res.status === 404) {
+            alert("Pedido não localizado no sistema. Verifique o número.");
+        } else {
+            alert("Erro ao buscar o pedido. Tente novamente mais tarde.");
+        }
+    } catch (e) {
+        console.error("Erro na busca:", e);
+        alert("Não foi possível conectar ao servidor. O sistema de rastreio está offline.");
     }
 }
+</script>
 
-    </script>
 </body>
 </html>
