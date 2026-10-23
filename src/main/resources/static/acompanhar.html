@@ -129,54 +129,79 @@
         }
 
         async function consultarStatus() {
-            if (!pedidoId) return;
-            try {
-                const res = await fetch(`${URL_BACKEND}/api/pedidos/${pedidoId}`);
-                if (res.ok) {
-                    const pedido = await res.json();
-                    atualizarInterfaceLinhaTempo(pedido.status);
-                } else if (res.status === 404) {
-                    document.getElementById("txt-status-nome").innerText = "Pedido não localizado no sistema.";
-                    limparLinhaTempo();
-                }
-            } catch (e) { 
-                console.error("Erro ao buscar status:", e); 
+    if (!pedidoId) return;
+    try {
+        // Limpa o caractere '#' se o usuário tiver digitado por engano
+        const idLimpo = pedidoId.toString().replace('#', '').trim();
+        
+        const res = await fetch(`${URL_BACKEND}/api/pedidos/${idLimpo}`);
+        if (res.ok) {
+            const pedido = await res.json();
+            
+            // Exibe o ID do pedido na tela
+            if (document.getElementById("txt-pedido-id")) {
+                document.getElementById("txt-pedido-id").innerText = idLimpo;
             }
+
+            // Envia o status para atualizar a linha do tempo visual
+            atualizarInterfaceLinhaTempo(pedido.status);
+            
+        } else if (res.status === 404) {
+            const elementoStatus = document.getElementById("txt-status-nome") || document.getElementById("txt-index-status");
+            if (elementoStatus) {
+                elementoStatus.innerText = "Pedido não localizado no sistema.";
+            }
+            limparLinhaTempo();
         }
-
-        // Substitua o trecho interno da função buscarRastreioAbas() por este bloco mapeado em maiúsculo:
-const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
-const dicionarioNomes = {
-    "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
-    "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
-    "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
-    "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
-};
-
-// Garante que o status vindo do Java seja convertido para maiúsculo antes do tratamento
-const statusDoBanco = pedido.status ? pedido.status.toUpperCase() : "RECEBIDO";
-
-document.getElementById("txt-index-status").innerText = dicionarioNomes[statusDoBanco] || statusDoBanco;
-const indexAtual = ordens.indexOf(statusDoBanco);
-
-ordens.forEach((st, idx) => {
-    const elemento = document.getElementById("p-" + st);
-    if (!elemento) return;
-    elemento.classList.remove("concluido", "atual");
-    if (idx < indexAtual) {
-        elemento.classList.add("concluido");
-    } else if (idx === indexAtual) {
-        elemento.classList.add("atual");
+    } catch (e) { 
+        console.error("Erro ao buscar status:", e); 
     }
-});
+}
 
-        function limparLinhaTempo() {
-            const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
-            ordens.forEach(st => {
-                const elemento = document.getElementById("passo-" + st);
-                if (elemento) elemento.classList.remove("concluido", "atual");
-            });
+// ESTA É A FUNÇÃO QUE JUNTA O DICIONÁRIO DA IA E ATUALIZA A TELA DO CLIENTE
+function atualizarInterfaceLinhaTempo(statusOriginal) {
+    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+    const dicionarioNomes = {
+        "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
+        "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
+        "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
+        "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
+    };
+
+    // Garante que o status vindo do Java seja convertido para maiúsculo
+    const statusDoBanco = statusOriginal ? statusOriginal.toUpperCase() : "RECEBIDO";
+
+    // Atualiza o texto principal do status (Tenta os dois IDs possíveis para evitar erros)
+    const txtStatus = document.getElementById("txt-index-status") || document.getElementById("txt-status-nome");
+    if (txtStatus) {
+        txtStatus.innerText = dicionarioNomes[statusDoBanco] || statusDoBanco;
+    }
+
+    // Calcula em qual etapa da linha do tempo o pedido está
+    const indexAtual = ordens.indexOf(statusDoBanco);
+
+    // Pinta as bolinhas/barras de progresso (RECEBIDO, PREPARO, etc.) no seu HTML
+    ordens.forEach((st, idx) => {
+        const elemento = document.getElementById("p-" + st);
+        if (!elemento) return;
+        
+        elemento.classList.remove("concluido", "atual");
+        if (idx < indexAtual) {
+            elemento.classList.add("concluido");
+        } else if (idx === indexAtual) {
+            elemento.classList.add("atual");
         }
+    });
+}
+
+function limparLinhaTempo() {
+    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+    ordens.forEach(st => {
+        const elemento = document.getElementById("p-" + st);
+        if (elemento) elemento.classList.remove("concluido", "atual");
+    });
+}
+
     </script>
 </body>
 </html>
