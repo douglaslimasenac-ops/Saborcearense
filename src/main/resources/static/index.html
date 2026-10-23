@@ -541,31 +541,26 @@ function restaurarCardapioOriginal() {
         
 
 // Define a URL do seu backend Java (mude a porta 8080 se o seu Java rodar em outra)
-const URL_BACKEND_JAVA = "http://localhost:8080"; 
+// ⚠️ SUBSTITUA O LINK ABAIXO PELO SEU LINK DO RENDER (Mantenha o https:// e retire a barra no final)
+const URL_BACKEND_JAVA = "https://saborcearense-5.onrender.com"; 
 
-// 1. Função que o seu botão chama indiretamente
 async function buscarRastreioAbas() {
-    // Abre uma janelinha para o cliente digitar o número do pedido
     let pedidoId = prompt("Digite o número do seu pedido:");
-    
     if (!pedidoId) return;
     
-    // Limpa espaços e o caractere '#'
     pedidoId = pedidoId.toString().replace('#', '').trim();
-    
     if (pedidoId === "") {
         alert("Por favor, digite um número válido.");
         return;
     }
 
     try {
-        // Envia a busca para o seu servidor Java
+        // Agora ele vai buscar direto na nuvem do Render!
         const res = await fetch(`${URL_BACKEND_JAVA}/api/pedidos/${pedidoId}`);
         
         if (res.ok) {
             const pedido = await res.json();
             
-            // Cria o dicionário de status para exibir de forma bonita para o cliente
             const dicionarioNomes = {
                 "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
                 "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
@@ -576,7 +571,6 @@ async function buscarRastreioAbas() {
             const statusFormatado = pedido.status ? pedido.status.toUpperCase() : "RECEBIDO";
             const mensagemStatus = dicionarioNomes[statusFormatado] || statusFormatado;
 
-            // Mostra o resultado em um alerta na tela
             alert(`Pedido #${pedidoId}\nStatus: ${mensagemStatus}`);
             
         } else if (res.status === 404) {
@@ -586,9 +580,10 @@ async function buscarRastreioAbas() {
         }
     } catch (e) {
         console.error("Erro na busca:", e);
-        alert("Não foi possível conectar ao servidor. O sistema de rastreio está offline.");
+        alert("Não foi possível conectar ao servidor no Render. Verifique se o servidor está ativo.");
     }
 }
+
 </script>
 
 </body>
