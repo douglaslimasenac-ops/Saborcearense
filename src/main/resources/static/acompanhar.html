@@ -98,7 +98,7 @@
     </div>
     <script>
     // 1. Definição da URL oficial do seu backend no Render
-    const URL_BACKEND = "https://onrender.com";
+    const URL_BACKEND = "https://saborcearense-5.onrender.com";
 
     // 2. Captura o ID vindo da gaveta (URL) ou do localStorage anterior
     const urlParams = new URLSearchParams(window.location.search);
@@ -152,6 +152,7 @@
         consultarStatus();
     }
 
+    // AQUI ESTÁ O ASYNC QUE EVITA O ERRO DO AWAIT:
     async function consultarStatus() {
         if (!pedidoId) return;
         try {
@@ -187,9 +188,7 @@
         }
     }
 
-    // FUNÇÃO QUE UNE OS STATUS DO BACKEND E MAPEIA OS IDs COMPATÍVEIS (Antigos e Novos)
     function atualizarInterfaceLinhaTempo(statusOriginal) {
-        // Sequência correspondente ao seu dicionário e banco de dados
         const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
         
         const dicionarioNomes = {
@@ -199,7 +198,6 @@
             "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
         };
 
-        // Garante caixa alta e faz o mapeamento caso venha variações de escrita do Java
         let statusDoBanco = statusOriginal ? statusOriginal.toUpperCase() : "RECEBIDO";
         if (statusDoBanco === "PREPARANDO") statusDoBanco = "PREPARO";
         if (statusDoBanco === "SAIU_ENTREGA") statusDoBanco = "ENTREGA";
@@ -212,14 +210,12 @@
         const indexAtual = ordens.indexOf(statusDoBanco);
 
         ordens.forEach((st, idx) => {
-            // Mapeia de forma inteligente aceitando os IDs "p-STATUS" e "step-STATUS"
             const elemento = document.getElementById("p-" + st) || 
                              document.getElementById("step-" + st) || 
                              document.getElementById("step-" + (st === "PREPARO" ? "PREPARANDO" : st === "ENTREGA" ? "SAIU_ENTREGA" : st));
                              
             if (!elemento) return;
             
-            // Suporta ambas as classes de estilização (Antiga do seu CSS e a nova Mobile)
             elemento.classList.remove("concluido", "atual", "completed", "active");
             
             if (idx < indexAtual) {
