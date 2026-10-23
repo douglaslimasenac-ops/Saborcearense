@@ -283,85 +283,113 @@ function atualizarInterfaceLinhaTempo(statusOriginal) {
 
     const indexAtual = ordens.indexOf(statusDoBanco);
 
-    // Garante que a animação pulsante exista na página
-    if (!document.getElementById("animacao-pulso-core")) {
+    // 1. Injeta a animação profissional de pulso (Glow) na página se ela não existir
+    if (!document.getElementById("animacao-sabor-cearense")) {
         const style = document.createElement("style");
-        style.id = "animacao-pulso-core";
+        style.id = "animacao-sabor-cearense";
         style.innerHTML = `
-            @keyframes pulsoRealTime {
-                0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.6); transform: scale(1.08); }
-                70% { box-shadow: 0 0 0 12px rgba(230, 57, 70, 0); transform: scale(1.08); }
-                100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); transform: scale(1.08); }
+            @keyframes pulsoGlowSabor {
+                0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.6); transform: scale(1.1); }
+                70% { box-shadow: 0 0 0 12px rgba(230, 57, 70, 0); transform: scale(1.1); }
+                100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); transform: scale(1.1); }
+            }
+            /* Suaviza a transição de cores e tamanhos das bolinhas */
+            .circulo {
+                transition: all 0.4s ease-in-out !important;
             }
         `;
         document.head.appendChild(style);
     }
 
+    // 2. Varre as etapas usando a sua estrutura exata de IDs: passo-STATUS
     ordens.forEach((st, idx) => {
-        const elemento = document.getElementById("p-" + st) || 
-                         document.getElementById("step-" + st) || 
-                         document.getElementById("step-" + (st === "PREPARO" ? "PREPARANDO" : st === "ENTREGA" ? "SAIU_ENTREGA" : st));
+        const elemento = document.getElementById("passo-" + st) || 
+                         document.getElementById("p-" + st) || 
+                         document.getElementById("step-" + st);
                          
         if (!elemento) return;
         
-        // Remove classes para controle lógico
+        // Remove classes de controle lógico antigas
         elemento.classList.remove("concluido", "atual", "completed", "active");
         
-        // Localiza especificamente o círculo numérico interno (seja uma div, span ou badge)
-        const circuloNumerico = elemento.querySelector("span, div, .badge, .circle") || elemento;
+        // Encontra a bolinha cinza que tem a classe '.circulo' dentro do passo
+        const bolinhaCirculo = elemento.querySelector(".circulo");
+        const legendaTexto = elemento.querySelector(".legenda") || elemento.querySelector("p");
 
-        // Limpa qualquer estilo inline residual antes de aplicar o novo estado
-        circuloNumerico.style.backgroundColor = "";
-        circuloNumerico.style.borderColor = "";
-        circuloNumerico.style.color = "";
-        circuloNumerico.style.animation = "";
-        circuloNumerico.style.transform = "";
-        elemento.style.opacity = "0.4";
+        if (bolinhaCirculo) {
+            // Reseta estilos residuais para aplicar o novo estado de forma limpa
+            bolinhaCirculo.style.backgroundColor = "";
+            bolinhaCirculo.style.borderColor = "";
+            bolinhaCirculo.style.color = "";
+            bolinhaCirculo.style.animation = "";
+            bolinhaCirculo.style.transform = "";
+        }
+        if (legendaTexto) {
+            legendaTexto.style.color = "";
+            legendaTexto.style.fontWeight = "";
+        }
 
-        // Aplica os efeitos visuais forçados individualmente
+        // 3. Aplica as animações e cores com efeito cascata profissional
         setTimeout(() => {
             if (idx < indexAtual) {
+                // ETAPA CONCLUÍDA: Transforma a bolinha em Verde iFood/Mercado Livre
                 elemento.classList.add("concluido", "completed");
-                elemento.style.opacity = "0.9";
-                
-                // Força o círculo concluído a ficar verde
-                circuloNumerico.style.backgroundColor = "#10b981";
-                circuloNumerico.style.borderColor = "#10b981";
-                circuloNumerico.style.color = "#ffffff";
+                if (bolinhaCirculo) {
+                    bolinhaCirculo.style.backgroundColor = "#10b981";
+                    bolinhaCirculo.style.borderColor = "#10b981";
+                    bolinhaCirculo.style.color = "#ffffff";
+                }
+                if (legendaTexto) {
+                    legendaTexto.style.color = "#475569";
+                }
             } else if (idx === indexAtual) {
+                // ETAPA ATUAL: Transforma a bolinha em Vermelho Sabor Cearense e Ativa o Pulso
                 elemento.classList.add("atual", "active");
-                elemento.style.opacity = "1";
+                if (bolinhaCirculo) {
+                    bolinhaCirculo.style.backgroundColor = "#e63946";
+                    bolinhaCirculo.style.borderColor = "#e63946";
+                    bolinhaCirculo.style.color = "#ffffff";
+                    bolinhaCirculo.style.animation = "pulsoGlowSabor 2s infinite ease-in-out";
+                }
+                if (legendaTexto) {
+                    legendaTexto.style.color = "#e63946";
+                    legendaTexto.style.fontWeight = "700";
+                }
                 
-                // Força o círculo atual a ficar vermelho e ativa a animação de pulso
-                circuloNumerico.style.backgroundColor = "#e63946";
-                circuloNumerico.style.borderColor = "#e63946";
-                circuloNumerico.style.color = "#ffffff";
-                circuloNumerico.style.animation = "pulsoRealTime 2s infinite ease-in-out";
-                
+                // Centraliza a etapa na tela de forma suave em telas menores
                 elemento.scrollIntoView({ behavior: "smooth", block: "nearest" });
             }
-        }, idx * 100); 
+        }, idx * 100); // Delay sutil de 100ms por etapa criando efeito cascata elegante
     });
 }
 
 function limparLinhaTempo() {
     const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
     ordens.forEach(st => {
-        const elemento = document.getElementById("p-" + st) || document.getElementById("step-" + st);
+        const elemento = document.getElementById("passo-" + st) || 
+                         document.getElementById("p-" + st) || 
+                         document.getElementById("step-" + st);
+                         
         if (elemento) {
             elemento.classList.remove("concluido", "atual", "completed", "active");
-            elemento.style.opacity = "";
-            const circuloNumerico = elemento.querySelector("span, div, .badge, .circle") || elemento;
-            if (circuloNumerico) {
-                circuloNumerico.style.backgroundColor = "";
-                circuloNumerico.style.borderColor = "";
-                circuloNumerico.style.color = "";
-                circuloNumerico.style.animation = "";
-                circuloNumerico.style.transform = "";
+            const bolinhaCirculo = elemento.querySelector(".circulo");
+            const legendaTexto = elemento.querySelector(".legenda") || elemento.querySelector("p");
+            
+            if (bolinhaCirculo) {
+                bolinhaCirculo.style.backgroundColor = "";
+                bolinhaCirculo.style.borderColor = "";
+                bolinhaCirculo.style.color = "";
+                bolinhaCirculo.style.animation = "";
+                bolinhaCirculo.style.transform = "";
+            }
+            if (legendaTexto) {
+                legendaTexto.style.color = "";
+                legendaTexto.style.fontWeight = "";
             }
         }
     });
 }
+
 
 
 </script>
