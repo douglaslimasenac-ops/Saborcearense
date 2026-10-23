@@ -320,7 +320,9 @@
         <p>Digite o número do seu pedido para acompanhar o status:</p>
         <div class="tracking-input-group">
             <input type="text" id="codigo-rastreio-input" placeholder="Ex: #1234" autocomplete="off">
-            <button onclick="toggleRastreio()" class="btn-search-tracking">Buscar</button>
+            
+            <!-- ALTERADO DE toggleRastreio() PARA executarBuscaRastreio() -->
+            <button onclick="executarBuscaRastreio()" class="btn-search-tracking">Buscar</button>
         </div>
     </div>
 </div>
