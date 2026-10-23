@@ -27,7 +27,7 @@ public class PedidoController {
     public java.util.List<com.saborcearense.model.Pedido> listarTodosOsPedidos() {
         // Altere 'pedidoRepository' para o nome exato do repositório injetado na sua classe
         return pedidoRepository.findAll(); 
-    }
+    }   
 
     @Autowired
     private PedidoRepository pedidoRepository;

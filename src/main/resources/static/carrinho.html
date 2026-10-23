@@ -195,9 +195,23 @@
                 </div>
 
                 <div class="form-grupo">
-                    <label for="endereco">Endereço Completo de Entrega</label>
-                    <input type="text" id="endereco" required placeholder="Rua, Número, Bloco, Apto e Bairro">
-                </div>
+    <label for="bairro-entrega">Selecione o Bairro de Entrega</label>
+    <select id="bairro-entrega" required onchange="atualizarTaxaEntrega(this.value)">
+        <option value="" disabled selected>Escolha o seu bairro...</option>
+        <option value="Engenho Novo|0.00">Engenho Novo - R$ 0,00</option>
+        <option value="Méier|3.00">Fátima - R$ 3,00</option>
+        <option value="Grajaú|5.00">Grajaú - R$ 5,00</option>
+        <option value="Andaraí|6.00">Andaraí - R$ 6,00</option>
+        <option value="Tijuca|7.00">Tijuca - R$ 7,00</option>
+        <option value="Cachambi|5.00">Cachambi - R$ 5,00</option>   
+    </select>
+</div>
+
+<div class="form-grupo">
+    <label for="endereco">Rua, Número, Bloco ou Apto</label>
+    <input type="text" id="endereco" required placeholder="Ex: Rua São Paulo, 123 - Bloco B Apto 202">
+</div>
+
 
                 <div class="form-grupo">
                     <label for="ponto-referencia">Ponto de Referência (Opcional)</label>
@@ -292,7 +306,34 @@
             totalTxt.innerText = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
         }
 
-        async function enviarPedido(e) {
+function atualizarTaxaEntrega(valorSelect) {
+    if (!valorSelect) return;
+    const partes = valorSelect.split("|");
+    bairroTextoSelecionado = partes[0];
+    taxaEntregaSelecionada = parseFloat(partes[1]);
+    
+    // Atualiza a exibição do total somando o valor dos pratos com a taxa de entrega
+    const totalComTaxa = totalCalculado + taxaEntregaSelecionada;
+    document.getElementById("valor-total").innerText = `R$ ${totalComTaxa.toFixed(2).replace('.', ',')} (com R$ ${taxaEntregaSelecionada.toFixed(2).replace('.', ',')} de entrega)`;
+}
+
+        // ATENÇÃO: Deixe estas duas variáveis fora de qualquer função (no escopo global do script)
+let taxaEntregaSelecionada = 0;
+let bairroTextoSelecionado = "";
+
+function atualizarTaxaEntrega(valorSelect) {
+    if (!valorSelect) return;
+    const partes = valorSelect.split("|");
+    bairroTextoSelecionado = partes[0];
+    taxaEntregaSelecionada = parseFloat(partes[1]);
+    
+    // Atualiza a exibição do total somando o valor dos pratos com a taxa de entrega
+    const totalComTaxa = totalCalculado + taxaEntregaSelecionada;
+    document.getElementById("valor-total").innerText = `R$ ${totalComTaxa.toFixed(2).replace('.', ',')} (com R$ ${taxaEntregaSelecionada.toFixed(2).replace('.', ',')} de entrega)`;
+}
+
+// SUA FUNÇÃO ENVIAR PEDIDO TOTALMENTE CORRIGIDA:
+async function enviarPedido(e) {
     e.preventDefault();
 
     const agora = new Date();
@@ -312,72 +353,82 @@
         }
     }
 
+    // Validação do Bairro e da Taxa
+    const bairroSelect = document.getElementById("bairro-entrega").value;
+    if (!bairroSelect) { 
+        alert("Por favor, selecione o bairro de entrega!"); 
+        return; 
+    }
+
     const itens = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || [];
     if (itens.length === 0) {
         alert("Seu carrinho está vazio!");
         return;
     }
-    
-    // ... restante do seu código original que envia para a API e abre o wa.me ...
 
+    const nome = document.getElementById("nome").value;
+    const contatoTelefone = document.getElementById("telefone").value;
+    const enderecoRua = document.getElementById("endereco").value;
+    const ref = document.getElementById("ponto-referencia").value || "Não informado";
+    const pagamento = document.getElementById("pagamento").value;
 
-            const nome = document.getElementById("nome").value;
-            const contatoTelefone = document.getElementById("telefone").value;
-            const endereco = document.getElementById("endereco").value;
-            const ref = document.getElementById("ponto-referencia").value || "Não informado";
-            const pagamento = document.getElementById("pagamento").value;
+    const enderecoCompleto = `${enderecoRua}, Bairro: ${bairroTextoSelecionado}`;
+    const totalComTaxaGeral = totalCalculado + taxaEntregaSelecionada;
 
-            const dadosPedido = {
-                clienteNome: nome,
-                endereco: endereco + " (Tel: " + contatoTelefone + ") (Ref: " + ref + ")",
-                formaPagamento: pagamento,
-                valorTotal: totalCalculado
-            };
+    const dadosPedido = {
+        clienteNome: nome,
+        endereco: enderecoCompleto + " (Tel: " + contatoTelefone + ") (Ref: " + ref + ")",
+        formaPagamento: pagamento,
+        valorTotal: totalComTaxaGeral // Envia o total exato corrigido com a taxa para o banco Java
+    };
 
-            try {
-                const response = await fetch(URL_API_BACKEND + "/api/pedidos", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(dadosPedido)
-                });
+    try {
+        const response = await fetch(URL_API_BACKEND + "/api/pedidos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dadosPedido)
+        });
 
-                let pedidoIdGerado = "NOVO";
-                if (response.ok) {
-                    const pedidoSalvo = await response.json();
-                    pedidoIdGerado = pedidoSalvo.id;
-                    localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
-                }
-
-                let mensagem = "🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n";
-                if (pedidoIdGerado !== "NOVO") {
-                    mensagem += "🆔 *Pedido Nº:* #" + pedidoIdGerado + "\n";
-                }
-                mensagem += "👤 *Cliente:* " + nome + "\n";
-                mensagem += "📞 *Contato:* " + contatoTelefone + "\n";
-                mensagem += "📍 *Endereço:* " + endereco + "\n";
-                mensagem += "🔍 *Referência:* " + ref + "\n";
-                mensagem += "💳 *Pagamento:* " + pagamento + "\n\n";
-                mensagem += "🛒 *Itens do Pedido:*\n";
-
-                itens.forEach(item => {
-                    const subtotal = (item.preco * item.quantidade).toFixed(2).replace('.', ',');
-                    mensagem += "• " + item.quantidade + "x _" + item.nome + "_ - R\$ " + subtotal + "\n";
-                });
-
-                mensagem += "\n💰 *Total do Pedido:* R\$ " + totalCalculado.toFixed(2).replace('.', ',') + "\n\n";
-                mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
-
-                const urlWhatsapp = "https://wa.me/" + WHATSAPP_NUMERO + "?text=" + encodeURIComponent(mensagem);
-                
-                window.open(urlWhatsapp, '_blank');
-                localStorage.removeItem("carrinhoSaborCearense");
-                window.location.href = "acompanhar.html";
-
-            } catch (error) {
-                console.error("Erro no processamento do pedido:", error);
-                alert("Ocorreu uma falha ao enviar o pedido para o servidor, mas você pode tentar reenviar.");
-            }
+        let pedidoIdGerado = "NOVO";
+        if (response.ok) {
+            const pedidoSalvo = await response.json();
+            pedidoIdGerado = pedidoSalvo.id;
+            localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
         }
+
+        // Montagem da mensagem estruturada profissional do WhatsApp com taxa embutida
+        let mensagem = "🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n";
+        if (pedidoIdGerado !== "NOVO") {
+            mensagem += "🆔 *Pedido Nº:* #" + pedidoIdGerado + "\n";
+        }
+        mensagem += "👤 *Cliente:* " + nome + "\n";
+        mensagem += "📞 *Contato:* " + contatoTelefone + "\n";
+        mensagem += "📍 *Bairro:* " + bairroTextoSelecionado + "\n";
+        mensagem += "🏠 *Endereço:* " + enderecoRua + "\n";
+        mensagem += "🔍 *Referência:* " + ref + "\n";
+        mensagem += "💳 *Pagamento:* " + pagamento + "\n\n";
+        mensagem += "🛒 *Itens do Pedido:*\n";
+
+        itens.forEach(item => {
+            const subtotal = (item.preco * item.quantidade).toFixed(2).replace('.', ',');
+            mensagem += "• " + item.quantidade + "x _" + item.nome + "_ - R$ " + subtotal + "\n";
+        });
+
+        mensagem += "\n🛵 *Taxa de Entrega:* R$ " + taxaEntregaSelecionada.toFixed(2).replace('.', ',');
+        mensagem += "\n💰 *Total do Pedido:* R$ " + totalComTaxaGeral.toFixed(2).replace('.', ',') + "\n\n";
+        mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
+
+        const urlWhatsapp = "https://wa.me/" + WHATSAPP_NUMERO + "?text=" + encodeURIComponent(mensagem);
+        
+        window.open(urlWhatsapp, '_blank');
+        localStorage.removeItem("carrinhoSaborCearense");
+        window.location.href = "index.html?admin=1&aba=RASTREIO"; // Redireciona direto para a nova aba integrada de rastreio
+
+    } catch (error) {
+        console.error("Erro no processamento do pedido:", error);
+        alert("Ocorreu uma falha ao enviar o pedido para o servidor, mas você pode tentar reenviar.");
+    }
+}
     </script>
 </body>
 </html>

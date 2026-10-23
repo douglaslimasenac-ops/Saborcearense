@@ -144,32 +144,31 @@
             }
         }
 
-        function atualizarInterfaceLinhaTempo(statusAtual) {
-            const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
-            const dicionarioNomes = {
-                "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
-                "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
-                "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
-                "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
-            };
+        // Substitua o trecho interno da função buscarRastreioAbas() por este bloco mapeado em maiúsculo:
+const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+const dicionarioNomes = {
+    "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
+    "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
+    "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
+    "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
+};
 
-            document.getElementById("txt-status-nome").innerText = dicionarioNomes[statusAtual] || statusAtual;
+// Garante que o status vindo do Java seja convertido para maiúsculo antes do tratamento
+const statusDoBanco = pedido.status ? pedido.status.toUpperCase() : "RECEBIDO";
 
-            const indexAtual = ordens.indexOf(statusAtual);
+document.getElementById("txt-index-status").innerText = dicionarioNomes[statusDoBanco] || statusDoBanco;
+const indexAtual = ordens.indexOf(statusDoBanco);
 
-            ordens.forEach((st, idx) => {
-                const elemento = document.getElementById("passo-" + st);
-                if (!elemento) return;
-
-                elemento.classList.remove("concluido", "atual");
-
-                if (idx < indexAtual) {
-                    elemento.classList.add("concluido");
-                } else if (idx === indexAtual) {
-                    elemento.classList.add("atual");
-                }
-            });
-        }
+ordens.forEach((st, idx) => {
+    const elemento = document.getElementById("p-" + st);
+    if (!elemento) return;
+    elemento.classList.remove("concluido", "atual");
+    if (idx < indexAtual) {
+        elemento.classList.add("concluido");
+    } else if (idx === indexAtual) {
+        elemento.classList.add("atual");
+    }
+});
 
         function limparLinhaTempo() {
             const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
