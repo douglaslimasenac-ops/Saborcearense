@@ -374,40 +374,44 @@
     </div>
 
         <!-- Barra Inferior Atualizada (Agora funciona como o gatilho da Sacola) -->
-<div id="barra-inferior" class="barra-flutuante" onclick="abrirSacola()">
+<!-- NOVA BARRA FLUTUANTE FIXA -->
+<div id="barra-flutuante-container" class="barra-flutuante" onclick="abrirSacola()">
     <button class="btn-rastrear" onclick="event.stopPropagation(); irParaRastreio();">
         🔍 Rastrear Pedido
     </button>
-    <div class="info-sacola">
-        <span id="quantidade-sacola">0 itens</span>
-        <span id="total-sacola" class="total-valor">R$ 0,00</span>
+    
+    <div class="info-central-sacola">
+        <span id="txt-qtd-itens">0 itens</span>
+        <span id="txt-valor-total" class="preco-destaque">R$ 0,00</span>
     </div>
-    <button class="btn-avancar">
-        Ver Sacola 👜
+    
+    <button class="btn-ver-sacola">
+        Ver Sacola ➔
     </button>
 </div>
 
-<!-- Estrutura da Gaveta da Sacola (Escondida por padrão) -->
-<div id="modal-sacola" class="modal-sacola">
-    <div class="modal-overlay" onclick="fecharSacola()"></div>
-    <div class="modal-conteudo">
-        <div class="modal-topo">
+<!-- CONTAINER DO MODAL DA GAVETA (SACOLA INTERATIVA) -->
+<div id="painel-sacola-modal" class="modal-sacola-gaveta">
+    <!-- Fundo escurecido (clique fecha a sacola) -->
+    <div class="sacola-backdrop" onclick="fecharSacola()"></div>
+    
+    <!-- Conteúdo que desliza -->
+    <div class="sacola-conteudo-wrapper">
+        <div class="sacola-topo-header">
             <h3>Sua Sacola</h3>
-            <button class="btn-fechar" onclick="fecharSacola()">✕</button>
+            <button class="btn-fechar-painel" onclick="fecharSacola()">✕</button>
         </div>
         
-        <!-- Lista de itens injetados dinamicamente -->
-        <div id="itens-sacola-lista" class="itens-sacola-lista">
-            <!-- Injetado via JS: Nome, Preço unitário, Quantidade e Botões de +/- -->
-        </div>
+        <!-- Onde os itens manipuláveis serão injetados -->
+        <div id="lista-produtos-sacola" class="sacola-corpo-itens"></div>
 
-        <div class="modal-rodape">
-            <div class="linha-resumo">
-                <span>Subtotal:</span>
-                <span id="modal-subtotal">R$ 0,00</span>
+        <div class="sacola-rodape-acoes">
+            <div class="resumo-valores-linha">
+                <span>Subtotal</span>
+                <span id="txt-modal-subtotal" class="preco-destaque">R$ 0,00</span>
             </div>
-            <!-- Botão final que envia para o checkout real -->
-            <button class="btn-finalizar-pedido" onclick="finalizarPedido()">
+            
+            <button class="btn-confirmar-checkout" onclick="irParaCheckout()">
                 Avançar para o Pagamento ➜
             </button>
         </div>
@@ -745,27 +749,23 @@ function restaurarCardapioOriginal() {
         // 1. OBJETO GLOBAL QUE MANTÉM O ESTADO DA SACOLA
 
 // 2. SUA FUNÇÃO ADAPTADA PARA GERENCIAR A SACOLA
-function mudarQuantidade(id, mudanca, nome, preco) {
-    // Se o produto não existe na sacola, inicializa ele
-    if (!dadosSacola[id]) {
-        dadosSacola[id] = { nome: nome, preco: parseFloat(preco), qtd: 0 };
+function mudarQuantidade(id, alteracao, nome, preco) {
+    // ... seu código de validação e manipulação do carrinho (mantenha igual) ...
+
+    if (carrinho[id].quantidade <= 0) {
+        delete carrinho[id];
+        if(document.getElementById("qtd-" + id)) document.getElementById("qtd-" + id).innerText = "0";
+        if(document.getElementById("item-" + id)) document.getElementById("item-" + id).classList.remove("selecionado");
+    } else {
+        if(document.getElementById("qtd-" + id)) document.getElementById("qtd-" + id).innerText = carrinho[id].quantidade;
+        if(document.getElementById("item-" + id)) document.getElementById("item-" + id).classList.add("selecionado");
     }
 
-    // Aplica a mudança (+1 ou -1)
-    dadosSacola[id].qtd += mudanca;
-
-    // Se a quantidade caiu para 0 ou menos, remove o item da sacola
-    if (dadosSacola[id].qtd <= 0) {
-        delete dadosSacola[id];
-    }
-
-    // 3. SINCRONIZAÇÃO DE TELAS
-    atualizarTotaisBarra();
-    renderizarItensSacola();
-    
-    // Atualiza o número do contador visual (0, 1, 2...) no cardápio principal
-    sincronizarContadorCardapio(id);
+    // Certifique-se de chamar estes dois métodos com estes nomes exatos:
+    atualizarTotalFlutuante(); 
+    renderizarItensSacola();   
 }
+
 
 // 4. ATUALIZA A BARRA FIXA INFERIOR RECOLHIDA
 function atualizarTotaisBarra() {
@@ -794,26 +794,24 @@ function sincronizarContadorCardapio(id) {
 
 
         function atualizarTotalFlutuante() {
-            let total = 0;
-            Object.values(carrinho).forEach(item => {
-                total += item.preco * item.quantidade;
-            });
-            document.getElementById("total-flutuante").innerText = "R\$ " + total.toFixed(2).replace('.', ',');
-        }
+    let totalItens = 0;
+    let valorTotal = 0;
 
-        function irParaFinalizacao() {
-            if(!estabelecimentoAberto) {
-                alert("Não é possível avançar. O restaurante encontra-se fechado no momento.");
-                return;
-            }
-            const chavesCarrinho = Object.keys(carrinho);
-            if (chavesCarrinho.length === 0) {
-                alert("Por favor, selecione pelo menos um prato antes de avançar!");
-                return;
-            }
-            localStorage.setItem("carrinhoSaborCearense", JSON.stringify(Object.values(carrinho)));
-            window.location.href = "carrinho.html";
-        }
+    Object.values(carrinho).forEach(item => {
+        totalItens += item.quantidade;
+        valorTotal += item.preco * item.quantidade;
+    });
+
+    // Só altera a propriedade se o elemento realmente existir na tela
+    const elQtd = document.getElementById('txt-qtd-itens');
+    const elTotal = document.getElementById('txt-valor-total');
+    const elSubtotal = document.getElementById('txt-modal-subtotal');
+
+    if (elQtd) elQtd.innerText = `${totalItens} ${totalItens === 1 ? 'item' : 'itens'}`;
+    if (elTotal) elTotal.innerText = `R$ ${valorTotal.toFixed(2)}`;
+    if (elSubtotal) elSubtotal.innerText = `R$ ${valorTotal.toFixed(2)}`;
+}
+
         
 
 // Define a URL do seu backend Java (mude a porta 8080 se o seu Java rodar em outra)
