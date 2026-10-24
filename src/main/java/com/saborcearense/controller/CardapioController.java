@@ -2,6 +2,7 @@ package com.saborcearense.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -109,43 +110,29 @@ public class CardapioController {
             System.out.println("Sabor Cearense: Banco já populado. Ignorando carga inicial.");
         }
     }
-   
-       // 1. Mudamos o parâmetro para 'double preco' para aceitar os números do seu cardápio sem reclamar
+
     private Produto criarProdutoInicial(String nome, String categoria, double preco, String descricao) {
         Produto produto = new Produto();
         produto.setNome(nome);
         produto.setCategoria(categoria);
-        
-        // 2. Aqui é feita a conversão correta de double para BigDecimal exigida pelo seu modelo
         produto.setPreco(java.math.BigDecimal.valueOf(preco)); 
         produto.setDescricao(descricao);
 
-        // Link padrão genérico profissional para o restaurante
         String urlImagem = "https://unsplash.com";
         String nomeMinusculo = nome.toLowerCase();
 
-        // Mapeamentos baseados nas fotos reais enviadas por você
         if (nomeMinusculo.contains("quiabo")) {
             urlImagem = "https://unsplash.com";
         } else if (nomeMinusculo.contains("carne assada")) {
             urlImagem = "https://unsplash.com";
-        } else if (nomeMinusculo.contains("costela")) {
-            urlImagem = "https://unsplash.com";
-        } else if (nomeMinusculo.contains("frango assado")) {
-            urlImagem = "https://unsplash.com";
-        } else if (nomeMinusculo.contains("dobradinha")) {
-            urlImagem = "https://unsplash.com";
-        } else if (nomeMinusculo.contains("pernil")) {
-            urlImagem = "https://unsplash.com";
-        } else if (nomeMinusculo.contains("coca")) {
-            urlImagem = "https://unsplash.com";
-        } else if (nomeMinusculo.contains("laranja")) {
-            urlImagem = "https://unsplash.com";
         }
 
-        // Vincula a foto mapeada ao campo correto da entidade Produto
         produto.setImagemUrl(urlImagem); 
-
         return produto;
     }
-} // Esta chave garante o fechamento perfeito da classe CardapioController
+
+    @GetMapping
+    public java.util.List<Produto> listarTodos() {
+        return repository.findAll();
+    }
+}

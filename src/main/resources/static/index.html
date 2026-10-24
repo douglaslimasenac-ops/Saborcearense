@@ -395,12 +395,24 @@
 
         async function carregarCardapio() {
     try {
+        // Altere "/api/cardapio" abaixo para a rota real do seu Java (ex: /api/produtos) se necessário
         const res = await fetch(URL_BACKEND + "/api/cardapio");
+        
+        // Se o servidor der erro (como 404), lança um erro para cair no bloco catch e não travar
+        if (!res.ok) {
+            throw new Error(`Servidor respondeu com status ${res.status}`);
+        }
+
         const itens = await res.json();
         
-        // Dicionário Inteligente com fotos reais extraídas dos seus dois folhetos físicos
+        // PROTEÇÃO DE SEGURANÇA: Se o retorno não for uma lista válida, avisa no console e para a execução
+        if (!Array.isArray(itens)) {
+            console.error("O backend não retornou uma lista de produtos válida:", itens);
+            return;
+        }
+        
+        // Dicionário Inteligente com fotos reais
         const IMAGENS_COMPLETAS_SABOR = {
-            // Pratos do Dia / Principais
             "Frango c/ quiabo": "https://unsplash.com",
             "Carne assada": "https://unsplash.com",
             "Costela c/ batata": "https://unsplash.com",
@@ -410,39 +422,11 @@
             "Frango grelhado": "https://unsplash.com",
             "Bife acebolado": "https://unsplash.com",
             "Omelete": "https://unsplash.com",
-            "Jardineira": "https://unsplash.com",
-            "Língua c/ batata": "https://unsplash.com",
-            "Mocotó": "https://unsplash.com",
-            "Almôndega": "https://unsplash.com",
-            "Rabada": "https://unsplash.com",
-            "Peixe ao molho": "https://unsplash.com",
-            "Carré à mineira": "https://unsplash.com",
-            "Frango amilanesa": "https://unsplash.com",
-            "Fígado acebolado": "https://unsplash.com",
-            "Bife amilanesa": "https://unsplash.com",
-            "Filé de peixe": "https://unsplash.com",
-            "Carré": "https://unsplash.com",
-            "Linguiça de churrasco": "https://unsplash.com",
-            
-            // Refrigerantes e Bebidas
             "Coca Comum": "https://unsplash.com",
             "Coca Zero": "https://unsplash.com",
             "Guaraná Comum": "https://unsplash.com",
-            "Guaraná Zero": "https://unsplash.com",
-            "Fanta Laranja": "https://unsplash.com",
-            "Fanta Uva": "https://unsplash.com",
-            "Sprite": "https://unsplash.com",
-            "Água s/gás": "https://unsplash.com",
-            "Água c/gás": "https://unsplash.com",
-            "Monster": "https://unsplash.com",
-            "Red Bull": "https://unsplash.com",
-            
-            // Sucos
-            "Laranja Copo": "https://unsplash.com",
-            "Limão Copo": "https://unsplash.com",
-            "Laranja Jarra": "https://unsplash.com",
-            "Limão Jarra": "https://unsplash.com"
-
+            "Suco Laranja Copo": "https://unsplash.com",
+            "Suco Limão Copo": "https://unsplash.com"
         };
         
         const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "SOBREMESA", "BEBIDA"];
@@ -457,12 +441,8 @@
             div.id = "item-" + item.id;
             div.className = `menu-item ${esgotado ? 'item-esgotado' : ''}`;
             
-            // Lógica inteligente para as fotos:
-            // 1. Verifica se veio um link válido do banco (item.imagemUrl)
-            // 2. Se não veio, busca no nosso catálogo pelo nome exato do prato
-            // 3. Se for um prato novo não catalogado, usa um placeholder profissional padrão
             let fotoFinal = item.imagemUrl;
-            if (!fotoFinal || fotoFinal === "" || fotoFinal.includes("://unsplash.com") || fotoFinal === "https://unsplash.com") {
+            if (!fotoFinal || fotoFinal === "" || fotoFinal === "https://unsplash.com") {
                 fotoFinal = IMAGENS_COMPLETAS_SABOR[item.nome] || "https://placehold.co";
             }
             
@@ -478,7 +458,6 @@
                 controleHtml = `<span class="badge-esgotado">Esgotado</span>`;
             }
 
-            // Renderiza mantendo a sua estrutura flexbox original intacta
             div.innerHTML = `
                 <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
                     <img src="${fotoFinal}" 
@@ -498,10 +477,15 @@
             if(targetSecao) targetSecao.appendChild(div);
         });
 
-        if(!estabelecimentoAberto) aplicarBloqueioInterfaceFechado();
+        if (typeof establishmentoAberto !== 'undefined' && !estabelecimentoAberto) {
+            aplicarBloqueioInterfaceFechado();
+        }
 
-    } catch(e) { console.error("Erro ao carregar cardápio:", e); }
+    } catch(e) { 
+        console.error("Erro ao carregar cardápio:", e); 
+    }
 }
+
 
                         // Variável de controle global para gerenciar o temporizador automático
         let rastreioTimerAutomatizado = null;
