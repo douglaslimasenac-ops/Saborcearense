@@ -15,366 +15,280 @@
 /* ==========================================================================
    2. RESET DE TELA E CENTRALIZAÇÃO COMPLETA
    ========================================================================== */
+/* Configurações Globais */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-    background-color: var(--bg-browser);
-    color: var(--dark);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
-}
-
-/* Trava o aplicativo no centro de telas grandes de computador */
-.container {
-    width: 100%;
-    max-width: var(--container-width);
-    background-color: var(--card-bg);
-    min-height: 100vh;
-    position: relative;
-    margin: 0 auto;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    background-color: #FFFDF0; /* Fundo bege bem claro */
+    color: #333;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    padding: 20px 10px;
 }
 
-main {
-    padding: 0 16px;
-    flex: 1;
+/* Container Principal */
+.container {
+    width: 100%;
+    max-width: 600px;
+    background-color: #FFFFFF;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-/* ==========================================================================
-   3. DESIGN DO CABEÇALHO, GRIDS DE BOTÕES E BADGES DE HORÁRIO
-   ========================================================================== */
-.header-app {
+/* Cabeçalho */
+.header {
     text-align: center;
-    margin: 24px 0 16px 0;
-    color: var(--dark);
+    margin-bottom: 15px;
 }
 
-.header-app h1 {
-    font-size: 2.2rem;
-    margin-bottom: 5px;
-    font-weight: 900;
-}
-
-/* Status: Aberto/Fechado */
-.status-barra {
+.brand-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #000000;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 12px;
-    font-weight: bold;
-    border-radius: 8px;
-    margin: 15px auto 5px auto;
-    background-color: #ffffff;
-    color: var(--dark);
-    border: 2px solid var(--border-color);
-    width: 92%;
-    font-size: 0.95rem;
 }
 
-.status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.status-aberto {
-    background-color: #2ecc71;
-    box-shadow: 0 0 6px #2ecc71;
-}
-
-.status-fechado {
-    background-color: #e74c3c;
-    box-shadow: 0 0 6px #e74c3c;
-}
-
-/* Recipiente de Horários Centralizado */
-.horario-container {
-    text-align: center;
-    margin: 5px auto 20px auto;
-}
-
-.horario-dias {
-    margin: 4px 0;
+.brand-subtitle {
     font-size: 14px;
-    color: #4A2412;
-    font-weight: bold;
-}
-
-.horario-entregas {
-    margin: 4px 0;
-    font-size: 13px;
-    color: #D32F2F;
-    font-weight: bold;
-    background-color: #FFF3CD;
-    display: inline-block;
-    padding: 4px 14px;
-    border-radius: 20px;
-    border: 1px solid #FFEBAA;
-}
-
-/* Abas de Navegação (Do Dia, Principais...) */
-.abas-navegacao {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    margin: 15px 0;
-    overflow-x: auto;
-    padding: 0 16px 5px 16px;
-}
-
-.abas-navegacao::-webkit-scrollbar {
-    display: none; /* Oculta barra de rolagem horizontal feia */
-}
-
-.btn-aba {
-    flex: 1;
-    padding: 10px 14px;
-    font-weight: bold;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background: #ffffff;
-    color: var(--dark);
-    cursor: pointer;
-    white-space: nowrap;
-    font-size: 0.85rem;
-    transition: all 0.2s ease;
-}
-
-.btn-aba.ativo {
-    background: var(--primary) !important;
-    border-color: var(--primary) !important;
-}
-/* ==========================================================================
-   4. ESTILO DE SEÇÕES DE PRODUTOS (IFOOD STYLE COM RÍGIDA ANTI-OSCILAÇÃO)
-   ========================================================================== */
-.menu-section h2 {
-    background: var(--dark);
-    color: var(--primary);
-    padding: 10px 14px;
-    border-radius: 6px;
-    font-size: 1.15rem;
-    margin: 20px 16px 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.menu-section h3 {
-    color: var(--dark);
-    border-bottom: 3px solid var(--primary);
-    padding-bottom: 4px;
-    margin: 20px 16px 10px 16px;
-    font-size: 1.05rem;
-}
-
-/* Container do item do cardápio das fotos */
-.menu-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #ffffff;
-    padding: 14px;
-    margin: 0 16px 12px 16px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-}
-
-.menu-item.selecionado {
-    border-left: 6px solid var(--primary);
-    background: #fffdf7;
-}
-
-.item-info h4 {
-    margin: 0 0 6px 0;
-    font-size: 1rem;
-    color: var(--dark);
-    font-weight: 600;
-}
-
-.preco {
-    color: #27ae60;
-    font-weight: bold;
-    font-size: 1.05rem;
-}
-
-/* Indicação Visual de Esgotado */
-.item-esgotado {
-    opacity: 0.5;
-    background: #f8fafc !important;
-    border-left: 4px solid #94a3b8 !important;
-}
-
-.badge-esgotado {
-    color: #475569;
-    font-weight: bold;
-    background: #e2e8f0;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-}
-
-/* Recipiente Rígido Anti-Layout Shift das Fotos */
-.foto-produto-container {
-    width: 70px;
-    height: 70px;
-    min-width: 70px;
-    max-width: 70px;
-    min-height: 70px;
-    max-height: 70px;
-    background-color: #f1f5f9;
-    border-radius: 8px;
-    overflow: hidden;
-    display: inline-block;
-    flex-shrink: 0;
-}
-
-.foto-produto-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-/* Seletor de quantidade quadrado igual ao do print */
-.seletor-quantidade {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #ffffff;
-    border: 1px solid #b5b5b5;
-    border-radius: 4px;
-    padding: 0 6px;
-    min-width: 85px;
-    height: 32px;
-}
-
-.btn-qtd {
-    background: transparent;
-    border: none;
-    color: var(--dark);
-    font-size: 1.2rem;
-    font-weight: bold;
-    cursor: pointer;
-    width: 24px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.qtd-numero {
-    font-weight: bold;
-    color: var(--dark);
-    font-size: 1rem;
-    min-width: 16px;
-    text-align: center;
-}
-
-/* ==========================================================================
-   5. BARRA INFERIOR DE TOTAL FIXA EXATAMENTE COMO NA FOTO
-   ========================================================================== */
-.barra-flutuante-original {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: var(--container-width); /* Acopla rigidamente aos 480px centrais */
-    height: 75px;
-    background-color: #ffffff;
-    border-top: 2px solid var(--primary); /* Linha amarela superior contínua */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 16px;
-    z-index: 1000;
-}
-
-.container-avancar-original {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-left: auto; /* Alinha o bloco e botão totalmente à direita */
-}
-
-.info-valores-originais {
-    text-align: right;
-    padding-right: 5px;
-}
-
-.txt-total-label {
-    font-size: 0.8rem;
-    color: #64748b;
-    display: block;
+    color: #666;
+    margin-top: 2px;
     font-weight: 500;
 }
 
-#total-flutuante, #txt-valor-total {
-    font-weight: 800;
-    color: #27ae60;
-    font-size: 1.15rem;
-    line-height: 1;
-}
-
-.btn-avancar, .btn-avancar-amarelo {
-    background-color: var(--primary) !important;
-    color: #111111 !important;
-    border: none;
-    padding: 10px 18px;
-    font-size: 0.95rem;
-    font-weight: bold;
-    border-radius: 6px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background-color 0.2s;
-}
-
-.btn-avancar:hover, .btn-avancar-amarelo:hover {
-    background-color: var(--primary-hover) !important;
-}
-
-/* ==========================================================================
-   6. SEÇÃO DE RASTREIO E DRAWER DE SACOLA DA INTERFACE
-   ========================================================================== */
-.sacola-drawer-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 2000;
-    display: none;
-}
-
-.sacola-drawer-overlay {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
-}
-
-.sacola-drawer-content {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: var(--container-width);
-    height: 75vh;
-    background-color: #ffffff;
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
+/* Badges e Informações de Status */
+.badge-container {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.badge-orange {
+    background-color: #FFA500;
+    color: #000000;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.status-open {
+    color: #28a745;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.status-admin {
+    color: #FFA500;
+    font-size: 12px;
+}
+
+.delivery-info {
+    font-size: 12px;
+    color: #444;
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+/* Link de Rastreamento (Destacado na imagem) */
+.tracking-link-box {
+    text-align: center;
+    margin: 15px 0;
+}
+
+.tracking-link {
+    color: #003399;
+    font-size: 13px;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 4px 15px;
+    border: 1.5px solid #003399; /* Azul do círculo de destaque */
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* Menu de Categorias (Abas) */
+.categories-nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 20px;
+}
+
+.category-btn {
+    border: 1px solid #E0E0E0;
+    padding: 8px 4px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    background-color: #FFFFFF;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.category-btn.active {
+    background-color: #FFA500; /* Laranja da aba ativa */
+    border-color: #FFA500;
+    color: #000000;
+}
+
+/* Seção de Pratos do Dia */
+.section-title-bar {
+    background-color: #000000;
+    color: #FFA500;
+    font-weight: bold;
+    font-size: 15px;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Lista de Produtos */
+.product-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #EAEAEA;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background-color: #FFFFFF;
+}
+
+.product-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.product-img-placeholder {
+    width: 50px;
+    height: 50px;
+    background-color: #F5F5F5;
+    border-radius: 6px;
+    border: 1px dashed #DDD;
+}
+
+.product-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.product-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #111;
+    margin-bottom: 4px;
+}
+
+.product-price {
+    font-size: 14px;
+    font-weight: bold;
+    color: #28a745; /* Verde do preço */
+}
+
+/* Controles de Quantidade (+ / -) */
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    border: 1px solid #CCCCCC;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.qty-btn {
+    background-color: #FFFFFF;
+    border: none;
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qty-btn:hover {
+    background-color: #F5F5F5;
+}
+
+.qty-value {
+    width: 24px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+/* Barra Inferior de Total / Avançar */
+.footer-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #FFFFFF;
+    border-top: 1px solid #EAEAEA;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 600px;
+    margin: 0 auto;
+    z-index: 100;
+}
+
+.btn-track-footer {
+    background-color: #F5F5F5;
+    border: 1px solid #CCCCCC;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.total-box {
+    text-align: right;
+}
+
+.total-label {
+    font-size: 11px;
+    color: #666;
+    display: block;
+}
+
+.total-value {
+    font-size: 16px;
+    font-weight: bold;
+    color: #28a745;
+}
+
+.btn-advance {
+    background-color: #FFA500;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #000000;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
