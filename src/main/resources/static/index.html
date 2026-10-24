@@ -375,44 +375,43 @@
 
         <!-- Barra Inferior Atualizada (Agora funciona como o gatilho da Sacola) -->
 <!-- NOVA BARRA FLUTUANTE FIXA -->
-<div id="barra-flutuante-container" class="barra-flutuante" onclick="abrirSacola()">
-    <button class="btn-rastrear" onclick="event.stopPropagation(); irParaRastreio();">
+<!-- SUA BARRA ORIGINAL COM A SACOLA EMBUTIDA OCULTA -->
+<div class="barra-flutuante-original">
+    <button class="btn-rastrear-original" onclick="irParaRastreio()">
         🔍 Rastrear Pedido
     </button>
     
-    <div class="info-central-sacola">
-        <span id="txt-qtd-itens">0 itens</span>
-        <span id="txt-valor-total" class="preco-destaque">R$ 0,00</span>
+    <div class="container-avancar-original" onclick="abrirSacola()">
+        <div class="info-valores-originais">
+            <span class="txt-total-label">Total:</span>
+            <span id="txt-valor-total" class="v-total-bold">R$ 0,00</span>
+        </div>
+        <button class="btn-avancar-amarelo">
+            Avançar ➔
+        </button>
     </div>
-    
-    <button class="btn-ver-sacola">
-        Ver Sacola ➔
-    </button>
 </div>
 
-<!-- CONTAINER DO MODAL DA GAVETA (SACOLA INTERATIVA) -->
-<div id="painel-sacola-modal" class="modal-sacola-gaveta">
-    <!-- Fundo escurecido (clique fecha a sacola) -->
-    <div class="sacola-backdrop" onclick="fecharSacola()"></div>
-    
-    <!-- Conteúdo que desliza -->
-    <div class="sacola-conteudo-wrapper">
-        <div class="sacola-topo-header">
+<!-- CONTAINER DA GAVETA (FICA 100% INVISÍVEL ATÉ VOCÊ CLICAR EM AVANÇAR) -->
+<div id="painel-sacola-modal" class="sacola-drawer-container">
+    <div class="sacola-drawer-overlay" onclick="fecharSacola()"></div>
+    <div class="sacola-drawer-content">
+        <div class="sacola-drawer-header">
             <h3>Sua Sacola</h3>
-            <button class="btn-fechar-painel" onclick="fecharSacola()">✕</button>
+            <button class="btn-fechar-drawer" onclick="fecharSacola()">✕</button>
         </div>
         
-        <!-- Onde os itens manipuláveis serão injetados -->
-        <div id="lista-produtos-sacola" class="sacola-corpo-itens"></div>
+        <div id="lista-produtos-sacola" class="sacola-drawer-body">
+            <!-- Itens injetados pelo JS aqui -->
+        </div>
 
-        <div class="sacola-rodape-acoes">
-            <div class="resumo-valores-linha">
-                <span>Subtotal</span>
-                <span id="txt-modal-subtotal" class="preco-destaque">R$ 0,00</span>
+        <div class="sacola-drawer-footer">
+            <div class="sacola-drawer-subtotal">
+                <span>Subtotal:</span>
+                <span id="txt-modal-subtotal">R$ 0,00</span>
             </div>
-            
-            <button class="btn-confirmar-checkout" onclick="irParaCheckout()">
-                Avançar para o Pagamento ➜
+            <button class="btn-drawer-finalizar" onclick="irParaCheckout()">
+                Avançar para o Pagamento ➔
             </button>
         </div>
     </div>
@@ -811,8 +810,6 @@ function sincronizarContadorCardapio(id) {
     if (elTotal) elTotal.innerText = `R$ ${valorTotal.toFixed(2)}`;
     if (elSubtotal) elSubtotal.innerText = `R$ ${valorTotal.toFixed(2)}`;
 }
-
-        
 
 // Define a URL do seu backend Java (mude a porta 8080 se o seu Java rodar em outra)
 // ⚠️ SUBSTITUA O LINK ABAIXO PELO SEU LINK DO RENDER (Mantenha o https:// e retire a barra no final)
