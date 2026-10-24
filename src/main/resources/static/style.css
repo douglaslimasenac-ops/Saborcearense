@@ -1,240 +1,150 @@
+/* ==========================================================================
+   1. VARIÁVEIS DE CORES INSTITUCIONAIS (BASEADO NO LOGOTIPO & TELAS REAIS)
+   ========================================================================== */
 :root {
-    --primary: #f5a623;       /* Amarelo Alaranjado do logotipo */
-    --primary-hover: #d48a17; /* Mostarda um pouco mais escuro para o hover */
-    --dark: #111111;          /* Preto rústico dos textos da logo */
-    --light-bg: #fffcf5;      /* Fundo bege bem suave estilo comida caseira quentinha */
-    --border-color: #ebdcb9;  /* Bordas em tom pastel combinando */
+    --primary-color: #f7a623;       /* Amarelo-Ouro / Laranja do Logotipo Sabor Cearense */
+    --primary-dark: #d98a14;        /* Tom mais escuro para hovers e botões */
+    --dark-bg: #151515;             /* Preto da Sidebar do Painel Admin */
+    --dark-item-bg: #222222;        /* Fundo de itens ativos na sidebar */
+    --light-bg: #f8f9fa;            /* Fundo cinza claro das telas do cliente */
+    --card-bg: #ffffff;             /* Fundo branco dos blocos de conteúdo */
+    --border-color: #e9ecef;        /* Divisórias sutis */
+    --text-main: #212529;           /* Cor principal do texto */
+    --text-muted: #6c757d;          /* Legendas e textos secundários */
+    --success-color: #28a745;       /* Verde para "Disponível" e passos concluídos */
+    --danger-color: #dc3545;        /* Vermelho para ações destrutivas / cancelamentos */
+    
+    /* Configurações de Grid / Mobile-First */
+    --container-width: 480px;
+}
+
+/* ==========================================================================
+   2. RESETS GERAIS E ESTRUTURA GLOBAL
+   ========================================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--light-bg);
-    margin: 0;
-    padding: 0;
-    color: var(--dark);
+    background-color: #f0f2f5;
+    color: var(--text-main);
+    min-height: 100vh;
 }
 
-.container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 16px 16px 140px 16px; /* Espaço para não cobrir o conteúdo com a barra */
-}
-
-/* Barra do Carrinho Flutuante Travada no Rodapé */
-.barra-carrinho {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    box-sizing: border-box;
-    background: var(--dark);
-    color: #fff;
-    padding: 16px 24px;
+/* Utilitário para as páginas do cliente (Index, Carrinho, Acompanhar) */
+.client-body {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
-    z-index: 9999;
-    border-top: 3px solid var(--primary);
-}
-
-.btn-avancar {
-    background: var(--primary);
-    border: none;
-    color: var(--dark); /* Texto escuro para dar contraste no botão amarelo */
-    padding: 12px 24px;
-    border-radius: 6px;
-    font-weight: bold;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-avancar:hover {
-    background: var(--primary-hover);
-    transform: scale(1.02);
-}
-/* Cabeçalho da Tela */
-.app-header {
-    display: flex;
-    align-items: center;
-    padding: 16px;
-    background: #ffffff;
-    border-bottom: 1px solid #eee;
-}
-.btn-back {
-    background: none;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    margin-right: 12px;
-}
-
-/* Card superior */
-.status-card {
-    background: #fff;
-    margin: 16px;
-    padding: 20px;
-    border-radius: 12px;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-}
-.order-id-badge {
-    background: #E65F2B;
-    color: white;
-    display: inline-block;
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-weight: bold;
-    font-size: 16px;
-}
-.last-update {
-    font-size: 13px;
-    color: #888;
-    margin-top: 10px;
-    margin-bottom: 0;
-}
-
-/* Linha do Tempo (Stepper) */
-.stepper-container {
-    padding: 20px 30px;
-    position: relative;
-    background: #fff;
-    margin: 0 16px 16px 16px;
-    border-radius: 12px;
-    flex: 1;
-}
-/* Linha vertical cinza de fundo */
-.stepper-container::before {
-    content: '';
-    position: absolute;
-    left: 44px;
-    top: 35px;
-    bottom: 35px;
-    width: 3px;
-    background: #e0e0e0;
-    z-index: 1;
-}
-
-.step {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 32px;
-    position: relative;
-    z-index: 2;
-    opacity: 0.4; /* Apagado por padrão */
-    transition: all 0.4s ease;
-}
-.step-icon {
-    width: 32px;
-    height: 32px;
-    background: #e0e0e0;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
     justify-content: center;
-    font-size: 16px;
-    margin-right: 16px;
-    border: 3px solid #fff;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    transition: all 0.4s ease;
-}
-.step-content h3 { margin: 0 0 4px 0; font-size: 15px; color: #2D2D2D; }
-.step-content p { margin: 0; font-size: 13px; color: #777; }
-
-/* ---- Estados Ativos e Concluídos (Dinâmicos) ---- */
-.step.completed, .step.active {
-    opacity: 1;
-}
-.step.completed .step-icon {
-    background: #28a745; /* Verde para etapas já concluídas */
-    color: white;
-}
-.step.active .step-icon {
-    background: #E65F2B; /* Laranja da sua marca para a etapa atual */
-    transform: scale(1.15);
-    box-shadow: 0 0 12px rgba(230, 95, 43, 0.4);
-}
-.step.active .step-content h3 {
-    color: #E65F2B;
-    font-weight: bold;
+    align-items: flex-start;
 }
 
-/* Indicador de efeito Pulsante em Tempo Real */
-.live-indicator {
+.app-container {
+    width: 100%;
+    max-width: var(--container-width);
+    min-height: 100vh;
+    background-color: var(--light-bg);
+    position: relative;
+    padding-bottom: 90px; /* Segurança para a barra de subtotal fixa */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==========================================================================
+   3. VISUAL DO CLIENTE: INDEX & CARDÁPIO (ESTILO IFOOD)
+   ========================================================================== */
+.brand-header {
+    text-align: center;
+    padding: 20px 16px;
+    background: var(--card-bg);
+}
+
+.brand-title-container {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    font-size: 13px;
-    color: #666;
-    padding: 16px;
-}
-.ping-circle {
-    width: 8px;
-    height: 8px;
-    background-color: #28a745;
-    border-radius: 50%;
-    position: relative;
-}
-.ping-circle::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: #28a745;
-    border-radius: 50%;
-    animation: ping 1.5s infinite ease-in-out;
-}
-@keyframes ping {
-    0% { transform: scale(1); opacity: 1; }
-    100% { transform: scale(3); opacity: 0; }
-}
-/* Estado Base dos itens da sua linha do tempo (Apagado/Aguardando por padrão) */
-.timeline-item, [id^="p-"], [id^="step-"] {
-    opacity: 0.4;
-    transform: translateY(4px);
-    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); /* Transição ultra fluida */
-}
-
-/* 1. Estado Concluído (Etapas que o pedido já passou com sucesso) */
-.concluido, .completed {
-    opacity: 0.8;
-    transform: translateY(0);
-}
-.concluido .timeline-badge, .completed .timeline-badge, 
-.concluido .badge, .completed .badge {
-    background-color: #10b981 !important; /* Verde moderno */
-    border-color: #10b981 !important;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-}
-
-/* 2. Estado Ativo/Atual (Onde o pedido está agora - INTERATIVO E PULSANTE) */
-.atual, .active {
-    opacity: 1 !important;
-    transform: translateY(0) scale(1.02); /* Leve destaque de tamanho */
-}
-
-/* Aplica a cor temática e o efeito pulsar de radar no círculo/ícone da etapa atual */
-.atual .timeline-badge, .active .timeline-badge,
-.atual .badge, .active .badge {
-    background-color: #e63946 !important; /* Vermelho Sabor Cearense */
-    border-color: #e63946 !important;
-    animation: pulsoRadar 2s infinite ease-in-out;
-}
-
-/* Destaca o texto do título da etapa atual */
-.atual h4, .active h4, .atual p, .active p {
-    color: #e63946 !important;
+    font-size: 1.5rem;
     font-weight: 700;
 }
 
-/* Animação profissional de pulso de radar (Glow Effect) */
-@keyframes pulsoRadar {
-    0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.6); }
-    70% { box-shadow: 0 0 0 10px rgba(230, 57, 70, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
+/* Badge de Horário e Status */
+.status-badge-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
 }
+
+.badge-info {
+    background-color: #fff9e6;
+    border: 1px solid #ffe8a1;
+    color: #b37400;
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.badge-status-aberto {
+    background-color: #e6f9ed;
+    border: 1px solid #a3e9be;
+    color: var(--success-color);
+    font-size: 0.8rem;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-weight: bold;
+}
+/* Categorias / Filtros em Linha */
+.categorias-scroll {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    background: var(--light-bg);
+}
+
+.btn-categoria {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-categoria.active {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--text-main);
+}
+
+/* Seções e Lista de Produtos estilo iFood */
+.categoria-banner-titulo {
+    background-color: #1a1a1a;
+    color: white;
+    padding: 10px 16px;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.card-produto {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Blindagem rígida contra Layout Shift nas imagens do cardápio (70x70px) */
 .foto-produto-container {
     width: 70px;
     height: 70px;
@@ -242,318 +152,342 @@ body {
     max-width: 70px;
     min-height: 70px;
     max-height: 70px;
-    background-color: #f8fafc; /* Fundo neutro que substitui o clarão branco */
-    border-radius: 10px;
+    border-radius: 6px;
     overflow: hidden;
-    display: inline-block;
-    flex-shrink: 0;
-    border: 1px solid #f1f5f9;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    background-color: var(--border-color);
 }
 
 .foto-produto-container img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
 }
-/* Configuração do Card do Produto (Estilo iFood) */
-.menu-item {
+
+/* Controles de Quantidade (+ 0 -) */
+.controles-quantidade {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 12px;
-    border-bottom: 1px solid #f1f5f9;
-    background: #ffffff;
-    gap: 12px;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
-/* CONTAINER RÍGIDO ANTI-TREPIDAÇÃO E ANTI-VAZAMENTO */
-.foto-produto-container {
-    width: 70px;
-    height: 70px;
-    min-width: 70px;
-    max-width: 70px;
-    min-height: 70px;
-    max-height: 70px;
-    background-color: #f1f5f9; /* Fundo cinza suave esconde o flash branco */
-    border-radius: 10px;
-    overflow: hidden; /* Corta qualquer texto ou borda que tente vazar */
-    display: inline-block;
-    flex-shrink: 0; /* Impede o flexbox de esmagar o espaço da foto */
-    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-}
-
-/* IMAGEM INTERNA DO PRODUTO */
-.foto-produto-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Enquadramento proporcional profissional */
-    display: block;
-    opacity: 0;
-    animation: entrarSuave 0.3s forwards; /* Entra com fade-in matando o pisca */
-}
-
-@keyframes entrarSuave {
-    to { opacity: 1; }
-}
-/* Ajustes na Barra Flutuante Base */
-.barra-flutuante {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 480px; /* Alinhado ao seu container central de 480px */
-    background: #fff;
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    z-index: 999;
-    cursor: pointer;
-}
-
-.info-sacola {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-size: 14px;
-}
-.total-valor {
-    font-weight: bold;
-    color: #2e7d32;
-    font-size: 16px;
-}
-
-/* Modal / Gaveta da Sacola */
-.modal-sacola {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    display: none; /* Controlado via JS */
-}
-
-.modal-sacola.ativo {
-    display: block;
-}
-
-.modal-overlay {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-}
-
-.modal-conteudo {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 480px;
-    background: #fff;
-    border-top-left-radius: 16px;
-    border-top-right-radius: 16px;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    animation: deslizarParaCima 0.3s ease-out;
-}
-
-@keyframes deslizarParaCima {
-    from { transform: translate(-50%, 100%); }
-    to { transform: translate(-50%, 0); }
-}
-
-.modal-topo {
-    padding: 16px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.itens-sacola-lista {
-    padding: 16px;
-    overflow-y: auto;
-    flex-grow: 1;
-}
-
-/* Linha de cada produto dentro da sacola */
-.item-sacola-linha {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #fafafa;
-}
-
-.modal-rodape {
-    padding: 16px;
-    border-top: 1px solid #eee;
-    background: #fafafa;
-}
-
-.linha-resumo {
-    display: flex;
-    justify-content: space-between;
-    font-weight: bold;
-    font-size: 18px;
-    margin-bottom: 12px;
-}
-
-.btn-finalizar-pedido {
-    width: 100%;
-    background: #ffc107;
-    color: #000;
+.btn-controle-qtd {
+    background: transparent;
     border: none;
-    padding: 14px;
-    border-radius: 8px;
+    width: 28px;
+    height: 28px;
     font-weight: bold;
-    font-size: 16px;
     cursor: pointer;
+    font-size: 1rem;
 }
-/* Garante que a barra inferior fique posicionada exatamente como antes */
-.barra-flutuante-original {
+
+.contador-valor {
+    padding: 0 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   4. BARRA INFERIOR DE SUBTOTAL FIXA & GAVETA (DRAWER)
+   ========================================================================== */
+.barra-subtotal-fixa {
     position: fixed;
     bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
     width: 100%;
-    max-width: 480px;
+    max-width: var(--container-width);
     height: 70px;
-    background: #fff;
-    box-shadow: 0 -3px 10px rgba(0,0,0,0.1);
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 16px;
-    z-index: 999;
-    box-sizing: border-box;
+    z-index: 1000;
 }
 
-.container-avancar-original {
+.btn-avancar-checkout {
+    background-color: var(--primary-color);
+    color: var(--text-main);
+    font-weight: bold;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 12px;
-    cursor: pointer;
+    gap: 4px;
 }
 
-.info-valores-originais {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-.v-total-bold {
-    font-weight: bold;
-    color: #2e7d32;
-    font-size: 16px;
-}
-
-.btn-avancar-amarelo {
-    background: #ffc107;
-    color: #000;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-/* MODAL INTERATIVO COMPLETAMENTE ISOLADO */
+/* Estrutura Opcional da Sacola-Drawer Expandida */
 .sacola-drawer-container {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 2000;
-    display: none; /* Escondido por padrão, não afeta o layout */
-}
-
-/* Exibe o modal apenas quando ganha a classe .open via JS */
-.sacola-drawer-container.open {
-    display: block;
-}
-
-.sacola-drawer-overlay {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-}
-
-.sacola-drawer-content {
-    position: absolute;
     bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
     width: 100%;
-    max-width: 480px;
-    background: #fff;
+    max-width: var(--container-width);
+    height: 75vh;
+    background: var(--card-bg);
     border-top-left-radius: 16px;
     border-top-right-radius: 16px;
-    max-height: 70vh;
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    z-index: 2000;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
+.sacola-drawer-container.aberto { transform: translateY(0); }
 
-.sacola-drawer-header {
+/* ==========================================================================
+   5. TELA: CARRINHO / FECHAMENTO DE PEDIDO (carrinho.html)
+   ========================================================================== */
+.bloco-checkout {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
     padding: 16px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    margin: 12px;
 }
 
-.btn-fechar-drawer {
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-}
-
-.sacola-drawer-body {
-    padding: 16px;
-    overflow-y: auto;
-    flex-grow: 1;
-}
-
-.item-sacola-linha {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #fafafa;
-}
-
-.sacola-drawer-footer {
-    padding: 16px;
-    border-top: 1px solid #eee;
-    background: #fafafa;
-}
-
-.sacola-drawer-subtotal {
-    display: flex;
-    justify-content: space-between;
-    font-weight: bold;
+.checkout-secao-titulo {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
     margin-bottom: 12px;
-    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.btn-drawer-finalizar {
+.input-checkout-grupo {
+    margin-bottom: 12px;
+}
+
+.input-checkout-grupo label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.input-checkout-field {
     width: 100%;
-    background: #ffc107;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background-color: #fafafa;
+}
+
+.input-checkout-field:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.btn-finalizar-whatsapp {
+    width: 100%;
+    background-color: var(--primary-color);
+    color: var(--text-main);
     border: none;
     padding: 14px;
-    border-radius: 8px;
-    font-weight: bold;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.95rem;
     cursor: pointer;
+    margin-top: 10px;
+}
+/* ==========================================================================
+   6. TELA: RASTREAMENTO DE PEDIDO (acompanhar.html)
+   ========================================================================== */
+.tracker-container {
+    background: var(--card-bg);
+    padding: 24px 16px;
+    border-radius: 6px;
+    margin: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.linha-tempo-horizontal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    margin: 20px 0;
+    padding: 0 10px;
+}
+
+.linha-tempo-horizontal::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    right: 20px;
+    height: 4px;
+    background-color: var(--border-color);
+    z-index: 1;
+}
+
+.passo-tracker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    flex: 1;
+}
+
+.circulo {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+    border: 2px solid #dee2e6;
+}
+
+.legenda-passo {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* Estados Dinâmicos do Rastreamento */
+.passo-concluido .circulo {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+    color: white;
+}
+
+.passo-ativo .circulo {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--text-main);
+    animation: pulsoAtivoLaranja 1.5s infinite ease-in-out;
+}
+
+@keyframes pulsoAtivoLaranja {
+    0% { box-shadow: 0 0 0 0 rgba(247, 166, 35, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(247, 166, 35, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(247, 166, 35, 0); }
+}
+
+/* ==========================================================================
+   7. TELA: INTERFACE DE GERENCIAMENTO (admin.html)
+   ========================================================================== */
+.admin-layout-wrapper {
+    display: flex;
+    min-height: 100vh;
+    width: 100vw;
+}
+
+/* Sidebar Lateral Esquerda Escura */
+.admin-sidebar {
+    width: 240px;
+    background-color: var(--dark-bg);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding-top: 20px;
+}
+
+.admin-sidebar-brand {
+    padding: 10px 24px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 30px;
+}
+
+.admin-nav-item {
+    padding: 14px 24px;
+    color: #cccccc;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 4px solid transparent;
+}
+
+.admin-nav-item:hover {
+    background-color: var(--dark-item-bg);
+    color: white;
+}
+
+/* Indicador Laranja no Item Selecionado da Sidebar */
+.admin-nav-item.active {
+    background-color: var(--primary-color);
+    color: var(--text-main);
+    font-weight: bold;
+}
+
+/* Painel de Conteúdo do Lado Direito */
+.admin-content-body {
+    flex: 1;
+    background-color: var(--light-bg);
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.admin-page-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Alertas de Lista Vazia */
+.admin-empty-state {
+    text-align: center;
+    padding: 40px;
+    background: var(--card-bg);
+    border: 1px dashed #cccccc;
+    border-radius: 4px;
+    color: var(--danger-color);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Grid e Formulários de Alteração de Cardápio */
+.admin-form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 24px;
+}
+
+/* Items da Lista de Modificação no Admin */
+.admin-produto-item-row {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-produto-status-badge {
+    background-color: #e6f9ed;
+    color: var(--success-color);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
