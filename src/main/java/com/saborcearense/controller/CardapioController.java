@@ -2,7 +2,7 @@ package com.saborcearense.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMapping; // Certifique-se de ter esse import
 import org.springframework.web.bind.annotation.RestController;
 
 import com.saborcearense.model.Produto;
@@ -22,7 +22,7 @@ public class CardapioController {
     public void inicializarCardapio() {
         if (repository.count() == 0) {
             System.out.println("Sabor Cearense: Populando base de dados com o cardápio oficial...");
-
+            
             // --- PRATOS DO DIA ---
             repository.save(criarProdutoInicial("Frango com Quiabo", "PRATOS_DO_DIA", 24.00, "Delicioso frango caipira com quiabo fresco."));
             repository.save(criarProdutoInicial("Carne Assada", "PRATOS_DO_DIA", 28.00, "Carne assada de panela macia e suculenta."));
@@ -110,31 +110,40 @@ public class CardapioController {
         }
     }
 
-    private Produto criarProdutoInicial(String nome, String categoria, double preco, String descricao) {
-    Produto produto = new Produto();
-    produto.setNome(nome);
-    produto.setCategoria(categoria);
-    produto.setPreco(java.math.BigDecimal.valueOf(preco)); 
-    produto.setDescricao(descricao);
+     private Produto criarProdutoInicial(String nome, String categoria, double preco, String descricao) {
+        Produto produto = new Produto();
+        produto.setNome(nome);
+        produto.setCategoria(categoria);
+        produto.setPreco(java.math.BigDecimal.valueOf(preco)); 
+        produto.setDescricao(descricao);
 
-    // URL de fallback (Caso não entre em nenhum if, traz uma foto genérica de comida bem bonita)
-    String urlImagem = "https://unsplash.com";
-    String nomeMinusculo = nome.toLowerCase();
+        // Fallback: Imagem padrão leve de comida
+        String urlImagem = "https://unsplash.com";
+        String nomeMinusculo = nome.toLowerCase();
 
-    // Dicionário inteligente direto no Java injetando fotos específicas em tamanho leve (140x140)
-    if (nomeMinusculo.contains("quiabo") || nomeMinusculo.contains("frango")) {
-        urlImagem = "https://unsplash.com";
-    } else if (nomeMinusculo.contains("carne assada") || nomeMinusculo.contains("carne")) {
-        urlImagem = "https://unsplash.com";
-    } else if (nomeMinusculo.contains("costela")) {
-        urlImagem = "https://unsplash.com";
-    } else if (nomeMinusculo.contains("dobradinha")) {
-        urlImagem = "https://unsplash.com";
-    } else if (nomeMinusculo.contains("pernil")) {
-        urlImagem = "https://unsplash.com";
+        if (nomeMinusculo.contains("quiabo") || nomeMinusculo.contains("frango")) {
+            urlImagem = "https://unsplash.com";
+        } else if (nomeMinusculo.contains("carne assada") || nomeMinusculo.contains("carne")) {
+            urlImagem = "https://unsplash.com";
+        }
+
+        produto.setImagemUrl(urlImagem); 
+        return produto;
     }
 
-    produto.setImagemUrl(urlImagem); 
-    return produto;
-   }
-}
+    /**
+     * ROTA DE RETORNO: GET /api/cardapio
+     * AGORA POSICIONADA CORRETAMENTE DENTRO DA CLASSE
+     */
+       // ... restante do seu código anterior (método criarProdutoInicial, etc) ...
+
+    /**
+     * ROTA DE RETORNO: GET /api/cardapio
+     * Usando o caminho completo para blindar contra erros de importação
+     */
+    @org.springframework.web.bind.annotation.GetMapping
+    public java.util.List<Produto> listarTodos() {
+        return repository.findAll();
+    }
+
+} // Certifique-se de que esta é a última chave que fecha a classe
