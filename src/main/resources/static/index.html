@@ -435,41 +435,43 @@
             return;
         }
         
-        // 1. DICIONÁRIO INTELIGENTE OTIMIZADO (URLs estáticas diretas de imagem no tamanho exato: 140x140)
+        // 1. DICIONÁRIO PADRONIZADO (Chaves simplificadas em minúsculas e sem abreviações complicadas)
         const IMAGENS_COMPLETAS_SABOR = {
-            "Frango c/ quiabo": "https://unsplash.com",
-            "Carne assada": "https://unsplash.com",
-            "Costela c/ batata": "https://unsplash.com",
-            "Frango assado": "https://unsplash.com",
-            "Dobradinha": "https://unsplash.com",
-            "Pernil assado": "https://unsplash.com",
-            "Frango grelhado": "https://unsplash.com",
-            "Bife acebolado": "https://unsplash.com",
-            "Omelete": "https://unsplash.com",
-            "Coca Comum": "https://unsplash.com",
-            "Coca Zero": "https://unsplash.com",
-            "Guaraná Comum": "https://unsplash.com",
-            "Suco Laranja Copo": "https://unsplash.com",
-            "Suco Limão Copo": "https://unsplash.com"
+            "frangocomquiabo": "https://unsplash.com",
+            "carneassada": "https://unsplash.com",
+            "costelacombatata": "https://unsplash.com",
+            "frangoassado": "https://unsplash.com",
+            "dobradinha": "https://unsplash.com",
+            "pernilassado": "https://unsplash.com",
+            "frangogrelhado": "https://unsplash.com",
+            "bifeacebolado": "https://unsplash.com",
+            "tilapiacombaiao": "https://unsplash.com",
+            "omelete": "https://unsplash.com",
+            "cocacomum": "https://unsplash.com",
+            "cocazero": "https://unsplash.com",
+            "guaranacomum": "https://unsplash.com",
+            "sucolaranjacopo": "https://unsplash.com",
+            "sucolimaocopo": "https://unsplash.com"
         };
         
-        // 2. CRIA UM ACUMULADOR EM MEMÓRIA PARA AS SEÇÕES (Isso evita apagar e redesenhar o HTML em blocos separados)
         const secoesMap = {
-            "PRATOS_DO_DIA": "",
-            "FRANGO": "",
-            "CARNE": "",
-            "OUTROS": "",
-            "SOBREMESA": "",
-            "BEBIDA": ""
+            "PRATOS_DO_DIA": "", "FRANGO": "", "CARNE": "", "OUTROS": "", "SOBREMESA": "", "BEBIDA": ""
         };
 
         itens.forEach(item => {
             const esgotado = !item.disponivel;
             
-            // Corrige se a URL vier crua ou inválida do banco
+            // NORMALIZAÇÃO INTELIGENTE: Transforma "Frango com Quiabo" ou "Frango c/ quiabo" em "frangocomquiabo"
+            const nomeNormalizado = item.nome
+                .toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
+                .replace(/\s+/g, "") // Remove todos os espaços
+                .replace("c/", "com"); // Normaliza abreviação comum de "com"
+            
+            // Busca a foto no dicionário usando o nome limpo. Se falhar, joga uma imagem reserva bonita (Placeholder moderno)
             let fotoFinal = item.imagemUrl;
-            if (!fotoFinal || fotoFinal === "" || fotoFinal === "https://unsplash.com") {
-                fotoFinal = IMAGENS_COMPLETAS_SABOR[item.nome] || "https://placehold.co";
+            if (!fotoFinal || fotoFinal === "" || fotoFinal.includes("://unsplash.com") || fotoFinal === "https://unsplash.com") {
+                fotoFinal = IMAGENS_COMPLETAS_SABOR[nomeNormalizado] || "https://unsplash.com";
             }
             
             let controleHtml = `
@@ -484,16 +486,15 @@
                 controleHtml = `<span class="badge-esgotado">Esgotado</span>`;
             }
 
-            // Gerando o HTML puro de forma direta concatenando na memória
             const itemHtml = `
                 <div id="item-${item.id}" class="menu-item ${esgotado ? 'item-esgotado' : ''}">
                     <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
-                        <!-- Container da imagem rígido com transição CSS nativa -->
+                        <!-- Container Rígido anti-trepidação e anti-vazamento -->
                         <div class="foto-produto-container">
                             <img src="${fotoFinal}" 
                                  alt="${item.nome}" 
                                  loading="lazy"
-                                 onerror="this.onerror=null; this.src='https://placehold.co';">
+                                 onerror="this.onerror=null; this.src='https://unsplash.com';">
                         </div>
                         <div class="item-info">
                             <h4 style="margin: 0 0 4px 0; font-size: 15px; color: #1e293b; font-weight: 600;">${item.nome}</h4>
@@ -504,17 +505,18 @@
                 </div>
             `;
 
-            // Guarda o HTML na seção correspondente sem mexer no DOM ainda
-            if (secoesMap[item.categoria] !== undefined) {
-                secoesMap[item.categoria] += itemHtml;
+            // Tratamento caso a categoria venha nula ou fora do padrão do mapa
+            const cat = item.categoria ? item.categoria.toUpperCase() : "PRATOS_DO_DIA";
+            if (secoesMap[cat] !== undefined) {
+                secoesMap[cat] += itemHtml;
+            } else {
+                secoesMap["PRATOS_DO_DIA"] += itemHtml; // Fallback para a seção visível principal
             }
         });
 
-        // 3. INJEÇÃO COMPACTA EM BLOCO ÚNICO (Zera o pisca visual por completo!)
         Object.keys(secoesMap).forEach(categoria => {
             const el = document.getElementById("section-" + categoria);
             if (el) {
-                // Só atualiza o DOM se o conteúdo for de fato diferente ou se a tela estiver vazia
                 el.innerHTML = secoesMap[categoria];
             }
         });
@@ -527,6 +529,7 @@
         console.error("Erro ao carregar cardápio:", e); 
     }
 }
+
 
                         // Variável de controle global para gerenciar o temporizador automático
         let rastreioTimerAutomatizado = null;
