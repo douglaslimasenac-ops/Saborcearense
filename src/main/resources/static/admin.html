@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão Executiva - Sabor Cearense</title>
-    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome para os ícones originais -->
     <link rel="stylesheet" href="https://cloudflare.com">
     <style>
         :root {
@@ -25,11 +25,17 @@
             color: var(--dark); 
             font-family: 'Inter', system-ui, -apple-system, sans-serif; 
             margin: 0;
-            display: flex;
             min-height: 100vh;
         }
 
-        /* Menu Lateral Corporativo */
+        /* Garante o emparelhamento perfeito da barra lateral com o painel */
+        .admin-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100vw;
+        }
+
+        /* Menu Lateral Corporativo Fixo na Esquerda */
         aside {
             width: 260px;
             background: var(--dark);
@@ -39,6 +45,7 @@
             padding: 30px 15px;
             box-shadow: 4px 0 10px rgba(0,0,0,0.05);
             flex-shrink: 0;
+            min-height: 100vh;
         }
         aside h2 {
             font-size: 1.4rem;
@@ -74,6 +81,7 @@
             flex: 1; 
             padding: 40px; 
             overflow-y: auto;
+            background-color: #fcfcfc;
         }
         
         .section-view { 
@@ -82,7 +90,6 @@
         .section-view.active { 
             display: block; 
         }
-
         .admin-header {
             display: flex; 
             justify-content: space-between; 
@@ -106,10 +113,28 @@
             margin-bottom: 35px;
         }
 
+        /* Centralizador para a caixa de login */
+        .login-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            width: 100vw;
+        }
+
+        #login-admin { 
+            width: 100%;
+            max-width: 380px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.06); 
+            border: 1px solid #e2e8f0; 
+        }
+
         @media (max-width: 900px) {
             .form-grid { grid-template-columns: 1fr; }
-            body { flex-direction: column; }
-            aside { width: 100%; padding: 15px; }
         }
 
         .form-grupo { display: flex; flex-direction: column; }
@@ -170,96 +195,116 @@
         }
         .btn-status-toggle.ativo { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
         .btn-status-toggle.inativo { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
-
-        #login-admin { max-width: 380px; margin: 100px auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+        
+        .badge-cat {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+            background: #f1f5f9;
+            margin-left: 5px;
+        }
+        .input-preco-rapido {
+            width: 80px;
+            padding: 4px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- TELA DE LOGIN -->
-    <div id="login-admin">
-        <h2 style="text-align: center; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">🔒 Gestão Executiva</h2>
-        <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-bottom: 30px;">Sabor Cearense Delivery</p>
-        <div class="form-grupo" style="margin-bottom: 15px;">
-            <label>Usuário Administrativo</label>
-            <input type="text" id="usuario-login" placeholder="Ex: admin">
+    <!-- CONTAINER DA TELA DE LOGIN -->
+    <div class="login-wrapper" id="container-login-view">
+        <div id="login-admin">
+            <h2 style="text-align: center; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">🔒 Gestão Executiva</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-bottom: 30px;">Sabor Cearense Delivery</p>
+            <div class="form-grupo" style="margin-bottom: 15px;">
+                <label>Usuário Administrativo</label>
+                <input type="text" id="usuario-login" placeholder="Ex: admin">
+            </div>
+            <div class="form-grupo" style="margin-bottom: 25px;">
+                <label>Senha de Acesso</label>
+                <input type="password" id="senha-login" placeholder="••••••••">
+            </div>
+            <button class="btn-acao" onclick="autenticarAdmin()" style="width: 100%; justify-content: center; display: flex;">Autenticar no Painel</button>
         </div>
-        <div class="form-grupo" style="margin-bottom: 25px;">
-            <label>Senha de Acesso</label>
-            <input type="password" id="senha-login" placeholder="••••••••">
-        </div>
-        <button class="btn-acao" onclick="autenticarAdmin()" style="width: 100%; justify-content: center; display: flex;">Autenticar no Painel</button>
     </div>
 
-    <!-- PAINEL PRINCIPAL COM MENU LATERAL POR ABAS -->
-    <aside id="menu-lateral" style="display: none;">
-        <h2>Sabor Cearense</h2>
-        <div class="nav-link active" id="tab-ativos" onclick="alternarAbasAdmin('ativos')"><i class="fas fa-motorcycle"></i> Em Andamento</div>
-        <div class="nav-link" id="tab-historico" onclick="alternarAbasAdmin('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico / Finalizados</div>
-        <div class="nav-link" id="tab-cardapio" onclick="alternarAbasAdmin('cardapio')"><i class="fas fa-utensils"></i> Alteração do Cardápio</div>
+    <!-- WRAPPER DO PAINEL PRINCIPAL -->
+    <div class="admin-wrapper" id="painel-adm-wrapper" style="display: none;">
         
-        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <a href="index.html?admin=1" style="color: var(--primary); text-decoration: none; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;"><i class="fas fa-shop"></i> Ver Cardápio</a>
-        </div>
-    </aside>
-
-    <main id="conteudo-painel" style="display: none;">
-        
-        <!-- ABA 1: PEDIDOS EM ANDAMENTO -->
-        <section id="sec-ativos" class="section-view active">
-            <div class="admin-header">
-                <h2>🛵 Pedidos em Andamento (Tempo Real)</h2>
-            </div>
-            <div id="lista-pedidos-ativos" style="display: flex; flex-direction: column; gap: 15px;"></div>
-        </section>
-
-        <!-- ABA 2: HISTÓRICO DE FINALIZADOS -->
-        <section id="sec-historico" class="section-view">
-            <div class="admin-header">
-                <h2>✅ Histórico de Pedidos Finalizados</h2>
-            </div>
-            <div id="lista-pedidos-finalizados" style="display: flex; flex-direction: column; gap: 15px;"></div>
-        </section>
-
-        <!-- ABA 3: ALTERAÇÃO DO CARDÁPIO -->
-        <section id="sec-cardapio" class="section-view">
-            <div class="admin-header">
-                <h2>📋 Produtos Cadastrados e Alteração Ágil</h2>
-            </div>
+        <aside id="menu-lateral">
+            <h2>Sabor Cearense</h2>
+            <div class="nav-link active" id="tab-ativos" onclick="alternarAbasAdmin('ativos')"><i class="fas fa-motorcycle"></i> Em Andamento</div>
+            <div class="nav-link" id="tab-historico" onclick="alternarAbasAdmin('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico / Finalizados</div>
+            <div class="nav-link" id="tab-cardapio" onclick="alternarAbasAdmin('cardapio')"><i class="fas fa-utensils"></i> Alteração do Cardápio</div>
             
-            <h3>➕ Adicionar Novo Item</h3>
-            <form id="form-novo-prato" class="form-grid">
-                <div class="form-grupo">
-                    <label for="nome">Nome do Item</label>
-                    <input type="text" id="nome" required placeholder="Ex: Baião de Dois">
-                </div>
-                <div class="form-grupo">
-                    <label for="preco">Preço de Venda (R$)</label>
-                    <input type="number" step="0.01" id="preco" required placeholder="0.00">
-                </div>
-                <div class="form-grupo">
-                    <label for="imagem">URL da Imagem</label>
-                    <input type="text" id="imagem" placeholder="https://link-da-foto.com">
-                </div>
-                <div class="form-grupo">
-                    <label for="categoria">Definir Categoria</label>
-                    <select id="categoria" required>
-                        <option value="PRATOS_DO_DIA">🌹 Pratos do Dia</option>
-                        <option value="FRANGO">🐔 Pratos Principais - Frango</option>
-                        <option value="CARNE">🥩 Pratos Principais - Carne</option>
-                        <option value="OUTROS">🐟 Pratos Principais - Outros</option>
-                        <option value="SOBREMESA">😋 Sobremesas</option>
-                        <option value="BEBIDA">🥤 Bebidas Geladas</option>
-                    </select>
-                </div>
-                <div style="grid-column: span 4; text-align: right; margin-top: 10px;">
-                    <button type="submit" class="btn-acao">Salvar Produto no Banco 🌵</button>
-                </div>
-            </form>
+            <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <a href="index.html?admin=1" style="color: var(--primary); text-decoration: none; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;"><i class="fas fa-shop"></i> Ver Cardápio</a>
+            </div>
+        </aside>
 
-            <div id="lista-itens-admin" class="grid-produtos"></div>
-        </section>
-    </main>
+        <main id="conteudo-painel">
+            
+            <!-- ABA 1: PEDIDOS EM ANDAMENTO -->
+            <section id="sec-ativos" class="section-view active">
+                <div class="admin-header">
+                    <h2>🛵 Pedidos em Andamento (Tempo Real)</h2>
+                </div>
+                <div id="lista-pedidos-ativos" style="display: flex; flex-direction: column; gap: 15px;"></div>
+            </section>
+
+            <!-- ABA 2: HISTÓRICO DE FINALIZADOS -->
+            <section id="sec-historico" class="section-view">
+                <div class="admin-header">
+                    <h2>✅ Histórico de Pedidos Finalizados</h2>
+                </div>
+                <div id="lista-pedidos-finalizados" style="display: flex; flex-direction: column; gap: 15px;"></div>
+            </section>
+
+            <!-- ABA 3: ALTERAÇÃO DO CARDÁPIO -->
+            <section id="sec-cardapio" class="section-view">
+                <div class="admin-header">
+                    <h2>📋 Produtos Cadastrados e Alteração Ágil</h2>
+                </div>
+                
+                <h3>➕ Adicionar Novo Item</h3>
+                <form id="form-novo-prato" class="form-grid">
+                    <div class="form-grupo">
+                        <label for="nome">Nome do Item</label>
+                        <input type="text" id="nome" required placeholder="Ex: Baião de Dois">
+                    </div>
+                    <div class="form-grupo">
+                        <label for="preco">Preço de Venda (R$)</label>
+                        <input type="number" step="0.01" id="preco" required placeholder="0.00">
+                    </div>
+                    <div class="form-grupo">
+                        <label for="imagem">URL da Imagem</label>
+                        <input type="text" id="imagem" placeholder="https://link-da-foto.com">
+                    </div>
+                    <div class="form-grupo">
+                        <label for="categoria">Definir Categoria</label>
+                        <select id="categoria" required>
+                            <option value="PRATOS_DO_DIA">🌹 Pratos do Dia</option>
+                            <option value="FRANGO">🐔 Pratos Principais - Frango</option>
+                            <option value="CARNE">🥩 Pratos Principais - Carne</option>
+                            <option value="OUTROS">🐟 Pratos Principais - Outros</option>
+                            <option value="SOBREMESA">😋 Sobremesas</option>
+                            <option value="BEBIDA">🥤 Bebidas Geladas</option>
+                        </select>
+                    </div>
+                    <div style="grid-column: span 4; text-align: right; margin-top: 10px;">
+                        <button type="submit" class="btn-acao">Salvar Produto no Banco 🌵</button>
+                    </div>
+                </form>
+
+                <div id="lista-itens-admin" class="grid-produtos"></div>
+            </section>
+        </main>
+    </div>
     <script>
         const URL_BACKEND = ""; 
         const URL_BACKEND_WS = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host;
@@ -279,9 +324,10 @@
             const s = document.getElementById("senha-login").value.trim();
             if(u === "admin" && s === "sabor123") {
                 localStorage.setItem("adminAutenticado", "true");
-                document.getElementById("login-admin").style.display = "none";
-                document.getElementById("menu-lateral").style.display = "flex";
-                document.getElementById("conteudo-painel").style.display = "block";
+                
+                document.getElementById("container-login-view").style.display = "none";
+                document.getElementById("painel-adm-wrapper").style.display = "flex";
+                
                 carregarItensAdmin();
                 inicializarControlePedidos();
                 configurarFormularioCadastro();
@@ -301,6 +347,7 @@
                 carregarPedidosAtivos();
             }
         }
+
         function configurarFormularioCadastro() {
             document.getElementById("form-novo-prato").onsubmit = async function(e) {
                 e.preventDefault();
@@ -401,14 +448,13 @@
             } catch (e) { console.error("Falha ao abrir canal WebSocket:", e); }
         }
 
-                async function carregarPedidosAtivos() {
+        async function carregarPedidosAtivos() {
             const containerAtivos = document.getElementById("lista-pedidos-ativos");
             const containerHistorico = document.getElementById("lista-pedidos-finalizados");
             
             if (containerAtivos) containerAtivos.innerHTML = "";
             if (containerHistorico) containerHistorico.innerHTML = "";
 
-            // 1. CARREGA OS PEDIDOS EM ANDAMENTO (Fila Ativa)
             try {
                 const resAtivos = await fetch(URL_BACKEND + "/api/pedidos/ativos");
                 if (resAtivos.ok) {
@@ -416,7 +462,7 @@
                     let temAtivos = false;
 
                     pedidosAtivos.forEach(pedido => {
-                        if (pedido.status === 'ENTREGUE') return; // Segurança caso venha misturado
+                        if (pedido.status === 'ENTREGUE') return;
                         temAtivos = true;
 
                         const card = document.createElement("div");
@@ -445,7 +491,6 @@
                 }
             } catch (e) { console.log("Erro ao carregar pedidos ativos:", e); }
 
-            // 2. CARREGA O HISTÓRICO DE FINALIZADOS (Chama o endpoint geral /api/pedidos)
             try {
                 const resTodos = await fetch(URL_BACKEND + "/api/pedidos");
                 if (resTodos.ok) {
@@ -453,7 +498,6 @@
                     let temFinalizados = false;
 
                     todosPedidos.forEach(pedido => {
-                        // Filtra apenas o que de fato já foi finalizado
                         if (pedido.status !== 'ENTREGUE') return;
                         temFinalizados = true;
 
@@ -479,7 +523,6 @@
                 }
             } catch (e) { console.log("Erro ao carregar histórico de finalizados:", e); }
         }
-        
 
         async function mudarStatusPedido(id, novoStatus) {
             try {
@@ -496,6 +539,16 @@
                 console.error("Erro ao mudar status do pedido:", e);
             }
         }
+
+        window.onload = function() {
+            if(localStorage.getItem("adminAutenticado") === "true") {
+                document.getElementById("container-login-view").style.display = "none";
+                document.getElementById("painel-adm-wrapper").style.display = "flex";
+                carregarItensAdmin();
+                inicializarControlePedidos();
+                configurarFormularioCadastro();
+            }
+        };
     </script>
 </body>
 </html>
