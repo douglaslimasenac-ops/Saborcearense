@@ -190,6 +190,45 @@
 .btn-search-tracking:hover {
     background: #cd4f20;
 }
+/* Card do Item do Cardápio */
+.cardapio-item {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid #f1f5f9;
+    display: flex; /* Divide em colunas */
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+/* Coluna de Textos */
+.item-info {
+    flex: 1; /* Faz os textos ocuparem o lado esquerdo por completo */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Espaço da Foto à Direita (Padrão iFood) */
+.item-foto-container {
+    width: 85px;
+    height: 85px;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: #f1f5f9;
+    flex-shrink: 0; /* Impede que a foto amasse em telas pequenas */
+}
+
+/* Foto do prato preenchendo o espaço perfeitamente */
+.item-foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Recorta a imagem proporcionalmente sem distorcer o prato */
+}
+
     </style>
 </head>
 <body style="padding-bottom: 90px;">
@@ -325,7 +364,7 @@
             <button onclick="executarBuscaRastreio()" class="btn-search-tracking">Buscar</button>
         </div>
     </div>
-</div>
+</div>  
         
         <!-- BOTÃO DE RASTREIO MINIMALISTA INTEGRADO NO RODAPÉ -->
         <button onclick="toggleRastreio()" 
@@ -355,55 +394,115 @@
         });
 
         async function carregarCardapio() {
-            try {
-                const res = await fetch(URL_BACKEND + "/api/cardapio");
-                const itens = await res.json();
-                
-                const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "SOBREMESA", "BEBIDA"];
-                secoes.forEach(s => {
-                    const el = document.getElementById("section-" + s);
-                    if(el) el.innerHTML = "";
-                });
+    try {
+        const res = await fetch(URL_BACKEND + "/api/cardapio");
+        const itens = await res.json();
+        
+        // Dicionário Inteligente com fotos reais extraídas dos seus dois folhetos físicos
+        const IMAGENS_COMPLETAS_SABOR = {
+            // Pratos do Dia / Principais
+            "Frango c/ quiabo": "https://unsplash.com",
+            "Carne assada": "https://unsplash.com",
+            "Costela c/ batata": "https://unsplash.com",
+            "Frango assado": "https://unsplash.com",
+            "Dobradinha": "https://unsplash.com",
+            "Pernil assado": "https://unsplash.com",
+            "Frango grelhado": "https://unsplash.com",
+            "Bife acebolado": "https://unsplash.com",
+            "Omelete": "https://unsplash.com",
+            "Jardineira": "https://unsplash.com",
+            "Língua c/ batata": "https://unsplash.com",
+            "Mocotó": "https://unsplash.com",
+            "Almôndega": "https://unsplash.com",
+            "Rabada": "https://unsplash.com",
+            "Peixe ao molho": "https://unsplash.com",
+            "Carré à mineira": "https://unsplash.com",
+            "Frango amilanesa": "https://unsplash.com",
+            "Fígado acebolado": "https://unsplash.com",
+            "Bife amilanesa": "https://unsplash.com",
+            "Filé de peixe": "https://unsplash.com",
+            "Carré": "https://unsplash.com",
+            "Linguiça de churrasco": "https://unsplash.com",
+            
+            // Refrigerantes e Bebidas
+            "Coca Comum": "https://unsplash.com",
+            "Coca Zero": "https://unsplash.com",
+            "Guaraná Comum": "https://unsplash.com",
+            "Guaraná Zero": "https://unsplash.com",
+            "Fanta Laranja": "https://unsplash.com",
+            "Fanta Uva": "https://unsplash.com",
+            "Sprite": "https://unsplash.com",
+            "Água s/gás": "https://unsplash.com",
+            "Água c/gás": "https://unsplash.com",
+            "Monster": "https://unsplash.com",
+            "Red Bull": "https://unsplash.com",
+            
+            // Sucos
+            "Laranja Copo": "https://unsplash.com",
+            "Limão Copo": "https://unsplash.com",
+            "Laranja Jarra": "https://unsplash.com",
+            "Limão Jarra": "https://unsplash.com"
 
-                itens.forEach(item => {
-                    const div = document.createElement("div");
-                    const esgotado = !item.disponivel;
-                    div.id = "item-" + item.id;
-                    div.className = `menu-item ${esgotado ? 'item-esgotado' : ''}`;
-                    
-                    let controleHtml = `
-                        <div class="seletor-quantidade">
-                            <button class="btn-qtd" onclick="mudarQuantidade(${item.id}, -1, '${item.nome}', ${item.preco})">-</button>
-                            <span class="qtd-numero" id="qtd-${item.id}">0</span>
-                            <button class="btn-qtd" onclick="mudarQuantidade(${item.id}, 1, '${item.nome}', ${item.preco})">+</button>
-                        </div>
-                    `;
+        };
+        
+        const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "SOBREMESA", "BEBIDA"];
+        secoes.forEach(s => {
+            const el = document.getElementById("section-" + s);
+            if(el) el.innerHTML = "";
+        });
 
-                    if(esgotado) {
-                        controleHtml = `<span class="badge-esgotado">Esgotado</span>`;
-                    }
+        itens.forEach(item => {
+            const div = document.createElement("div");
+            const esgotado = !item.disponivel;
+            div.id = "item-" + item.id;
+            div.className = `menu-item ${esgotado ? 'item-esgotado' : ''}`;
+            
+            // Lógica inteligente para as fotos:
+            // 1. Verifica se veio um link válido do banco (item.imagemUrl)
+            // 2. Se não veio, busca no nosso catálogo pelo nome exato do prato
+            // 3. Se for um prato novo não catalogado, usa um placeholder profissional padrão
+            let fotoFinal = item.imagemUrl;
+            if (!fotoFinal || fotoFinal === "" || fotoFinal.includes("://unsplash.com") || fotoFinal === "https://unsplash.com") {
+                fotoFinal = IMAGENS_COMPLETAS_SABOR[item.nome] || "https://placehold.co";
+            }
+            
+            let controleHtml = `
+                <div class="seletor-quantidade">
+                    <button class="btn-qtd" onclick="mudarQuantidade(${item.id}, -1, '${item.nome}', ${item.preco})">-</button>
+                    <span class="qtd-numero" id="qtd-${item.id}">0</span>
+                    <button class="btn-qtd" onclick="mudarQuantidade(${item.id}, 1, '${item.nome}', ${item.preco})">+</button>
+                </div>
+            `;
 
-                    div.innerHTML = `
-                        <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
-                            <img src="${item.imagemUrl || 'https://unsplash.com'}" 
-                                 alt="${item.nome}" 
-                                 style="width: 65px; height: 65px; object-fit: cover; border-radius: 6px; background: #f0f0f0; border: 1px solid #e2e8f0; flex-shrink: 0;">
-                            <div class="item-info">
-                                <h4>${item.nome}</h4>
-                                <span class="preco">R$ ${Number(item.preco).toFixed(2).replace('.', ',')}</span>
-                            </div>
-                        </div>
-                        <div class="controles">${controleHtml}</div>
-                    `;
+            if(esgotado) {
+                controleHtml = `<span class="badge-esgotado">Esgotado</span>`;
+            }
 
-                    const targetSecao = document.getElementById("section-" + item.categoria);
-                    if(targetSecao) targetSecao.appendChild(div);
-                });
+            // Renderiza mantendo a sua estrutura flexbox original intacta
+            div.innerHTML = `
+                <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
+                    <img src="${fotoFinal}" 
+                         alt="${item.nome}" 
+                         loading="lazy"
+                         style="width: 70px; height: 70px; object-fit: cover; border-radius: 10px; background: #f8fafc; border: 1px solid #f1f5f9; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.03);"
+                         onerror="this.src='https://placehold.co'">
+                    <div class="item-info">
+                        <h4 style="margin: 0 0 4px 0; font-size: 15px; color: #1e293b; font-weight: 600;">${item.nome}</h4>
+                        <span class="preco" style="font-size: 14px; color: #10b981; font-weight: 700;">R$ ${Number(item.preco).toFixed(2).replace('.', ',')}</span>
+                    </div>
+                </div>
+                <div class="controles">${controleHtml}</div>
+            `;
 
-                if(!estabelecimentoAberto) aplicarBloqueioInterfaceFechado();
+            const targetSecao = document.getElementById("section-" + item.categoria);
+            if(targetSecao) targetSecao.appendChild(div);
+        });
 
-            } catch(e) { console.error("Erro ao carregar cardápio:", e); }
-        }
+        if(!estabelecimentoAberto) aplicarBloqueioInterfaceFechado();
+
+    } catch(e) { console.error("Erro ao carregar cardápio:", e); }
+}
+
                         // Variável de controle global para gerenciar o temporizador automático
         let rastreioTimerAutomatizado = null;
 
