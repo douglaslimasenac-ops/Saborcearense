@@ -297,3 +297,124 @@ body {
 @keyframes entrarSuave {
     to { opacity: 1; }
 }
+/* Ajustes na Barra Flutuante Base */
+.barra-flutuante {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px; /* Alinhado ao seu container central de 480px */
+    background: #fff;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    z-index: 999;
+    cursor: pointer;
+}
+
+.info-sacola {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 14px;
+}
+.total-valor {
+    font-weight: bold;
+    color: #2e7d32;
+    font-size: 16px;
+}
+
+/* Modal / Gaveta da Sacola */
+.modal-sacola {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: none; /* Controlado via JS */
+}
+
+.modal-sacola.ativo {
+    display: block;
+}
+
+.modal-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-conteudo {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: #fff;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: deslizarParaCima 0.3s ease-out;
+}
+
+@keyframes deslizarParaCima {
+    from { transform: translate(-50%, 100%); }
+    to { transform: translate(-50%, 0); }
+}
+
+.modal-topo {
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.itens-sacola-lista {
+    padding: 16px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+/* Linha de cada produto dentro da sacola */
+.item-sacola-linha {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #fafafa;
+}
+
+.modal-rodape {
+    padding: 16px;
+    border-top: 1px solid #eee;
+    background: #fafafa;
+}
+
+.linha-resumo {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+
+.btn-finalizar-pedido {
+    width: 100%;
+    background: #ffc107;
+    color: #000;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+}

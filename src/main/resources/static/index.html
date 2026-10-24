@@ -373,25 +373,47 @@
         </main>
     </div>
 
-        <!-- SUBSTITUA A SUA DIV BARRA-FLUTUANTE POR ESTA INTEIRA -->
-    <div id="barra-flutuante" style="position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px 15px; box-shadow: 0 -4px 15px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; max-width: 650px; margin: 0 auto; border-radius: 16px 16px 0 0; z-index: 100; gap: 10px;">
-
-        <!-- Painel Dinâmico de Rastreio (Escondido por padrão) -->
-<div id="painel-rastreio" class="tracking-drawer">
-    <div class="tracking-header">
-        <span>🔍 Rastrear Meu Pedido</span>
-        <button onclick="toggleRastreio()" class="btn-close-tracking">&times;</button>
+        <!-- Barra Inferior Atualizada (Agora funciona como o gatilho da Sacola) -->
+<div id="barra-inferior" class="barra-flutuante" onclick="abrirSacola()">
+    <button class="btn-rastrear" onclick="event.stopPropagation(); irParaRastreio();">
+        🔍 Rastrear Pedido
+    </button>
+    <div class="info-sacola">
+        <span id="quantidade-sacola">0 itens</span>
+        <span id="total-sacola" class="total-valor">R$ 0,00</span>
     </div>
-    <div class="tracking-body">
-        <p>Digite o número do seu pedido para acompanhar o status:</p>
-        <div class="tracking-input-group">
-            <input type="text" id="codigo-rastreio-input" placeholder="Ex: #1234" autocomplete="off">
-            
-            <!-- ALTERADO DE toggleRastreio() PARA executarBuscaRastreio() -->
-            <button onclick="executarBuscaRastreio()" class="btn-search-tracking">Buscar</button>
+    <button class="btn-avancar">
+        Ver Sacola 👜
+    </button>
+</div>
+
+<!-- Estrutura da Gaveta da Sacola (Escondida por padrão) -->
+<div id="modal-sacola" class="modal-sacola">
+    <div class="modal-overlay" onclick="fecharSacola()"></div>
+    <div class="modal-conteudo">
+        <div class="modal-topo">
+            <h3>Sua Sacola</h3>
+            <button class="btn-fechar" onclick="fecharSacola()">✕</button>
+        </div>
+        
+        <!-- Lista de itens injetados dinamicamente -->
+        <div id="itens-sacola-lista" class="itens-sacola-lista">
+            <!-- Injetado via JS: Nome, Preço unitário, Quantidade e Botões de +/- -->
+        </div>
+
+        <div class="modal-rodape">
+            <div class="linha-resumo">
+                <span>Subtotal:</span>
+                <span id="modal-subtotal">R$ 0,00</span>
+            </div>
+            <!-- Botão final que envia para o checkout real -->
+            <button class="btn-finalizar-pedido" onclick="finalizarPedido()">
+                Avançar para o Pagamento ➜
+            </button>
         </div>
     </div>
-</div>  
+</div>
+
         
         <!-- BOTÃO DE RASTREIO MINIMALISTA INTEGRADO NO RODAPÉ -->
         <button onclick="toggleRastreio()" 
@@ -720,28 +742,56 @@ function restaurarCardapioOriginal() {
 
 
 
-        function mudarQuantidade(id, alteracao, nome, preco) {
-            if(!estabelecimentoAberto) {
-                alert("O estabelecimento está fechado no momento. Horário de funcionamento das 11:30 às 15:00.");
-                return;
-            }
-            if (!carrinho[id]) {
-                carrinho[id] = { id: id, nome: nome, preco: Number(preco), quantidade: 0 };
-            }
+        // 1. OBJETO GLOBAL QUE MANTÉM O ESTADO DA SACOLA
 
-            carrinho[id].quantidade += alteracao;
+// 2. SUA FUNÇÃO ADAPTADA PARA GERENCIAR A SACOLA
+function mudarQuantidade(id, mudanca, nome, preco) {
+    // Se o produto não existe na sacola, inicializa ele
+    if (!dadosSacola[id]) {
+        dadosSacola[id] = { nome: nome, preco: parseFloat(preco), qtd: 0 };
+    }
 
-            if (carrinho[id].quantidade <= 0) {
-                delete carrinho[id];
-                if(document.getElementById("qtd-" + id)) document.getElementById("qtd-" + id).innerText = "0";
-                if(document.getElementById("item-" + id)) document.getElementById("item-" + id).classList.remove("selecionado");
-            } else {
-                if(document.getElementById("qtd-" + id)) document.getElementById("qtd-" + id).innerText = carrinho[id].quantidade;
-                if(document.getElementById("item-" + id)) document.getElementById("item-" + id).classList.add("selecionado");
-            }
+    // Aplica a mudança (+1 ou -1)
+    dadosSacola[id].qtd += mudanca;
 
-            atualizarTotalFlutuante();
-        }
+    // Se a quantidade caiu para 0 ou menos, remove o item da sacola
+    if (dadosSacola[id].qtd <= 0) {
+        delete dadosSacola[id];
+    }
+
+    // 3. SINCRONIZAÇÃO DE TELAS
+    atualizarTotaisBarra();
+    renderizarItensSacola();
+    
+    // Atualiza o número do contador visual (0, 1, 2...) no cardápio principal
+    sincronizarContadorCardapio(id);
+}
+
+// 4. ATUALIZA A BARRA FIXA INFERIOR RECOLHIDA
+function atualizarTotaisBarra() {
+    let totalItens = 0;
+    let valorTotal = 0;
+
+    Object.values(dadosSacola).forEach(item => {
+        totalItens += item.qtd;
+        valorTotal += item.preco * item.qtd;
+    });
+
+    document.getElementById('txt-qtd-itens').innerText = `${totalItens} ${totalItens === 1 ? 'item' : 'itens'}`;
+    document.getElementById('txt-valor-total').innerText = `R$ ${valorTotal.toFixed(2)}`;
+    document.getElementById('txt-modal-subtotal').innerText = `R$ ${valorTotal.toFixed(2)}`;
+}
+
+// 5. ATUALIZA O CONTADOR DO CARDÁPIO PRINCIPAL (Para manter o número entre o - e + correto)
+function sincronizarContadorCardapio(id) {
+    // IMPORTANTE: Certifique-se de que o elemento que exibe o número do produto no seu cardápio tenha um ID ou classe identificável, ex: id="qtd-produto-12"
+    const elementoContador = document.getElementById(`qtd-produto-${id}`);
+    if (elementoContador) {
+        const qtdAtual = dadosSacola[id] ? dadosSacola[id].qtd : 0;
+        elementoContador.innerText = qtdAtual;
+    }
+}
+
 
         function atualizarTotalFlutuante() {
             let total = 0;
@@ -805,6 +855,90 @@ function executarBuscaRastreio() {
     // Envia o cliente direto para a tela interativa de tempo real passando o ID
     window.location.href = `acompanhar.html?id=${pedidoId}`;
 }
+// Objeto global que guarda os produtos selecionados
+let dadosSacola = {}; 
+
+// 1. FUNÇÃO PARA ABRIR E FECHAR O PAINEL
+function abrirSacola() {
+    document.getElementById('painel-sacola-modal').classList.add('open');
+    renderizarItensSacola(); // Renderiza atualizado ao abrir
+}
+
+function fecharSacola() {
+    document.getElementById('painel-sacola-modal').classList.remove('open');
+}
+
+// 2. ADICIONAR/MANIPULAR PRODUTOS (Integre essa lógica nos seus botões + e - do cardápio)
+function alterarQuantidadeProduto(id, nome, preco, mudanca) {
+    if (!dadosSacola[id]) {
+        dadosSacola[id] = { nome: nome, preco: parseFloat(preco), qtd: 0 };
+    }
+
+    dadosSacola[id].qtd += mudanca;
+
+    // Se a quantidade zerar ou descer, removemos do carrinho
+    if (dadosSacola[id].qtd <= 0) {
+        delete dadosSacola[id];
+    }
+
+    atualizarTotaisBarra();
+    renderizarItensSacola();
+}
+
+// 3. ATUALIZA OS VALORES DA BARRA FIXA INFERIOR
+function atualizarTotaisBarra() {
+    let totalItens = 0;
+    let valorTotal = 0;
+
+    Object.values(dadosSacola).forEach(item => {
+        totalItens += item.qtd;
+        valorTotal += item.preco * item.qtd;
+    });
+
+    document.getElementById('txt-qtd-itens').innerText = `${totalItens} ${totalItens === 1 ? 'item' : 'itens'}`;
+    document.getElementById('txt-valor-total').innerText = `R$ ${valorTotal.toFixed(2)}`;
+    document.getElementById('txt-modal-subtotal').innerText = `R$ ${valorTotal.toFixed(2)}`;
+}
+
+// 4. INJETA DINAMICAMENTE OS ITENS DENTRO DA GAVETA DA SACOLA
+function renderizarItensSacola() {
+    const containerLista = document.getElementById('lista-produtos-sacola');
+    containerLista.innerHTML = '';
+
+    const itens = Object.entries(dadosSacola);
+
+    if (itens.length === 0) {
+        containerLista.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">Sua sacola está vazia.</p>`;
+        return;
+    }
+
+    itens.forEach(([id, item]) => {
+        containerLista.innerHTML += `
+            <div class="item-sacola-linha">
+                <div>
+                    <div style="font-weight: 600; font-size:15px;">${item.nome}</div>
+                    <div style="font-size: 13px; color: #777;">R$ ${(item.preco * item.qtd).toFixed(2)}</div>
+                </div>
+                <!-- Controles internos para manipular as quantidades de dentro da sacola -->
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button onclick="alterarQuantidadeProduto('${id}', '${item.nome}', ${item.preco}, -1)" style="padding:4px 10px;">-</button>
+                    <span style="font-weight:bold;">${item.qtd}</span>
+                    <button onclick="alterarQuantidadeProduto('${id}', '${item.nome}', ${item.preco}, 1)" style="padding:4px 10px;">+</button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function irParaCheckout() {
+    if (Object.keys(dadosSacola).length === 0) {
+        alert("Adicione pelo menos um item à sacola!");
+        return;
+    }
+    alert("Redirecionando para a página de envio do pedido...");
+    // Aqui você executa o envio dos dadosSacola pro localStorage ou direto pro backend
+}
+
         
     </script>
 </body>
