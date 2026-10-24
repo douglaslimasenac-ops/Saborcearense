@@ -1,26 +1,20 @@
 /* ==========================================================================
-   1. VARIÁVEIS DE CORES INSTITUCIONAIS (BASEADO NO LOGOTIPO & TELAS REAIS)
+   1. VARIÁVEIS E CORES EXATAS DO APP (BASEADO NAS CAPTURAS REAIS)
    ========================================================================== */
 :root {
-    --primary-color: #f7a623;       /* Amarelo-Ouro / Laranja do Logotipo Sabor Cearense */
-    --primary-dark: #d98a14;        /* Tom mais escuro para hovers e botões */
-    --dark-bg: #151515;             /* Preto da Sidebar do Painel Admin */
-    --dark-item-bg: #222222;        /* Fundo de itens ativos na sidebar */
-    --light-bg: #f8f9fa;            /* Fundo cinza claro das telas do cliente */
-    --card-bg: #ffffff;             /* Fundo branco dos blocos de conteúdo */
-    --border-color: #e9ecef;        /* Divisórias sutis */
-    --text-main: #212529;           /* Cor principal do texto */
-    --text-muted: #6c757d;          /* Legendas e textos secundários */
-    --success-color: #28a745;       /* Verde para "Disponível" e passos concluídos */
-    --danger-color: #dc3545;        /* Vermelho para ações destrutivas / cancelamentos */
+    --bg-browser: #f0f2f5;          /* Fundo cinza claro que preenche as laterais da tela */
+    --primary-orange: #ffb81c;      /* Amarelo-ouro/Laranja institucional */
+    --primary-light: #fff9e6;       /* Fundo amarelado claro interno dos badges */
+    --text-dark: #212529;           /* Preto para títulos principais */
+    --text-muted: #6c757d;          /* Cinza para descrições secundárias */
+    --card-bg: #ffffff;             /* Fundo branco dos blocos de conteúdo e cards */
+    --border-color: #dee2e6;        /* Bordas sutis das caixas e inputs */
+    --green-status: #28a745;        /* Verde para status Aberto / Disponível */
     
-    /* Configurações de Grid / Mobile-First */
+    /* Largura travada do container para simular smartphone no desktop */
     --container-width: 480px;
 }
 
-/* ==========================================================================
-   2. RESETS GERAIS E ESTRUTURA GLOBAL
-   ========================================================================== */
 * {
     margin: 0;
     padding: 0;
@@ -29,176 +23,220 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+/* O segredo do layout está aqui: preenche as laterais com cinza e centraliza o app */
 body {
-    background-color: #f0f2f5;
-    color: var(--text-main);
+    background-color: var(--bg-browser);
+    color: var(--text-dark);
     min-height: 100vh;
-}
-
-/* Utilitário para as páginas do cliente (Index, Carrinho, Acompanhar) */
-.client-body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
 }
 
+/* Container Centralizado de 480px que impede o app de pegar a tela inteira */
 .app-container {
     width: 100%;
     max-width: var(--container-width);
     min-height: 100vh;
-    background-color: var(--light-bg);
+    background-color: var(--card-bg); /* O fundo do app agora é branco puro conforme a foto */
     position: relative;
-    padding-bottom: 90px; /* Segurança para a barra de subtotal fixa */
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+    padding-bottom: 90px; /* Margem de segurança para a barra amarela inferior não cobrir os produtos */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
 }
 
 /* ==========================================================================
-   3. VISUAL DO CLIENTE: INDEX & CARDÁPIO (ESTILO IFOOD)
+   2. HEADER, BADGES E BOTÕES DE CATEGORIA (INDEX.HTML)
    ========================================================================== */
-.brand-header {
+.main-header {
     text-align: center;
-    padding: 20px 16px;
+    padding: 24px 16px 12px 16px;
     background: var(--card-bg);
 }
 
-.brand-title-container {
+.brand-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-dark);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    font-size: 1.5rem;
-    font-weight: 700;
+    margin-bottom: 4px;
 }
 
-/* Badge de Horário e Status */
+.brand-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+/* Alinhamento dos crachás e caixas de informação superiores */
 .status-badge-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    margin-top: 10px;
+    gap: 8px;
+    margin-bottom: 16px;
 }
 
-.badge-info {
-    background-color: #fff9e6;
-    border: 1px solid #ffe8a1;
-    color: #b37400;
+.badge-orange-pill {
+    background-color: var(--primary-orange);
+    color: var(--text-dark);
     font-size: 0.75rem;
-    padding: 4px 12px;
+    font-weight: 700;
+    padding: 6px 16px;
     border-radius: 20px;
-    font-weight: 600;
 }
 
-.badge-status-aberto {
-    background-color: #e6f9ed;
-    border: 1px solid #a3e9be;
-    color: var(--success-color);
-    font-size: 0.8rem;
-    padding: 6px 16px;
-    border-radius: 6px;
-    font-weight: bold;
+.status-box-aberto {
+    width: 100%;
+    max-width: 400px;
+    background-color: var(--card-bg);
+    border: 1px solid #ffe8a1;
+    background-color: var(--primary-light);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: #664d03;
 }
-/* Categorias / Filtros em Linha */
-.categorias-scroll {
+
+.status-box-aberto span {
+    color: var(--green-status);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+/* Barra de Rolagem de Categorias */
+.categories-container {
     display: flex;
     gap: 8px;
     padding: 12px 16px;
     overflow-x: auto;
-    background: var(--light-bg);
+    background: var(--card-bg);
 }
 
-.btn-categoria {
+/* Remove a barra de rolagem visualmente para ficar mais limpo */
+.categories-container::-webkit-scrollbar {
+    display: none;
+}
+
+.btn-filter-category {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     padding: 8px 16px;
     border-radius: 6px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 600;
+    color: var(--text-dark);
     cursor: pointer;
     white-space: nowrap;
 }
 
-.btn-categoria.active {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-    color: var(--text-main);
+/* Quando a categoria estiver ativa, ela ganha o fundo amarelo/laranja idêntico ao botão Bebidas */
+.btn-filter-category.active {
+    background-color: var(--primary-orange);
+    border-color: var(--primary-orange);
+}
+/* Banner de Categoria do Cardápio (Faixa Preta na sua Imagem) */
+.menu-section-banner {
+    background-color: #151515;
+    color: #ffffff;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 4px;
+    margin: 12px 16px 4px 16px;
 }
 
-/* Seções e Lista de Produtos estilo iFood */
-.categoria-banner-titulo {
-    background-color: #1a1a1a;
-    color: white;
-    padding: 10px 16px;
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.card-produto {
+/* Cards de produto brancos com bordas sutis e arredondadas (Igual à foto) */
+.product-card-item {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin: 8px 16px;
+    padding: 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 14px 16px;
-    background: var(--card-bg);
-    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
 }
 
-/* Blindagem rígida contra Layout Shift nas imagens do cardápio (70x70px) */
-.foto-produto-container {
-    width: 70px;
-    height: 70px;
-    min-width: 70px;
-    max-width: 70px;
-    min-height: 70px;
-    max-height: 70px;
-    border-radius: 6px;
-    overflow: hidden;
-    background-color: var(--border-color);
+.product-info-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
-.foto-produto-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.product-title-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-dark);
 }
 
-/* Controles de Quantidade (+ 0 -) */
-.controles-quantidade {
+.product-price-text {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--green-status);
+}
+
+/* Seletor de Quantidade Retangular com Bordas Finas (Igual ao do print) */
+.quantity-selector-box {
     display: flex;
     align-items: center;
-    border: 1px solid #cccccc;
+    border: 1px solid #b5b5b5;
     border-radius: 4px;
+    background: var(--card-bg);
     overflow: hidden;
+    height: 32px;
 }
 
-.btn-controle-qtd {
+.btn-quantity-action {
     background: transparent;
     border: none;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 100%;
+    font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
-    font-size: 1rem;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.contador-valor {
-    padding: 0 8px;
+.quantity-current-value {
+    padding: 0 4px;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 700;
+    min-width: 24px;
+    text-align: center;
+    color: var(--text-dark);
 }
 
 /* ==========================================================================
-   4. BARRA INFERIOR DE SUBTOTAL FIXA & GAVETA (DRAWER)
+   4. BARRA INFERIOR DE SUBTOTAL FIXA (ALINHADA À FOTO REAL)
    ========================================================================== */
-.barra-subtotal-fixa {
+.fixed-bottom-total-bar {
     position: fixed;
     bottom: 0;
     width: 100%;
-    max-width: var(--container-width);
-    height: 70px;
-    background: var(--card-bg);
-    border-top: 1px solid var(--border-color);
+    max-width: var(--container-width); /* Mantém os 480px travados e não deixa espalhar na tela */
+    height: 75px;
+    background-color: var(--card-bg);
+    border-top: 2px solid var(--primary-orange); /* Linha amarela superior contínua */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -206,119 +244,80 @@ body {
     z-index: 1000;
 }
 
-.btn-avancar-checkout {
-    background-color: var(--primary-color);
-    color: var(--text-main);
+/* Texto do lado esquerdo da barra */
+.total-label-text {
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #664d03;
+}
+
+.total-label-text span {
+    color: var(--primary-orange);
+    font-weight: 800;
+}
+
+/* Botão Laranja Alinhado à Direita */
+.btn-submit-order {
+    background-color: var(--primary-orange);
+    color: var(--text-dark);
     font-weight: bold;
     border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 0.9rem;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    transition: background-color 0.2s;
 }
 
-/* Estrutura Opcional da Sacola-Drawer Expandida */
-.sacola-drawer-container {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    max-width: var(--container-width);
-    height: 75vh;
-    background: var(--card-bg);
-    border-top-left-radius: 16px;
-    border-top-right-radius: 16px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-    z-index: 2000;
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+.btn-submit-order:hover {
+    background-color: var(--primary-dark);
 }
-.sacola-drawer-container.aberto { transform: translateY(0); }
 
 /* ==========================================================================
-   5. TELA: CARRINHO / FECHAMENTO DE PEDIDO (carrinho.html)
+   5. TELAS DO CLIENTE: ADAPTAÇÕES (carrinho.html / acompanhar.html)
    ========================================================================== */
-.bloco-checkout {
+.checkout-card-block {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 16px;
-    margin: 12px;
+    margin: 12px 16px;
 }
 
-.checkout-secao-titulo {
+.checkout-block-title {
     font-size: 0.95rem;
     font-weight: 700;
-    color: var(--text-main);
     margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    color: var(--text-dark);
 }
 
-.input-checkout-grupo {
-    margin-bottom: 12px;
-}
-
-.input-checkout-grupo label {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 4px;
-}
-
-.input-checkout-field {
+.checkout-input-field {
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    background-color: #fafafa;
-}
-
-.input-checkout-field:focus {
-    border-color: var(--primary-color);
-    outline: none;
-}
-
-.btn-finalizar-whatsapp {
-    width: 100%;
-    background-color: var(--primary-color);
-    color: var(--text-main);
-    border: none;
-    padding: 14px;
-    border-radius: 4px;
-    font-weight: 700;
-    font-size: 0.95rem;
-    cursor: pointer;
-    margin-top: 10px;
-}
-/* ==========================================================================
-   6. TELA: RASTREAMENTO DE PEDIDO (acompanhar.html)
-   ========================================================================== */
-.tracker-container {
-    background: var(--card-bg);
-    padding: 24px 16px;
-    border-radius: 6px;
-    margin: 12px;
+    padding: 11px;
     border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: #fafafa;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
 }
-
-.linha-tempo-horizontal {
+/* Linha de Tempo do Rastreio de Pedido (Horizontal e Interativa) */
+.horizontal-timeline-flow {
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
-    margin: 20px 0;
+    margin: 32px 0 20px 0;
     padding: 0 10px;
 }
 
-.linha-tempo-horizontal::before {
+/* Conector cinza de fundo da linha de tempo */
+.horizontal-timeline-flow::before {
     content: '';
     position: absolute;
-    top: 15px;
+    top: 14px;
     left: 20px;
     right: 20px;
     height: 4px;
@@ -326,7 +325,7 @@ body {
     z-index: 1;
 }
 
-.passo-tracker {
+.timeline-step-item {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -335,9 +334,9 @@ body {
     flex: 1;
 }
 
-.circulo {
-    width: 32px;
-    height: 32px;
+.timeline-circle {
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background-color: #e9ecef;
     color: #6c757d;
@@ -345,148 +344,248 @@ body {
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    font-size: 0.85rem;
-    margin-bottom: 6px;
+    font-size: 0.8rem;
+    margin-bottom: 8px;
     border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
 }
 
-.legenda-passo {
+.step-label-text {
     font-size: 0.7rem;
+    font-weight: 600;
     color: var(--text-muted);
     text-align: center;
+    white-space: nowrap;
 }
 
-/* Estados Dinâmicos do Rastreamento */
-.passo-concluido .circulo {
-    background-color: var(--success-color);
-    border-color: var(--success-color);
+/* Estado: Passo Concluído (Verde Estático) */
+.passo-concluido .timeline-circle {
+    background-color: var(--green-status);
+    border-color: var(--green-status);
     color: white;
 }
+.passo-concluido .step-label-text {
+    color: var(--green-status);
+}
 
-.passo-ativo .circulo {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-    color: var(--text-main);
+/* Estado: Passo Ativo (Amarelo/Laranja Pulsante do Sabor Cearense) */
+.passo-ativo .timeline-circle {
+    background-color: var(--primary-orange);
+    border-color: var(--primary-orange);
+    color: var(--text-dark);
     animation: pulsoAtivoLaranja 1.5s infinite ease-in-out;
+}
+.passo-ativo .step-label-text {
+    color: var(--text-dark);
+    font-weight: 700;
 }
 
 @keyframes pulsoAtivoLaranja {
-    0% { box-shadow: 0 0 0 0 rgba(247, 166, 35, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(247, 166, 35, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(247, 166, 35, 0); }
+    0% { box-shadow: 0 0 0 0 rgba(255, 184, 28, 0.7); }
+    70% { box-shadow: 0 0 0 8px rgba(255, 184, 28, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 184, 28, 0); }
+}
+
+/* Painel Interativo de Busca por ID na Tela de Rastreio */
+.interactive-search-block {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 20px;
+    margin: 16px;
+    display: flex;
+    gap: 10px;
+}
+
+.search-id-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1rem;
+    text-align: center;
+    font-weight: bold;
+}
+
+.search-id-input:focus {
+    border-color: var(--primary-orange);
+    outline: none;
+}
+
+.btn-search-trigger {
+    background-color: var(--primary-orange);
+    color: var(--text-dark);
+    border: none;
+    padding: 0 20px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
 /* ==========================================================================
-   7. TELA: INTERFACE DE GERENCIAMENTO (admin.html)
+   5. INTERFACE DE GERENCIAMENTO DESKTOP (admin.html - IMAGENS 2, 3 E 4)
    ========================================================================== */
-.admin-layout-wrapper {
+.admin-dashboard-container {
     display: flex;
     min-height: 100vh;
     width: 100vw;
+    background-color: #ffffff;
 }
 
-/* Sidebar Lateral Esquerda Escura */
-.admin-sidebar {
+/* Sidebar lateral preta idêntica à do print */
+.admin-left-sidebar {
     width: 240px;
-    background-color: var(--dark-bg);
-    color: white;
+    background-color: #151515;
+    color: #ffffff;
     display: flex;
     flex-direction: column;
-    padding-top: 20px;
+    padding-top: 24px;
+    flex-shrink: 0;
 }
 
-.admin-sidebar-brand {
-    padding: 10px 24px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: var(--primary-color);
-    margin-bottom: 30px;
+.admin-sidebar-header-title {
+    padding: 0 24px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--primary-orange);
+    margin-bottom: 32px;
+    letter-spacing: 0.5px;
 }
 
-.admin-nav-item {
+.admin-sidebar-menu-link {
     padding: 14px 24px;
-    color: #cccccc;
+    color: #bbbbbb;
     text-decoration: none;
     font-size: 0.85rem;
     font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: block;
     border-left: 4px solid transparent;
+    transition: all 0.2s ease;
 }
 
-.admin-nav-item:hover {
-    background-color: var(--dark-item-bg);
-    color: white;
+.admin-sidebar-menu-link:hover {
+    background-color: #222222;
+    color: #ffffff;
 }
 
-/* Indicador Laranja no Item Selecionado da Sidebar */
-.admin-nav-item.active {
-    background-color: var(--primary-color);
-    color: var(--text-main);
-    font-weight: bold;
+/* Item Ativo com fundo Laranja na Sidebar conforme os prints */
+.admin-sidebar-menu-link.active {
+    background-color: var(--primary-orange);
+    color: var(--text-dark);
+    font-weight: 700;
+    border-left-color: #d98a14;
 }
 
-/* Painel de Conteúdo do Lado Direito */
-.admin-content-body {
+/* Área de Conteúdo da Direita */
+.admin-main-content-area {
     flex: 1;
-    background-color: var(--light-bg);
+    background-color: #ffffff;
     padding: 30px;
     overflow-y: auto;
 }
 
-.admin-page-title {
+.admin-section-main-title {
     font-size: 1.2rem;
     font-weight: 700;
+    color: var(--text-dark);
     margin-bottom: 24px;
     display: flex;
     align-items: center;
     gap: 8px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
 }
 
-/* Alertas de Lista Vazia */
-.admin-empty-state {
+/* Mensagem de erro em vermelho para listas vazias (Prints 2 e 3) */
+.admin-alert-no-data {
     text-align: center;
-    padding: 40px;
-    background: var(--card-bg);
-    border: 1px dashed #cccccc;
-    border-radius: 4px;
-    color: var(--danger-color);
-    font-size: 0.9rem;
+    padding: 24px;
+    color: #dc3545;
     font-weight: 600;
-}
-
-/* Grid e Formulários de Alteração de Cardápio */
-.admin-form-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    background: var(--card-bg);
-    padding: 20px;
+    font-size: 0.9rem;
+    border: 1px dashed #f5c6cb;
+    background-color: #f8d7da;
     border-radius: 4px;
-    border: 1px solid var(--border-color);
-    margin-bottom: 24px;
+    margin-top: 20px;
 }
 
-/* Items da Lista de Modificação no Admin */
-.admin-produto-item-row {
-    background: var(--card-bg);
+/* Grid de Inputs de Cadastro (Print 4) */
+.admin-product-form-grid {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    background-color: #fafafa;
+    padding: 20px;
+    border-radius: 6px;
     border: 1px solid var(--border-color);
+}
+
+.admin-input-wrapper {
+    flex: 1;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-input-wrapper label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.admin-input-element {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    outline: none;
+    background-color: #ffffff;
+}
+
+.admin-input-element:focus {
+    border-color: var(--primary-orange);
+}
+
+.btn-admin-save-product {
+    background-color: var(--primary-orange);
+    color: var(--text-dark);
+    font-weight: bold;
+    border: none;
+    padding: 11px 24px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    align-self: flex-end;
+    transition: background-color 0.2s;
+}
+
+.btn-admin-save-product:hover {
+    background-color: #d98a14;
+}
+
+/* Listagem de itens cadastrados com borda verde lateral ativa (Print 4) */
+.admin-item-row-list {
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--green-status);
     border-radius: 4px;
     padding: 16px;
     margin-bottom: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background-color: #ffffff;
 }
 
-.admin-produto-status-badge {
+.admin-badge-available {
     background-color: #e6f9ed;
-    color: var(--success-color);
+    color: var(--green-status);
     padding: 6px 12px;
     border-radius: 4px;
     font-size: 0.8rem;
-    font-weight: bold;
+    font-weight: 700;
     display: flex;
     align-items: center;
     gap: 6px;
