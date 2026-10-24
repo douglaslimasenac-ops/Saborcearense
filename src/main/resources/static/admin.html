@@ -541,14 +541,9 @@
         }
 
         window.onload = function() {
-            if(localStorage.getItem("adminAutenticado") === "true") {
-                document.getElementById("container-login-view").style.display = "none";
-                document.getElementById("painel-adm-wrapper").style.display = "flex";
-                carregarItensAdmin();
-                inicializarControlePedidos();
-                configurarFormularioCadastro();
+            
             }
-        };
+            
     </script>
 </body>
 </html>
