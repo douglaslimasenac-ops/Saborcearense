@@ -2,7 +2,6 @@ package com.saborcearense.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -112,27 +111,30 @@ public class CardapioController {
     }
 
     private Produto criarProdutoInicial(String nome, String categoria, double preco, String descricao) {
-        Produto produto = new Produto();
-        produto.setNome(nome);
-        produto.setCategoria(categoria);
-        produto.setPreco(java.math.BigDecimal.valueOf(preco)); 
-        produto.setDescricao(descricao);
+    Produto produto = new Produto();
+    produto.setNome(nome);
+    produto.setCategoria(categoria);
+    produto.setPreco(java.math.BigDecimal.valueOf(preco)); 
+    produto.setDescricao(descricao);
 
-        String urlImagem = "https://unsplash.com";
-        String nomeMinusculo = nome.toLowerCase();
+    // URL de fallback (Caso não entre em nenhum if, traz uma foto genérica de comida bem bonita)
+    String urlImagem = "https://unsplash.com";
+    String nomeMinusculo = nome.toLowerCase();
 
-        if (nomeMinusculo.contains("quiabo")) {
-            urlImagem = "https://unsplash.com";
-        } else if (nomeMinusculo.contains("carne assada")) {
-            urlImagem = "https://unsplash.com";
-        }
-
-        produto.setImagemUrl(urlImagem); 
-        return produto;
+    // Dicionário inteligente direto no Java injetando fotos específicas em tamanho leve (140x140)
+    if (nomeMinusculo.contains("quiabo") || nomeMinusculo.contains("frango")) {
+        urlImagem = "https://unsplash.com";
+    } else if (nomeMinusculo.contains("carne assada") || nomeMinusculo.contains("carne")) {
+        urlImagem = "https://unsplash.com";
+    } else if (nomeMinusculo.contains("costela")) {
+        urlImagem = "https://unsplash.com";
+    } else if (nomeMinusculo.contains("dobradinha")) {
+        urlImagem = "https://unsplash.com";
+    } else if (nomeMinusculo.contains("pernil")) {
+        urlImagem = "https://unsplash.com";
     }
 
-    @GetMapping
-    public java.util.List<Produto> listarTodos() {
-        return repository.findAll();
-    }
+    produto.setImagemUrl(urlImagem); 
+    return produto;
+   }
 }
