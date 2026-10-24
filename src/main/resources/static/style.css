@@ -1,246 +1,204 @@
 /* ==========================================================================
-   1. VARIÁVEIS DE CORES INSTITUCIONAIS (BASEADO NO LOGOTIPO & TELAS REAIS)
+   1. VARIÁVEIS DE CORES E CONFIGURAÇÕES GERAIS
    ========================================================================== */
 :root {
-    --primary-color: #f7a623;       /* Amarelo-Ouro / Laranja do Logotipo Sabor Cearense */
-    --primary-dark: #d98a14;        /* Tom mais escuro para hovers e botões */
-    --dark-bg: #151515;             /* Preto da Sidebar do Painel Admin */
-    --dark-item-bg: #222222;        /* Fundo de itens ativos na sidebar */
-    --light-bg: #f8f9fa;            /* Fundo cinza claro das telas do cliente */
-    --card-bg: #ffffff;             /* Fundo branco dos blocos de conteúdo */
-    --border-color: #e9ecef;        /* Divisórias sutis */
-    --text-main: #212529;           /* Cor principal do texto */
-    --text-muted: #6c757d;          /* Legendas e textos secundários */
-    --success-color: #28a745;       /* Verde para "Disponível" e passos concluídos */
-    --danger-color: #dc3545;        /* Vermelho para ações destrutivas / cancelamentos */
-    
-    /* Configurações de Grid / Mobile-First */
-    --container-width: 480px;
+    --cor-fundo: #fffdf0;        /* Creme bem claro do fundo da página */
+    --cor-primaria: #f19f1b;     /* Laranja institucional do Sabor Cearense */
+    --cor-secundaria: #ffbe1a;   /* Amarelo-ouro dos botões e destaques */
+    --cor-escura: #111111;       /* Preto absoluto dos títulos e cabeçalhos de seções */
+    --cor-texto: #2c2c2c;        /* Cinza escuro para legibilidade de preços/itens */
+    --cor-borda: #f7d08a;        /* Borda suave para os cards e caixas */
+    --cor-aside: #1e1e24;        /* Escuro corporativo para a barra lateral do painel */
 }
 
-/* ==========================================================================
-   2. RESETS GERAIS E ESTRUTURA GLOBAL
-   ========================================================================== */
-*/* Configurações Globais */
 * {
     margin: 0;
     padding: 0;
-    box-box: border-box;
+    box-sizing: border-box;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-    background-color: var(--bg-light);
-    color: var(--text-dark);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px 10px 80px 10px; /* Espaço inferior para não cobrir o rodapé fixo */
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+    min-height: 100vh;
 }
 
-.container {
-    width: 100%;
-    max-width: 600px; /* Layout otimizado para dispositivos móveis/telas estreitas */
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+/* ==========================================================================
+   2. AMBIENTE DE LOGIN (.login-wrapper)
+   ========================================================================== */
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--cor-fundo);
     padding: 20px;
 }
 
-/* ==========================================================================
-   Cabeçalho (Header)
-   ========================================================================== */
-.header {
+.login-card {
+    background: #ffffff;
+    border: 3px solid var(--cor-primaria);
+    border-radius: 15px;
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.05);
     text-align: center;
-    margin-bottom: 20px;
-    position: relative;
 }
 
-.logo-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 4px;
-}
-
-.logo-text {
-    font-size: 28px;
-    font-weight: 900;
-    color: var(--text-dark);
-    text-transform: uppercase;
-}
-
-.cactus-icon {
-    font-size: 24px;
-    color: #2e7d32;
-}
-
-.subtitle {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 15px;
-}
-
-/* Badges de Informações do Topo */
-.badge-info {
-    background-color: var(--primary-color);
-    color: var(--text-dark);
-    font-weight: bold;
-    font-size: 12px;
-    padding: 6px 16px;
-    border-radius: 20px;
-    display: inline-block;
-    margin-bottom: 10px;
-}
-
-.badge-status {
-    background-color: #f1f8e9;
-    border: 1px solid #c5e1a5;
-    color: var(--secondary-color);
-    font-weight: bold;
-    font-size: 13px;
-    padding: 8px 16px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.status-dot {
-    width: 8px;
-    height: 8px;
-    background-color: var(--secondary-color);
+.login-logo {
+    width: 120px;
+    height: 120px;
+    background-color: var(--cor-primaria);
     border-radius: 50%;
-    display: inline-block;
-}
-
-.delivery-time {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 15px;
-}
-
-/* Link de Rastreamento Destacado na Imagem */
-.track-order-alert {
-    border: 2px solid var(--highlight-blue);
-    border-radius: 25px;
-    padding: 10px 20px;
-    margin: 15px auto;
-    width: fit-content;
-    font-size: 13px;
+    margin: 0 auto 20px auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #000000;
     font-weight: bold;
-    color: var(--highlight-blue);
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.track-order-alert:hover {
-    background-color: rgba(59, 89, 152, 0.05);
 }
 
 /* ==========================================================================
-   Categorias (Menu de Abas)
+   3. ESTRUTURA DO PAINEL ADMINISTRATIVO LADO A LADO (.admin-wrapper)
    ========================================================================== */
-.categories-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+.admin-wrapper {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+/* Barra lateral fixa em 260px na esquerda */
+.admin-wrapper aside {
+    width: 260px;
+    min-width: 260px;
+    background-color: var(--cor-aside);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    border-right: 4px solid var(--cor-primaria);
+}
+
+/* Área de conteúdo fluido no restante do monitor */
+.admin-wrapper main {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+    background-color: var(--cor-fundo);
+}
+
+/* ==========================================================================
+   4. ELEMENTOS DO LAYOUT (BASEADO NO APLICATIVO DO CLIENTE)
+   ========================================================================== */
+
+/* Badges e Avisos do Topo */
+.badge-status {
+    background-color: var(--cor-primaria);
+    color: #000000;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
     gap: 8px;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.box-info-entrega {
+    background-color: #ffffff;
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    max-width: 500px;
+    margin: 0 auto 25px auto;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Abas e Seletores de Categoria */
+.container-abas {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
     margin-bottom: 25px;
 }
 
-.category-btn {
-    background: #ffffff;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 10px 4px;
-    font-size: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    transition: all 0.2s;
-}
-
-.category-btn.active {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-}
-
-/* ==========================================================================
-   Seção de Pratos (Menu List)
-   ========================================================================== */
-.section-title-bar {
-    background-color: #8d231a; /* Tom marrom/avermelhado escuro da barra */
-    color: #ffffff;
-    padding: 10px 15px;
+.aba-item {
+    background-color: #ffffff;
+    border: 1px solid var(--cor-borda);
+    padding: 8px 16px;
     border-radius: 6px;
-    font-weight: bold;
-    font-size: 15px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.aba-item.ativa {
+    background-color: var(--cor-primaria);
+    color: #ffffff;
+    border-color: var(--cor-primaria);
+}
+
+/* Cabeçalho de Categoria (Ex: Bebidas Geladas) */
+.categoria-titulo {
+    background-color: var(--cor-escura);
+    color: var(--cor-secundaria);
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 700;
     margin-bottom: 15px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
-.product-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border: 1px solid var(--border-color);
+/* Cards de Produtos da Listagem */
+.produto-card {
+    background-color: #ffffff;
+    border: 1px solid var(--cor-borda);
     border-radius: 8px;
-    padding: 12px;
+    padding: 15px 20px;
     margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.produto-info .nome {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--cor-escura);
+    margin-bottom: 6px;
+}
+
+.produto-info .preco {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2e7d32; /* Verde para destacar o valor monetário */
+}
+
+/* Controles de Quantidade e Botões Redondos (+ / -) */
+.seletor-quantidade {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--cor-primaria);
+    border-radius: 4px;
     background: #ffffff;
-}
-
-.product-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.product-img-placeholder {
-    width: 50px;
-    height: 50px;
-    background-color: #f5f5f5;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    color: #aaa;
-    border: 1px dashed var(--border-color);
-}
-
-.product-details .product-name {
-    font-size: 15px;
-    font-weight: bold;
-    margin-bottom: 4px;
-}
-
-.product-details .product-price {
-    font-size: 15px;
-    font-weight: bold;
-    color: var(--secondary-color);
-}
-
-/* Controles de Quantidade (- 0 +) */
-.quantity-control {
-    display: flex;
-    align-items: center;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
     overflow: hidden;
-    background: #ffffff;
 }
 
-.quantity-btn {
+.btn-qtd {
     background: none;
     border: none;
     width: 32px;
@@ -248,96 +206,98 @@ body {
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
-    color: var(--text-dark);
-    transition: background 0.1s;
+    color: var(--cor-primaria);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
 }
 
-.quantity-btn:hover {
-    background-color: #f5f5f5;
+.btn-qtd:hover {
+    background-color: #fff8eb;
 }
 
-.quantity-value {
-    width: 30px;
-    text-align: center;
-    font-weight: bold;
+.valor-qtd {
+    padding: 0 12px;
+    font-weight: 700;
     font-size: 14px;
+    color: #000000;
 }
 
-/* ==========================================================================
-   Barra de Fechamento Fixa (Footer Bar)
-   ========================================================================== */
-.footer-bar {
+/* Formulários de Alteração de Cardápio (Grid) */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--cor-borda);
+}
+
+.form-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-grupo label {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.form-grupo input, .form-grupo select {
+    padding: 10px;
+    border: 1px solid var(--cor-borda);
+    border-radius: 4px;
+    outline: none;
+}
+
+/* Barra Fixa Inferior de Fechamento / Rodapé */
+.barra-inferior {
     position: fixed;
     bottom: 0;
     left: 0;
-    right: 0;
+    width: 100%;
     background-color: #ffffff;
-    border-top: 1px solid var(--border-color);
-    padding: 12px 20px;
+    border-top: 3px solid var(--cor-secundaria);
+    padding: 12px 40px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    max-width: 600px;
-    margin: 0 auto;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+    align-items: center;
     z-index: 1000;
 }
 
-.footer-left {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.footer-btn-secondary {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-size: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    text-decoration: underline;
-}
-
 .total-container {
-    font-size: 13px;
-    font-weight: bold;
-    color: var(--text-dark);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--cor-primaria);
 }
 
-.total-price {
-    font-size: 18px;
-    font-weight: 900;
-    color: var(--secondary-color);
-}
-
-.btn-checkout {
-    background-color: var(--primary-color);
+/* Botão Corporativo Otimizado (Avançar para o Carrinho / Ações do Admin) */
+.btn-corporativo {
+    background-color: var(--cor-primaria);
+    color: #000000;
+    font-weight: 700;
     border: none;
-    border-radius: 6px;
-    color: var(--text-dark);
-    font-weight: bold;
-    font-size: 14px;
     padding: 12px 24px;
+    border-radius: 6px;
     cursor: pointer;
+    font-size: 14px;
     display: flex;
     align-items: center;
-    gap: 6px;
-    transition: background-color 0.2s;
+    gap: 8px;
+    box-shadow: 0 4px 6px rgba(241, 159, 27, 0.2);
+    transition: background 0.2s ease;
 }
 
-.btn-checkout:hover {
-    background-color: var(--primary-dark);
+.btn-corporativo:hover {
+    background-color: #d6870f;
 }
+
 /* ==========================================
    1. CONFIGURAÇÕES GERAIS E RESETS
    ========================================== */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
 
 /* O body agora controla as duas grandes colunas lado a lado */
 body {
@@ -600,4 +560,78 @@ body {
     border-radius: 4px;
     cursor: pointer;
     color: #666666;
+}
+/* ==========================================================================
+   5. CORREÇÃO DO LAYOUT DO CLIENTE (index.html)
+   ========================================================================== */
+
+/* Garante o alinhamento centralizado do conteúdo do cliente */
+.client-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px 20px 100px 20px; /* Margem inferior para não cobrir o rodapé fixo */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Centraliza os blocos de cabeçalho do Sabor Cearense */
+.header-cliente {
+    text-align: center;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+/* Remove qualquer empilhamento estranho nas seções e modais ocultos */
+.secao-cardapio {
+    width: 100%;
+    max-width: 600px;
+    margin-top: 15px;
+}
+
+/* Corrige o posicionamento da Barra de Avançar (Amarela) que estava cobrindo a lateral */
+.barra-inferior {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 70px; /* Altura fixa confortável */
+    background-color: #ffffff;
+    border-top: 4px solid var(--cor-secundaria);
+    padding: 0 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* Corrige o botão "Avançar para o Carrinho" dentro da barra inferior */
+.btn-avancar-carrinho {
+    background-color: var(--cor-primaria);
+    color: #000000;
+    font-weight: 700;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+/* Esconde modais ou elementos flutuantes (como Sacola/Rastrear) até que sejam ativados via JS */
+.sacola-flutuante, .rastrear-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 2px solid var(--cor-primaria);
+    border-radius: 8px;
+    padding: 20px;
+    z-index: 10000;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    display: none; /* Só exiba mudando para 'block' ou 'flex' via JavaScript quando clicado */
 }
