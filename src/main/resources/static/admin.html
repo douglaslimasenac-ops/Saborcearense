@@ -215,6 +215,31 @@
     </style>
 </head>
 <body>
+    <!-- CONTAINER PARA EXIBIR OS CARDS DOS PEDIDOS QUE CHEGAM VIA WEBSOCKET -->
+<div id="container-novos-pedidos" style="padding: 20px; font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+    <div id="lista-cards-ws">
+        <!-- Os novos pedidos injetados pelo JavaScript entrarão aqui automaticamente -->
+    </div>
+</div>
+
+    <!-- Modal de ativação obrigatório para burlar o bloqueio do navegador -->
+<div id="modal-ativacao" style="position:fixed; top:0; left:0; width:100%; height:100%; bg-color:rgba(0,0,0,0.8); background: black; opacity: 0.9; z-index:9999; display:flex; justify-content:center; align-items:center; flex-direction:column; color:white; font-family:sans-serif;">
+    <h2>Painel Sabor Cearense</h2>
+    <p>Clique no botão abaixo para ativar as notificações sonoras de novos pedidos.</p>
+    <button onclick="ligarPainel()" style="padding:15px 30px; font-size:18px; background:#28a745; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">
+        ATIVAR PAINEL
+    </button>
+</div>
+
+<!-- Elemento de áudio (substitua pelo caminho do seu arquivo de som) -->
+<audio id="som-notificacao" src="notificacao.mp3" preload="auto"></audio>
+
+<!-- Container onde os pedidos vão aparecer na tela -->
+<div id="lista-pedidos" style="padding: 20px; font-family: sans-serif;">
+    <h2>Pedidos Recebidos</h2>
+    <!-- Os pedidos injetados pelo JS entrarão aqui -->
+</div>
+
 
     <!-- CONTAINER DA TELA DE LOGIN -->
     <div class="login-wrapper" id="container-login-view">
@@ -638,11 +663,61 @@ async function mudarStatusPedido(id, novoStatus) {
         console.error("Erro ao mudar status do pedido:", e);
     }
 }
-        function imprimirCupomIFood(pedido) {
-    // 1. Cria uma janela temporária ou um container oculto para o cupom
+        // ==========================================
+// 🚀 NOVAS FUNÇÕES ADICIONADAS (EVITAM QUEBRA DE CÓDIGO)
+// ==========================================
+
+// Cria o card amarelo de alerta na tela com o botão para o atendente clicar
+function renderizarCardNovoPedido(pedido) {
+    const container = document.getElementById('lista-cards-ws');
+    if (!container) return;
+
+    const divCard = document.createElement('div');
+    divCard.style = "border: 2px solid #ffc107; padding: 15px; margin-bottom: 15px; border-radius: 8px; background: #fff8e1; box-shadow: 0 4px 6px rgba(0,0,0,0.05); font-family: sans-serif;";
+    
+    // Transforma o objeto do pedido em texto limpo para o evento onclick do botão
+    const pedidoString = JSON.stringify(pedido).replace(/"/g, '&quot;');
+    const cliente = pedido.clienteNome || pedido.nomeCliente || pedido.cliente || 'Não informado';
+    const totalPedido = pedido.total || pedido.valorTotal || 0;
+
+    divCard.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0; color: #d39e00;">🔔 NOVO PEDIDO #${pedido.id}</h3>
+            <span style="background: #ffc107; color: #000; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;">${pedido.status}</span>
+        </div>
+        <p style="margin: 5px 0;"><strong>Cliente:</strong> ${cliente}</p>
+        <p style="margin: 5px 0;"><strong>Total:</strong> R$ ${Number(totalPedido).toFixed(2)}</p>
+        <div style="margin-top: 12px;">
+            <button onclick="dispararCliqueImpressao('${pedidoString}', this)" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,123,255,0.3);">
+                🖨️ IMPRIMIR CUPOM
+            </button>
+        </div>
+    `;
+
+    // Adiciona no topo da lista
+    container.insertBefore(divCard, container.firstChild);
+}
+
+// Responde ao clique físico do usuário, abrindo o cupom sem restrições do navegador
+function dispararCliqueImpressao(pedidoStringCodificado, botao) {
+    const pedidoLimpo = JSON.parse(pedidoStringCodificado.replace(/&quot;/g, '"'));
+    
+    botao.style.background = "#6c757d";
+    botao.innerText = "🖨️ Cupom Enviado";
+    
+    // Executa a SUA função original com permissão total do navegador
+    if (typeof imprimirCupomIFood === "function") {
+        imprimirCupomIFood(pedidoLimpo);
+    }
+}
+
+// ==========================================
+// 🌵 SUAS FUNÇÕES ORIGINAIS INTEGRADAS
+// ==========================================
+
+function imprimirCupomIFood(pedido) {
     const janelaImpressao = window.open('', '_blank', 'width=300,height=600');
     
-    // 2. Monta a lista de itens do pedido
     let textoItens = '';
     if (pedido.itens) {
         const listaItens = Array.isArray(pedido.itens) ? pedido.itens : Object.values(pedido.itens);
@@ -652,8 +727,6 @@ async function mudarStatusPedido(id, novoStatus) {
         });
     }
 
-    // 3. Estrutura o HTML com CSS otimizado para bobinas térmicas de 58mm/80mm
-    // Nota: O uso de <\/script> (com barra invertida) evita que o navegador confunda com a tag real
     janelaImpressao.document.write(`
         <html>
         <head>
@@ -711,17 +784,12 @@ async function mudarStatusPedido(id, novoStatus) {
         </body>
         </html>
     `);
-    
     janelaImpressao.document.close();
 }
 
 function conectarWebSocketAdmin() {
-    // Corrigido: Removido as barras extras geradas no wss://
-    // Descobre se o site atual usa HTTPS (seguro) ou HTTP comum
-const protocoloWS = window.location.protocol === "https:" ? "wss://" : "ws://";
-
-// Monta a URL dinâmica usando o link atual do navegador + a rota do seu WebSocket (/ws-status)
-socketAdmin = new WebSocket(`${protocoloWS}${window.location.host}/ws-status`);
+    const protocoloWS = window.location.protocol === "https:" ? "wss://" : "ws://";
+    socketAdmin = new WebSocket(`${protocoloWS}${window.location.host}/ws-status`);
 
     socketAdmin.onopen = () => {
         console.log("🌵 Sabor Cearense: Painel Admin conectado ao tempo real!");
@@ -732,19 +800,19 @@ socketAdmin = new WebSocket(`${protocoloWS}${window.location.host}/ws-status`);
             const dados = JSON.parse(event.data);
             console.log("Mensagem recebida do WebSocket:", dados);
 
-            // 1. Se a mensagem recebida for a de um pedido que acabou de ser criado:
             if (dados.status === "RECEBIDO" || dados.status === "PENDENTE") {
                 
-                // 🔊 Toca o sinal sonoro para avisar o atendente
+                // 🔊 Toca o seu sinal sonoro original normalmente
                 tocarAlertaSonoro(); 
 
-                // 🖨️ DISPARA A IMPRESSÃO AUTOMÁTICA PADRÃO IFOOD!
-                if (typeof imprimirCupomIFood === "function") {
-                    imprimirCupomIFood(dados);
-                }
+                // ✨ NOVO: Gera o card interativo com segurança na tela
+                renderizarCardNovoPedido(dados);
+
+                // 🖨️ Desativado a chamada direta automática antiga para evitar o bloqueio do navegador:
+                // imprimirCupomIFood(dados);
             }
 
-            // 2. Atualiza a lista de pedidos ativos visualmente na tela sem duplicar
+            // 2. Mantém a atualização da sua lista de controle antiga ativa
             if (typeof carregarPedidosAtivos === "function") {
                 carregarPedidosAtivos();
             }
@@ -764,22 +832,22 @@ socketAdmin = new WebSocket(`${protocoloWS}${window.location.host}/ws-status`);
     };
 }
 
-// 🔊 Função auxiliar para o alerta sonoro de novos pedidos
 function tocarAlertaSonoro() {
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const oscilador = audioContext.createOscillator();
     const ganho = audioContext.createGain();
     
     oscilador.type = "sine";
-    oscilador.frequency.setValueAtTime(587.33, audioContext.currentTime); // Nota Ré (D5)
+    oscilador.frequency.setValueAtTime(587.33, audioContext.currentTime); 
     ganho.gain.setValueAtTime(0.5, audioContext.currentTime);
     
     oscilador.connect(ganho);
     ganho.connect(audioContext.destination);
     
     oscilador.start();
-    oscilador.stop(audioContext.currentTime + 0.3); // Apita por 300 milissegundos
+    oscilador.stop(audioContext.currentTime + 0.3); 
 }
+
 window.addEventListener('DOMContentLoaded', () => {
     conectarWebSocketAdmin();
 });
