@@ -638,6 +638,81 @@ async function mudarStatusPedido(id, novoStatus) {
         console.error("Erro ao mudar status do pedido:", e);
     }
 }
+        function imprimirCupomIFood(pedido) {
+    // 1. Cria uma janela temporária ou um container oculto para o cupom
+    const janelaImpressao = window.open('', '_blank', 'width=300,height=600');
+    
+    // 2. Monta a lista de itens do pedido
+    let textoItens = '';
+    if (pedido.itens) {
+        const listaItens = Array.isArray(pedido.itens) ? pedido.itens : Object.values(pedido.itens);
+        listaItens.forEach(item => {
+            textoItens += `${item.quantidade}x ${item.nome.padEnd(20, ' ')} R$ ${Number(item.preco * item.quantidade).toFixed(2)}\n`;
+            if(item.observacao) textoItens += `   [OBS: ${item.observacao}]\n`;
+        });
+    }
+
+    // 3. Estrutura o HTML com CSS otimizado para bobinas térmicas de 58mm/80mm
+    janelaImpressao.document.write(`
+        <html>
+        <head>
+            <title>Pedido #${pedido.id}</title>
+            <style>
+                @page { margin: 0; }
+                body { 
+                    font-family: 'Courier New', Courier, monospace; 
+                    width: 280px; 
+                    margin: 10px; 
+                    padding: 0;
+                    font-size: 12px;
+                    color: #000;
+                }
+                .txt-centralizado { text-align: center; }
+                .txt-negrito { font-weight: bold; }
+                .linha-divisoria { border-top: 1px dashed #000; margin: 8px 0; }
+                .titulo-pedido { font-size: 18px; font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            <div class="txt-centralizado txt-negrito">SABOR CEARENSE</div>
+            <div class="txt-centralizado">Delivery Mobile-First</div>
+            <div class="linha-divisoria"></div>
+            
+            <div class="txt-centralizado titulo-pedido">PEDIDO #${pedido.id}</div>
+            <div class="txt-centralizado">Status: ${pedido.status}</div>
+            <div class="linha-divisoria"></div>
+            
+            <div class="txt-negrito">CLIENTE:</div>
+            <div>${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</div>
+            <div>📍 Endereço: ${pedido.endereco}</div>
+            <div class="linha-divisoria"></div>
+            
+            <div class="txt-negrito">ITENS DO PEDIDO:</div>
+            <pre style="font-family: inherit; margin: 0; white-space: pre-wrap;">${textoItens || 'Nenhum item mapeado'}</pre>
+            <div class="linha-divisoria"></div>
+            
+            <div class="txt-negrito">PAGAMENTO:</div>
+            <div>Forma: ${pedido.formaPagamento}</div>
+            <div class="txt-negrito" style="font-size: 14px; margin-top: 4px;">
+                TOTAL: R$ ${Number(pedido.total || pedido.valorTotal || 0).toFixed(2)}
+            </div>
+            
+            <div class="linha-divisoria"></div>
+            <div class="txt-centralizado txt-negrito">Muito obrigado pelo pedido!</div>
+            <div class="txt-centralizado">Apoie o comércio local.</div>
+            
+            <script>
+                window.onload = function() {
+                    window.print();
+                    setTimeout(function() { window.close(); }, 500);
+                };
+            ` + `</script>
+        </body>
+        </html>
+    `);
+    
+    janelaImpressao.document.close();
+}
 
     </script>
 </body>
