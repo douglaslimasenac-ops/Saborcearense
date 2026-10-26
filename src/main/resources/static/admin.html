@@ -417,32 +417,71 @@
         }
 
         async function atualizarPrecoRapido(id, novoPreco) {
-            const valorFormatado = parseFloat(novoPreco);
-            if (isNaN(valorFormatado) || valorFormatado < 0) return;
-            try {
-                await fetch(`${URL_BACKEND}/api/cardapio/${id}/preco?preco=${valorFormatado}`, { method: "PUT" });
-                carregarItensAdmin();
-            } catch(err) { alert("Erro de conexão ao alterar preço."); }
+    const valorFormatado = parseFloat(novoPreco);
+    if (isNaN(valorFormatado) || valorFormatado < 0) return;
+    try {
+        // 🌟 CORREÇÃO: Envia o preço envelopado em JSON dentro do body
+        const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/preco`, { 
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ preco: valorFormatado })
+        });
+        
+        if (res.ok) {
+            carregarItensAdmin();
+        } else {
+            console.error("Erro no servidor ao atualizar preço.");
         }
+    } catch(err) { 
+        alert("Erro de conexão ao alterar preço."); 
+    }
+}
 
-        async function alternarDisponibilidade(id, statusAtual) {
-            try {
-                const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/disponibilidade?disponivel=${!statusAtual}`, { method: "PUT" });
-                if(res.ok) carregarItensAdmin();
-            } catch(e) { alert("Erro ao mudar disponibilidade."); }
+async function alternarDisponibilidade(id, statusAtual) {
+    try {
+        const novoStatus = !statusAtual;
+        
+        // 🌟 CORREÇÃO: Envia a disponibilidade envelopada em JSON dentro do body
+        const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/disponibilidade`, { 
+            method: "PUT", 
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ disponivel: novoStatus })
+        });
+        
+        if(res.ok) {
+            carregarItensAdmin();
+        } else {
+            console.error("Erro no servidor ao mudar disponibilidade.");
         }
+    } catch(e) { 
+        alert("Erro ao mudar disponibilidade."); 
+    }
+}
 
-        async function deletarItem(id) {
-            if(!confirm("Deseja apagar esse item permanentemente?")) return;
-            try {
-                const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}`, { method: "DELETE" });
-                if(res.ok) carregarItensAdmin();
-            } catch(e) { alert("Erro ao deletar."); }
+async function deletarItem(id) {
+    if(!confirm("Deseja apagar esse item permanentemente?")) return;
+    try {
+        const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}`, { method: "DELETE" });
+        if(res.ok) {
+            carregarItensAdmin();
+        } else {
+            alert("Erro ao deletar. Verifique se o item não está preso a algum pedido pendente.");
         }
-        function inicializarControlePedidos() {
-            conectarWebSocketAdmin();
-            carregarPedidosAtivos();
-        }
+    } catch(e) { 
+        alert("Erro ao deletar."); 
+    }
+}
+
+// Mantido original para o fluxo do WebSocket
+function inicializarControlePedidos() {
+    conectarWebSocketAdmin();
+    carregarPedidosAtivos();
+}
+
 
         function conectarWebSocketAdmin() {
             try {

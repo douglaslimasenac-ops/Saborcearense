@@ -333,25 +333,28 @@ let bairroTextoSelecionado = "";
 
 function atualizarTaxaEntrega(valorSelect) {
     if (!valorSelect) return;
-    const partes = valorSelect.split("|");
-    bairroTextoSelecionado = partes[0];
-    taxaEntregaSelecionada = parseFloat(partes[1]);
     
-    // 1. Calcula o total somando a variável global estável com a taxa do bairro
+    // 1. Divide o texto do select usando a barra vertical |
+    const partes = valorSelect.split("|");
+    bairroTextoSelecionado = partes[0]; // Nome do bairro (Ex: Centro)
+    taxaEntregaSelecionada = parseFloat(partes[1]) || 0; // Valor da taxa (Ex: 5.00)
+    
+    // 2. Calcula o total somando o valor global dos produtos com a entrega
     const totalComTaxa = totalCalculado + taxaEntregaSelecionada;
     
-    // 2. Atualiza a exibição da caixa verde usando innerHTML para manter o texto destacado
+    // 3. Atualiza a exibição da caixa verde
     const totalTxt = document.getElementById("valor-total");
     if (totalTxt) {
         totalTxt.innerHTML = `Valor Total: <strong>R$ ${totalComTaxa.toFixed(2).replace('.', ',')}</strong> (com R$ ${taxaEntregaSelecionada.toFixed(2).replace('.', ',')} de entrega)`;
     }
 
-    // 3. 🌟 ATUALIZAÇÃO DA SEÇÃO DE PAGAMENTO: Injeta o mesmo valor total lá embaixo
+    // 4. Atualiza o valor final lá embaixo no Passo 2 do Pagamento
     const pagamentoTotalTxt = document.getElementById("pagamento-valor-total");
     if (pagamentoTotalTxt) {
         pagamentoTotalTxt.innerText = `R$ ${totalComTaxa.toFixed(2).replace('.', ',')}`;
     }
 }
+
 
 // SUA FUNÇÃO ENVIAR PEDIDO TOTALMENTE CORRIGIDA:
 async function enviarPedido(e) {
