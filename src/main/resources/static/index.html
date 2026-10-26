@@ -449,18 +449,16 @@
             }
         }
         
-       function irParaCheckout() {
+      function irParaCheckout() {
     if (Object.keys(carrinho).length === 0) {
         alert("Adicione pelo menos um item à sacola!");
         return;
     }
     
-    // 1. Salva os itens da sacola para não sumirem ao mudar de página
-    localStorage.setItem('saborCearense_carrinho', JSON.stringify(carrinho));
+    // Salva usando exatamente a chave que a outra página espera ler
+    localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
     
-    alert("Redirecionando para a página de envio do pedido...");
-    
-    // 2. Faz o redirecionamento real para a nova tela
+    // Redireciona direto
     window.location.href = "carrinho.html";
 }
 

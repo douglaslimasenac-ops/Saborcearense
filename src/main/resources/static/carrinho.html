@@ -251,10 +251,27 @@
         const WHATSAPP_NUMERO = "/5521974720736"; 
         let totalCalculado = 0;
 
-        document.addEventListener("DOMContentLoaded", () => {
-            renderizarResumo();
-            document.getElementById("form-pedido").addEventListener("submit", enviarPedido);
-        });
+        // 1. Cria uma variável global para o carrinho nesta página
+let carrinho = {};
+
+document.addEventListener("DOMContentLoaded", () => {
+    // 2. Busca o que salvamos na página anterior
+    const dadosSalvos = localStorage.getItem('saborCearense_carrinho');
+    
+    if (dadosSalvos) {
+        // Converte o texto de volta para o objeto de itens
+        carrinho = JSON.parse(dadosSalvos);
+    } else {
+        alert("Sua sacola está vazia!");
+        window.location.href = "index.html";
+        return;
+    }
+
+    // 3. Agora sim executa as suas funções originais
+    renderizarResumo();
+    document.getElementById("form-pedido").addEventListener("submit", enviarPedido);
+});
+
 
         function controlarExibicaoPix(opcao) {
             const box = document.getElementById("container-pix-dinamico");
@@ -274,16 +291,21 @@
         }
 
         function renderizarResumo() {
-            const container = document.getElementById("lista-itens-carrinho");
-            const totalTxt = document.getElementById("valor-total");
-            const itens = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || [];
+           const container = document.getElementById("lista-itens-carrinho");
+           const totalTxt = document.getElementById("valor-total");
+    
+    // Lê o Objeto do localStorage (ou cria um objeto vazio se não houver)
+          const itens = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
 
-            if (itens.length === 0) {
-                container.innerHTML = `<p style="text-align: center; color: #718096; margin: 20px 0;">Seu carrinho está vazio no momento.</p>`;
-                totalTxt.innerText = "R\$ 0,00";
-                return;
-            }
+    // Verifica se o objeto está vazio
+         if (Object.keys(itens).length === 0) {
+            container.innerHTML = `<p style="text-align: center; color: #718096; margin: 20px 0;">Seu carrinho está vazio no momento.</p>`;
+            totalTxt.innerText = "R$ 0,00";
+          return;
+    }
 
+    // Daqui para baixo, o seu código continua renderizando os itens...
+    // Lembre-se que para percorrer um objeto você usará: Object.keys(itens).forEach(id => { ... })
             container.innerHTML = "";
             totalCalculado = 0;
 
