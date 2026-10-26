@@ -473,24 +473,29 @@ function imprimirCupomIFood(pedido) {
     elEstilo.textContent = regrasCSS;
     janelaImpressao.document.head.appendChild(elEstilo);
 
+    // Captura fiel do Nome do Cliente baseado na sua lógica do card
+    var nomeClienteFinal = (pedido.clienteNome || pedido.nomeCliente || "Não informado").toUpperCase();
     var enderecoBruto = pedido.endereco || "RETIRADA NO ESTABELECIMENTO";
     var telefoneFinal = pedido.telefone || "Não informado";
     
-    // Tratamento de string limpo e seguro sem Regex para não quebrar o interpretador
-    if (!pedido.telefone || pedido.telefone === "Não informado") {
-        var posicaoTermoTel = enderecoBruto.indexOf("Tel:");
-        if (posicaoTermoTel !== -1) {
-            var trechoTelefone = enderecoBruto.substring(posicaoTermoTel);
-            telefoneFinal = trechoTrechoTelefone = trechoTelefone.replace("Tel:", "").replace(")", "").trim();
-            enderecoBruto = enderecoBruto.substring(0, posicaoTermoTel).trim();
-            if (enderecoBruto.endsWith(",")) {
-                enderecoBruto = enderecoBruto.slice(0, -1).trim();
-            }
+    // Tratamento focado no padrão exato enviado pelo seu Spring Boot: "(Tel: ..."
+    var termoProcurado = "(Tel:";
+    var posicaoTermo = enderecoBruto.indexOf(termoProcurado);
+    
+    if (posicaoTermo !== -1) {
+        var parteDoTelefone = enderecoBruto.substring(posicaoTermo);
+        // Limpa os parênteses e o texto deixando apenas o número
+        telefoneFinal = parteDoTelefone.replace("(Tel:", "").replace(")", "").trim();
+        // Corta o endereço exatamente antes do início do parênteses
+        enderecoBruto = enderecoBruto.substring(0, posicaoTermo).trim();
+        
+        // Remove uma possível vírgula que sobrou no final do endereço fatiado
+        if (enderecoBruto.endsWith(",")) {
+            enderecoBruto = enderecoBruto.slice(0, -1).trim();
         }
     }
 
     var tipoServico = pedido.endereco ? "ENTREGA" : "RETIRADA";
-    var nomeClienteFinal = (pedido.clienteNome || pedido.nomeCliente || "Não informado").toUpperCase();
     var pagamentoFinal = (pedido.formaPagamento || "Não informado").toUpperCase();
     var observacaoFinal = pedido.observacao || "";
     var totalPedidoFinal = Number(pedido.total || pedido.valorTotal || 0);
@@ -506,28 +511,28 @@ function imprimirCupomIFood(pedido) {
     elTagServico.textContent = tipoServico;
     containerPrincipal.appendChild(elTagServico);
 
-    // 2. Cabeçalho
+    // 2. Cabeçalho da Loja
     var elCabecalho = janelaImpressao.document.createElement("div");
     elCabecalho.className = "text-center";
     elCabecalho.innerHTML = "<div class='titulo-loja'>🌵 SABOR CEARENSE 🌵</div><div class='subtitulo-loja'>Comida Caseira Legítima</div><div class='divider-dashed'></div><div class='subtitulo-loja'>Não vale como nota fiscal</div><div class='id-pedido'>PEDIDO #" + pedido.id + "</div><div class='subtitulo-loja'>Data: " + dataFinal + " - Hora: " + horaFinal + "</div>";
     containerPrincipal.appendChild(elCabecalho);
     containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, true));
 
-    // 3. Cliente
+    // 3. Bloco do Cliente
     var elDadosCliente = janelaImpressao.document.createElement("div");
     elDadosCliente.className = "bloco-conteudo";
     elDadosCliente.innerHTML = "<div class='secao-titulo'>Cliente</div><div class='negrito' style='font-size: 14px;'>" + nomeClienteFinal + "</div><div>Telefone: " + telefoneFinal + "</div>";
     containerPrincipal.appendChild(elDadosCliente);
     containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, false));
 
-    // 4. Endereço
+    // 4. Bloco de Endereço Limpo
     var elEnderecoBloco = janelaImpressao.document.createElement("div");
     elEnderecoBloco.className = "bloco-conteudo";
     elEnderecoBloco.innerHTML = "<div class='secao-titulo'>Endereço de Entrega</div><div style='white-space: pre-wrap; font-size: 13px;'>" + enderecoBruto + "</div>";
     containerPrincipal.appendChild(elEnderecoBloco);
     containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, true));
 
-    // 5. Seção de Itens
+    // 5. Seção de Itens baseada em pedido.descricao
     var elItensTitulo = janelaImpressao.document.createElement("div");
     elItensTitulo.className = "secao-titulo";
     elItensTitulo.textContent = "Itens do Pedido";
@@ -536,22 +541,26 @@ function imprimirCupomIFood(pedido) {
     var tabelaItens = janelaImpressao.document.createElement("table");
     tabelaItens.className = "tabela-itens";
     
-    var listaDeItens = pedido.itens || pedido.produtos || [];
-    var descricaoTextoPlano = pedido.descricao || pedido.textoPedido || "";
+    // Captura o texto corrido onde os itens estão guardados no seu banco
+    var textoDosPratos = pedido.descricao || "";
 
-    if (listaDeItens.length === 0 && descricaoTextoPlano.trim() !== "") {
-        var linhasItens = descricaoTextoPlano.split("\n");
-        linhasItens.forEach(function(linha) {
+    if (textoDosPratos.trim() !== "") {
+        // Divide o bloco de texto por quebras de linha reais
+        var linhas = textoDosPratos.split("\n");
+        linhas.forEach(function(linha) {
             if (linha.trim() !== "") {
                 var tr = janelaImpressao.document.createElement("tr");
                 var qtdItem = "1";
                 var nomeItem = linha.trim();
                 
-                if (linha.indexOf("x") !== -1 || linha.indexOf("X") !== -1) {
-                    var partes = linha.split(/[xX]/);
-                    if (partes.length > 1 && !isNaN(partes[0].trim())) {
-                        qtdItem = partes[0].trim();
-                        nomeItem = partes.slice(1).join("x").trim();
+                // Se a linha contiver um indicador de quantidade (ex: 2x Frango, 1 x Carne)
+                if (linha.toLowerCase().indexOf("x") !== -1) {
+                    var quebra = linha.split(/[xX]/);
+                    var possivelQtd = quebra[0].trim();
+                    // Valida se o caractere antes do X é realmente um número válido
+                    if (possivelQtd !== "" && !isNaN(possivelQtd)) {
+                        qtdItem = possivelQtd;
+                        nomeItem = quebra.slice(1).join("x").trim();
                     }
                 }
 
@@ -560,23 +569,12 @@ function imprimirCupomIFood(pedido) {
             }
         });
         containerPrincipal.appendChild(tabelaItens);
-    } else if (listaDeItens.length > 0) {
-        listaDeItens.forEach(function(item) {
-            var tr = janelaImpressao.document.createElement("tr");
-            var nomeItem = item.nome || (item.prato ? item.prato.nome : "Item");
-            var qtdItem = item.quantidade || item.qtd || 1;
-            var precoItem = item.preco || (item.prato ? item.prato.preco : 0);
-            var subTotalItem = qtdItem * precoItem;
-
-            tr.innerHTML = "<td class='col-qtd'>" + qtdItem + "x</td><td class='col-nome'>" + nomeItem.toUpperCase() + "</td><td class='col-preco'>R$ " + Number(subTotalItem).toFixed(2) + "</td>";
-            tabelaItens.appendChild(tr);
-        });
-        containerPrincipal.appendChild(tabelaItens);
     } else {
+        // Se a propriedade descrição vier vazia do banco
         var elFallback = janelaImpressao.document.createElement("div");
-        elFallback.style.whiteSpace = "pre-wrap";
         elFallback.style.padding = "5px 0";
-        elFallback.textContent = "Verificar descrição dos produtos na tela do painel administrativo.";
+        elFallback.className = "negrito";
+        elFallback.textContent = "Nenhum prato listado na descrição deste pedido.";
         containerPrincipal.appendChild(elFallback);
     }
 
@@ -588,7 +586,7 @@ function imprimirCupomIFood(pedido) {
     elFinancas.innerHTML = "<div class='linha-financeiro'><span>Subtotal</span> <span>R$ " + totalPedidoFinal.toFixed(2) + "</span></div><div class='linha-financeiro'><span>Taxa de entrega</span> <span>R$ 0.00</span></div><div class='linha-financeiro'><span class='negrito'>Pagamento</span> <span>" + pagamentoFinal + "</span></div><div class='linha-total'><span class='negrito'>TOTAL</span> <span class='negrito'>R$ " + totalPedidoFinal.toFixed(2) + "</span></div>";
     containerPrincipal.appendChild(elFinancas);
 
-    // 7. Bloco de Observações
+    // 7. Bloco de Observações do Cliente
     if (observacaoFinal && observacaoFinal !== "Nenhuma observação.") {
         containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, false));
         var elObsTitulo = janelaImpressao.document.createElement("div");
@@ -604,7 +602,7 @@ function imprimirCupomIFood(pedido) {
 
     containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, true));
 
-    // 8. Rodapé Operacional
+    // 8. Rodapé Operacional da Cozinha
     var elRodape = janelaImpressao.document.createElement("div");
     elRodape.className = "text-center";
     elRodape.style.marginTop = "15px";
