@@ -86,60 +86,89 @@ function carregarDadosDoCarrinho() {
 }
 
 function carregarItensDaUrlNoCarrinho() {
-    // 1. Procura o contêiner correto na sua estrutura de checkout
-    const containerItens = document.getElementById("itens-selecionados-container") || 
-                           document.querySelector(".itens-selecionados") ||
-                           document.querySelector(".card-pedido") || 
-                           document.querySelector("main");
+    // 🌵 CORREÇÃO: Aponta exatamente para a div real do seu HTML
+    const containerItens = document.getElementById("lista-itens-carrinho");
 
     if (!containerItens) return;
 
     try {
         const urlParams = new URLSearchParams(window.location.search);
         const carrinhoParam = urlParams.get("carrinho");
+        let itensCarrinho = null;
 
         if (carrinhoParam) {
-            // Decodifica a string crua vinda do parâmetro HTTP
-            const itensCarrinho = JSON.parse(decodeURIComponent(carrinhoParam));
+            // 1. Tenta capturar os dados vindos do Cardápio via URL
+            itensCarrinho = JSON.parse(decodeURIComponent(carrinhoParam));
+        } else {
+            // 2. Fallback estável: Se não veio na URL, lê direto do LocalStorage do navegador
+            const localRaw = localStorage.getItem("carrinhoSaborCearense") || localStorage.getItem("saborCearense_carrinho");
+            if (localRaw) {
+                itensCarrinho = JSON.parse(localRaw);
+            }
+        }
 
-            // 🌵 CORREÇÃO: Aceita tanto Arrays puros quanto Objetos Indexados do LocalStorage
-            const listaItens = Array.isArray(itensCarrinho) ? itensCarrinho : Object.values(itensCarrinho);
+        if (!itensCarrinho) return;
 
-            if (listaItens && listaItens.length > 0) {
-                const listaHtml = document.createElement("div");
-                listaHtml.style.marginBottom = "15px";
+        // Converte em lista plana caso os dados venham estruturados como Objeto Indexado
+        const listaItens = Array.isArray(itensCarrinho) ? itensCarrinho : Object.values(itensCarrinho);
 
-                listaItens.forEach(item => {
-                    const itemLinha = document.createElement("div");
-                    itemLinha.style.display = "flex";
-                    itemLinha.style.justifyContent = "space-between";
-                    itemLinha.style.padding = "8px 0";
-                    itemLinha.style.borderBottom = "1px dashed #e2e8f0";
-                    itemLinha.style.color = "#334155";
-                    itemLinha.style.fontSize = "1rem";
+        if (listaItens && listaItens.length > 0) {
+            // Limpa o contêiner antes de renderizar para evitar duplicações na tela
+            containerItens.innerHTML = "";
+            let subtotalCalculadoUrl = 0;
 
-                    // 🌵 CORREÇÃO: Garante a limpeza completa de espaços, acentos e caracteres especiais
-                    let nomeFormatado = "Prato";
-                    if (item.nome) {
-                        nomeFormatado = decodeURIComponent(item.nome).replace(/%20/g, " ");
-                    }
-                    
-                    const qtd = item.quantidade || item.qtd || 1;
-                    const preco = item.preco || 0;
+            listaItens.forEach(item => {
+                const itemLinha = document.createElement("div");
+                // Mantém a classe original para herdar a estilização do seu CSS
+                itemLinha.className = "item-resumo";
+                
+                // Estilização limpa de fallback caso seu CSS precise de reforço no alinhamento
+                itemLinha.style.display = "flex";
+                itemLinha.style.justifyContent = "space-between";
+                itemLinha.style.padding = "8px 0";
+                itemLinha.style.borderBottom = "1px dashed #e2e8f0";
 
-                    itemLinha.innerHTML = `
-                        <span style="font-weight: 600;">${qtd}x ${nomeFormatado}</span>
-                        <span style="color: #0f766e; font-weight: 700;">R$ ${(qtd * preco).toFixed(2).replace(".", ",")}</span>
-                    `;
-                    listaHtml.appendChild(itemLinha);
-                });
+                let nomeFormatado = "Prato";
+                if (item.nome) {
+                    nomeFormatado = decodeURIComponent(item.nome).replace(/%20/g, " ");
+                }
+                
+                const qtd = item.quantidade || item.qtd || 1;
+                const preco = item.preco || 0;
+                const subtotalItem = qtd * preco;
+                subtotalCalculadoUrl += subtotalItem;
 
-                // Insere no topo do elemento pai preservando os botões ou valores abaixo
-                containerItens.prepend(listaHtml);
+                itemLinha.innerHTML = `
+                    <div>
+                        <span class="item-qtd-tag" style="font-weight: 600; margin-right: 5px;">${qtd}x</span>
+                        <span class="item-nome">${nomeFormatado}</span>
+                    </div>
+                    <span class="item-preco-sub" style="font-weight: 700; color: #0f766e;">R$ ${subtotalItem.toFixed(2).replace(".", ",")}</span>
+                `;
+                containerItens.appendChild(itemLinha);
+            });
+
+            // Alimenta a variável global financeira do seu script para o cálculo de taxas funcionar
+            if (typeof totalCalculado !== "undefined") {
+                totalCalculado = subtotalCalculadoUrl;
+            }
+            if (typeof subtotalProdutos !== "undefined") {
+                subtotalProdutos = subtotalCalculadoUrl;
+            }
+
+            // Atualiza imediatamente o preço na tela de checkout
+            const campoTotal = document.getElementById("valor-total");
+            if (campoTotal) {
+                campoTotal.innerHTML = `<strong>R$ ${subtotalCalculadoUrl.toFixed(2).replace('.', ',')}</strong>`;
+            }
+            
+            const campoTotalPagar = document.getElementById("pagamento-valor-total");
+            if (campoTotalPagar) {
+                campoTotalPagar.innerText = `R$ ${subtotalCalculadoUrl.toFixed(2).replace('.', ',')}`;
             }
         }
     } catch (erro) {
-        console.error("Erro ao ler e processar os itens do carrinho vindos da URL:", erro);
+        console.error("Erro ao ler e processar os itens mapeados do Sabor Cearense:", erro);
     }
 }
 
