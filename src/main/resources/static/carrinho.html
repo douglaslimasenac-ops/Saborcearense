@@ -296,7 +296,64 @@ document.addEventListener("DOMContentLoaded", () => {
     renderizarResumo();
     document.getElementById("form-pedido").addEventListener("submit", enviarPedido);
 });
+// Executa automaticamente assim que a página do carrinho carregar
+document.addEventListener("DOMContentLoaded", function() {
+    carregarItensDaUrlNoCarrinho();
+});
 
+function carregarItensDaUrlNoCarrinho() {
+    // 1. Procura o contêiner onde os pratos devem ser listados (acima do valor total)
+    // Caso o id do seu contêiner seja diferente, ajuste o nome abaixo
+    const containerItens = document.getElementById("itens-selecionados-container") || 
+                           document.querySelector(".itens-selecionados") ||
+                           document.querySelector(".card-pedido") || 
+                           document.querySelector("main"); // Fallback seguro
+
+    if (!containerItens) return;
+
+    try {
+        // 2. Captura os parâmetros da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const carrinhoParam = urlParams.get("carrinho");
+
+        if (carrinhoParam) {
+            // Decodifica o texto da URL e transforma de volta em um Array de objetos JavaScript
+            const itensCarrinho = JSON.parse(decodeURIComponent(carrinhoParam));
+
+            if (Array.isArray(itensCarrinho) && itensCarrinho.length > 0) {
+                // Cria um contêiner limpo para listar os pratos antes do elemento de valor total
+                const listaHtml = document.createElement("div");
+                listaHtml.style.marginBottom = "15px";
+
+                itensCarrinho.forEach(item => {
+                    const itemLinha = document.createElement("div");
+                    // Estilização profissional e limpa para combinar com o layout corporativo
+                    itemLinha.style.display = "flex";
+                    itemLinha.style.justifyContent = "space-between";
+                    itemLinha.style.padding = "8px 0";
+                    itemLinha.style.borderBottom = "1px dashed #e2e8f0";
+                    itemLinha.style.color = "#334155";
+                    itemLinha.style.fontSize = "1rem";
+
+                    const nomeFormatado = item.nome ? item.nome.replace(/%20/g, " ") : "Prato";
+                    const qtd = item.quantidade || item.qtd || 1;
+                    const preco = item.preco || 0;
+
+                    itemLinha.innerHTML = `
+                        <span style="font-weight: 600;">${qtd}x ${nomeFormatado}</span>
+                        <span style="color: #0f766e; font-weight: 700;">R$ ${(qtd * preco).toFixed(2)}</span>
+                    `;
+                    listaHtml.appendChild(itemLinha);
+                });
+
+                // Insere os pratos formatados no topo do bloco de "Itens Selecionados"
+                containerItens.prepend(listaHtml);
+            }
+        }
+    } catch (erro) {
+        console.error("Erro ao ler e processar os itens do carrinho vindos da URL:", erro);
+    }
+}
 
         function controlarExibicaoPix(opcao) {
             const box = document.getElementById("container-pix-dinamico");
