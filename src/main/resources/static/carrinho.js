@@ -86,7 +86,7 @@ function carregarDadosDoCarrinho() {
 }
 
 function carregarItensDaUrlNoCarrinho() {
-    // 🌵 CORREÇÃO: Aponta exatamente para a div real do seu HTML
+    // 1. Mapeia a div correta do seu HTML
     const containerItens = document.getElementById("lista-itens-carrinho");
 
     if (!containerItens) return;
@@ -97,10 +97,10 @@ function carregarItensDaUrlNoCarrinho() {
         let itensCarrinho = null;
 
         if (carrinhoParam) {
-            // 1. Tenta capturar os dados vindos do Cardápio via URL
+            // Decodifica a string JSON vinda da sua URL real
             itensCarrinho = JSON.parse(decodeURIComponent(carrinhoParam));
         } else {
-            // 2. Fallback estável: Se não veio na URL, lê direto do LocalStorage do navegador
+            // Fallback para o LocalStorage caso o parâmetro suma
             const localRaw = localStorage.getItem("carrinhoSaborCearense") || localStorage.getItem("saborCearense_carrinho");
             if (localRaw) {
                 itensCarrinho = JSON.parse(localRaw);
@@ -109,69 +109,61 @@ function carregarItensDaUrlNoCarrinho() {
 
         if (!itensCarrinho) return;
 
-        // Converte em lista plana caso os dados venham estruturados como Objeto Indexado
+        // 🌵 CORREÇÃO DEFINITIVA: Converte o objeto indexador {"1": {...}} vindo da sua URL em uma lista legível
         const listaItens = Array.isArray(itensCarrinho) ? itensCarrinho : Object.values(itensCarrinho);
 
         if (listaItens && listaItens.length > 0) {
-            // Limpa o contêiner antes de renderizar para evitar duplicações na tela
+            // Limpa o contêiner para remover mensagens residuais ou duplicadas
             containerItens.innerHTML = "";
             let subtotalCalculadoUrl = 0;
 
             listaItens.forEach(item => {
-                const itemLinha = document.createElement("div");
-                // Mantém a classe original para herdar a estilização do seu CSS
-                itemLinha.className = "item-resumo";
+                const divItem = document.createElement("div");
+                // Herda perfeitamente a classe do seu layout CSS corporativo
+                divItem.className = "item-resumo";
                 
-                // Estilização limpa de fallback caso seu CSS precise de reforço no alinhamento
-                itemLinha.style.display = "flex";
-                itemLinha.style.justifyContent = "space-between";
-                itemLinha.style.padding = "8px 0";
-                itemLinha.style.borderBottom = "1px dashed #e2e8f0";
+                // Força o alinhamento lado a lado profissional (Qtd/Nome na esquerda, Preço na direita)
+                divItem.style.display = "flex";
+                divItem.style.justifyContent = "space-between";
+                divItem.style.padding = "6px 0";
 
-                let nomeFormatado = "Prato";
-                if (item.nome) {
-                    nomeFormatado = decodeURIComponent(item.nome).replace(/%20/g, " ");
-                }
-                
+                // Mapeamento exato das propriedades vinda da sua URL ("nome", "quantidade", "preco")
+                const nomeLimpo = item.nome ? decodeURIComponent(item.nome) : "Prato";
                 const qtd = item.quantidade || item.qtd || 1;
                 const preco = item.preco || 0;
                 const subtotalItem = qtd * preco;
                 subtotalCalculadoUrl += subtotalItem;
 
-                itemLinha.innerHTML = `
+                divItem.innerHTML = `
                     <div>
-                        <span class="item-qtd-tag" style="font-weight: 600; margin-right: 5px;">${qtd}x</span>
-                        <span class="item-nome">${nomeFormatado}</span>
+                        <span class="item-qtd-tag" style="font-weight: 600; margin-right: 6px;">${qtd}x</span>
+                        <span class="item-nome">${nomeLimpo}</span>
                     </div>
                     <span class="item-preco-sub" style="font-weight: 700; color: #0f766e;">R$ ${subtotalItem.toFixed(2).replace(".", ",")}</span>
                 `;
-                containerItens.appendChild(itemLinha);
+                containerItens.appendChild(divItem);
             });
 
-            // Alimenta a variável global financeira do seu script para o cálculo de taxas funcionar
-            if (typeof totalCalculado !== "undefined") {
-                totalCalculado = subtotalCalculadoUrl;
-            }
-            if (typeof subtotalProdutos !== "undefined") {
-                subtotalProdutos = subtotalCalculadoUrl;
-            }
+            // Sincroniza o valor total com os escopos globais do seu script
+            if (typeof totalCalculado !== "undefined") totalCalculado = subtotalCalculadoUrl;
+            if (typeof subtotalProdutos !== "undefined") subtotalProdutos = subtotalCalculadoUrl;
 
-            // Atualiza imediatamente o preço na tela de checkout
+            // 2. Atualiza a exibição do preço na caixa superior do resumo
             const campoTotal = document.getElementById("valor-total");
             if (campoTotal) {
                 campoTotal.innerHTML = `<strong>R$ ${subtotalCalculadoUrl.toFixed(2).replace('.', ',')}</strong>`;
             }
             
+            // 3. Atualiza o preço final localizado lá no Passo 2 do Pagamento
             const campoTotalPagar = document.getElementById("pagamento-valor-total");
             if (campoTotalPagar) {
                 campoTotalPagar.innerText = `R$ ${subtotalCalculadoUrl.toFixed(2).replace('.', ',')}`;
             }
         }
     } catch (erro) {
-        console.error("Erro ao ler e processar os itens mapeados do Sabor Cearense:", erro);
+        console.error("Erro ao renderizar itens da URL do Sabor Cearense:", erro);
     }
 }
-
 
 function renderizarResumo() {
     const container = document.getElementById("lista-itens-carrinho");
