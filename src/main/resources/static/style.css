@@ -397,3 +397,47 @@ body {
     gap: 10px;
     border-radius: 12px 12px 0 0;
 }
+/* ==========================================================================
+   MELHORIA DOS BOTÕES DE CATEGORIA (ABAS)
+   ========================================================================== */
+
+/* Remove a barra de rolagem horizontal nativa feia se houver muitos botões */
+.abas-navegacao {
+    scrollbar-width: none; /* Firefox */
+}
+.abas-navegacao::-webkit-scrollbar {
+    display: none; /* Chrome, Safari e Edge */
+}
+
+/* Estilo padrão de todos os botões de aba */
+.abas-navegacao .btn-aba {
+    flex: 1;
+    background: #ffffff !important;
+    color: #334155 !important; /* Cor cinza escuro moderna para o texto */
+    border: 1px solid #e2e8f0 !important; /* Borda fina e elegante */
+    padding: 10px 14px !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Efeito ao passar o mouse por cima (Desktop) */
+.abas-navegacao .btn-aba:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* ESTADO ATIVO - Quando a aba está selecionada (Preenchimento Laranja Oficial) */
+.abas-navegacao .btn-aba.ativo {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: #111111 !important; /* Texto escuro para dar contraste no amarelo */
+    box-shadow: 0 4px 12px rgba(245, 166, 35, 0.2) !important; /* Leve brilho na aba ativa */
+}
