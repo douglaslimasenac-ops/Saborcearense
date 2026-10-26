@@ -717,7 +717,7 @@ async function mudarStatusPedido(id, novoStatus) {
 
 function conectarWebSocketAdmin() {
     // Corrigido: Removido as barras extras geradas no wss://
-    socketAdmin = new WebSocket("wss://://onrender.com");
+    socketAdmin = new WebSocket("wss://https://saborcearense-5.onrender.com");
 
     socketAdmin.onopen = () => {
         console.log("🌵 Sabor Cearense: Painel Admin conectado ao tempo real!");
