@@ -291,42 +291,48 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         function renderizarResumo() {
-           const container = document.getElementById("lista-itens-carrinho");
-           const totalTxt = document.getElementById("valor-total");
+    const container = document.getElementById("lista-itens-carrinho");
+    const totalTxt = document.getElementById("valor-total");
     
-    // Lê o Objeto do localStorage (ou cria um objeto vazio se não houver)
-          const itens = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
+    // 1. Pega o objeto salvo do localStorage
+    const carrinhoObjeto = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
 
-    // Verifica se o objeto está vazio
-         if (Object.keys(itens).length === 0) {
-            container.innerHTML = `<p style="text-align: center; color: #718096; margin: 20px 0;">Seu carrinho está vazio no momento.</p>`;
-            totalTxt.innerText = "R$ 0,00";
-          return;
+    // 2. Transforma o Objeto em um Array (Lista) para não quebrar o seu código existente
+    const itens = Object.values(carrinhoObjeto);
+
+    // 3. Verifica se a lista está vazia
+    if (itens.length === 0) {
+        container.innerHTML = `<p style="text-align: center; color: #718096; margin: 20px 0;">Seu carrinho está vazio no momento.</p>`;
+        totalTxt.innerText = "R$ 0,00";
+        return;
     }
 
-    // Daqui para baixo, o seu código continua renderizando os itens...
-    // Lembre-se que para percorrer um objeto você usará: Object.keys(itens).forEach(id => { ... })
-            container.innerHTML = "";
-            totalCalculado = 0;
+    // 4. Limpa o container antes de listar
+    container.innerHTML = "";
+    let totalAcumulado = 0;
 
-            itens.forEach(item => {
-                const subtotalItem = item.preco * item.quantidade; 
-                totalCalculado += subtotalItem;
+    // 5. Agora o seu .forEach vai funcionar perfeitamente sem erros!
+    itens.forEach(item => {
+        // Calcula o valor total deste item (preço x quantidade)
+        const subtotalItem = item.preco * item.quantidade;
+        totalAcumulado += subtotalItem;
 
-                const div = document.createElement("div");
-                div.className = "item-resumo";
-                div.innerHTML = `
-                    <div>
-                        <span class="item-qtd-tag">${item.quantidade}x</span>
-                        <span class="item-nome">${item.nome}</span>
-                    </div>
-                    <span class="item-preco-sub">R$ ${subtotalItem.toFixed(2).replace('.', ',')}</span>
-                `;
-                container.appendChild(div);
-            });
+        // Injeta o HTML de cada prato escolhido na lista do carrinho
+        container.innerHTML += `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #edf2f7;">
+                <div>
+                    <h4 style="margin: 0; font-size: 16px; color: #2d3748;">${item.nome}</h4>
+                    <span style="font-size: 14px; color: #718096;">Qtd: ${item.quantidade}</span>
+                </div>
+                <span style="font-weight: 600; color: #2d3748;">R$ ${subtotalItem.toFixed(2).replace('.', ',')}</span>
+            </div>
+        `;
+    });
 
-            totalTxt.innerText = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
-        }
+    // 6. Atualiza o valor total geral na tela
+    totalTxt.innerText = `R$ ${totalAcumulado.toFixed(2).replace('.', ',')}`;
+}
+
 
 function atualizarTaxaEntrega(valorSelect) {
     if (!valorSelect) return;
