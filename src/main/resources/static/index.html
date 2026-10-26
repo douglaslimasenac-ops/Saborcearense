@@ -146,7 +146,7 @@
 
     <!-- SCRIPTS DE LOGICA -->
     <script>
-        const URL_BACKEND = "https://onrender.com";
+        const URL_BACKEND = "https://saborcearense-5.onrender.com";
         let carrinho = {};
         let dadosSacola = carrinho; 
         let estabelecimentoAberto = true;
@@ -455,6 +455,17 @@
             }
             alert("Redirecionando para a página de envio do pedido...");
         }
+        function executarBuscaRastreio() {
+    const input = document.getElementById('input-rastreio-index');
+    if (!input) return;
+    const pedidoId = input.value.trim().replace('#', '');
+    if (!pedidoId) {
+        alert('Por favor, digite o número do pedido.');
+        return;
+    }
+    window.location.href = `acompanhar.html?id=${pedidoId}`;
+}
+
     </script>
 </body>
 </html>
