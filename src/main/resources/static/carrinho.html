@@ -219,16 +219,23 @@
                 </div>
             </div>
             <div class="secao-card">
-                <h2>💳 Passo 2: Forma de Pagamento</h2>
-                <div class="form-grupo">
-                    <label for="pagamento">Escolha como deseja pagar:</label>
-                    <select id="pagamento" required onchange="controlarExibicaoPix(this.value)">
-                        <option value="Pix">Pix (Copia e Cola Direto no Site)</option>
-                        <option value="Dinheiro">Dinheiro (Pagar na Entrega)</option>
-                        <option value="Cartão de Crédito">Cartão de Crédito (Na Entrega)</option>
-                        <option value="Cartão de Débito">Cartão de Débito (Na Entrega)</option>
-                    </select>
-                </div>
+    <h2>💳 Passo 2: Forma de Pagamento</h2>
+    <div class="form-grupo">
+        <label for="pagamento">Escolha como deseja pagar:</label>
+        <select id="pagamento" required onchange="controlarExibicaoPix(this.value)">
+            <option value="Pix">Pix (Copia e Cola Direto no Site)</option>
+            <option value="Dinheiro">Dinheiro (Pagar na Entrega)</option>
+            <option value="Cartão de Crédito">Cartão de Crédito (Na Entrega)</option>
+            <option value="Cartão de Débito">Cartão de Débito (Na Entrega)</option>
+        </select>
+    </div>
+
+    <!-- ADICIONE ESTE BLOCO AQUI -->
+    <div style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 15px; color: #4a5568; font-weight: 500;">Total a pagar:</span>
+        <span id="pagamento-valor-total" style="font-size: 18px; font-weight: 700; color: #141414;">R$ 0,00</span>
+    </div>
+</div>
 
                 <div id="container-pix-dinamico" class="box-pix" style="display: block;">
                     <p style="margin: 0 0 8px 0; font-weight: bold; color: #166534; font-size: 0.95rem;">🔑 Chave CNPJ do Sabor Cearense:</p>
@@ -317,6 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Exibe o valor inicial dos produtos (antes do bairro ser escolhido)
     totalTxt.innerHTML = `Valor Total: <strong>R$ ${totalCalculado.toFixed(2).replace('.', ',')}</strong>`;
+     document.getElementById("pagamento-valor-total").innerText = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
 }
 
         // ATENÇÃO: Deixe estas duas variáveis fora de qualquer função (no escopo global do script)
@@ -329,9 +337,20 @@ function atualizarTaxaEntrega(valorSelect) {
     bairroTextoSelecionado = partes[0];
     taxaEntregaSelecionada = parseFloat(partes[1]);
     
-    // Atualiza a exibição do total somando o valor dos pratos com a taxa de entrega
+    // 1. Calcula o total somando a variável global estável com a taxa do bairro
     const totalComTaxa = totalCalculado + taxaEntregaSelecionada;
-    document.getElementById("valor-total").innerText = `R$ ${totalComTaxa.toFixed(2).replace('.', ',')} (com R$ ${taxaEntregaSelecionada.toFixed(2).replace('.', ',')} de entrega)`;
+    
+    // 2. Atualiza a exibição da caixa verde usando innerHTML para manter o texto destacado
+    const totalTxt = document.getElementById("valor-total");
+    if (totalTxt) {
+        totalTxt.innerHTML = `Valor Total: <strong>R$ ${totalComTaxa.toFixed(2).replace('.', ',')}</strong> (com R$ ${taxaEntregaSelecionada.toFixed(2).replace('.', ',')} de entrega)`;
+    }
+
+    // 3. 🌟 ATUALIZAÇÃO DA SEÇÃO DE PAGAMENTO: Injeta o mesmo valor total lá embaixo
+    const pagamentoTotalTxt = document.getElementById("pagamento-valor-total");
+    if (pagamentoTotalTxt) {
+        pagamentoTotalTxt.innerText = `R$ ${totalComTaxa.toFixed(2).replace('.', ',')}`;
+    }
 }
 
 // SUA FUNÇÃO ENVIAR PEDIDO TOTALMENTE CORRIGIDA:
