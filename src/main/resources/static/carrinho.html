@@ -184,8 +184,6 @@
     </style>
 </head>
 <body>
-
-
     <div class="container-checkout">
         <a href="index.html" class="btn-voltar">← Voltar para o Cardápio</a>
         
@@ -213,333 +211,62 @@
                 </div>
 
                 <div class="form-grupo">
-    <label for="bairro-entrega">Selecione o Bairro de Entrega</label>
-    <select id="bairro-entrega" required onchange="atualizarTaxaEntrega(this.value)">
-        <option value="" disabled selected>Escolha o seu bairro...</option>
-        <option value="Engenho Novo|0.00">Engenho Novo - R$ 0,00</option>
-        <option value="Méier|3.00">Fátima - R$ 3,00</option>
-        <option value="Grajaú|5.00">Grajaú - R$ 5,00</option>
-        <option value="Andaraí|6.00">Andaraí - R$ 6,00</option>
-        <option value="Tijuca|7.00">Tijuca - R$ 7,00</option>
-        <option value="Cachambi|5.00">Cachambi - R$ 5,00</option>   
-    </select>
-</div>
+                    <label for="bairro-entrega">Selecione o Bairro de Entrega</label>
+                    <select id="bairro-entrega" required onchange="atualizarTaxaEntrega(this.value)">
+                        <option value="" disabled selected>Escolha o seu bairro...</option>
+                        <option value="Engenho Novo|0.00">Engenho Novo - R$ 0,00</option>
+                        <option value="Méier|3.00">Fátima - R$ 3,00</option>
+                        <option value="Grajaú|5.00">Grajaú - R$ 5,00</option>
+                        <option value="Andaraí|6.00">Andaraí - R$ 6,00</option>
+                        <option value="Tijuca|7.00">Tijuca - R$ 7,00</option>
+                        <option value="Cachambi|5.00">Cachambi - R$ 5,00</option>   
+                    </select>
+                </div>
 
-<div class="form-grupo">
-    <label for="endereco">Rua, Número, Bloco ou Apto</label>
-    <input type="text" id="endereco" required placeholder="Ex: Rua São Paulo, 123 - Bloco B Apto 202">
-</div>
-
+                <div class="form-grupo">
+                    <label for="endereco">Rua, Número, Bloco ou Apto</label>
+                    <input type="text" id="endereco" required placeholder="Ex: Rua São Paulo, 123 - Bloco B Apto 202">
+                </div>
 
                 <div class="form-grupo">
                     <label for="ponto-referencia">Ponto de Referência (Opcional)</label>
                     <input type="text" id="ponto-referencia" placeholder="Ex: Próximo ao mercadinho ou praça">
                 </div>
             </div>
+
             <div class="secao-card">
-    <h2>💳 Passo 2: Forma de Pagamento</h2>
-    <div class="form-grupo">
-        <label for="pagamento">Escolha como deseja pagar:</label>
-        <select id="pagamento" required onchange="controlarExibicaoPix(this.value)">
-            <option value="Pix">Pix (Copia e Cola Direto no Site)</option>
-            <option value="Dinheiro">Dinheiro (Pagar na Entrega)</option>
-            <option value="Cartão de Crédito">Cartão de Crédito (Na Entrega)</option>
-            <option value="Cartão de Débito">Cartão de Débito (Na Entrega)</option>
-        </select>
-    </div>
-
-    <!-- ADICIONE ESTE BLOCO AQUI -->
-    <div style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 15px; color: #4a5568; font-weight: 500;">Total a pagar:</span>
-        <span id="pagamento-valor-total" style="font-size: 18px; font-weight: 700; color: #141414;">R$ 0,00</span>
-    </div>
-</div>
-
-                <div id="container-pix-dinamico" class="box-pix" style="display: block;">
-                    <p style="margin: 0 0 8px 0; font-weight: bold; color: #166534; font-size: 0.95rem;">🔑 Chave CNPJ do Sabor Cearense:</p>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="chave-pix-texto" value="21974720736" readonly style="flex: 1; padding: 10px; border: 1px solid #bbf7d0; border-radius: 6px; font-weight: bold; text-align: center; background: #fff; color: #166534;">
-                        <button type="button" onclick="copiarChavePix()" style="background: #22c55e; color: white; border: none; padding: 0 15px; font-weight: bold; border-radius: 6px; cursor: pointer;">Copiar</button>
-                    </div>
-                    <p style="margin: 8px 0 0 0; font-size: 0.8rem; color: #166534;">💡 Copie o número acima, faça a transferência no seu banco e clique no botão abaixo para nos enviar o comprovante!</p>
+                <h2>💳 Passo 2: Forma de Pagamento</h2>
+                <div class="form-grupo">
+                    <label for="pagamento">Escolha como deseja pagar:</label>
+                    <select id="pagamento" required onchange="controlarExibicaoPix(this.value)">
+                        <option value="Pix" selected>Pix (Copia e Cola Direto no Site)</option>
+                        <option value="Dinheiro">Dinheiro (Pagar na Entrega)</option>
+                        <option value="Cartão de Crédito">Cartão de Crédito (Na Entrega)</option>
+                        <option value="Cartão de Débito">Cartão de Débito (Na Entrega)</option>
+                    </select>
                 </div>
-                
-                <div style="margin-top: 25px;">
-                    <button type="submit" class="btn-enviar">Finalizar e Enviar para o WhatsApp 🌵</button>
+
+                <div style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 15px; color: #4a5568; font-weight: 500;">Total a pagar:</span>
+                    <span id="pagamento-valor-total" style="font-size: 18px; font-weight: 700; color: #141414;">R$ 0,00</span>
                 </div>
+            </div>
+
+            <div id="container-pix-dinamico" class="box-pix" style="display: block;">
+                <p style="margin: 0 0 8px 0; font-weight: bold; color: #166534; font-size: 0.95rem;">🔑 Chave CNPJ do Sabor Cearense:</p>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="chave-pix-texto" value="21974720736" readonly style="flex: 1; padding: 10px; border: 1px solid #bbf7d0; border-radius: 6px; font-weight: bold; text-align: center; background: #fff; color: #166534;">
+                    <button type="button" onclick="copiarChavePix()" style="background: #22c55e; color: white; border: none; padding: 0 15px; font-weight: bold; border-radius: 6px; cursor: pointer;">Copiar</button>
+                </div>
+                <p style="margin: 8px 0 0 0; font-size: 0.8rem; color: #166534;">💡 Copie o número acima, faça a transferência no seu banco e clique no botão abaixo para nos enviar o comprovante!</p>
+            </div>
+            
+            <div style="margin-top: 25px;">
+                <button type="submit" class="btn-enviar">Finalizar e Enviar para o WhatsApp 🌵</button>
             </div>
         </form>
     </div>
-
-    <script>
-        const URL_API_BACKEND = ""; 
-        const WHATSAPP_NUMERO = "/5521974720736"; 
-        let totalCalculado = 0;
-
-        // 1. Cria uma variável global para o carrinho nesta página
-let carrinho = {};
-
-document.addEventListener("DOMContentLoaded", () => {
-    // 2. Busca o que salvamos na página anterior
-    const dadosSalvos = localStorage.getItem('saborCearense_carrinho');
-    
-    if (dadosSalvos) {
-        // Converte o texto de volta para o objeto de itens
-        carrinho = JSON.parse(dadosSalvos);
-    } else {
-        alert("Sua sacola está vazia!");
-        window.location.href = "index.html";
-        return;
-    }
-
-    // 3. Agora sim executa as suas funções originais
-    renderizarResumo();
-    document.getElementById("form-pedido").addEventListener("submit", enviarPedido);
-});
-// Executa automaticamente assim que a página do carrinho carregar
-document.addEventListener("DOMContentLoaded", function() {
-    carregarItensDaUrlNoCarrinho();
-});
-
-function carregarItensDaUrlNoCarrinho() {
-    // 1. Procura o contêiner onde os pratos devem ser listados (acima do valor total)
-    // Caso o id do seu contêiner seja diferente, ajuste o nome abaixo
-    const containerItens = document.getElementById("itens-selecionados-container") || 
-                           document.querySelector(".itens-selecionados") ||
-                           document.querySelector(".card-pedido") || 
-                           document.querySelector("main"); // Fallback seguro
-
-    if (!containerItens) return;
-
-    try {
-        // 2. Captura os parâmetros da URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const carrinhoParam = urlParams.get("carrinho");
-
-        if (carrinhoParam) {
-            // Decodifica o texto da URL e transforma de volta em um Array de objetos JavaScript
-            const itensCarrinho = JSON.parse(decodeURIComponent(carrinhoParam));
-
-            if (Array.isArray(itensCarrinho) && itensCarrinho.length > 0) {
-                // Cria um contêiner limpo para listar os pratos antes do elemento de valor total
-                const listaHtml = document.createElement("div");
-                listaHtml.style.marginBottom = "15px";
-
-                itensCarrinho.forEach(item => {
-                    const itemLinha = document.createElement("div");
-                    // Estilização profissional e limpa para combinar com o layout corporativo
-                    itemLinha.style.display = "flex";
-                    itemLinha.style.justifyContent = "space-between";
-                    itemLinha.style.padding = "8px 0";
-                    itemLinha.style.borderBottom = "1px dashed #e2e8f0";
-                    itemLinha.style.color = "#334155";
-                    itemLinha.style.fontSize = "1rem";
-
-                    const nomeFormatado = item.nome ? item.nome.replace(/%20/g, " ") : "Prato";
-                    const qtd = item.quantidade || item.qtd || 1;
-                    const preco = item.preco || 0;
-
-                    itemLinha.innerHTML = `
-                        <span style="font-weight: 600;">${qtd}x ${nomeFormatado}</span>
-                        <span style="color: #0f766e; font-weight: 700;">R$ ${(qtd * preco).toFixed(2)}</span>
-                    `;
-                    listaHtml.appendChild(itemLinha);
-                });
-
-                // Insere os pratos formatados no topo do bloco de "Itens Selecionados"
-                containerItens.prepend(listaHtml);
-            }
-        }
-    } catch (erro) {
-        console.error("Erro ao ler e processar os itens do carrinho vindos da URL:", erro);
-    }
-}
-
-        function controlarExibicaoPix(opcao) {
-            const box = document.getElementById("container-pix-dinamico");
-            if (box) {
-                box.style.display = (opcao === "Pix") ? "block" : "none";
-            }
-        }
-
-        function copiarChavePix() {
-            const inputChave = document.getElementById("chave-pix-texto");
-            if (inputChave) {
-                inputChave.select();
-                inputChave.setSelectionRange(0, 99999);
-                navigator.clipboard.writeText(inputChave.value);
-                alert("Chave Pix copiada com sucesso! Só colar no app do seu banco.");
-            }
-        }
-
-        function renderizarResumo() {
-    const container = document.getElementById("lista-itens-carrinho");
-    const totalTxt = document.getElementById("valor-total");
-    
-    const carrinhoObjeto = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
-    const itens = Object.values(carrinhoObjeto);
-
-    if (itens.length === 0) {
-        container.innerHTML = `<p style="text-align: center; color: #718096; margin: 20px 0;">Seu carrinho está vazio.</p>`;
-        totalTxt.innerText = "R$ 0,00";
-        return;
-    }
-
-    container.innerHTML = "";
-    let subtotal = 0;
-
-    itens.forEach(item => {
-        subtotal += item.preco * item.quantidade;
-        
-        // ... (seu código que adiciona o HTML do item na lista) ...
-    });
-
-    // 🌟 CORREÇÃO AQUI: Alimenta a variável global com o subtotal dos produtos (sem usar "let" na frente)
-    totalCalculado = subtotal; 
-
-    // Exibe o valor inicial dos produtos (antes do bairro ser escolhido)
-    totalTxt.innerHTML = `Valor Total: <strong>R$ ${totalCalculado.toFixed(2).replace('.', ',')}</strong>`;
-     document.getElementById("pagamento-valor-total").innerText = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
-}
-
-        // ATENÇÃO: Deixe estas duas variáveis fora de qualquer função (no escopo global do script)
-let taxaEntregaSelecionada = 0;
-let bairroTextoSelecionado = "";
-
-function atualizarTaxaEntrega(valorSelect) {
-    if (!valorSelect) return;
-    
-    // 1. Divide o texto do select usando a barra vertical |
-    const partes = valorSelect.split("|");
-    bairroTextoSelecionado = partes[0]; // Nome do bairro (Ex: Centro)
-    taxaEntregaSelecionada = parseFloat(partes[1]) || 0; // Valor da taxa (Ex: 5.00)
-    
-    // 2. Calcula o total somando o valor global dos produtos com a entrega
-    const totalComTaxa = totalCalculado + taxaEntregaSelecionada;
-    
-    // 3. Atualiza a exibição da caixa verde
-    const totalTxt = document.getElementById("valor-total");
-    if (totalTxt) {
-        totalTxt.innerHTML = `Valor Total: <strong>R$ ${totalComTaxa.toFixed(2).replace('.', ',')}</strong> (com R$ ${taxaEntregaSelecionada.toFixed(2).replace('.', ',')} de entrega)`;
-    }
-
-    // 4. Atualiza o valor final lá embaixo no Passo 2 do Pagamento
-    const pagamentoTotalTxt = document.getElementById("pagamento-valor-total");
-    if (pagamentoTotalTxt) {
-        pagamentoTotalTxt.innerText = `R$ ${totalComTaxa.toFixed(2).replace('.', ',')}`;
-    }
-}
-
-
-// SUA FUNÇÃO ENVIAR PEDIDO TOTALMENTE CORRIGIDA:
-async function enviarPedido(e) {
-    e.preventDefault();
-
-    const agora = new Date();
-    const diaSemana = agora.getDay();
-    const minutosAtuais = (agora.getHours() * 60) + agora.getMinutes();
-    
-    // Captura se você está no modo admin pela URL ou se veio do index com o parâmetro
-    const parametrosUrl = new URLSearchParams(window.location.search);
-    const modoAdminSecreto = parametrosUrl.get("admin") === "1" || localStorage.getItem("adminAutenticado") === "true";
-
-    // Se estiver fora do horário de entregas
-    if (diaSemana === 0 || minutosAtuais < (11 * 60 + 30) || minutosAtuais > (15 * 60)) {
-        // Se NÃO for o administrador, bloqueia. Se for o admin, ele deixa passar o teste!
-        if (!modoAdminSecreto) {
-            alert("Desculpe! O restaurante acabou de fechar o expediente de entregas. Não é possível enviar ou fechar novos pedidos agora.");
-            return;
-        }
-    }
-
-    // ==========================================
-    // CORREÇÃO DO ERRO AQUI:
-    // ==========================================
-    // 1. Buscamos o objeto do localStorage
-    const carrinhoObjeto = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
-
-    // 2. Convertemos o Objeto em uma Lista (Array) para o seu .forEach original funcionar abaixo
-    const itens = Object.values(carrinhoObjeto);
-
-    if (itens.length === 0) {
-        alert("Seu carrinho está vazio!");
-        return;
-    }
-
-    // --- DAQUI PARA BAIXO O SEU CÓDIGO CONTINUA ORIGINAL ---
-    // O seu loop 'itens.forEach(...)' que vem logo em seguida agora vai rodar sem quebras!
-
-
-    // Validação do Bairro e da Taxa
-    const bairroSelect = document.getElementById("bairro-entrega").value;
-    if (!bairroSelect) { 
-        alert("Por favor, selecione o bairro de entrega!"); 
-        return; 
-    }
-
-    const nome = document.getElementById("nome").value;
-    const contatoTelefone = document.getElementById("telefone").value;
-    const enderecoRua = document.getElementById("endereco").value;
-    const ref = document.getElementById("ponto-referencia").value || "Não informado";
-    const pagamento = document.getElementById("pagamento").value;
-
-    const enderecoCompleto = `${enderecoRua}, Bairro: ${bairroTextoSelecionado}`;
-    const totalComTaxaGeral = totalCalculado + taxaEntregaSelecionada;
-
-    const dadosPedido = {
-        clienteNome: nome,
-        endereco: enderecoCompleto + " (Tel: " + contatoTelefone + ") (Ref: " + ref + ")",
-        formaPagamento: pagamento,
-        valorTotal: totalComTaxaGeral // Envia o total exato corrigido com a taxa para o banco Java
-    };
-
-    try {
-        const response = await fetch(URL_API_BACKEND + "/api/pedidos", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(dadosPedido)
-        });
-
-        let pedidoIdGerado = "NOVO";
-        if (response.ok) {
-            const pedidoSalvo = await response.json();
-            pedidoIdGerado = pedidoSalvo.id;
-            localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
-        }
-
-        // Montagem da mensagem estruturada profissional do WhatsApp com taxa embutida
-        let mensagem = "🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n";
-        if (pedidoIdGerado !== "NOVO") {
-            mensagem += "🆔 *Pedido Nº:* #" + pedidoIdGerado + "\n";
-        }
-        mensagem += "👤 *Cliente:* " + nome + "\n";
-        mensagem += "📞 *Contato:* " + contatoTelefone + "\n";
-        mensagem += "📍 *Bairro:* " + bairroTextoSelecionado + "\n";
-        mensagem += "🏠 *Endereço:* " + enderecoRua + "\n";
-        mensagem += "🔍 *Referência:* " + ref + "\n";
-        mensagem += "💳 *Pagamento:* " + pagamento + "\n\n";
-        mensagem += "🛒 *Itens do Pedido:*\n";
-
-        itens.forEach(item => {
-            const subtotal = (item.preco * item.quantidade).toFixed(2).replace('.', ',');
-            mensagem += "• " + item.quantidade + "x _" + item.nome + "_ - R$ " + subtotal + "\n";
-        });
-
-        mensagem += "\n🛵 *Taxa de Entrega:* R$ " + taxaEntregaSelecionada.toFixed(2).replace('.', ',');
-        mensagem += "\n💰 *Total do Pedido:* R$ " + totalComTaxaGeral.toFixed(2).replace('.', ',') + "\n\n";
-        mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
-
-        const urlWhatsapp = "https://wa.me/" + WHATSAPP_NUMERO + "?text=" + encodeURIComponent(mensagem);
-        
-        window.open(urlWhatsapp, '_blank');
-        localStorage.removeItem("carrinhoSaborCearense");
-        window.location.href = "index.html?admin=1&aba=RASTREIO"; // Redireciona direto para a nova aba integrada de rastreio
-
-    } catch (error) {
-        console.error("Erro no processamento do pedido:", error);
-        alert("Ocorreu uma falha ao enviar o pedido para o servidor, mas você pode tentar reenviar.");
-    }
-}
-    </script>
+     <!-- Vincle o seu novo arquivo externo aqui de forma limpa -->
+    <script src="carrinho.js"></script>
 </body>
 </html>
