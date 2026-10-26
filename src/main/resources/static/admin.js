@@ -23,31 +23,6 @@ let audioCtxCompartilhado = null;
 // ==========================================
 // 🔐 FLUXO DE AUTENTICAÇÃO SEGURO
 // ==========================================
-function autenticarAdmin() {
-    const campoUsuario = document.getElementById("usuario-login");
-    const campoSenha = document.getElementById("senha-login");
-
-    if (!campoUsuario || !campoSenha) {
-        console.error("Campos de login nao encontrados.");
-        return;
-    }
-
-    const u = campoUsuario.value.trim();
-    const s = campoSenha.value.trim();
-    
-    if (u === "admin" && s === "sabor123") {
-        localStorage.setItem("adminAutenticado", "true");
-        document.getElementById("container-login-view").style.display = "none";
-        document.getElementById("painel-adm-wrapper").style.display = "flex";
-        
-        if (typeof carregarItensAdmin === "function") carregarItensAdmin();
-        if (typeof inicializarControlePedidos === "function") inicializarControlePedidos();
-        if (typeof configurarFormularioCadastro === "function") configurarFormularioCadastro();
-        if (typeof exibirBannerAtivacaoAudio === "function") exibirBannerAtivacaoAudio();
-    } else {
-        alert("Usuario ou senha incorretos!");
-    }
-}
 
 window.addEventListener('DOMContentLoaded', function() {
     const botaoLogin = document.getElementById("btn-submeter-login");
@@ -440,6 +415,32 @@ async function mudarStatusPedido(id, novoStatus) {
         console.error("Erro ao mudar status do pedido:", e);
     }
 }
+function autenticarAdmin() {
+    const campoUsuario = document.getElementById("usuario-login");
+    const campoSenha = document.getElementById("senha-login");
+
+    if (!campoUsuario || !campoSenha) {
+        console.error("Campos de login nao encontrados.");
+        return;
+    }
+
+    const u = campoUsuario.value.trim();
+    const s = campoSenha.value.trim();
+    
+    if (u === "admin" && s === "sabor123") {
+        localStorage.setItem("adminAutenticado", "true");
+        document.getElementById("container-login-view").style.display = "none";
+        document.getElementById("painel-adm-wrapper").style.display = "flex";
+        
+        if (typeof carregarItensAdmin === "function") carregarItensAdmin();
+        if (typeof inicializarControlePedidos === "function") inicializarControlePedidos();
+        if (typeof configurarFormularioCadastro === "function") configurarFormularioCadastro();
+        if (typeof exibirBannerAtivacaoAudio === "function") exibirBannerAtivacaoAudio();
+    } else {
+        alert("Usuario ou senha incorretos!");
+    }
+}
+
 function criarDivDivisora(janela, dupla) {
     var div = janela.document.createElement("div");
     div.className = dupla ? "divider-double" : "divider-dashed";
@@ -467,46 +468,7 @@ function imprimirCupomIFood(pedido) {
     janelaImpressao.document.close();
 
     var elEstilo = janelaImpressao.document.createElement("style");
-    var regrasCSS = `
-        body { 
-            font-family: 'Courier New', Courier, monospace; 
-            font-size: 13px; 
-            line-height: 1.4; 
-            margin: 0; 
-            padding: 4px; 
-            color: #000; 
-            background: #fff; 
-        }
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-        .negrito { font-weight: bold; }
-        .divider-dashed { border-top: 1px dashed #000; margin: 6px 0; }
-        .divider-double { border-top: 3px double #000; margin: 8px 0; }
-        
-        .tag-tipo-entrega { font-size: 22px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 4px; margin-bottom: 8px; letter-spacing: 1px; }
-        .titulo-loja { font-size: 15px; margin: 0; font-weight: bold; text-transform: uppercase; }
-        .subtitulo-loja { font-size: 11px; margin: 2px 0; }
-        .id-pedido { font-size: 18px; font-weight: bold; margin: 4px 0; }
-        
-        .secao-titulo { font-size: 13px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
-        .bloco-conteudo { margin-bottom: 6px; }
-        
-        .tabela-itens { width: 100%; border-collapse: collapse; margin: 5px 0; }
-        .tabela-itens td { vertical-align: top; padding: 2px 0; }
-        .col-qtd { width: 12%; font-weight: bold; }
-        .col-nome { width: 63%; }
-        .col-preco { width: 25%; text-align: right; }
-        
-        .linha-financeiro { display: flex; justify-content: space-between; margin: 2px 0; }
-        .linha-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 5px; padding-top: 4px; border-top: 1px dashed #000; }
-        
-        .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 5px 0; white-space: pre-wrap; font-size: 12px; font-weight: bold; }
-        
-        @media print { 
-            @page { size: 80mm auto; margin: 0; } 
-            body { padding: 5mm 4mm; } 
-        }
-    `;
+    var regrasCSS = "body { font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.4; margin: 0; padding: 4px; color: #000; background: #fff; } .text-center { text-align: center; } .text-right { text-align: right; } .negrito { font-weight: bold; } .divider-dashed { border-top: 1px dashed #000; margin: 6px 0; } .divider-double { border-top: 3px double #000; margin: 8px 0; } .tag-tipo-entrega { font-size: 22px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 4px; margin-bottom: 8px; letter-spacing: 1px; } .titulo-loja { font-size: 15px; margin: 0; font-weight: bold; text-transform: uppercase; } .subtitulo-loja { font-size: 11px; margin: 2px 0; } .id-pedido { font-size: 18px; font-weight: bold; margin: 4px 0; } .secao-titulo { font-size: 13px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; } .bloco-conteudo { margin-bottom: 6px; } .tabela-itens { width: 100%; border-collapse: collapse; margin: 5px 0; } .tabela-itens td { vertical-align: top; padding: 2px 0; } .col-qtd { width: 12%; font-weight: bold; } .col-nome { width: 63%; } .col-preco { width: 25%; text-align: right; } .linha-financeiro { display: flex; justify-content: space-between; margin: 2px 0; } .linha-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 5px; padding-top: 4px; border-top: 1px dashed #000; } .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 5px 0; white-space: pre-wrap; font-size: 12px; font-weight: bold; } @media print { @page { size: 80mm auto; margin: 0; } body { padding: 5mm 4mm; } }";
     
     elEstilo.textContent = regrasCSS;
     janelaImpressao.document.head.appendChild(elEstilo);
@@ -514,12 +476,16 @@ function imprimirCupomIFood(pedido) {
     var enderecoBruto = pedido.endereco || "RETIRADA NO ESTABELECIMENTO";
     var telefoneFinal = pedido.telefone || "Não informado";
     
+    // Tratamento de string limpo e seguro sem Regex para não quebrar o interpretador
     if (!pedido.telefone || pedido.telefone === "Não informado") {
-        var regexTelefone = /\\(?Tel:\\s*([0-9\\s\\-]+)\\)?/i;
-        var match = enderecoBruto.match(regexTelefone);
-        if (match && match[1]) {
-            telefoneFinal = match[1].trim();
-            enderecoBruto = enderecoBruto.replace(/,?\\s*\\(?Tel:\\s*[0-9\\s\\-]+\\)?/i, "");
+        var posicaoTermoTel = enderecoBruto.indexOf("Tel:");
+        if (posicaoTermoTel !== -1) {
+            var trechoTelefone = enderecoBruto.substring(posicaoTermoTel);
+            telefoneFinal = trechoTrechoTelefone = trechoTelefone.replace("Tel:", "").replace(")", "").trim();
+            enderecoBruto = enderecoBruto.substring(0, posicaoTermoTel).trim();
+            if (enderecoBruto.endsWith(",")) {
+                enderecoBruto = enderecoBruto.slice(0, -1).trim();
+            }
         }
     }
 
@@ -543,35 +509,21 @@ function imprimirCupomIFood(pedido) {
     // 2. Cabeçalho
     var elCabecalho = janelaImpressao.document.createElement("div");
     elCabecalho.className = "text-center";
-    elCabecalho.innerHTML = `
-        <div class='titulo-loja'>🌵 SABOR CEARENSE 🌵</div>
-        <div class='subtitulo-loja'>Comida Caseira Legítima</div>
-        <div class='divider-dashed'></div>
-        <div class='subtitulo-loja'>Não vale como nota fiscal</div>
-        <div class='id-pedido'>PEDIDO #${pedido.id}</div>
-        <div class='subtitulo-loja'>Data: ${dataFinal} - Hora: ${horaFinal}</div>
-    `;
+    elCabecalho.innerHTML = "<div class='titulo-loja'>🌵 SABOR CEARENSE 🌵</div><div class='subtitulo-loja'>Comida Caseira Legítima</div><div class='divider-dashed'></div><div class='subtitulo-loja'>Não vale como nota fiscal</div><div class='id-pedido'>PEDIDO #" + pedido.id + "</div><div class='subtitulo-loja'>Data: " + dataFinal + " - Hora: " + horaFinal + "</div>";
     containerPrincipal.appendChild(elCabecalho);
     containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, true));
 
     // 3. Cliente
     var elDadosCliente = janelaImpressao.document.createElement("div");
     elDadosCliente.className = "bloco-conteudo";
-    elDadosCliente.innerHTML = `
-        <div class='secao-titulo'>Cliente</div>
-        <div class='negrito' style='font-size: 14px;'>${nomeClienteFinal}</div>
-        <div>Telefone: ${telefoneFinal}</div>
-    `;
+    elDadosCliente.innerHTML = "<div class='secao-titulo'>Cliente</div><div class='negrito' style='font-size: 14px;'>" + nomeClienteFinal + "</div><div>Telefone: " + telefoneFinal + "</div>";
     containerPrincipal.appendChild(elDadosCliente);
     containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, false));
 
     // 4. Endereço
     var elEnderecoBloco = janelaImpressao.document.createElement("div");
     elEnderecoBloco.className = "bloco-conteudo";
-    elEnderecoBloco.innerHTML = `
-        <div class='secao-titulo'>Endereço de Entrega</div>
-        <div style='white-space: pre-wrap; font-size: 13px;'>${enderecoBruto}</div>
-    `;
+    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>Endereço de Entrega</div><div style='white-space: pre-wrap; font-size: 13px;'>" + enderecoBruto + "</div>";
     containerPrincipal.appendChild(elEnderecoBloco);
     containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, true));
 
@@ -588,24 +540,22 @@ function imprimirCupomIFood(pedido) {
     var descricaoTextoPlano = pedido.descricao || pedido.textoPedido || "";
 
     if (listaDeItens.length === 0 && descricaoTextoPlano.trim() !== "") {
-        var linhasItens = descricaoTextoPlano.split(/\\r?\\n/);
+        var linhasItens = descricaoTextoPlano.split("\n");
         linhasItens.forEach(function(linha) {
             if (linha.trim() !== "") {
                 var tr = janelaImpressao.document.createElement("tr");
-                var matchQtd = linha.match(/^(\\d+)\\s*[xX]\\s*(.+)/);
                 var qtdItem = "1";
                 var nomeItem = linha.trim();
                 
-                if (matchQtd) {
-                    qtdItem = matchQtd[1];
-                    nomeItem = matchQtd[2];
+                if (linha.indexOf("x") !== -1 || linha.indexOf("X") !== -1) {
+                    var partes = linha.split(/[xX]/);
+                    if (partes.length > 1 && !isNaN(partes[0].trim())) {
+                        qtdItem = partes[0].trim();
+                        nomeItem = partes.slice(1).join("x").trim();
+                    }
                 }
 
-                tr.innerHTML = `
-                    <td class='col-qtd'>${qtdItem}x</td>
-                    <td class='col-nome'>${nomeItem.toUpperCase()}</td>
-                    <td class='col-preco'>--</td>
-                `;
+                tr.innerHTML = "<td class='col-qtd'>" + qtdItem + "x</td><td class='col-nome'>" + nomeItem.toUpperCase() + "</td><td class='col-preco'>--</td>";
                 tabelaItens.appendChild(tr);
             }
         });
@@ -618,11 +568,7 @@ function imprimirCupomIFood(pedido) {
             var precoItem = item.preco || (item.prato ? item.prato.preco : 0);
             var subTotalItem = qtdItem * precoItem;
 
-            tr.innerHTML = `
-                <td class='col-qtd'>${qtdItem}x</td>
-                <td class='col-nome'>${nomeItem.toUpperCase()}</td>
-                <td class='col-preco'>R$ ${Number(subTotalItem).toFixed(2)}</td>
-            `;
+            tr.innerHTML = "<td class='col-qtd'>" + qtdItem + "x</td><td class='col-nome'>" + nomeItem.toUpperCase() + "</td><td class='col-preco'>R$ " + Number(subTotalItem).toFixed(2) + "</td>";
             tabelaItens.appendChild(tr);
         });
         containerPrincipal.appendChild(tabelaItens);
@@ -639,12 +585,7 @@ function imprimirCupomIFood(pedido) {
     // 6. Fechamento Financeiro
     var elFinancas = janelaImpressao.document.createElement("div");
     elFinancas.className = "bloco-conteudo";
-    elFinancas.innerHTML = `
-        <div class='linha-financeiro'><span>Subtotal</span> <span>R$ ${totalPedidoFinal.toFixed(2)}</span></div>
-        <div class='linha-financeiro'><span>Taxa de entrega</span> <span>R$ 0.00</span></div>
-        <div class='linha-financeiro'><span class='negrito'>Pagamento</span> <span>${pagamentoFinal}</span></div>
-        <div class='linha-total'><span class='negrito'>TOTAL</span> <span class='negrito'>R$ ${totalPedidoFinal.toFixed(2)}</span></div>
-    `;
+    elFinancas.innerHTML = "<div class='linha-financeiro'><span>Subtotal</span> <span>R$ " + totalPedidoFinal.toFixed(2) + "</span></div><div class='linha-financeiro'><span>Taxa de entrega</span> <span>R$ 0.00</span></div><div class='linha-financeiro'><span class='negrito'>Pagamento</span> <span>" + pagamentoFinal + "</span></div><div class='linha-total'><span class='negrito'>TOTAL</span> <span class='negrito'>R$ " + totalPedidoFinal.toFixed(2) + "</span></div>";
     containerPrincipal.appendChild(elFinancas);
 
     // 7. Bloco de Observações
@@ -668,10 +609,7 @@ function imprimirCupomIFood(pedido) {
     elRodape.className = "text-center";
     elRodape.style.marginTop = "15px";
     elRodape.style.fontSize = "11px";
-    elRodape.innerHTML = `
-        <p class='negrito' style='margin: 0;'>* COMPROVANTE DE PRODUÇÃO *</p>
-        <p style='margin: 3px 0 0 0;'>Agradecemos a preferência!</p>
-    `;
+    elRodape.innerHTML = "<p class='negrito' style='margin: 0;'>* COMPROVANTE DE PRODUÇÃO *</p><p style='margin: 3px 0 0 0;'>Agradecemos a preferência!</p>";
     containerPrincipal.appendChild(elRodape);
 
     janelaImpressao.document.body.appendChild(containerPrincipal);
