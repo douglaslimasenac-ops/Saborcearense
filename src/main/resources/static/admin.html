@@ -375,11 +375,19 @@
         }
 
         async function carregarItensAdmin() {
-            const container = document.getElementById("lista-itens-admin");
-            try {
-                const res = await fetch(URL_BACKEND + "/api/cardapio");
-                const itens = await res.json();
-                container.innerHTML = "";
+    const container = document.getElementById("lista-itens-admin");
+    try {
+        const res = await fetch(URL_BACKEND + "/api/cardapio");
+        const itens = await res.json();
+        
+        // 🌟 CORREÇÃO AQUI: Salva os pratos vindos do banco na nossa variável global
+        // para que as funções de preço e disponibilidade possam usar os dados completos!
+        listaPratosLocal = itens;
+        
+        container.innerHTML = "";
+        
+        // --- DAQUI PARA BAIXO O SEU CÓDIGO CONTINUA ORIGINAL ---
+        // O seu loop que monta as linhas da tabela administrativa segue normal...
 
                 itens.forEach(item => {
                     const div = document.createElement("div");
@@ -419,19 +427,34 @@
 const URL_BACKEND = "https://saborcearense-5.onrender.com";
 const URL_API_ADMIN = `${URL_BACKEND}/api/admin/pratos`;
 
+// Armazena temporariamente os pratos carregados para podermos ler os dados antigos antes de atualizar
+let listaPratosLocal = [];
+
+// NOTA: Na sua função existente 'carregarItensAdmin' ou 'carregarCardapioAdmin', 
+// logo após receber a lista do fetch, adicione: listaPratosLocal = dadosRecebidos;
+
 async function atualizarPrecoRapido(id, novoPreco) {
     const valorFormatado = parseFloat(novoPreco);
     if (isNaN(valorFormatado) || valorFormatado < 0) return;
+
+    // 1. Encontra o prato atual na nossa lista local para pegar o Nome, Descrição, etc.
+    const pratoAntigo = listaPratosLocal.find(p => p.id === id) || {};
+
     try {
-        // Como o seu Spring Boot espera o objeto Produto completo no @RequestBody,
-        // montamos a estrutura passando o preço novo.
+        // 2. Envia o objeto COMPLETO exigido pelo Spring Boot, alterando apenas o preço
         const res = await fetch(`${URL_API_ADMIN}/${id}`, { 
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({ 
-                preco: valorFormatado
+                id: id,
+                nome: pratoAntigo.nome || "",
+                descricao: pratoAntigo.descricao || "",
+                categoria: pratoAntigo.categoria || "",
+                imagemUrl: pratoAntigo.imagemUrl || "",
+                disponivel: pratoAntigo.disponivel !== undefined ? pratoAntigo.disponivel : true,
+                preco: valorFormatado // Novo preço injetado aqui
             })
         });
         
@@ -449,15 +472,23 @@ async function atualizarPrecoRapido(id, novoPreco) {
 async function alternarDisponibilidade(id, statusAtual) {
     try {
         const novoStatus = !statusAtual;
+        // 1. Encontra o prato atual na nossa lista local para manter os dados idênticos
+        const pratoAntigo = listaPratosLocal.find(p => p.id === id) || {};
         
-        // Enviando a alteração de disponibilidade respeitando o método @PutMapping("/{id}")
+        // 2. Envia o objeto COMPLETO, alterando apenas o status de disponibilidade
         const res = await fetch(`${URL_API_ADMIN}/${id}`, { 
             method: "PUT", 
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({ 
-                disponivel: novoStatus 
+                id: id,
+                nome: pratoAntigo.nome || "",
+                descricao: pratoAntigo.descricao || "",
+                categoria: pratoAntigo.categoria || "",
+                imagemUrl: pratoAntigo.imagemUrl || "",
+                preco: pratoAntigo.preco || 0,
+                disponivel: novoStatus // Novo status injetado aqui
             })
         });
         
