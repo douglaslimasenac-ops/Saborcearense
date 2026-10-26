@@ -440,15 +440,15 @@ async function mudarStatusPedido(id, novoStatus) {
         console.error("Erro ao mudar status do pedido:", e);
     }
 }
-function criarDivDivisora(janela) {
+function criarDivDivisora(janela, dupla) {
     var div = janela.document.createElement("div");
-    div.className = "divider";
+    div.className = dupla ? "divider-double" : "divider-dashed";
     return div;
 }
 
 function imprimirCupomIFood(pedido) {
-    var larguraJanela = 340;
-    var alturaJanela = 600;
+    var larguraJanela = 360;
+    var alturaJanela = 700;
     var posicaoEsquerda = (window.screen.width / 2) - (larguraJanela / 2);
     var posicaoTopo = (window.screen.height / 2) - (alturaJanela / 2);
 
@@ -463,30 +463,63 @@ function imprimirCupomIFood(pedido) {
         return;
     }
 
-    janelaImpressao.document.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Cupom #" + pedido.id + "</title></head><body></body></html>");
+    janelaImpressao.document.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>iFood Cupom #" + pedido.id + "</title></head><body></body></html>");
     janelaImpressao.document.close();
 
     var elEstilo = janelaImpressao.document.createElement("style");
-    var regrasCSS = "body { font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.3; margin: 0; padding: 10px; color: #000; background: #fff; }";
-    regrasCSS += " .text-center { text-align: center; }";
-    regrasCSS += " .text-right { text-align: right; }";
-    regrasCSS += " .divider { border-top: 1px dashed #000; margin: 8px 0; }";
-    regrasCSS += " .negrito { font-weight: bold; }";
-    regrasCSS += " .titulo-loja { font-size: 16px; margin: 0; font-weight: bold; font-family: Arial, sans-serif; }";
-    regrasCSS += " .subtitulo-loja { font-size: 10px; margin: 2px 0 5px 0; }";
-    regrasCSS += " .bloco-obs { background: #f5f5f5; padding: 6px; border: 1px solid #000; margin-top: 5px; white-space: pre-wrap; font-size: 11px; }";
-    regrasCSS += " .item-tabela { display: flex; justify-content: space-between; margin: 3px 0; }";
-    regrasCSS += " @media print { @page { size: 80mm auto; margin: 0; } body { padding: 8mm 5mm; } }";
+    var regrasCSS = `
+        body { 
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 13px; 
+            line-height: 1.4; 
+            margin: 0; 
+            padding: 4px; 
+            color: #000; 
+            background: #fff; 
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .negrito { font-weight: bold; }
+        .divider-dashed { border-top: 1px dashed #000; margin: 6px 0; }
+        .divider-double { border-top: 3px double #000; margin: 8px 0; }
+        
+        /* Estilos idênticos ao iFood */
+        .tag-tipo-entrega { font-size: 22px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 4px; margin-bottom: 8px; letter-spacing: 1px; }
+        .titulo-loja { font-size: 15px; margin: 0; font-weight: bold; text-transform: uppercase; }
+        .subtitulo-loja { font-size: 11px; margin: 2px 0; }
+        .id-pedido { font-size: 18px; font-weight: bold; margin: 4px 0; }
+        
+        .secao-titulo { font-size: 13px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; }
+        .bloco-conteudo { margin-bottom: 6px; }
+        
+        .tabela-itens { width: 100%; border-collapse: collapse; margin: 5px 0; }
+        .tabela-itens td { vertical-align: top; padding: 2px 0; }
+        .col-qtd { width: 10%; font-weight: bold; }
+        .col-nome { width: 65%; }
+        .col-preco { width: 25%; text-align: right; }
+        
+        .linha-financeiro { display: flex; justify-content: space-between; margin: 2px 0; }
+        .linha-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 5px; padding-top: 4px; border-top: 1px dashed #000; }
+        
+        .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 5px 0; white-space: pre-wrap; font-size: 12px; font-weight: bold; }
+        
+        @media print { 
+            @page { size: 80mm auto; margin: 0; } 
+            body { padding: 5mm 4mm; } 
+        }
+    `;
     
     elEstilo.textContent = regrasCSS;
     janelaImpressao.document.head.appendChild(elEstilo);
 
-    var nomeClienteFinal = pedido.clienteNome || pedido.nomeCliente || "Não informado";
+    // Tratamento e Fallbacks de Dados
+    var tipoServico = pedido.endereco ? "ENTREGA" : "RETIRADA";
+    var nomeClienteFinal = (pedido.clienteNome || pedido.nomeCliente || "Não informado").toUpperCase();
     var telefoneFinal = pedido.telefone || "Não informado";
-    var enderecoFinal = pedido.endereco || "Retirada no Estabelecimento";
-    var pagamentoFinal = pedido.formaPagamento || "Não informado";
-    var observacaoFinal = pedido.observacao || "Nenhuma observação.";
-    var totalPedidoFinal = pedido.total || pedido.valorTotal || 0;
+    var enderecoFinal = pedido.endereco || "RETIRADA NO ESTABELECIMENTO";
+    var pagamentoFinal = (pedido.formaPagamento || "Não informado").toUpperCase();
+    var observacaoFinal = pedido.observacao || "";
+    var totalPedidoFinal = Number(pedido.total || pedido.valorTotal || 0);
     
     var dataAgora = new Date();
     var dataFinal = dataAgora.toLocaleDateString("pt-BR");
@@ -494,124 +527,125 @@ function imprimirCupomIFood(pedido) {
 
     var containerPrincipal = janelaImpressao.document.createElement("div");
 
-    // Cabeçalho da Loja
+    // 1. Tag de Orientação de Fluxo (Entrega / Retirada)
+    var elTagServico = janelaImpressao.document.createElement("div");
+    elTagServico.className = "tag-tipo-entrega";
+    elTagServico.textContent = tipoServico;
+    containerPrincipal.appendChild(elTagServico);
+
+    // 2. Cabeçalho do Estabelecimento
     var elCabecalho = janelaImpressao.document.createElement("div");
     elCabecalho.className = "text-center";
-    var elTitulo = janelaImpressao.document.createElement("h2");
-    elTitulo.className = "titulo-loja";
-    elTitulo.textContent = "🌵 SABOR CEARENSE 🌵";
-    var elSubtitulo = janelaImpressao.document.createElement("p");
-    elSubtitulo.className = "subtitulo-loja";
-    elSubtitulo.textContent = "Comida Caseira Legítima - Painel de Produção";
-    elCabecalho.appendChild(elTitulo);
-    elCabecalho.appendChild(elSubtitulo);
+    elCabecalho.innerHTML = `
+        <div class='titulo-loja'>🌵 SABOR CEARENSE 🌵</div>
+        <div class='subtitulo-loja'>Comida Caseira Legítima</div>
+        <div class='divider-dashed'></div>
+        <div class='subtitulo-loja'>Não vale como nota fiscal</div>
+        <div class='id-pedido'>PEDIDO #${pedido.id}</div>
+        <div class='subtitulo-loja'>Data: ${dataFinal} - Hora: ${horaFinal}</div>
+    `;
     containerPrincipal.appendChild(elCabecalho);
+    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, true));
 
-    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
-
-    // Identificação do Pedido, Data e Hora
-    var elInfoVenda = janelaImpressao.document.createElement("div");
-    elInfoVenda.innerHTML = "<div style='font-size: 15px;' class='negrito text-center'>CUPOM DE PEDIDO</div>" +
-                             "<div class='item-tabela'><span class='negrito'>PEDIDO:</span> <span>#" + pedido.id + "</span></div>" +
-                             "<div class='item-tabela'><span>DATA: " + dataFinal + "</span> <span>HORA: " + horaFinal + "</span></div>";
-    containerPrincipal.appendChild(elInfoVenda);
-
-    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
-
-    // Dados do Cliente
+    // 3. Dados do Cliente
     var elDadosCliente = janelaImpressao.document.createElement("div");
-    elDadosCliente.innerHTML = "<div class='negrito' style='margin-bottom: 3px;'>DESTINATÁRIO:</div>" +
-                               "<div>" + nomeClienteFinal + "</div>" +
-                               "<div>CONTATO: " + telefoneFinal + "</div>";
+    elDadosCliente.className = "bloco-conteudo";
+    elDadosCliente.innerHTML = `
+        <div class='secao-titulo'>Cliente</div>
+        <div class='negrito' style='font-size: 14px;'>${nomeClienteFinal}</div>
+        <div>Fone: ${telefoneFinal}</div>
+    `;
     containerPrincipal.appendChild(elDadosCliente);
+    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, false));
 
-    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
-
-    // Endereço
+    // 4. Endereço de Entrega
     var elEnderecoBloco = janelaImpressao.document.createElement("div");
-    elEnderecoBloco.innerHTML = "<div class='negrito' style='margin-bottom: 3px;'>ENDEREÇO DE ENTREGA:</div>" +
-                                "<div style='white-space: pre-wrap;'>" + enderecoFinal + "</div>";
+    elEnderecoBloco.className = "bloco-conteudo";
+    elEnderecoBloco.innerHTML = `
+        <div class='secao-titulo'>Endereço de Entrega</div>
+        <div style='white-space: pre-wrap; font-size: 13px;'>${enderecoFinal}</div>
+    `;
     containerPrincipal.appendChild(elEnderecoBloco);
+    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, true));
 
-    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
-
-    // ==========================================
-    // 🛒 DESCRIÇÃO DOS ITENS DO PEDIDO (TABELA)
-    // ==========================================
+    // 5. Seção de Itens (Estilo Cupom de Caixa)
     var elItensTitulo = janelaImpressao.document.createElement("div");
-    elItensTitulo.className = "negrito";
-    elItensTitulo.style.marginBottom = "5px";
-    elItensTitulo.textContent = "ITENS DO PEDIDO:";
+    elItensTitulo.className = "secao-titulo";
+    elItensTitulo.textContent = "Itens do Pedido";
     containerPrincipal.appendChild(elItensTitulo);
 
-    var listaDeItens = pedido.itens || pedido.produtos || [];
+    var tabelaItens = janelaImpressao.document.createElement("table");
+    tabelaItens.className = "tabela-itens";
     
+    var listaDeItens = pedido.itens || pedido.produtos || [];
     if (listaDeItens.length > 0) {
         listaDeItens.forEach(function(item) {
-            var elItemRow = janelaImpressao.document.createElement("div");
-            elItemRow.className = "item-tabela";
+            var tr = janelaImpressao.document.createElement("tr");
             
             var nomeItem = item.nome || (item.prato ? item.prato.nome : "Item");
             var qtdItem = item.quantidade || item.qtd || 1;
             var precoItem = item.preco || (item.prato ? item.prato.preco : 0);
             var subTotalItem = qtdItem * precoItem;
 
-            elItemRow.innerHTML = "<span>" + qtdItem + "x " + nomeItem + "</span>" +
-                                  "<span>R$ " + Number(subTotalItem).toFixed(2) + "</span>";
-            containerPrincipal.appendChild(elItemRow);
+            tr.innerHTML = `
+                <td class='col-qtd'>${qtdItem}x</td>
+                <td class='col-nome'>${nomeItem}</td>
+                <td class='col-preco'>R$ ${Number(subTotalItem).toFixed(2)}</td>
+            `;
+            tabelaItens.appendChild(tr);
         });
+        containerPrincipal.appendChild(tabelaItens);
     } else {
-        var elItemSimples = janelaImpressao.document.createElement("div");
-        elItemSimples.style.whiteSpace = "pre-wrap";
-        elItemSimples.textContent = pedido.descricao || "Verificar itens no painel principal.";
-        containerPrincipal.appendChild(elItemSimples);
+        var elFallback = janelaImpressao.document.createElement("div");
+        elFallback.style.whiteSpace = "pre-wrap";
+        elFallback.style.padding = "5px 0";
+        elFallback.textContent = pedido.descricao || "Verificar itens no painel principal.";
+        containerPrincipal.appendChild(elFallback);
     }
 
-    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
+    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, true));
 
-    // Forma de Pagamento e Total
+    // 6. Fechamento de Valores e Financeiro
     var elFinancas = janelaImpressao.document.createElement("div");
-    elFinancas.innerHTML = "<div class='item-tabela'><span class='negrito'>FORMA DE PAGAMENTO:</span> <span>" + pagamentoFinal + "</span></div>";
-    if (totalPedidoFinal > 0) {
-        elFinancas.innerHTML += "<div class='item-tabela' style='font-size: 14px; margin-top: 5px;'><span class='negrito'>TOTAL DO PEDIDO:</span> <span class='negrito'>R$ " + Number(totalPedidoFinal).toFixed(2) + "</span></div>";
-    }
+    elFinancas.className = "bloco-conteudo";
+    
+    // Simula a estrutura clássica de somas do iFood
+    elFinancas.innerHTML = `
+        <div class='linha-financeiro'><span>Subtotal</span> <span>R$ ${totalPedidoFinal.toFixed(2)}</span></div>
+        <div class='linha-financeiro'><span>Taxa de entrega</span> <span>R$ 0.00</span></div>
+        <div class='linha-financeiro'><span class='negrito'>Pagamento</span> <span>${pagamentoFinal}</span></div>
+        <div class='linha-total'><span class='negrito'>TOTAL</span> <span class='negrito'>R$ ${totalPedidoFinal.toFixed(2)}</span></div>
+    `;
     containerPrincipal.appendChild(elFinancas);
 
-    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
+    // 7. Bloco de Observações (se houver)
+    if (observacaoFinal && observacaoFinal !== "Nenhuma observação.") {
+        containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, false));
+        var elObsTitulo = janelaImpressao.document.createElement("div");
+        elObsTitulo.className = "secao-titulo";
+        elObsTitulo.textContent = "Observações do Cliente:";
+        containerPrincipal.appendChild(elObsTitulo);
 
-    // Observações
-    var elObsTitulo = janelaImpressao.document.createElement("div");
-    elObsTitulo.className = "negrito";
-    elObsTitulo.textContent = "OBSERVAÇÕES DO CLIENTE:";
-    containerPrincipal.appendChild(elObsTitulo);
+        var elObsBloco = janelaImpressao.document.createElement("div");
+        elObsBloco.className = "bloco-obs";
+        elObsBloco.textContent = observacaoFinal;
+        containerPrincipal.appendChild(elObsBloco);
+    }
 
-    var elObsBloco = janelaImpressao.document.createElement("div");
-    elObsBloco.className = "bloco-obs";
-    elObsBloco.textContent = observacaoFinal;
-    containerPrincipal.appendChild(elObsBloco);
+    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, true));
 
-    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
-
-    // Rodapé
+    // 8. Rodapé Operacional
     var elRodape = janelaImpressao.document.createElement("div");
     elRodape.className = "text-center";
-    elRodape.style.marginTop = "20px";
+    elRodape.style.marginTop = "15px";
     elRodape.style.fontSize = "11px";
-    
-    var elRodapeL1 = janelaImpressao.document.createElement("p");
-    elRodapeL1.className = "negrito";
-    elRodapeL1.style.margin = "0px";
-    elRodapeL1.textContent = "=== DOCUMENTO AUXILIAR DE PRODUÇÃO ===";
-    
-    var elRodapeL2 = janelaImpressao.document.createElement("p");
-    elRodapeL2.style.margin = "4px 0 0 0";
-    elRodapeL2.textContent = "Obrigado pela preferência e bom apetite!";
-    
-    elRodape.appendChild(elRodapeL1);
-    elRodape.appendChild(elRodapeL2);
+    elRodape.innerHTML = `
+        <p class='negrito' style='margin: 0;'>* COMPROVANTE DE PRODUÇÃO *</p>
+        <p style='margin: 3px 0 0 0;'>Agradecemos a preferência!</p>
+    `;
     containerPrincipal.appendChild(elRodape);
 
-    // Renderização no Pop-up e comando de impressão
+    // Renderização e chamada de hardware
     janelaImpressao.document.body.appendChild(containerPrincipal);
     janelaImpressao.focus();
     
