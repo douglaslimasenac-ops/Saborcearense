@@ -440,9 +440,12 @@ async function mudarStatusPedido(id, novoStatus) {
         console.error("Erro ao mudar status do pedido:", e);
     }
 }
-// ==========================================
-// 🖨️ IMPRESSÃO TÉRMICA PROFISSIONAL (COM ITENS DO PEDIDO)
-// ==========================================
+function criarDivDivisora(janela) {
+    var div = janela.document.createElement("div");
+    div.className = "divider";
+    return div;
+}
+
 function imprimirCupomIFood(pedido) {
     var larguraJanela = 340;
     var alturaJanela = 600;
@@ -548,7 +551,6 @@ function imprimirCupomIFood(pedido) {
             var elItemRow = janelaImpressao.document.createElement("div");
             elItemRow.className = "item-tabela";
             
-            // Extrai as propriedades dinamicamente (seja prato.nome ou nome direto)
             var nomeItem = item.nome || (item.prato ? item.prato.nome : "Item");
             var qtdItem = item.quantidade || item.qtd || 1;
             var precoItem = item.preco || (item.prato ? item.prato.preco : 0);
@@ -559,7 +561,6 @@ function imprimirCupomIFood(pedido) {
             containerPrincipal.appendChild(elItemRow);
         });
     } else {
-        // Fallback caso a descrição venha como um texto simples no backend
         var elItemSimples = janelaImpressao.document.createElement("div");
         elItemSimples.style.whiteSpace = "pre-wrap";
         elItemSimples.textContent = pedido.descricao || "Verificar itens no painel principal.";
@@ -596,26 +597,26 @@ function imprimirCupomIFood(pedido) {
     elRodape.className = "text-center";
     elRodape.style.marginTop = "20px";
     elRodape.style.fontSize = "11px";
+    
     var elRodapeL1 = janelaImpressao.document.createElement("p");
     elRodapeL1.className = "negrito";
+    elRodapeL1.style.margin = "0px";
     elRodapeL1.textContent = "=== DOCUMENTO AUXILIAR DE PRODUÇÃO ===";
+    
     var elRodapeL2 = janelaImpressao.document.createElement("p");
+    elRodapeL2.style.margin = "4px 0 0 0";
     elRodapeL2.textContent = "Obrigado pela preferência e bom apetite!";
+    
     elRodape.appendChild(elRodapeL1);
     elRodape.appendChild(elRodapeL2);
     containerPrincipal.appendChild(elRodape);
 
+    // Renderização no Pop-up e comando de impressão
     janelaImpressao.document.body.appendChild(containerPrincipal);
     janelaImpressao.focus();
     
-    setTimeout(function() {
-        janelaImpressao.print();
-        janelaImpressao.close();
+    setTimeout(function() { 
+        janelaImpressao.print(); 
+        janelaImpressao.close(); 
     }, 350);
-}
-
-function criarDivDivisora(janelaAlvo) {
-    var div = janelaAlvo.document.createElement("div");
-    div.className = "divider";
-    return div;
 }
