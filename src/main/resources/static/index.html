@@ -5,350 +5,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sabor Cearense - Cardápio</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .header-app { text-align: center; margin: 20px 0; color: var(--dark); }
-        .header-app h1 { font-size: 2.2rem; margin-bottom: 5px; font-weight: 900; }
-        .menu-section h2 { background: var(--dark); color: var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 1.25rem; margin-top: 25px; }
-        .menu-section h3 { color: var(--dark); border-bottom: 3px solid var(--primary); padding-bottom: 4px; margin-top: 20px; font-size: 1.15rem; }
+</head>
+<body>
+
+    <!-- CONTAINER CENTRAL DO APLICATIVO -->
+    <div class="container">
         
-        .seletor-quantidade {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: #fff;
-            border: 2px solid var(--primary);
-            border-radius: 6px;
-            padding: 2px 8px;
-            min-width: 85px;
-            height: 32px;
-        }
-        .btn-qtd {
-            background: transparent;
-            border: none;
-            color: var(--dark);
-            font-size: 1.4rem;
-            font-weight: bold;
-            cursor: pointer;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .qtd-numero { font-weight: bold; color: var(--dark); font-size: 1.05rem; }
+        <!-- CABEÇALHO COM BOTÃO DE ADMIN -->
+        <header class="header-app" style="position: relative;">
+            <a href="admin.html" title="Acessar Painel do Administrador" style="position: absolute; top: -10px; right: 10px; text-decoration: none; font-size: 1.4rem; color: #a0aec0; transition: color 0.2s;">⚙️</a>
+            <h1>🌵 Sabor Cearense 🌵</h1>
+            <p style="font-weight: 500; font-size: 1.1rem; margin-top: -5px;">Comida Caseira Legítima</p>
+            <p style="font-size: 0.9rem; font-weight: bold; color: #555; background: var(--primary); display: inline-block; padding: 4px 12px; border-radius: 20px;">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
+        </header>
 
-        .menu-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #fff;
-            padding: 14px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-        }
-        .menu-item.selecionado { border-left: 6px solid var(--primary); background: #fffdf7; }
-        .item-info h4 { margin: 0 0 6px 0; font-size: 1.05rem; color: var(--dark); }
-        .preco { color: #27ae60; font-weight: bold; font-size: 1.1rem; }
-        .item-esgotado { opacity: 0.4; background: #f2f2f2!important; border-left: 4px solid #95a5a6!important; }
-        .badge-esgotado { color: #7f8c8d; font-weight: bold; background: #e0e0e0; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; }
-        
-        .status-barra {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px;
-            font-weight: bold;
-            border-radius: 8px;
-            margin: 15px 0 5px 0;
-            background-color: #fff;
-            color: var(--dark);
-            border: 2px solid var(--border-color);
-        }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-        .status-aberto { background-color: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
-        .status-fechado { background-color: #e74c3c; box-shadow: 0 0 6px #e74c3c; }
+        <!-- STATUS DE FUNCIONAMENTO -->
+        <div id="status-loja" class="status-barra">Carregando funcionamento...</div>
 
-        .btn-avancar {
-            background-color: #f5a623 !important;
-            color: #111111 !important;
-            border: none;
-            padding: 10px 20px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-avancar:hover {
-            background-color: #e0941f !important;
-        }
+        <!-- HORÁRIOS DE ENTREGA -->
+        <div class="horario-container">
+            <p class="horario-dias">📅 Segunda a Sábado</p>
+            <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
+        </div>
 
-        .horario-container {
-            text-align: center;
-            margin: 5px auto 20px auto;
-            font-family: inherit;
-        }
-        .horario-dias {
-            margin: 4px 0;
-            font-size: 14px;
-            color: #4A2412;
-            font-weight: bold;
-        }
-        .horario-entregas {
-            margin: 4px 0;
-            font-size: 13px;
-            color: #D32F2F;
-            font-weight: bold;
-            background-color: #FFF3CD;
-            display: inline-block;
-            padding: 4px 14px;
-            border-radius: 20px;
-            border: 1px solid #FFEBAA;
-        }
-        /* Painel de Rastreio Estilo Drawer */
-.tracking-drawer {
-    position: fixed;
-    bottom: -100%; /* Começa escondido abaixo da tela */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 480px; /* Alinhado ao seu container mobile */
-    background: #ffffff;
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15);
-    transition: bottom 0.3s ease-in-out;
-    z-index: 1000;
-    padding-bottom: 80px; /* Espaço para não cobrir o rodapé fixo */
-}
+        <!-- BOTÃO CENTRAL DE RASTREIO -->
+        <div style="text-align: center; margin: -10px auto 20px auto; max-width: 650px; padding: 0 10px;">
+            <button type="button" id="open-tracking-btn" onclick="abrirAbaRastreioOculta()" style="background: #e6f0fa; border: 1.5px solid #4a90e2; padding: 10px 20px; font-weight: bold; border-radius: 30px; cursor: pointer; color: #2a64a6; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                🔍 Já fez um pedido? Clique aqui para rastrear
+            </button>
+        </div>
 
-/* Classe ativa que faz o painel subir */
-.tracking-drawer.active {
-    bottom: 0;
-}
+        <!-- ABAS DE NAVEGAÇÃO -->
+        <div class="abas-navegacao" style="display: flex; justify-content: space-between; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px;">
+            <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')">Do Dia</button>
+            <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')">📌 Principais</button>
+            <button class="btn-aba" onclick="alternarAba('SOBREMESA')">😋 Doces</button>
+            <button class="btn-aba" onclick="alternarAba('BEBIDA')">🥤 Bebidas</button>
+        </div>
+        <!-- CONTEÚDO PRINCIPAL DO CARDÁPIO -->
+        <main>
+            <section id="aba-PRATOS_DO_DIA" class="menu-section">
+                <h2>🌹 Pratos do Dia</h2>
+                <div id="section-PRATOS_DO_DIA" class="menu-items"></div>
+            </section>
 
-.tracking-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid #eee;
-    font-weight: bold;
-    color: #2D2D2D;
-    font-size: 16px;
-}
+            <section id="aba-PRINCIPAIS" class="menu-section" style="display: none;">
+                <h2>📌 Pratos Principais</h2>
+                <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px; margin-bottom: 15px;"><em>Todos acompanham arroz, feijão e farofa</em></p>
+                
+                <h3>🐔 Frango</h3>
+                <div id="section-FRANGO" class="menu-items"></div>
+                
+                <h3>🥩 Carne</h3>
+                <div id="section-CARNE" class="menu-items"></div>
+                
+                <h3>🐟 Outros</h3>
+                <div id="section-OUTROS" class="menu-items"></div>
+            </section>
 
-.btn-close-tracking {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #999;
-}
-
-.tracking-body {
-    padding: 20px;
-}
-
-.tracking-body p {
-    margin: 0 0 12px 0;
-    font-size: 14px;
-    color: #666;
-}
-
-.tracking-input-group {
-    display: flex;
-    gap: 10px;
-}
-
-#codigo-rastreio-input {
-    flex: 1;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 16px;
-    outline: none;
-}
-
-#codigo-rastreio-input:focus {
-    border-color: #E65F2B;
-}
-
-.btn-search-tracking {
-    background: #E65F2B;
-    color: white;
-    border: none;
-    padding: 0 20px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.btn-search-tracking:hover {
-    background: #cd4f20;
-}
-/* Card do Item do Cardápio */
-.cardapio-item {
-    background: #ffffff;
-    border-radius: 14px;
-    padding: 16px;
-    margin-bottom: 12px;
-    border: 1px solid #f1f5f9;
-    display: flex; /* Divide em colunas */
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-}
-
-/* Coluna de Textos */
-.item-info {
-    flex: 1; /* Faz os textos ocuparem o lado esquerdo por completo */
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-/* Espaço da Foto à Direita (Padrão iFood) */
-.item-foto-container {
-    width: 85px;
-    height: 85px;
-    border-radius: 10px;
-    overflow: hidden;
-    background-color: #f1f5f9;
-    flex-shrink: 0; /* Impede que a foto amasse em telas pequenas */
-}
-
-    /* Foto do prato preenchendo o espaço perfeitamente */
-    .item-foto {
-        width: 100%;
-        height: 100%;
-        object-fit: cover; /* Recorta a imagem proporcionalmente sem distorcer o prato */
-    }
-    /* Container rígido estilo iFood - Não deixa o layout se mover */
-    .foto-produto-container {
-        width: 70px;
-        height: 70px;
-        min-width: 70px;
-        max-width: 70px;
-        min-height: 70px;
-        max-height: 70px;
-        background-color: #f0f0f0; /* Cor de fundo neutra para cobrir o flash branco */
-        border-radius: 8px;
-        overflow: hidden;
-        display: inline-block;
-    }
-
-    /* Suaviza a renderização da imagem na tela */
-    .foto-produto-container img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        opacity: 0;
-        animation: fadeInSuave 0.3s forwards;
-    }
-
-    @keyframes fadeInSuave {
-        to { opacity: 1; }
-    }
-
-        </style>
-    </head>
-    <body style="padding-bottom: 90px;">
-
-        <div class="container">
-            <header class="header-app" style="position: relative;">
-                <a href="admin.html" title="Acessar Painel do Administrador" style="position: absolute; top: -10px; right: 10px; text-decoration: none; font-size: 1.4rem; color: #a0aec0; transition: color 0.2s;">⚙️</a>
-                <h1>🌵 Sabor Cearense 🌵</h1>
-                <p style="font-weight: 500; font-size: 1.1rem; margin-top: -5px;">Comida Caseira Legítima</p>
-                <p style="font-size: 0.9rem; font-weight: bold; color: #555; background: var(--primary); display: inline-block; padding: 4px 12px; border-radius: 20px;">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
-            </header>
-
-            <div id="status-loja" class="status-barra">Carregando funcionamento...</div>
-
-            <div class="horario-container">
-                <p class="horario-dias">📅 Segunda a Sábado</p>
-                <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
-            </div>
-            <!-- Localize o fechamento da sua div horario-container -->
-
-    <!-- ADICIONE ESTE BLOCO LOGO ABAIXO DA TRAVA DE HORÁRIO -->
-    <div style="text-align: center; margin: -10px auto 20px auto; max-width: 650px; padding: 0 10px;">
-        <button type="button" 
-                onclick="abrirAbaRastreioOculta()" 
-                style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 10px 20px; font-weight: bold; border-radius: 30px; cursor: pointer; color: #4a5568; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);"
-                onmouseover="this.style.background='#fff3cd'; this.style.borderColor='#f5a623';"
-                onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#cbd5e1';">
-        
-        </button>
-    </div>
-
-                    <!-- Localize a div class="abas-navegacao" e substitua por esta, incluindo o botão de rastreio -->
-            <!-- Substitua a sua div abas-navegacao por esta, limpando o botão de rastreio de lá -->
-    <div class="abas-navegacao" style="display: flex; justify-content: space-between; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px;">
-        <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: var(--primary); color: var(--dark); cursor: pointer; white-space: nowrap;">🌹 Do Dia</button>
-        <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">📌 Principais</button>
-        <button class="btn-aba" onclick="alternarAba('SOBREMESA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">😋 Doces</button>
-        <button class="btn-aba" onclick="alternarAba('BEBIDA')" style="flex: 1; padding: 10px; font-weight: bold; border-radius: 6px; border: 1px solid var(--border-color); background: #fff; color: var(--dark); cursor: pointer; white-space: nowrap;">🥤 Bebidas</button>
-    </div>
-
-            
-            <main>
-                <section id="aba-PRATOS_DO_DIA" class="menu-section">
-                    <h2>🌹 Pratos do Dia</h2>
-                    <div id="section-PRATOS_DO_DIA" class="menu-items"></div>
-                </section>
-
-                <section id="aba-PRINCIPAIS" class="menu-section" style="display: none;">
-                    <h2>📌 Pratos Principais</h2>
-                    <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px;"><em>Todos acompanham arroz, feijão e farofa</em></p>
-                    
-                    <h3>🐔 Frango</h3>
-                    <div id="section-FRANGO" class="menu-items"></div>
-                    
-                    <h3>🥩 Carne</h3>
-                    <div id="section-CARNE" class="menu-items"></div>
-                    
-                    <h3>🐟 Outros</h3>
-                    <div id="section-OUTROS" class="menu-items"></div>
-                </section>
-
-                <section id="aba-SOBREMESA" class="menu-section" style="display: none;">
-                    <h2>😋 Sobremesas - R\$ 8,00</h2>
-                    <div id="section-SOBREMESA" class="menu-items"></div>
-                </section>
+            <section id="aba-SOBREMESA" class="menu-section" style="display: none;">
+                <h2>😋 Sobremesas - R$ 8,00</h2>
+                <div id="section-SOBREMESA" class="menu-items"></div>
+            </section>
 
             <section id="aba-BEBIDA" class="menu-section" style="display: none;">
                 <h2>🥤 Bebidas Geladas</h2>
                 <div id="section-BEBIDA" class="menu-items"></div>
             </section>
-                        <!-- Adicione esta nova section logo abaixo da seção de BEBIDA no index.html -->
+
+            <!-- SEÇÃO DE RASTREIO OCULTA -->
             <section id="aba-RASTREIO" class="menu-section" style="display: none; background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.01); margin-top: 25px;">
                 <h2 style="background: var(--dark); color: var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 1.25rem; margin-top: 0; margin-bottom: 20px;">🔍 Acompanhar Meu Pedido</h2>
                 
                 <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 25px; display: flex; gap: 10px;">
                     <input type="number" id="input-rastreio-index" placeholder="Digite o Nº do seu Pedido" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; text-align: center; font-size: 1rem;">
-                    <button onclick="toggleRastreio()" style="background: var(--primary); border: none; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer;">Consultar</button>
+                    <button onclick="executarBuscaRastreio()" style="background: var(--primary); border: none; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer;">Consultar</button>
                 </div>
 
                 <div id="wrapper-linha-tempo" style="display: none;">
                     <div style="background: #edf2f7; display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; margin-bottom: 20px;">Pedido #<span id="txt-index-id">...</span></div>
                     
                     <div class="linha-tempo" style="display: flex; justify-content: space-between; position: relative; margin: 30px 0; padding: 0 10px;">
-                        <style>
-                            .linha-tempo::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 4px; background: #e2e8f0; z-index: 1; }
-                            .passo-front { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; width: 60px; }
-                            .circulo-front { width: 34px; height: 34px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #718096; border: 3px solid #ffffff; transition: all 0.3s; }
-                            .legenda-front { font-size: 0.7rem; font-weight: bold; color: #a0aec0; margin-top: 8px; white-space: nowrap; }
-                            .passo-front.concluido .circulo-front { background: #27ae60; color: white; }
-                            .passo-front.concluido .legenda-front { color: #27ae60; }
-                            .passo-front.atual .circulo-front { background: var(--primary); color: var(--dark); box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.25); }
-                            .passo-front.atual .legenda-front { color: var(--primary); font-size: 0.75rem; }
-                        </style>
                         <div id="p-RECEBIDO" class="passo-front">
                             <div class="circulo-front">1</div>
                             <div class="legenda-front">Recebido</div>
@@ -359,314 +96,341 @@
                         </div>
                         <div id="p-ENTREGA" class="passo-front">
                             <div class="circulo-front">3</div>
-                            <div class="legenda-front">A caminho</div>
-                        </div>
-                        <div id="p-ENTREGUE" class="passo-front">
-                            <div class="circulo-front">4</div>
-                            <div class="legenda-front">Entregue</div>
+                            <div class="legenda-front">Entrega</div>
                         </div>
                     </div>
-                    <div id="txt-index-status" style="font-size: 1.2rem; font-weight: 800; margin: 20px 0; color: #2d3748;">Consultando...</div>
                 </div>
             </section>
-
         </main>
-    </div>
-
-        <!-- Barra Inferior Atualizada (Agora funciona como o gatilho da Sacola) -->
-<!-- NOVA BARRA FLUTUANTE FIXA -->
-<!-- SUA BARRA ORIGINAL COM A SACOLA EMBUTIDA OCULTA -->
-<div class="barra-flutuante-original">
-    <button class="btn-rastrear-original" onclick="irParaRastreio()">
-        🔍 Rastrear Pedido
-    </button>
-    
-    <div class="container-avancar-original" onclick="abrirSacola()">
-        <div class="info-valores-originais">
-            <span class="txt-total-label">Total:</span>
-            <span id="txt-valor-total" class="v-total-bold">R$ 0,00</span>
-        </div>
-        <button class="btn-avancar-amarelo">
-            Avançar ➔
+    </div> <!-- FIM DO CONTAINER -->
+    <!-- BARRA FIXA INFERIOR (RODAPÉ DO CARRINHO) -->
+    <div class="cart-bar" id="barra-flutuante">
+        <button onclick="abrirAbaRastreioOculta()" id="btn-rodape-rastreio" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; color: #475569; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;">
+            🔍 Rastrear Pedido
         </button>
+
+        <div style="margin-left: auto; text-align: right; padding-right: 15px;" onclick="abrirSacola()">
+            <span id="txt-qtd-itens" style="font-size: 0.8rem; color: #64748b; display: block; font-weight: 500;">0 itens</span>
+            <div id="txt-valor-total" style="font-weight: 800; color: #27ae60; font-size: 1.15rem; line-height: 1;">R$ 0,00</div>
+        </div>
+
+        <button onclick="abrirSacola()" class="btn-avancar" id="botao-avancar-checkout" style="padding: 10px 16px; font-size: 0.95rem; white-space: nowrap;">Avançar ➔</button>
     </div>
-</div>
 
-<!-- CONTAINER DA GAVETA (FICA 100% INVISÍVEL ATÉ VOCÊ CLICAR EM AVANÇAR) -->
-<div id="painel-sacola-modal" class="sacola-drawer-container">
-    <div class="sacola-drawer-overlay" onclick="fecharSacola()"></div>
-    <div class="sacola-drawer-content">
-        <div class="sacola-drawer-header">
-            <h3>Sua Sacola</h3>
-            <button class="btn-fechar-drawer" onclick="fecharSacola()">✕</button>
-        </div>
-        
-        <div id="lista-produtos-sacola" class="sacola-drawer-body">
-            <!-- Itens injetados pelo JS aqui -->
-        </div>
-
-        <div class="sacola-drawer-footer">
-            <div class="sacola-drawer-subtotal">
-                <span>Subtotal:</span>
-                <span id="txt-modal-subtotal">R$ 0,00</span>
+    <!-- MODAL DA GAVETA DA SACOLA -->
+    <div id="painel-sacola-modal" class="sacola-drawer-container">
+        <div class="sacola-drawer-overlay" onclick="fecharSacola()"></div>
+        <div class="sacola-drawer-content">
+            <div class="sacola-drawer-header">
+                <h3>Sua Sacola</h3>
+                <button class="btn-fechar-drawer" onclick="fecharSacola()">✕</button>
             </div>
-            <button class="btn-drawer-finalizar" onclick="irParaCheckout()">
-                Avançar para o Pagamento ➔
-            </button>
+            
+            <div id="lista-produtos-sacola" class="sacola-drawer-body">
+                <!-- Itens injetados via JS -->
+            </div>
+
+            <div class="sacola-drawer-footer">
+                <div class="sacola-drawer-subtotal">
+                    <span>Subtotal:</span>
+                    <span id="txt-modal-subtotal">R$ 0,00</span>
+                </div>
+                <div style="padding-top: 10px;">
+                    <button class="btn-drawer-finalizar" onclick="irParaCheckout()">
+                        Avançar para o Pagamento ➔
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-        
-        <!-- BOTÃO DE RASTREIO MINIMALISTA INTEGRADO NO RODAPÉ -->
-        <button onclick="toggleRastreio()" 
-        id="btn-rodape-rastreio"
-        style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; color: #475569; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;">
-    🔍 Rastrear Pedido
-</button>
-
-        <!-- TOTAL DO CARRINHO (Ajustado com margem automática para alinhar à direita) -->
-        <div style="margin-left: auto; text-align: right; padding-right: 5px;">
-            <span style="font-size: 0.8rem; color: #64748b; display: block; font-weight: 500;">Total:</span>
-            <div id="total-flutuante" style="font-weight: 800; color: #27ae60; font-size: 1.15rem; line-height: 1;">R$ 0,00</div>
-        </div>
-
-        <!-- BOTÃO AVANÇAR ORIGINAL -->
-        <button onclick="irParaFinalizacao()" class="btn-avancar" id="botao-avancar-checkout" style="padding: 10px 16px; font-size: 0.95rem; white-space: nowrap;">Avançar ➔</button>
-    </div>
-
+    <!-- SCRIPTS DE LOGICA -->
     <script>
-        const URL_BACKEND = "";
+        const URL_BACKEND = "https://onrender.com";
         let carrinho = {};
+        let dadosSacola = carrinho; 
         let estabelecimentoAberto = true;
+        let rastreioTimerAutomatizado = null;
 
         document.addEventListener("DOMContentLoaded", () => {
             carregarCardapio();
             verificarHorarioFuncionamento();
         });
-
         async function carregarCardapio() {
-    try {
-        const res = await fetch(URL_BACKEND + "/api/cardapio");
-        
-        if (!res.ok) {
-            throw new Error(`Servidor respondeu com status ${res.status}`);
-        }
+            try {
+                const res = await fetch(URL_BACKEND + "/api/cardapio");
+                if (!res.ok) throw new Error(`Servidor respondeu com status ${res.status}`);
+                const itens = await res.json();
+                
+                if (!Array.isArray(itens)) return;
+                
+                // 1. DICIONÁRIO PADRONIZADO DE IMAGENS RESIDENCIAIS
+                const IMAGENS_COMPLETAS_SABOR = {
+                    "frangocomquiabo": "https://unsplash.com",
+                    "carneassada": "https://unsplash.com",
+                    "costelacombatata": "https://unsplash.com",
+                    "frangoassado": "https://unsplash.com",
+                    "dobradinha": "https://unsplash.com",
+                    "pernilassado": "https://unsplash.com",
+                    "frangogrelhado": "https://unsplash.com",
+                    "bifeacebolado": "https://unsplash.com",
+                    "tilapiacombaiao": "https://unsplash.com",
+                    "omelete": "https://unsplash.com",
+                    "cocacomum": "https://unsplash.com",
+                    "cocazero": "https://unsplash.com",
+                    "guaranacomum": "https://unsplash.com",
+                    "sucolaranjacopo": "https://unsplash.com",
+                    "sucolimaocopo": "https://unsplash.com"
+                };
 
-        const itens = await res.json();
-        
-        if (!Array.isArray(itens)) {
-            console.error("O backend não retornou uma lista de produtos válida:", itens);
-            return;
-        }
-        
-        // 1. DICIONÁRIO PADRONIZADO (Chaves simplificadas em minúsculas e sem abreviações complicadas)
-        const IMAGENS_COMPLETAS_SABOR = {
-            "frangocomquiabo": "https://unsplash.com",
-            "carneassada": "https://unsplash.com",
-            "costelacombatata": "https://unsplash.com",
-            "frangoassado": "https://unsplash.com",
-            "dobradinha": "https://unsplash.com",
-            "pernilassado": "https://unsplash.com",
-            "frangogrelhado": "https://unsplash.com",
-            "bifeacebolado": "https://unsplash.com",
-            "tilapiacombaiao": "https://unsplash.com",
-            "omelete": "https://unsplash.com",
-            "cocacomum": "https://unsplash.com",
-            "cocazero": "https://unsplash.com",
-            "guaranacomum": "https://unsplash.com",
-            "sucolaranjacopo": "https://unsplash.com",
-            "sucolimaocopo": "https://unsplash.com"
-        };
-        
-        const secoesMap = {
-            "PRATOS_DO_DIA": "", "FRANGO": "", "CARNE": "", "OUTROS": "", "SOBREMESA": "", "BEBIDA": ""
-        };
+                const secoesMap = {
+                    "PRATOS_DO_DIA": "", "FRANGO": "", "CARNE": "", "OUTROS": "", "SOBREMESA": "", "BEBIDA": ""
+                };
 
-        itens.forEach(item => {
-            const esgotado = !item.disponivel;
-            
-            // NORMALIZAÇÃO INTELIGENTE: Transforma "Frango com Quiabo" ou "Frango c/ quiabo" em "frangocomquiabo"
-            const nomeNormalizado = item.nome
-                .toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove acentos
-                .replace(/\s+/g, "") // Remove todos os espaços
-                .replace("c/", "com"); // Normaliza abreviação comum de "com"
-            
-            // Busca a foto no dicionário usando o nome limpo. Se falhar, joga uma imagem reserva bonita (Placeholder moderno)
-            let fotoFinal = item.imagemUrl;
-            if (!fotoFinal || fotoFinal === "" || fotoFinal.includes("://unsplash.com") || fotoFinal === "https://unsplash.com") {
-                fotoFinal = IMAGENS_COMPLETAS_SABOR[nomeNormalizado] || "https://unsplash.com";
-            }
-            
-            let controleHtml = `
-                <div class="seletor-quantidade">
-                    <button class="btn-qtd" onclick="mudarQuantidade(${item.id}, -1, '${item.nome}', ${item.preco})">-</button>
-                    <span class="qtd-numero" id="qtd-${item.id}">0</span>
-                    <button class="btn-qtd" onclick="mudarQuantidade(${item.id}, 1, '${item.nome}', ${item.preco})">+</button>
-                </div>
-            `;
-
-            if (esgotado) {
-                controleHtml = `<span class="badge-esgotado">Esgotado</span>`;
-            }
-
-            const itemHtml = `
-                <div id="item-${item.id}" class="menu-item ${esgotado ? 'item-esgotado' : ''}">
-                    <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
-                        <!-- Container Rígido anti-trepidação e anti-vazamento -->
-                        <div class="foto-produto-container">
-                            <img src="${fotoFinal}" 
-                                 alt="${item.nome}" 
-                                 loading="lazy"
-                                 onerror="this.onerror=null; this.src='https://unsplash.com';">
+                itens.forEach(item => {
+                    const esgotado = !item.disponivel;
+                    
+                    const nomeNormalizado = item.nome
+                        .toLowerCase()
+                        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+                        .replace(/\s+/g, "") 
+                        .replace("c/", "com"); 
+                    
+                    let fotoFinal = item.imagemUrl;
+                    if (!fotoFinal || fotoFinal === "" || fotoFinal.includes("://unsplash.com") || fotoFinal === "https://unsplash.com") {
+                        fotoFinal = IMAGENS_COMPLETAS_SABOR[nomeNormalizado] || "https://unsplash.com";
+                    }
+                    
+                    let controleHtml = `
+                        <div class="seletor-quantidade">
+                            <button class="btn-qtd" onclick="mudarQuantidade(${item.id}, -1, '${item.nome}', ${item.preco})">-</button>
+                            <span class="qtd-numero" id="qtd-${item.id}">0</span>
+                            <button class="btn-qtd" onclick="mudarQuantidade(${item.id}, 1, '${item.nome}', ${item.preco})">+</button>
                         </div>
-                        <div class="item-info">
-                            <h4 style="margin: 0 0 4px 0; font-size: 15px; color: #1e293b; font-weight: 600;">${item.nome}</h4>
-                            <span class="preco" style="font-size: 14px; color: #10b981; font-weight: 700;">R$ ${Number(item.preco).toFixed(2).replace('.', ',')}</span>
+                    `;
+
+                    if (esgotado) {
+                        controleHtml = `<span class="badge-esgotado">Esgotado</span>`;
+                    }
+
+                    const itemHtml = `
+                        <div id="item-${item.id}" class="menu-item ${esgotado ? 'item-esgotado' : ''}">
+                            <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
+                                <div class="foto-produto-container">
+                                    <img src="${fotoFinal}" alt="${item.nome}" loading="lazy" onerror="this.onerror=null; this.src='https://unsplash.com';">
+                                </div>
+                                <div class="item-info">
+                                    <h4>${item.nome}</h4>
+                                    <span class="preco">R$ ${Number(item.preco).toFixed(2).replace('.', ',')}</span>
+                                </div>
+                            </div>
+                            <div class="controles">${controleHtml}</div>
                         </div>
-                    </div>
-                    <div class="controles">${controleHtml}</div>
-                </div>
-            `;
+                    `;
 
-            // Tratamento caso a categoria venha nula ou fora do padrão do mapa
-            const cat = item.categoria ? item.categoria.toUpperCase() : "PRATOS_DO_DIA";
-            if (secoesMap[cat] !== undefined) {
-                secoesMap[cat] += itemHtml;
-            } else {
-                secoesMap["PRATOS_DO_DIA"] += itemHtml; // Fallback para a seção visível principal
+                    const cat = item.categoria ? item.categoria.toUpperCase() : "PRATOS_DO_DIA";
+                    if (secoesMap[cat] !== undefined) {
+                        secoesMap[cat] += itemHtml;
+                    } else {
+                        secoesMap["PRATOS_DO_DIA"] += itemHtml;
+                    }
+                });
+
+                Object.keys(secoesMap).forEach(categoria => {
+                    const el = document.getElementById("section-" + categoria);
+                    if (el) el.innerHTML = secoesMap[categoria];
+                });
+
+                if (!estabelecimentoAberto) aplicarBloqueioInterfaceFechado();
+
+            } catch(e) { 
+                console.error("Erro ao carregar cardápio:", e); 
             }
-        });
-
-        Object.keys(secoesMap).forEach(categoria => {
-            const el = document.getElementById("section-" + categoria);
-            if (el) {
-                el.innerHTML = secoesMap[categoria];
+        }
+        function alternarAba(nomeAba) {
+            if (nomeAba !== 'RASTREIO' && rastreioTimerAutomatizado) {
+                clearInterval(rastreioTimerAutomatizado);
+                rastreioTimerAutomatizado = null;
+                console.log("Sabor Cearense: Cliente mudou de aba. Monitoramento pausado.");
             }
-        });
 
-        if (typeof estabelecimentoAberto !== 'undefined' && !estabelecimentoAberto) {
-            aplicarBloqueioInterfaceFechado();
+            const todasAbas = ['PRATOS_DO_DIA', 'PRINCIPAIS', 'SOBREMESA', 'BEBIDA', 'RASTREIO'];
+            todasAbas.forEach(aba => {
+                const elementoAba = document.getElementById('aba-' + aba);
+                if (elementoAba) elementoAba.style.display = 'none';
+            });
+            
+            const abaAtiva = document.getElementById('aba-' + nomeAba);
+            if (abaAtiva) abaAtiva.style.display = 'block';
+            
+            document.querySelectorAll('.btn-aba').forEach(btn => {
+                btn.classList.remove('ativo');
+            });
+            if(event && event.currentTarget) event.currentTarget.classList.add('ativo');
+
+            const barraFlutuante = document.getElementById("barra-flutuante");
+            if(barraFlutuante) {
+                barraFlutuante.style.display = (nomeAba === 'RASTREIO') ? 'none' : 'flex';
+            }
         }
 
-    } catch(e) { 
-        console.error("Erro ao carregar cardápio:", e); 
-    }
-}
+        function abrirAbaRastreioOculta() {
+            alternarAba('RASTREIO');
+            const btnRastreio = document.getElementById("btn-rodape-rastreio");
+            if (btnRastreio) {
+                btnRastreio.innerHTML = "📋 Voltar ao Cardápio";
+                btnRastreio.setAttribute("onclick", "restaurarCardapioOriginal()");
+                btnRastreio.style.background = "#fff3cd";
+                btnRastreio.style.borderColor = "#f5a623";
+            }
+        }
 
+        function restaurarCardapioOriginal() {
+            if (typeof desativarTemporizadorEInterface === "function") {
+                desativarTemporizadorEInterface();
+            }
 
-                        // Variável de controle global para gerenciar o temporizador automático
-        let rastreioTimerAutomatizado = null;
-
-        async function abrirAbaRastreioOculta() {
-    // 1. Esconde todas as seções de pratos e bebidas
-    const todasAbas = ['PRATOS_DO_DIA', 'PRINCIPAIS', 'SOBREMESA', 'BEBIDA'];
-    todasAbas.forEach(aba => {
-        const elementoAba = document.getElementById('aba-' + aba);
-        if (elementoAba) elementoAba.style.display = 'none';
-    });
-    
-    // 2. Exibe a seção interna de rastreamento do cliente
-    const abaRastreio = document.getElementById('aba-RASTREIO');
-    if (abaRastreio) abaRastreio.style.display = 'block';
-    
-    // 3. Remove as cores de seleção das abas superiores
-    document.querySelectorAll('.btn-aba').forEach(btn => {
-        btn.style.background = '#ffffff';
-    });
-    
-    // 4. Modifica o botão do rodapé para permitir que o cliente retorne ao menu facilmente
-    const btnRastreio = document.getElementById("btn-rodape-rastreio");
-    if (btnRastreio) {
-        btnRastreio.innerHTML = "📋 Voltar ao Cardápio";
-        // Altera a função do clique temporariamente para restaurar a tela inicial
-        btnRastreio.setAttribute("onclick", "restaurarCardapioOriginal()");
-        btnRastreio.style.background = "#fff3cd";
-        btnRastreio.style.borderColor = "#f5a623";
-    }
-
-    toggleRastreio();
-}
-
-function restaurarCardapioOriginal() {
-    // 1. Desliga o monitoramento em tempo real se ele estiver rodando
-    if (typeof desativarTemporizadorEInterface === "function") {
-        desativarTemporizadorEInterface();
-    }
-    
-    // 2. Restaura o botão do rodapé para o estado original de rastreio
-    const btnRastreio = document.getElementById("btn-rodape-rastreio");
-    if (btnRastreio) {
-        btnRastreio.innerHTML = "🔍 Rastrear Pedido";
-        btnRastreio.setAttribute("onclick", "abrirAbaRastreioOculta()");
-        btnRastreio.style.background = "#f1f5f9";
-        btnRastreio.style.borderColor = "#cbd5e1";
-    }
-
-    // 3. Reativa visualmente a primeira aba do menu (Pratos do Dia)
-    alternarAba('PRATOS_DO_DIA');
-}
+            const btnRastreio = document.getElementById("btn-rodape-rastreio");
+            if (btnRastreio) {
+                btnRastreio.innerHTML = "🔍 Rastrear Pedido";
+                btnRastreio.setAttribute("onclick", "abrirAbaRastreioOculta()");
+                btnRastreio.style.background = "#f1f5f9";
+                btnRastreio.style.borderColor = "#cbd5e1";
+            }
+            alternarAba('PRATOS_DO_DIA');
+        }
 
         function desativarTemporizadorEInterface() {
             if (rastreioTimerAutomatizado) {
                 clearInterval(rastreioTimerAutomatizado);
                 rastreioTimerAutomatizado = null;
             }
-            ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"].forEach(st => {
+            ["RECEBIDO", "PREPARO", "ENTREGA"].forEach(st => {
                 const el = document.getElementById("p-" + st);
                 if(el) el.classList.remove("concluido", "atual");
             });
         }
 
-       function verificarHorarioFuncionamento() {
-    const agora = new Date();
-    const diaSemana = agora.getDay(); 
-    const hora = agora.getHours();
-    const minuto = agora.getMinutes();
-    
-    const minutosAtuais = (hora * 60) + minuto;
-    const aberturaMinutos = (11 * 60) + 30; 
-    const fechamentoMinutos = (15 * 60) + 0;  
-
-    const statusLoja = document.getElementById("status-loja");
-    
-    // --- PORTA SECRETA VIA URL ---
-    // Captura o que está escrito na URL do navegador
-    const parametrosUrl = new URLSearchParams(window.location.search);
-    // Verifica se você digitou o código secreto admin=1 na URL
-    const modoAdminSecreto = parametrosUrl.get("admin") === "1";
-    
-    // Mantém também a checagem pelo localStorage por segurança
-    const adminStorage = localStorage.getItem("adminAutenticado");
-    const isAdmin = modoAdminSecreto || (adminStorage && adminStorage.trim() === "true"); 
-    // ------------------------------
-
-    // Se estiver fora do horário comercial (Segunda a Sábado, das 11:30 às 15:00)
-    if (diaSemana === 0 || minutosAtuais < aberturaMinutos || minutosAtuais > fechamentoMinutos) {
-        
-        // Se for você acessando pela porta secreta, destrava o site na hora
-        if (isAdmin) {
-            estabelecimentoAberto = true;
-            if(statusLoja) {
-                statusLoja.innerHTML = `<span class="status-dot status-aberto"></span> ABERTO AGORA <small style="color: #f5a623; margin-left: 5px; font-weight: bold;">(Modo Admin Ativo)</small>`;
+        function mudarQuantidade(id, alteracao, nome, preco) {
+            if (!carrinho[id]) {
+                carrinho[id] = { nome: nome, preco: parseFloat(preco), quantidade: 0 };
             }
-            return; // Interrompe o bloqueio e libera os botões de + e -
+            carrinho[id].quantidade += alteracao;
+
+            if (carrinho[id].quantidade <= 0) {
+                delete carrinho[id];
+                if(document.getElementById("qtd-" + id)) document.getElementById("qtd-" + id).innerText = "0";
+                if(document.getElementById("item-" + id)) document.getElementById("item-" + id).classList.remove("selecionado");
+            } else {
+                if(document.getElementById("qtd-" + id)) document.getElementById("qtd-" + id).innerText = carrinho[id].quantidade;
+                if(document.getElementById("item-" + id)) document.getElementById("item-" + id).classList.add("selecionado");
+            }
+            atualizarTotalFlutuante(); 
+            sincronizarContadorCardapio(id);
         }
 
-        // Se for um cliente comum, bloqueia normalmente
-        estabelecimentoAberto = false;
-        if(statusLoja) {
-            statusLoja.innerHTML = `<span class="status-dot status-fechado"></span> FECHADO NO MOMENTO`;
+        function sincronizarContadorCardapio(id) {
+            const elementoContador = document.getElementById(`qtd-${id}`);
+            if (elementoContador) {
+                const qtdAtual = carrinho[id] ? carrinho[id].quantidade : 0;
+                elementoContador.innerText = qtdAtual;
+            }
         }
-        aplicarBloqueioInterfaceFechado();
-    } else {
-        estabelecimentoAberto = true;
-        if(statusLoja) {
-            statusLoja.innerHTML = `<span class="status-dot status-aberto"></span> ABERTO AGORA`;
+        function atualizarTotalFlutuante() {
+            let totalItens = 0;
+            let valorTotal = 0;
+
+            Object.values(carrinho).forEach(item => {
+                totalItens += item.quantidade;
+                valorTotal += item.preco * item.quantidade;
+            });
+
+            const elQtd = document.getElementById('txt-qtd-itens');
+            const elTotal = document.getElementById('txt-valor-total');
+            const elSubtotal = document.getElementById('txt-modal-subtotal');
+
+            if (elQtd) elQtd.innerText = `${totalItens} ${totalItens === 1 ? 'item' : 'itens'}`;
+            if (elTotal) elTotal.innerText = `R$ ${valorTotal.toFixed(2)}`;
+            if (elSubtotal) elSubtotal.innerText = `R$ ${valorTotal.toFixed(2)}`;
         }
-    }
-}
+
+        function abrirSacola() {
+            document.getElementById('painel-sacola-modal').classList.add('open');
+            renderizarItensSacola();
+        }
+
+        function fecharSacola() {
+            document.getElementById('painel-sacola-modal').classList.remove('open');
+        }
+
+        function renderizarItensSacola() {
+            const containerLista = document.getElementById('lista-produtos-sacola');
+            containerLista.innerHTML = '';
+            const itens = Object.entries(carrinho);
+
+            if (itens.length === 0) {
+                containerLista.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">Sua sacola está vazia.</p>`;
+                return;
+            }
+
+            itens.forEach(([id, item]) => {
+                containerLista.innerHTML += `
+                    <div class="item-sacola-linha">
+                        <div>
+                            <div style="font-weight: 600; font-size:15px;">${item.nome}</div>
+                            <div style="font-size: 13px; color: #777;">R$ ${(item.preco * item.quantidade).toFixed(2)}</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <button onclick="mudarQuantidade('${id}', -1, '${item.nome}', ${item.preco}); renderizarItensSacola();" style="padding:4px 10px;">-</button>
+                            <span style="font-weight:bold;">${item.quantidade}</span>
+                            <button onclick="mudarQuantidade('${id}', 1, '${item.nome}', ${item.preco}); renderizarItensSacola();" style="padding:4px 10px;">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function ejecutarBuscaRastreio() {
+            const input = document.getElementById('input-rastreio-index');
+            if (!input) return;
+            const pedidoId = input.value.trim().replace('#', '');
+            if (!pedidoId) {
+                alert('Por favor, digite o número do pedido.');
+                return;
+            }
+            window.location.href = `acompanhar.html?id=${pedidoId}`;
+        }
+
+        function verificarHorarioFuncionamento() {
+            const agora = new Date();
+            const diaSemana = agora.getDay(); 
+            const hora = agora.getHours();
+            const minuto = agora.getMinutes();
+            
+            const minutosAtuais = (hora * 60) + minuto;
+            const aberturaMinutos = (11 * 60) + 30; 
+            const fechamentoMinutos = (15 * 60) + 0;  
+
+            const statusLoja = document.getElementById("status-loja");
+            const parametrosUrl = new URLSearchParams(window.location.search);
+            const modoAdminSecreto = parametrosUrl.get("admin") === "1";
+            const adminStorage = localStorage.getItem("adminAutenticado");
+            const isAdmin = modoAdminSecreto || (adminStorage && adminStorage.trim() === "true");
+
+            if (diaSemana === 0 || minutosAtuais < aberturaMinutos || minutosAtuais > fechamentoMinutos) {
+                if (isAdmin) {
+                    estabelecimentoAberto = true;
+                    if(statusLoja) statusLoja.innerHTML = `<span class="status-dot status-aberto"></span> ABERTO AGORA <small style="color: #f5a623; margin-left: 5px; font-weight: bold;">(Modo Admin Ativo)</small>`;
+                    return;
+                }
+                estabelecimentoAberto = false;
+                if(statusLoja) statusLoja.innerHTML = `<span class="status-dot status-fechado"></span> FECHADO NO MOMENTO`;
+                aplicarBloqueioInterfaceFechado();
+            } else {
+                estabelecimentoAberto = true;
+                if(statusLoja) statusLoja.innerHTML = `<span class="status-dot status-aberto"></span> ABERTO AGORA`;
+            }
+        }
 
         function aplicarBloqueioInterfaceFechado() {
             document.querySelectorAll(".btn-qtd").forEach(btn => {
@@ -683,258 +447,14 @@ function restaurarCardapioOriginal() {
                 btnAvancar.innerText = "Fechado no Momento 🔒";
             }
         }
-        function abrirAbaRastreioOculta() {
-    // 1. Esconde todas as seções de comida e bebida
-    const todasAbas = ['PRATOS_DO_DIA', 'PRINCIPAIS', 'SOBREMESA', 'BEBIDA'];
-    todasAbas.forEach(aba => {
-        const elementoAba = document.getElementById('aba-' + aba);
-        if (elementoAba) elementoAba.style.display = 'none';
-    });
-    
-    // 2. Exibe a seção de rastreio em destaque
-    const abaRastreio = document.getElementById('aba-RASTREIO');
-    if (abaRastreio) abaRastreio.style.display = 'block';
-    
-    // 3. Remove a cor amarela dos botões do cardápio para não confundir o cliente
-    document.querySelectorAll('.btn-aba').forEach(btn => {
-        btn.style.background = '#ffffff';
-    });
-    
-    // 4. Oculta o carrinho temporariamente por harmonia
-    const barraFlutuante = document.getElementById("barra-flutuante");
-    if(barraFlutuante) barraFlutuante.style.display = 'none';
-    
-    // 5. Roda o buscador automático
-    toggleRastreio();
-}
-
-
-                        function alternarAba(nomeAba) {
-            // --- ADICIONADO: Se mudar de aba, desliga temporariamente o monitoramento automático ---
-            if (nomeAba !== 'RASTREIO' && rastreioTimerAutomatizado) {
-                clearInterval(rastreioTimerAutomatizado);
-                rastreioTimerAutomatizado = null;
-                console.log("Sabor Cearense: Cliente mudou de aba. Monitoramento pausado.");
-            }
-            // -------------------------------------------------------------------------------------
-
-            const todasAbas = ['PRATOS_DO_DIA', 'PRINCIPAIS', 'SOBREMESA', 'BEBIDA', 'RASTREIO'];
-            todasAbas.forEach(aba => {
-                const elementoAba = document.getElementById('aba-' + aba);
-                if (elementoAba) elementoAba.style.display = 'none';
-            });
-            
-            const abaAtiva = document.getElementById('aba-' + nomeAba);
-            if (abaAtiva) abaAtiva.style.display = 'block';
-            
-            const botoes = document.querySelectorAll('.btn-aba');
-            botoes.forEach(btnResult => {
-                btnResult.style.background = '#ffffff';
-            });
-            
-            const botaoClicado = event.currentTarget;
-            if (botaoClicado) botaoClicado.style.background = 'var(--primary)';
-
-            const barraFlutuante = document.getElementById("barra-flutuante");
-            if(barraFlutuante) {
-                barraFlutuante.style.display = (nomeAba === 'RASTREIO') ? 'none' : 'flex';
-            }
-            
-            if(nomeAba === 'RASTREIO') buscarRastreioAbas(); 
-        }
-
-
-
-        // 1. OBJETO GLOBAL QUE MANTÉM O ESTADO DA SACOLA
-
-// 2. SUA FUNÇÃO ADAPTADA PARA GERENCIAR A SACOLA
-function mudarQuantidade(id, alteracao, nome, preco) {
-    // ... seu código de validação e manipulação do carrinho (mantenha igual) ...
-
-    if (carrinho[id].quantidade <= 0) {
-        delete carrinho[id];
-        if(document.getElementById("qtd-" + id)) document.getElementById("qtd-" + id).innerText = "0";
-        if(document.getElementById("item-" + id)) document.getElementById("item-" + id).classList.remove("selecionado");
-    } else {
-        if(document.getElementById("qtd-" + id)) document.getElementById("qtd-" + id).innerText = carrinho[id].quantidade;
-        if(document.getElementById("item-" + id)) document.getElementById("item-" + id).classList.add("selecionado");
-    }
-
-    // Certifique-se de chamar estes dois métodos com estes nomes exatos:
-    atualizarTotalFlutuante(); 
-    renderizarItensSacola();   
-}
-
-
-// 4. ATUALIZA A BARRA FIXA INFERIOR RECOLHIDA
-function atualizarTotaisBarra() {
-    let totalItens = 0;
-    let valorTotal = 0;
-
-    Object.values(dadosSacola).forEach(item => {
-        totalItens += item.qtd;
-        valorTotal += item.preco * item.qtd;
-    });
-
-    document.getElementById('txt-qtd-itens').innerText = `${totalItens} ${totalItens === 1 ? 'item' : 'itens'}`;
-    document.getElementById('txt-valor-total').innerText = `R$ ${valorTotal.toFixed(2)}`;
-    document.getElementById('txt-modal-subtotal').innerText = `R$ ${valorTotal.toFixed(2)}`;
-}
-
-// 5. ATUALIZA O CONTADOR DO CARDÁPIO PRINCIPAL (Para manter o número entre o - e + correto)
-function sincronizarContadorCardapio(id) {
-    // IMPORTANTE: Certifique-se de que o elemento que exibe o número do produto no seu cardápio tenha um ID ou classe identificável, ex: id="qtd-produto-12"
-    const elementoContador = document.getElementById(`qtd-produto-${id}`);
-    if (elementoContador) {
-        const qtdAtual = dadosSacola[id] ? dadosSacola[id].qtd : 0;
-        elementoContador.innerText = qtdAtual;
-    }
-}
-
-
-        function atualizarTotalFlutuante() {
-    let totalItens = 0;
-    let valorTotal = 0;
-
-    Object.values(carrinho).forEach(item => {
-        totalItens += item.quantidade;
-        valorTotal += item.preco * item.quantidade;
-    });
-
-    // Só altera a propriedade se o elemento realmente existir na tela
-    const elQtd = document.getElementById('txt-qtd-itens');
-    const elTotal = document.getElementById('txt-valor-total');
-    const elSubtotal = document.getElementById('txt-modal-subtotal');
-
-    if (elQtd) elQtd.innerText = `${totalItens} ${totalItens === 1 ? 'item' : 'itens'}`;
-    if (elTotal) elTotal.innerText = `R$ ${valorTotal.toFixed(2)}`;
-    if (elSubtotal) elSubtotal.innerText = `R$ ${valorTotal.toFixed(2)}`;
-}
-
-// Define a URL do seu backend Java (mude a porta 8080 se o seu Java rodar em outra)
-// ⚠️ SUBSTITUA O LINK ABAIXO PELO SEU LINK DO RENDER (Mantenha o https:// e retire a barra no final)
-const URL_BACKEND_JAVA = "https://saborcearense-5.onrender.com"; 
-
-// Função para abrir e fechar a aba de rastreio de forma fluida
-        // Abre e fecha a gaveta de rastreio de forma fluida
-        // Função para abrir e fechar a aba de rastreio moderna
-function toggleRastreio() {
-    const painel = document.getElementById('painel-rastreio');
-    if (!painel) {
-        console.error("Erro: O elemento 'painel-rastreio' não foi encontrado no HTML.");
-        return;
-    }
-    painel.classList.toggle('active');
-    
-    if(painel.classList.contains('active')) {
-        const inputId = document.getElementById('codigo-rastreio-input');
-        if (inputId) inputId.focus();
-    }
-}
-
-// Função que pega o número digitado e envia para a tela dinâmica acompanhar.html
-function executarBuscaRastreio() {
-    const input = document.getElementById('codigo-rastreio-input');
-    if (!input) return;
-
-    const pedidoId = input.value.trim().replace('#', ''); 
-    
-    if (!pedidoId) {
-        alert('Por favor, digite o número do pedido.');
-        return;
-    }
-    
-    // Fecha a gaveta
-    toggleRastreio();
-    
-    // Envia o cliente direto para a tela interativa de tempo real passando o ID
-    window.location.href = `acompanhar.html?id=${pedidoId}`;
-}
-// Objeto global que guarda os produtos selecionados
-let dadosSacola = {}; 
-
-// 1. FUNÇÃO PARA ABRIR E FECHAR O PAINEL
-function abrirSacola() {
-    document.getElementById('painel-sacola-modal').classList.add('open');
-    renderizarItensSacola(); // Renderiza atualizado ao abrir
-}
-
-function fecharSacola() {
-    document.getElementById('painel-sacola-modal').classList.remove('open');
-}
-
-// 2. ADICIONAR/MANIPULAR PRODUTOS (Integre essa lógica nos seus botões + e - do cardápio)
-function alterarQuantidadeProduto(id, nome, preco, mudanca) {
-    if (!dadosSacola[id]) {
-        dadosSacola[id] = { nome: nome, preco: parseFloat(preco), qtd: 0 };
-    }
-
-    dadosSacola[id].qtd += mudanca;
-
-    // Se a quantidade zerar ou descer, removemos do carrinho
-    if (dadosSacola[id].qtd <= 0) {
-        delete dadosSacola[id];
-    }
-
-    atualizarTotaisBarra();
-    renderizarItensSacola();
-}
-
-// 3. ATUALIZA OS VALORES DA BARRA FIXA INFERIOR
-function atualizarTotaisBarra() {
-    let totalItens = 0;
-    let valorTotal = 0;
-
-    Object.values(dadosSacola).forEach(item => {
-        totalItens += item.qtd;
-        valorTotal += item.preco * item.qtd;
-    });
-
-    document.getElementById('txt-qtd-itens').innerText = `${totalItens} ${totalItens === 1 ? 'item' : 'itens'}`;
-    document.getElementById('txt-valor-total').innerText = `R$ ${valorTotal.toFixed(2)}`;
-    document.getElementById('txt-modal-subtotal').innerText = `R$ ${valorTotal.toFixed(2)}`;
-}
-
-// 4. INJETA DINAMICAMENTE OS ITENS DENTRO DA GAVETA DA SACOLA
-function renderizarItensSacola() {
-    const containerLista = document.getElementById('lista-produtos-sacola');
-    containerLista.innerHTML = '';
-
-    const itens = Object.entries(dadosSacola);
-
-    if (itens.length === 0) {
-        containerLista.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">Sua sacola está vazia.</p>`;
-        return;
-    }
-
-    itens.forEach(([id, item]) => {
-        containerLista.innerHTML += `
-            <div class="item-sacola-linha">
-                <div>
-                    <div style="font-weight: 600; font-size:15px;">${item.nome}</div>
-                    <div style="font-size: 13px; color: #777;">R$ ${(item.preco * item.qtd).toFixed(2)}</div>
-                </div>
-                <!-- Controles internos para manipular as quantidades de dentro da sacola -->
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <button onclick="alterarQuantidadeProduto('${id}', '${item.nome}', ${item.preco}, -1)" style="padding:4px 10px;">-</button>
-                    <span style="font-weight:bold;">${item.qtd}</span>
-                    <button onclick="alterarQuantidadeProduto('${id}', '${item.nome}', ${item.preco}, 1)" style="padding:4px 10px;">+</button>
-                </div>
-            </div>
-        `;
-    });
-}
-
-function irParaCheckout() {
-    if (Object.keys(dadosSacola).length === 0) {
-        alert("Adicione pelo menos um item à sacola!");
-        return;
-    }
-    alert("Redirecionando para a página de envio do pedido...");
-    // Aqui você executa o envio dos dadosSacola pro localStorage ou direto pro backend
-}
-
         
+        function irParaCheckout() {
+            if (Object.keys(carrinho).length === 0) {
+                alert("Adicione pelo menos um item à sacola!");
+                return;
+            }
+            alert("Redirecionando para a página de envio do pedido...");
+        }
     </script>
 </body>
 </html>
