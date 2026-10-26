@@ -441,10 +441,10 @@ async function mudarStatusPedido(id, novoStatus) {
     }
 }
 // ==========================================
-// 🖨️ IMPRESSÃO TÉRMICA COMPLEMENTAR (ZERO VAZAMENTO)
+// 🖨️ IMPRESSÃO TÉRMICA PROFISSIONAL (COM ITENS DO PEDIDO)
 // ==========================================
 function imprimirCupomIFood(pedido) {
-    var larguraJanela = 320;
+    var larguraJanela = 340;
     var alturaJanela = 600;
     var posicaoEsquerda = (window.screen.width / 2) - (larguraJanela / 2);
     var posicaoTopo = (window.screen.height / 2) - (alturaJanela / 2);
@@ -460,101 +460,128 @@ function imprimirCupomIFood(pedido) {
         return;
     }
 
-    // Inicialização segura do ambiente do documento sem strings textuais complexas
-    janelaImpressao.document.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Cupom</title></head><body></body></html>");
+    janelaImpressao.document.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Cupom #" + pedido.id + "</title></head><body></body></html>");
     janelaImpressao.document.close();
 
-    // 1. Criação e Injeção de Estilos de forma modular
     var elEstilo = janelaImpressao.document.createElement("style");
-    var regrasCSS = "body { font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.4; margin: 10px; color: #000; background: #fff; }";
+    var regrasCSS = "body { font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.3; margin: 0; padding: 10px; color: #000; background: #fff; }";
     regrasCSS += " .text-center { text-align: center; }";
+    regrasCSS += " .text-right { text-align: right; }";
     regrasCSS += " .divider { border-top: 1px dashed #000; margin: 8px 0; }";
     regrasCSS += " .negrito { font-weight: bold; }";
-    regrasCSS += " .bloco-obs { background: #f0f0f0; padding: 6px; border-left: 3px solid #000; margin-top: 5px; white-space: pre-wrap; }";
+    regrasCSS += " .titulo-loja { font-size: 16px; margin: 0; font-weight: bold; font-family: Arial, sans-serif; }";
+    regrasCSS += " .subtitulo-loja { font-size: 10px; margin: 2px 0 5px 0; }";
+    regrasCSS += " .bloco-obs { background: #f5f5f5; padding: 6px; border: 1px solid #000; margin-top: 5px; white-space: pre-wrap; font-size: 11px; }";
+    regrasCSS += " .item-tabela { display: flex; justify-content: space-between; margin: 3px 0; }";
+    regrasCSS += " @media print { @page { size: 80mm auto; margin: 0; } body { padding: 8mm 5mm; } }";
+    
     elEstilo.textContent = regrasCSS;
     janelaImpressao.document.head.appendChild(elEstilo);
 
-    // 2. Resgate seguro de dados estruturados
-    var nomeClienteFinal = pedido.clienteNome || pedido.nomeCliente || "Nao informado";
-    var telefoneFinal = pedido.telefone || "Nao informado";
+    var nomeClienteFinal = pedido.clienteNome || pedido.nomeCliente || "Não informado";
+    var telefoneFinal = pedido.telefone || "Não informado";
     var enderecoFinal = pedido.endereco || "Retirada no Estabelecimento";
-    var pagamentoFinal = pedido.formaPagamento || "Nao informado";
-    var observacaoFinal = pedido.observacao || "Nenhuma.";
-    var horaFinal = new Date().toLocaleTimeString("pt-BR", {hour: "2-digit", minute:"2-digit"});
+    var pagamentoFinal = pedido.formaPagamento || "Não informado";
+    var observacaoFinal = pedido.observacao || "Nenhuma observação.";
+    var totalPedidoFinal = pedido.total || pedido.valorTotal || 0;
+    
+    var dataAgora = new Date();
+    var dataFinal = dataAgora.toLocaleDateString("pt-BR");
+    var horaFinal = dataAgora.toLocaleTimeString("pt-BR", {hour: "2-digit", minute:"2-digit"});
 
-    // 3. Montagem do esqueleto utilizando nós de texto do DOM (Isola e impede vazamento de aspas)
     var containerPrincipal = janelaImpressao.document.createElement("div");
 
+    // Cabeçalho da Loja
     var elCabecalho = janelaImpressao.document.createElement("div");
     elCabecalho.className = "text-center";
     var elTitulo = janelaImpressao.document.createElement("h2");
-    elTitulo.style.margin = "0";
-    elTitulo.style.fontSize = "16px";
-    elTitulo.textContent = "SABOR & CIA";
+    elTitulo.className = "titulo-loja";
+    elTitulo.textContent = "🌵 SABOR CEARENSE 🌵";
     var elSubtitulo = janelaImpressao.document.createElement("p");
-    elSubtitulo.style.fontSize = "11px";
-    elSubtitulo.style.margin = "2px 0 8px 0";
-    elSubtitulo.textContent = "PAINEL OPERACIONAL";
+    elSubtitulo.className = "subtitulo-loja";
+    elSubtitulo.textContent = "Comida Caseira Legítima - Painel de Produção";
     elCabecalho.appendChild(elTitulo);
     elCabecalho.appendChild(elSubtitulo);
     containerPrincipal.appendChild(elCabecalho);
 
-    var divLinha1 = janelaImpressao.document.createElement("div");
-    divLinha1.className = "divider";
-    containerPrincipal.appendChild(divLinha1);
+    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
 
-    var elNumPedido = janelaImpressao.document.createElement("div");
-    elNumPedido.className = "negrito";
-    elNumPedido.style.fontSize = "14px";
-    elNumPedido.textContent = "PEDIDO: #" + pedido.id;
-    containerPrincipal.appendChild(elNumPedido);
+    // Identificação do Pedido, Data e Hora
+    var elInfoVenda = janelaImpressao.document.createElement("div");
+    elInfoVenda.innerHTML = "<div style='font-size: 15px;' class='negrito text-center'>CUPOM DE PEDIDO</div>" +
+                             "<div class='item-tabela'><span class='negrito'>PEDIDO:</span> <span>#" + pedido.id + "</span></div>" +
+                             "<div class='item-tabela'><span>DATA: " + dataFinal + "</span> <span>HORA: " + horaFinal + "</span></div>";
+    containerPrincipal.appendChild(elInfoVenda);
 
-    var elDataHora = janelaImpressao.document.createElement("div");
-    elDataHora.innerHTML = "DATA/HORA: <span class='negrito'>" + horaFinal + "</span>";
-    containerPrincipal.appendChild(elDataHora);
+    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
 
-    var divLinha2 = janelaImpressao.document.createElement("div");
-    divLinha2.className = "divider";
-    containerPrincipal.appendChild(divLinha2);
-
+    // Dados do Cliente
     var elDadosCliente = janelaImpressao.document.createElement("div");
-    elDadosCliente.innerHTML = "<div><span class='negrito'>CLIENTE:</span> " + nomeClienteFinal + "</div>" +
-                               "<div><span class='negrito'>CONTATO:</span> " + telefoneFinal + "</div>";
+    elDadosCliente.innerHTML = "<div class='negrito' style='margin-bottom: 3px;'>DESTINATÁRIO:</div>" +
+                               "<div>" + nomeClienteFinal + "</div>" +
+                               "<div>CONTATO: " + telefoneFinal + "</div>";
     containerPrincipal.appendChild(elDadosCliente);
 
-    var divLinha3 = janelaImpressao.document.createElement("div");
-    divLinha3.className = "divider";
-    containerPrincipal.appendChild(divLinha3);
+    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
 
-    var elEnderecoTitulo = janelaImpressao.document.createElement("div");
-    elEnderecoTitulo.className = "negrito";
-    elEnderecoTitulo.textContent = "ENDERECO DE ENTREGA:";
-    containerPrincipal.appendChild(elEnderecoTitulo);
+    // Endereço
+    var elEnderecoBloco = janelaImpressao.document.createElement("div");
+    elEnderecoBloco.innerHTML = "<div class='negrito' style='margin-bottom: 3px;'>ENDEREÇO DE ENTREGA:</div>" +
+                                "<div style='white-space: pre-wrap;'>" + enderecoFinal + "</div>";
+    containerPrincipal.appendChild(elEnderecoBloco);
 
-    var elEnderecoValor = janelaImpressao.document.createElement("div");
-    elEnderecoValor.textContent = enderecoFinal;
-    containerPrincipal.appendChild(elEnderecoValor);
+    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
 
-    var divLinha4 = janelaImpressao.document.createElement("div");
-    divLinha4.className = "divider";
-    containerPrincipal.appendChild(divLinha4);
+    // ==========================================
+    // 🛒 DESCRIÇÃO DOS ITENS DO PEDIDO (TABELA)
+    // ==========================================
+    var elItensTitulo = janelaImpressao.document.createElement("div");
+    elItensTitulo.className = "negrito";
+    elItensTitulo.style.marginBottom = "5px";
+    elItensTitulo.textContent = "ITENS DO PEDIDO:";
+    containerPrincipal.appendChild(elItensTitulo);
 
-    var elPagamentoTitulo = janelaImpressao.document.createElement("div");
-    elPagamentoTitulo.className = "negrito";
-    elPagamentoTitulo.textContent = "FORMA DE PAGAMENTO:";
-    containerPrincipal.appendChild(elPagamentoTitulo);
+    var listaDeItens = pedido.itens || pedido.produtos || [];
+    
+    if (listaDeItens.length > 0) {
+        listaDeItens.forEach(function(item) {
+            var elItemRow = janelaImpressao.document.createElement("div");
+            elItemRow.className = "item-tabela";
+            
+            // Extrai as propriedades dinamicamente (seja prato.nome ou nome direto)
+            var nomeItem = item.nome || (item.prato ? item.prato.nome : "Item");
+            var qtdItem = item.quantidade || item.qtd || 1;
+            var precoItem = item.preco || (item.prato ? item.prato.preco : 0);
+            var subTotalItem = qtdItem * precoItem;
 
-    var elPagamentoValor = janelaImpressao.document.createElement("div");
-    elPagamentoValor.textContent = pagamentoFinal;
-    containerPrincipal.appendChild(elPagamentoValor);
+            elItemRow.innerHTML = "<span>" + qtdItem + "x " + nomeItem + "</span>" +
+                                  "<span>R$ " + Number(subTotalItem).toFixed(2) + "</span>";
+            containerPrincipal.appendChild(elItemRow);
+        });
+    } else {
+        // Fallback caso a descrição venha como um texto simples no backend
+        var elItemSimples = janelaImpressao.document.createElement("div");
+        elItemSimples.style.whiteSpace = "pre-wrap";
+        elItemSimples.textContent = pedido.descricao || "Verificar itens no painel principal.";
+        containerPrincipal.appendChild(elItemSimples);
+    }
 
-    var divLinha5 = janelaImpressao.document.createElement("div");
-    divLinha5.className = "divider";
-    containerPrincipal.appendChild(divLinha5);
+    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
 
+    // Forma de Pagamento e Total
+    var elFinancas = janelaImpressao.document.createElement("div");
+    elFinancas.innerHTML = "<div class='item-tabela'><span class='negrito'>FORMA DE PAGAMENTO:</span> <span>" + pagamentoFinal + "</span></div>";
+    if (totalPedidoFinal > 0) {
+        elFinancas.innerHTML += "<div class='item-tabela' style='font-size: 14px; margin-top: 5px;'><span class='negrito'>TOTAL DO PEDIDO:</span> <span class='negrito'>R$ " + Number(totalPedidoFinal).toFixed(2) + "</span></div>";
+    }
+    containerPrincipal.appendChild(elFinancas);
+
+    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
+
+    // Observações
     var elObsTitulo = janelaImpressao.document.createElement("div");
     elObsTitulo.className = "negrito";
-    elObsTitulo.textContent = "OBSERVACOES DO PEDIDO:";
+    elObsTitulo.textContent = "OBSERVAÇÕES DO CLIENTE:";
     containerPrincipal.appendChild(elObsTitulo);
 
     var elObsBloco = janelaImpressao.document.createElement("div");
@@ -562,29 +589,33 @@ function imprimirCupomIFood(pedido) {
     elObsBloco.textContent = observacaoFinal;
     containerPrincipal.appendChild(elObsBloco);
 
-    var divLinha6 = janelaImpressao.document.createElement("div");
-    divLinha6.className = "divider";
-    containerPrincipal.appendChild(divLinha6);
+    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao));
 
+    // Rodapé
     var elRodape = janelaImpressao.document.createElement("div");
     elRodape.className = "text-center";
-    elRodape.style.marginTop = "25px";
+    elRodape.style.marginTop = "20px";
     elRodape.style.fontSize = "11px";
     var elRodapeL1 = janelaImpressao.document.createElement("p");
     elRodapeL1.className = "negrito";
-    elRodapeL1.textContent = "Documento auxiliar de producao.";
+    elRodapeL1.textContent = "=== DOCUMENTO AUXILIAR DE PRODUÇÃO ===";
     var elRodapeL2 = janelaImpressao.document.createElement("p");
-    elRodapeL2.textContent = "Obrigado pela preferencia!";
+    elRodapeL2.textContent = "Obrigado pela preferência e bom apetite!";
     elRodape.appendChild(elRodapeL1);
     elRodape.appendChild(elRodapeL2);
     containerPrincipal.appendChild(elRodape);
 
-    // 4. Injeção segura e disparo do hardware de impressão
     janelaImpressao.document.body.appendChild(containerPrincipal);
     janelaImpressao.focus();
     
     setTimeout(function() {
         janelaImpressao.print();
         janelaImpressao.close();
-    }, 300);
+    }, 350);
+}
+
+function criarDivDivisora(janelaAlvo) {
+    var div = janelaAlvo.document.createElement("div");
+    div.className = "divider";
+    return div;
 }
