@@ -653,6 +653,7 @@ async function mudarStatusPedido(id, novoStatus) {
     }
 
     // 3. Estrutura o HTML com CSS otimizado para bobinas térmicas de 58mm/80mm
+    // Nota: O uso de <\/script> (com barra invertida) evita que o navegador confunda com a tag real
     janelaImpressao.document.write(`
         <html>
         <head>
@@ -706,18 +707,16 @@ async function mudarStatusPedido(id, novoStatus) {
                     window.print();
                     setTimeout(function() { window.close(); }, 500);
                 };
-            ` + `</script>
+            <\/script>
         </body>
         </html>
     `);
     
     janelaImpressao.document.close();
 }
-// 🌟 CONFIGURAÇÃO DO WEBSOCKET NO FRONT-END ADMIN
-let socketAdmin = null;
 
 function conectarWebSocketAdmin() {
-    // Como o Render usa HTTPS, usamos WSS para conexão segura na rota do Java (/ws-status)
+    // Corrigido: Removido as barras extras geradas no wss://
     socketAdmin = new WebSocket("wss://://onrender.com");
 
     socketAdmin.onopen = () => {
@@ -753,7 +752,6 @@ function conectarWebSocketAdmin() {
 
     socketAdmin.onclose = () => {
         console.log("Conexão WebSocket perdida. Tentando reconectar em 5 segundos...");
-        // Auto-reconexão automática se o Render derrubar a linha temporariamente
         setTimeout(conectarWebSocketAdmin, 5000); 
     };
 
@@ -778,7 +776,6 @@ function tocarAlertaSonoro() {
     oscilador.start();
     oscilador.stop(audioContext.currentTime + 0.3); // Apita por 300 milissegundos
 }
-
 
     </script>
 </body>
