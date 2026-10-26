@@ -310,7 +310,6 @@
         </main>
     </div>
     <script>
-        const URL_BACKEND = ""; 
         const URL_BACKEND_WS = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host;
         let socketAdmin;
 
@@ -416,26 +415,31 @@
             } catch(e) { container.innerHTML = `<p style="text-align: center; color: var(--danger);">Erro ao carregar o cardápio.</p>`; }
         }
 
-       async function atualizarPrecoRapido(id, novoPreco) {
+       // 🌟 CORREÇÃO 1: Rota base exata mapeada no seu AdminPratoController.java
+const URL_BACKEND = "https://saborcearense-5.onrender.com";
+const URL_API_ADMIN = `${URL_BACKEND}/api/admin/pratos`;
+
+async function atualizarPrecoRapido(id, novoPreco) {
     const valorFormatado = parseFloat(novoPreco);
     if (isNaN(valorFormatado) || valorFormatado < 0) return;
     try {
-        // Tenta o formato padrão com JSON no corpo. 
-        // Se o seu Java usar @PathVariable e @RequestParam, mude a URL abaixo para: `${URL_BACKEND}/api/cardapio/${id}/preco?preco=${valorFormatado}`
-        const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/preco`, { 
+        // Como o seu Spring Boot espera o objeto Produto completo no @RequestBody,
+        // montamos a estrutura passando o preço novo.
+        const res = await fetch(`${URL_API_ADMIN}/${id}`, { 
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ preco: valorFormatado })
+            body: JSON.stringify({ 
+                preco: valorFormatado
+            })
         });
         
         if (res.ok) {
             carregarItensAdmin();
         } else {
-            // Se der 404 aqui, significa que o seu método no Java pode não ter o "/preco" no final da rota.
-            console.error(`Erro ${res.status}: Verifique se a rota no Java é realmente /api/cardapio/{id}/preco`);
-            alert("Erro no servidor ao atualizar preço. Verifique o console.");
+            console.error(`Erro ${res.status} ao atualizar preço.`);
+            alert("Erro ao salvar o novo preço no servidor.");
         }
     } catch(err) { 
         alert("Erro de conexão ao alterar preço."); 
@@ -446,20 +450,22 @@ async function alternarDisponibilidade(id, statusAtual) {
     try {
         const novoStatus = !statusAtual;
         
-        // Tenta o formato padrão enviado via corpo (body)
-        const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/disponibilidade`, { 
+        // Enviando a alteração de disponibilidade respeitando o método @PutMapping("/{id}")
+        const res = await fetch(`${URL_API_ADMIN}/${id}`, { 
             method: "PUT", 
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ disponivel: novoStatus })
+            body: JSON.stringify({ 
+                disponivel: novoStatus 
+            })
         });
         
-        if(res.ok) {
+        if (res.ok) {
             carregarItensAdmin();
         } else {
-            console.error(`Erro ${res.status}: Verifique se a rota no Java é /api/cardapio/{id}/disponibilidade`);
-            alert("Erro no servidor ao mudar disponibilidade.");
+            console.error(`Erro ${res.status} ao mudar disponibilidade.`);
+            alert("Erro ao atualizar a disponibilidade no servidor.");
         }
     } catch(e) { 
         alert("Erro ao mudar disponibilidade."); 
@@ -467,20 +473,24 @@ async function alternarDisponibilidade(id, statusAtual) {
 }
 
 async function deletarItem(id) {
-    if(!confirm("Deseja apagar esse item permanentemente?")) return;
+    if (!confirm("Deseja apagar esse item permanentemente?")) return;
     try {
-        // Como deu 404 no delete, verifique se no Java você colocou @DeleteMapping("/{id}") ou apenas @DeleteMapping
-        const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}`, { method: "DELETE" });
-        if(res.ok) {
+        // Mapeado perfeitamente para o seu @DeleteMapping("/{id}") que retorna noContent (204)
+        const res = await fetch(`${URL_API_ADMIN}/${id}`, { 
+            method: "DELETE" 
+        });
+        
+        if (res.ok || res.status === 204) {
             carregarItensAdmin();
         } else {
-            console.error(`Erro ${res.status}: O endpoint de exclusão falhou.`);
-            alert("Erro ao deletar. Verifique se o item não está associado a pedidos ativos.");
+            console.error(`Erro ${res.status} ao deletar.`);
+            alert("Erro ao excluir o item. Verifique se ele não está em algum pedido.");
         }
     } catch(e) { 
         alert("Erro ao deletar."); 
     }
 }
+
 
 // Mantido original para o fluxo do WebSocket
 function inicializarControlePedidos() {
