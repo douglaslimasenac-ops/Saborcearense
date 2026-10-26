@@ -109,8 +109,17 @@ function carregarItensDaUrlNoCarrinho() {
 
         if (!itensCarrinho) return;
 
-        // 🌵 CORREÇÃO DEFINITIVA: Converte o objeto indexador {"1": {...}} vindo da sua URL em uma lista legível
-        const listaItens = Array.isArray(itensCarrinho) ? itensCarrinho : Object.values(itensCarrinho);
+        // 🌵 AJUSTE AQUI: Identifica se veio apenas um prato (objeto direto) ou uma lista
+        let listaItens = [];
+        if (Array.isArray(itensCarrinho)) {
+            listaItens = itensCarrinho;
+        } else if (itensCarrinho && typeof itensCarrinho === 'object' && 'nome' in itensCarrinho) {
+            // Se for um prato direto (como na sua URL atual), coloca ele dentro de um Array
+            listaItens = [itensCarrinho];
+        } else if (itensCarrinho && typeof itensCarrinho === 'object') {
+            // Caso seja um indexador no formato {"1": {...}, "2": {...}}
+            listaItens = Object.values(itensCarrinho);
+        }
 
         if (listaItens && listaItens.length > 0) {
             // Limpa o contêiner para remover mensagens residuais ou duplicadas
@@ -164,6 +173,7 @@ function carregarItensDaUrlNoCarrinho() {
         console.error("Erro ao renderizar itens da URL do Sabor Cearense:", erro);
     }
 }
+
 
 function renderizarResumo() {
     const container = document.getElementById("lista-itens-carrinho");
