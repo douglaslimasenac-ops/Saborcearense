@@ -215,65 +215,54 @@
     </style>
 </head>
 <body>
-    <!-- CONTAINER PARA EXIBIR OS CARDS DOS PEDIDOS QUE CHEGAM VIA WEBSOCKET -->
-<div id="container-novos-pedidos" style="padding: 20px; font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-    <div id="lista-cards-ws">
-        <!-- Os novos pedidos injetados pelo JavaScript entrarão aqui automaticamente -->
+    <!-- Elemento de áudio original para alertas sonoros -->
+    <audio id="som-notificacao" src="notificacao.mp3" preload="auto"></audio>
+
+    <!-- CONTAINER DA TELA DE LOGIN -->
+    <div class="login-wrapper" id="container-login-view">
+        <div id="login-admin">
+            <h2 style="text-align: center; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">🔒 Gestão Executiva</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-bottom: 30px;">Sabor Cearense Delivery</p>
+            <div class="form-grupo" style="margin-bottom: 15px;">
+                <label>Usuário Administrativo</label>
+                <input type="text" id="usuario-login" placeholder="Ex: admin">
+            </div>
+            <div class="form-grupo" style="margin-bottom: 25px;">
+                <label>Senha de Acesso</label>
+                <input type="password" id="senha-login" placeholder="••••••••">
+            </div>
+            <button class="btn-acao" onclick="autenticarAdmin()" style="width: 100%; justify-content: center; display: flex;">Autenticar no Painel</button>
+        </div>
     </div>
-</div>
 
-
-<!-- Elemento de áudio (substitua pelo caminho do seu arquivo de som) -->
-<audio id="som-notificacao" src="notificacao.mp3" preload="auto"></audio>
-
-<!-- Container onde os pedidos vão aparecer na tela -->
-<div id="lista-pedidos" style="padding: 20px; font-family: sans-serif;">
-    <h2>Pedidos Recebidos</h2>
-    <!-- Os pedidos injetados pelo JS entrarão aqui -->
-</div>
-
-
- <!-- CONTAINER DA TELA DE LOGIN -->
-<div class="login-wrapper" id="container-login-view">
-    <div id="login-admin">
-        <h2 style="text-align: center; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">🔒 Gestão Executiva</h2>
-        <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-bottom: 30px;">Sabor Cearense Delivery</p>
-        <div class="form-grupo" style="margin-bottom: 15px;">
-            <label>Usuário Administrativo</label>
-            <input type="text" id="usuario-login" placeholder="Ex: admin">
-        </div>
-        <div class="form-grupo" style="margin-bottom: 25px;">
-            <label>Senha de Acesso</label>
-            <input type="password" id="senha-login" placeholder="••••••••">
-        </div>
-        <button class="btn-acao" onclick="autenticarAdmin()" style="width: 100%; justify-content: center; display: flex;">Autenticar no Painel</button>
-    </div>
-</div>
-
-<!-- WRAPPER DO PAINEL PRINCIPAL -->
-<div class="admin-wrapper" id="painel-adm-wrapper" style="display: none;">
-    <aside id="menu-lateral" style="position: relative;">
-        <h2>Sabor Cearense</h2>
-        <div class="nav-link active" id="tab-ativos" onclick="alternarAbasAdmin('ativos')"><i class="fas fa-motorcycle"></i> Em Andamento</div>
-        <div class="nav-link" id="tab-historico" onclick="alternarAbasAdmin('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico / Finalizados</div>
-        <div class="nav-link" id="tab-cardapio" onclick="alternarAbasAdmin('cardapio')"><i class="fas fa-utensils"></i> Alteração do Cardápio</div>
-        
-        <div style="position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px 15px; background: var(--dark); border-top: 1px solid rgba(255,255,255,0.1); box-sizing: border-box;">
-            <a href="index.html?admin=1" class="nav-link" style="color: var(--primary); background: rgba(255,255,255,0.03); font-weight: bold; margin-bottom: 0; justify-content: center;">
-                <i class="fas fa-shop"></i> Ver Cardápio
-            </a>
-        </div>
-    </aside>
-
-</div>
+    <!-- WRAPPER DO PAINEL PRINCIPAL -->
+    <div class="admin-wrapper" id="painel-adm-wrapper" style="display: none;">
+        <aside id="menu-lateral" style="position: relative;">
+            <h2>Sabor Cearense</h2>
+            <div class="nav-link active" id="tab-ativos" onclick="alternarAbasAdmin('ativos')"><i class="fas fa-motorcycle"></i> Em Andamento</div>
+            <div class="nav-link" id="tab-historico" onclick="alternarAbasAdmin('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico / Finalizados</div>
+            <div class="nav-link" id="tab-cardapio" onclick="alternarAbasAdmin('cardapio')"><i class="fas fa-utensils"></i> Alteração do Cardápio</div>
+            
+            <!-- Bloco fixado na base com linha divisória corporativa -->
+            <div style="position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px 15px; background: var(--dark); border-top: 1px solid rgba(255,255,255,0.1); box-sizing: border-box;">
+                <a href="index.html?admin=1" class="nav-link" style="color: var(--primary); background: rgba(255,255,255,0.03); font-weight: bold; margin-bottom: 0; justify-content: center;">
+                    <i class="fas fa-shop"></i> Ver Cardápio
+                </a>
+            </div>
+        </aside>
 
         <main id="conteudo-painel">
-            
             <!-- ABA 1: PEDIDOS EM ANDAMENTO -->
             <section id="sec-ativos" class="section-view active">
                 <div class="admin-header">
                     <h2>🛵 Pedidos em Andamento (Tempo Real)</h2>
                 </div>
+                
+                <!-- CONTAINER INTEGRADO PARA CARDS DO WEBSOCKET -->
+                <div id="container-novos-pedidos" style="margin-bottom: 20px; display: none;">
+                    <div id="lista-cards-ws"></div>
+                </div>
+
                 <div id="lista-pedidos-ativos" style="display: flex; flex-direction: column; gap: 15px;"></div>
             </section>
 
@@ -326,6 +315,7 @@
         </main>
     </div>
     <script>
+
         const URL_BACKEND_WS = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host;
         const dicionarioCategorias = {
             "PRATOS_DO_DIA": "🌹 Prato do Dia",
@@ -362,30 +352,65 @@ function autenticarAdmin() {
     }
 }
 
-function exibirBannerAtivacaoAudio() {
-    // 🛡️ GARANTIA ABSOLUTA: Se a tela de login ainda estiver visível, cancela a execução imediatamente
-    const telaLogin = document.getElementById("container-login-view");
-    if (telaLogin && telaLogin.style.display !== "none") {
-        return; 
-    }
+// FILTRO DE SEGURANÇA: Só executa se a URL atual mantiver "admin.html"
+if (window.location.pathname.includes('admin.html')) {
+    
+    // 1. Inicializa e destrava o AudioContext imediatamente no clique do operador
+    window.audioCtxCompartilhado = null;
 
-    // Evita duplicar o banner na tela
-    if (document.getElementById('banner-ativacao-painel')) return;
-
+    // 2. Cria o elemento visual apenas dentro do ambiente administrativo
     const banner = document.createElement('div');
     banner.id = 'banner-ativacao-painel';
-    banner.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-family: sans-serif;";
+    
+    // Aplicação correta de estilos via JS
+    banner.style.position = 'fixed';
+    banner.style.top = '0';
+    banner.style.left = '0';
+    banner.style.width = '100%';
+    banner.style.height = '100%';
+    banner.style.background = 'rgba(0, 0, 0, 0.85)';
+    banner.style.zIndex = '9999';
+    banner.style.display = 'flex';
+    banner.style.flexDirection = 'column';
+    banner.style.justifyContent = 'center';
+    banner.style.alignItems = 'center';
+    banner.style.color = 'white';
+    banner.style.fontFamily = 'sans-serif';
+
+    // Conteúdo HTML limpo (apenas a interface estrutural, sem funções embutidas como texto)
     banner.innerHTML = `
-        <div style="text-align: center; background: #212529; padding: 30px; border-radius: 8px; border: 2px solid #ffc107; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-            <h3 style="color: #ffc107; margin-top: 0;">🍕 Painel Sabor Cearense</h3>
-            <p style="margin: 15px 0; font-size: 14px; color: #ddd;">Para começar a receber pedidos e ativar os alertas sonoros na cozinha, inicie o turno de trabalho abaixo.</p>
-            <button onclick="iniciarTurnoAdmin()" style="background: #ffc107; color: #000; border: none; padding: 12px 24px; font-weight: bold; font-size: 16px; border-radius: 4px; cursor: pointer; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
-                🔔 INICIAR TURNO & LIGAR SOM
+        <div style="text-align: center; max-width: 400px; padding: 20px; background: #222; border-radius: 8px; border: 1px solid #ffcc00;">
+            <h2 style="color: #ffcc00; margin-bottom: 15px;">🌵 Painel Sabor Cearense</h2>
+            <p style="font-size: 14px; margin-bottom: 20px; line-height: 1.5;">
+                Para começar a receber pedidos e ativar os alertas sonoros na cozinha, inicie o turno de trabalho abaixo.
+            </p>
+            <button id="btn-iniciar-turno" style="background: #ffcc00; color: #000; border: none; padding: 12px 24px; font-weight: bold; border-radius: 4px; cursor: pointer; text-transform: uppercase;">
+                🔊 INICIAR TURNO & LIGAR SOM
             </button>
         </div>
     `;
+
     document.body.appendChild(banner);
+
+    // FUNÇÃO DE GATILHO: Executada APENAS dentro da página admin.html ao clicar no botão
+    document.getElementById('btn-iniciar-turno').addEventListener('click', function() {
+        // Inicializa e destrava o AudioContext
+        window.audioCtxCompartilhado = new (window.AudioContext || window.webkitAudioContext)();
+        if (window.audioCtxCompartilhado.state === 'suspended') {
+            window.audioCtxCompartilhado.resume();
+        }
+
+        // Toca um bipe rápido para testar e confirmar o desbloqueio
+        tocarAlertaSonoro();
+
+        // Remove o aviso/botão da tela de forma elegante
+        banner.style.display = 'none';
+
+        // Inicia a sua função existente do WebSocket apenas AGORAS
+        conectarWebSocketAdmin();
+    });
 }
+
 
 function iniciarTurnoAdmin() {
     // Inicializa o AudioContext no clique
