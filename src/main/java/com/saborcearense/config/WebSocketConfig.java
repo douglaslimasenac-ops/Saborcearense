@@ -17,6 +17,11 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     private final static CopyOnWriteArrayList<WebSocketSession> sessoes = new CopyOnWriteArrayList<>();
 
+    // 👇 MÉTODO ADICIONADO: Permite que o PedidoController acesse as sessões ativas do painel admin
+    public static CopyOnWriteArrayList<WebSocketSession> getSessoes() {
+        return sessoes;
+    }
+
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(new TextWebSocketHandler() {
@@ -42,3 +47,4 @@ public class WebSocketConfig implements WebSocketConfigurer {
         }, "/ws-status").setAllowedOrigins("*");
     }
 }
+

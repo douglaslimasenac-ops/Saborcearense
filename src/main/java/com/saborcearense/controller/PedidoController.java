@@ -13,9 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.socket.TextMessage; // Adicione este import no topo da classe
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saborcearense.model.Pedido;
 import com.saborcearense.repository.PedidoRepository;
+
 
 @RestController
 @RequestMapping("/api/pedidos")
@@ -51,15 +54,37 @@ public class PedidoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // 📥 RECEBER NOVO PEDIDO: Chamado via fetch POST pelo carrinho.html ao finalizar
-    @PostMapping
+   @PostMapping
     public Pedido receberNovoPedido(@RequestBody Pedido novoPedido) {
         // Define o status inicial padrão exigido pela linha do tempo
         if (novoPedido.getStatus() == null || novoPedido.getStatus().isEmpty()) {
             novoPedido.setStatus("RECEBIDO");
         }
+        
         System.out.println("Sabor Cearense: Novo pedido recebido do cliente " + novoPedido.getClienteNome());
-        return pedidoRepository.save(novoPedido);
+        
+        // Salva no banco de dados primeiro
+        Pedido pedidoSalvo = pedidoRepository.save(novoPedido);
+
+        // 👇 TRANSMITE O PEDIDO SALVO VIA WEBSOCKET EM TEMPO REAL
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            // Converte o objeto Pedido completo para uma String JSON
+            String pedidoJson = mapper.writeValueAsString(pedidoSalvo); 
+            TextMessage message = new TextMessage(pedidoJson);
+
+            // Percorre todas as telas do admin conectadas e envia o novo pedido
+            for (org.springframework.web.socket.WebSocketSession sessao : com.saborcearense.config.WebSocketConfig.getSessoes()) {
+                if (sessao.isOpen()) {
+                    sessao.sendMessage(message);
+                }
+            }
+            System.out.println("🌵 Sabor Cearense: Alerta de novo pedido enviado via WebSocket!");
+        } catch (Exception e) {
+            System.err.println("Erro ao enviar pedido via WebSocket: " + e.getMessage());
+        }
+
+        return pedidoSalvo;
     }
 
     // 🔄 ATUALIZAR STATUS DO PEDIDO: Gerencia o fluxo de entrega (Preparo, Despacho, Finalização)
@@ -76,3 +101,5 @@ public class PedidoController {
         }).orElse(ResponseEntity.notFound().build());
     }
 }
+
+
