@@ -832,25 +832,73 @@ function conectarWebSocketAdmin() {
     };
 }
 
+// Variável global para armazenar o AudioContext após o clique do usuário
+let audioCtxCompartilhado = null;
+
 function tocarAlertaSonoro() {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscilador = audioContext.createOscillator();
-    const ganho = audioContext.createGain();
-    
-    oscilador.type = "sine";
-    oscilador.frequency.setValueAtTime(587.33, audioContext.currentTime); 
-    ganho.gain.setValueAtTime(0.5, audioContext.currentTime);
-    
-    oscilador.connect(ganho);
-    ganho.connect(audioContext.destination);
-    
-    oscilador.start();
-    oscilador.stop(audioContext.currentTime + 0.3); 
+    try {
+        // Usa o AudioContext que foi desbloqueado pelo clique do operador
+        const audioContext = audioCtxCompartilhado || new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Se o navegador colocou o contexto em suspensão por inatividade, força o retorno
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+
+        const oscilador = audioContext.createOscillator();
+        const ganho = audioContext.createGain();
+        
+        oscilador.type = "sine";
+        oscilador.frequency.setValueAtTime(587.33, audioContext.currentTime); 
+        ganho.gain.setValueAtTime(0.5, audioContext.currentTime);
+        
+        oscilador.connect(ganho);
+        ganho.connect(audioContext.destination);
+        
+        oscilador.start();
+        oscilador.stop(audioContext.currentTime + 0.3); 
+    } catch (erro) {
+        console.error("Falha ao reproduzir áudio sintetizado:", erro);
+    }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+// FUNÇÃO DE GATILHO: Executada de dentro da página admin.html ao clicar no botão
+function iniciarTurnoAdmin() {
+    // 1. Inicializa e destrava o AudioContext imediatamente na ação do clique
+    audioCtxCompartilhado = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Toca um bipe rápido para testar e confirmar o desbloqueio
+    tocarAlertaSonoro();
+
+    // 2. Remove o aviso/botão da tela de forma elegante
+    const banner = document.getElementById('banner-ativacao-painel');
+    if (banner) {
+        banner.style.display = 'none';
+    }
+
+    // 3. Inicia a sua função existente do WebSocket apenas AGORA
     conectarWebSocketAdmin();
+}
+
+// Substituímos o DOMContentLoaded direto para apenas exibir o aviso visual se necessário
+window.addEventListener('DOMContentLoaded', () => {
+    // Caso queira criar o elemento visual via JS de forma limpa, sem mexer no seu HTML:
+    const body = document.body;
+    const banner = document.createElement('div');
+    banner.id = 'banner-ativacao-painel';
+    banner.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-family: sans-serif;";
+    banner.innerHTML = `
+        <div style="text-align: center; background: #212529; padding: 30px; border-radius: 8px; border: 2px solid #ffc107; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 style="color: #ffc107; margin-top: 0;">🍕 Painel Sabor Cearense</h3>
+            <p style="margin: 15px 0; font-size: 14px; color: #ddd;">Para começar a receber pedidos e ativar os alertas sonoros na cozinha, inicie o turno de trabalho abaixo.</p>
+            <button onclick="iniciarTurnoAdmin()" style="background: #ffc107; color: #000; border: none; padding: 12px 24px; font-weight: bold; font-size: 16px; border-radius: 4px; cursor: pointer; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                🔔 INICIAR TURNO & LIGAR SOM
+            </button>
+        </div>
+    `;
+    body.appendChild(banner);
 });
+
 
     </script>
 </body>
