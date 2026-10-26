@@ -713,6 +713,72 @@ async function mudarStatusPedido(id, novoStatus) {
     
     janelaImpressao.document.close();
 }
+// 🌟 CONFIGURAÇÃO DO WEBSOCKET NO FRONT-END ADMIN
+let socketAdmin = null;
+
+function conectarWebSocketAdmin() {
+    // Como o Render usa HTTPS, usamos WSS para conexão segura na rota do Java (/ws-status)
+    socketAdmin = new WebSocket("wss://://onrender.com");
+
+    socketAdmin.onopen = () => {
+        console.log("🌵 Sabor Cearense: Painel Admin conectado ao tempo real!");
+    };
+
+    socketAdmin.onmessage = (event) => {
+        try {
+            const dados = JSON.parse(event.data);
+            console.log("Mensagem recebida do WebSocket:", dados);
+
+            // 1. Se a mensagem recebida for a de um pedido que acabou de ser criado:
+            if (dados.status === "RECEBIDO" || dados.status === "PENDENTE") {
+                
+                // 🔊 Toca o sinal sonoro para avisar o atendente
+                tocarAlertaSonoro(); 
+
+                // 🖨️ DISPARA A IMPRESSÃO AUTOMÁTICA PADRÃO IFOOD!
+                if (typeof imprimirCupomIFood === "function") {
+                    imprimirCupomIFood(dados);
+                }
+            }
+
+            // 2. Atualiza a lista de pedidos ativos visualmente na tela sem duplicar
+            if (typeof carregarPedidosAtivos === "function") {
+                carregarPedidosAtivos();
+            }
+
+        } catch (erro) {
+            console.error("Erro ao processar dados do WebSocket:", erro);
+        }
+    };
+
+    socketAdmin.onclose = () => {
+        console.log("Conexão WebSocket perdida. Tentando reconectar em 5 segundos...");
+        // Auto-reconexão automática se o Render derrubar a linha temporariamente
+        setTimeout(conectarWebSocketAdmin, 5000); 
+    };
+
+    socketAdmin.onerror = (erro) => {
+        console.error("Erro no canal do WebSocket:", erro);
+    };
+}
+
+// 🔊 Função auxiliar para o alerta sonoro de novos pedidos
+function tocarAlertaSonoro() {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscilador = audioContext.createOscillator();
+    const ganho = audioContext.createGain();
+    
+    oscilador.type = "sine";
+    oscilador.frequency.setValueAtTime(587.33, audioContext.currentTime); // Nota Ré (D5)
+    ganho.gain.setValueAtTime(0.5, audioContext.currentTime);
+    
+    oscilador.connect(ganho);
+    ganho.connect(audioContext.destination);
+    
+    oscilador.start();
+    oscilador.stop(audioContext.currentTime + 0.3); // Apita por 300 milissegundos
+}
+
 
     </script>
 </body>
