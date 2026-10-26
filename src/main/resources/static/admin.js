@@ -495,7 +495,6 @@ function imprimirCupomIFood(pedido) {
     var tipoServico = pedido.endereco ? "ENTREGA" : "RETIRADA";
     var pagamentoFinal = (pedido.formaPagamento || "Não informado").toUpperCase();
     var observacaoFinal = pedido.observacao || "";
-    var totalPedidoFinal = Number(pedido.total || pedido.valorTotal || 0);
     
     var dataAgora = new Date();
     var dataFinal = dataAgora.toLocaleDateString("pt-BR");
@@ -512,23 +511,29 @@ function imprimirCupomIFood(pedido) {
     elCabecalho.className = "text-center";
     elCabecalho.innerHTML = "<div class='titulo-loja'>🌵 SABOR CEARENSE 🌵</div><div class='subtitulo-loja'>Comida Caseira Legítima</div><div class='divider-dashed'></div><div class='subtitulo-loja'>Não vale como nota fiscal</div><div class='id-pedido'>PEDIDO #" + pedido.id + "</div><div class='subtitulo-loja'>Data: " + dataFinal + " - Hora: " + horaFinal + "</div>";
     containerPrincipal.appendChild(elCabecalho);
-    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, true));
+    
+    var divDivisora1 = janelaImpressao.document.createElement("div");
+    divDivisora1.className = "divider-double";
+    containerPrincipal.appendChild(divDivisora1);
 
-    // 3. Bloco do Cliente (Apenas Nome e Telefone - Referência removida daqui)
     var elDadosCliente = janelaImpressao.document.createElement("div");
     elDadosCliente.className = "bloco-conteudo";
     elDadosCliente.innerHTML = "<div class='secao-titulo'>Cliente</div><div class='negrito' style='font-size: 14px;'>" + nomeClienteFinal + "</div><div>Telefone: " + telefoneFinal + "</div>";
     containerPrincipal.appendChild(elDadosCliente);
-    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, false));
+    
+    var divDivisora2 = janelaImpressao.document.createElement("div");
+    divDivisora2.className = "divider-dashed";
+    containerPrincipal.appendChild(divDivisora2);
 
-    // 4. Bloco de Endereço (Referência inserida aqui no local correto)
     var elEnderecoBloco = janelaImpressao.document.createElement("div");
     elEnderecoBloco.className = "bloco-conteudo";
-    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>Endereço de Entrega</div><div style='white-space: pre-wrap; font-size: 13px;'>" + enderecoBruto + "</div><div style='margin-top: 4px;'>Referência: " + referenciaFinal + "</div>";
+    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>Endereço de Entrega</div><div style='white-space: pre-wrap; font-size: 13px;'>" + enderecoBruto + "</div><div style='margin-top: 4px;'><span class='negrito'>Referência:</span> " + referenciaFinal + "</div>";
     containerPrincipal.appendChild(elEnderecoBloco);
-    containerPrincipal.appendChild(criarDivDivisora(janelaImpressao, true));
-
-    // 5. Seção de Itens baseada nos elementos renderizados do carrinho
+    
+    var divDivisora3 = janelaImpressao.document.createElement("div");
+    divDivisora3.className = "divider-double";
+    containerPrincipal.appendChild(divDivisora3);
+    // 5. Itens do Pedido (Lendo diretamente da árvore DOM da sua interface)
     var elItensTitulo = janelaImpressao.document.createElement("div");
     elItensTitulo.className = "secao-titulo";
     elItensTitulo.textContent = "Itens do Pedido";
@@ -537,8 +542,8 @@ function imprimirCupomIFood(pedido) {
     var tabelaItens = janelaImpressao.document.createElement("table");
     tabelaItens.className = "tabela-itens";
     
-    // Captura os elementos dinâmicos salvos na tela do seu carrinho
     var itensDaTela = document.querySelectorAll("#lista-itens-carrinho .item-resumo");
+    var totalProdutosCalculado = 0;
 
     if (itensDaTela && itensDaTela.length > 0) {
         itensDaTela.forEach(function(itemNode) {
@@ -546,7 +551,11 @@ function imprimirCupomIFood(pedido) {
             
             var qtdTexto = itemNode.querySelector(".item-qtd-tag") ? itemNode.querySelector(".item-qtd-tag").innerText.replace("x", "").trim() : "1";
             var nomeTexto = itemNode.querySelector(".item-nome") ? itemNode.querySelector(".item-nome").innerText.trim().toUpperCase() : "PRATO";
-            var precoTexto = itemNode.querySelector(".item-preco-sub") ? itemNode.querySelector(".item-preco-sub").innerText.trim() : "--";
+            var precoTexto = itemNode.querySelector(".item-preco-sub") ? itemNode.querySelector(".item-preco-sub").innerText.trim() : "R$ 0,00";
+
+            // Converte o texto em número para somar o subtotal de forma correta
+            var valorNumerico = parseFloat(precoTexto.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
+            totalProdutosCalculado += valorNumerico;
 
             tr.innerHTML = "<td class='col-qtd'>" + qtdTexto + "x</td><td class='col-nome'>" + nomeTexto + "</td><td class='col-preco'>" + precoTexto + "</td>";
             tabelaItens.appendChild(tr);
@@ -560,10 +569,56 @@ function imprimirCupomIFood(pedido) {
         containerPrincipal.appendChild(elFallback);
     }
 
-    // Código final de append do container na janela e fechamento
+    var divDivisora4 = janelaImpressao.document.createElement("div");
+    divDivisora4.className = "divider-dashed";
+    containerPrincipal.appendChild(divDivisora4);
+
+    // 6. Fechamento Financeiro
+    var subtotalExibir = totalProdutosCalculado > 0 ? totalProdutosCalculado : Number(pedido.total || pedido.valorTotal || 0);
+    
+    // Captura dinamicamente o valor da taxa do bairro selecionado no formulário
+    var selectBairro = document.getElementById("bairro-entrega");
+    var taxaEntrega = 0;
+    if (selectBairro && selectBairro.value) {
+        var partesBairro = selectBairro.value.split("|");
+        if (partesBairro.length > 1) {
+            taxaEntrega = parseFloat(partesBairro[1]) || 0;
+        }
+    }
+    var totalGeralExibir = subtotalExibir + taxaEntrega;
+
+    var elFinanceiro = janelaImpressao.document.createElement("div");
+    elFinanceiro.className = "bloco-conteudo";
+    elFinanceiro.innerHTML = `
+        <div class='linha-financeiro'><span>Subtotal</span><span>R$ ${subtotalExibir.toFixed(2).replace(".", ",")}</span></div>
+        <div class='linha-financeiro'><span>Taxa de Entrega</span><span>R$ ${taxaEntrega.toFixed(2).replace(".", ",")}</span></div>
+        <div class='linha-financeiro'><span class='negrito'>Forma Pagto.</span><span>${pagamentoFinal}</span></div>
+        <div class='linha-total'><span>TOTAL</span><span>R$ ${totalGeralExibir.toFixed(2).replace(".", ",")}</span></div>
+    `;
+    containerPrincipal.appendChild(elFinanceiro);
+
+    // 7. Observações
+    if (observacaoFinal.trim() !== "") {
+        var elObs = janelaImpressao.document.createElement("div");
+        elObs.className = "bloco-obs";
+        elObs.textContent = "OBS: " + observacaoFinal;
+        containerPrincipal.appendChild(elObs);
+    }
+
+    var divDivisora5 = janelaImpressao.document.createElement("div");
+    divDivisora5.className = "divider-dashed";
+    containerPrincipal.appendChild(divDivisora5);
+
+    // 8. Mensagem de Rodapé
+    var elRodape = janelaImpressao.document.createElement("div");
+    elRodape.className = "text-center negrito";
+    elRodape.style.marginTop = "10px";
+    elRodape.innerHTML = "* COMPROVANTE DE PRODUÇÃO *<br>Agradecemos a preferência!";
+    containerPrincipal.appendChild(elRodape);
+
+    // Renderiza tudo na janela aberta e executa a impressão
     janelaImpressao.document.body.appendChild(containerPrincipal);
     
-    // Executa o comando de impressão do navegador automaticamente
     setTimeout(function() {
         janelaImpressao.print();
     }, 250);
