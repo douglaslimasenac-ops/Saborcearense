@@ -241,40 +241,39 @@
 </div>
 
 
-    <!-- CONTAINER DA TELA DE LOGIN -->
-    <div class="login-wrapper" id="container-login-view">
-        <div id="login-admin">
-            <h2 style="text-align: center; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">🔒 Gestão Executiva</h2>
-            <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-bottom: 30px;">Sabor Cearense Delivery</p>
-            <div class="form-grupo" style="margin-bottom: 15px;">
-                <label>Usuário Administrativo</label>
-                <input type="text" id="usuario-login" placeholder="Ex: admin">
-            </div>
-            <div class="form-grupo" style="margin-bottom: 25px;">
-                <label>Senha de Acesso</label>
-                <input type="password" id="senha-login" placeholder="••••••••">
-            </div>
-            <button class="btn-acao" onclick="autenticarAdmin()" style="width: 100%; justify-content: center; display: flex;">Autenticar no Painel</button>
+   <!-- CONTAINER DA TELA DE LOGIN -->
+<div class="login-wrapper" id="container-login-view">
+    <div id="login-admin">
+        <h2 style="text-align: center; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">🔒 Gestão Executiva</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-bottom: 30px;">Sabor Cearense Delivery</p>
+        <div class="form-grupo" style="margin-bottom: 15px;">
+            <label>Usuário Administrativo</label>
+            <input type="text" id="usuario-login" placeholder="Ex: admin">
         </div>
+        <div class="form-grupo" style="margin-bottom: 25px;">
+            <label>Senha de Acesso</label>
+            <input type="password" id="senha-login" placeholder="••••••••">
+        </div>
+        <button class="btn-acao" onclick="autenticarAdmin()" style="width: 100%; justify-content: center; display: flex;">Autenticar no Painel</button>
     </div>
+</div>
 
-    <!-- WRAPPER DO PAINEL PRINCIPAL -->
-    <div class="admin-wrapper" id="painel-adm-wrapper" style="display: none;">
-        
-            <aside id="menu-lateral" style="position: relative;">
+<!-- WRAPPER DO PAINEL PRINCIPAL -->
+<div class="admin-wrapper" id="painel-adm-wrapper" style="display: none;">
+    <aside id="menu-lateral" style="position: relative;">
         <h2>Sabor Cearense</h2>
         <div class="nav-link active" id="tab-ativos" onclick="alternarAbasAdmin('ativos')"><i class="fas fa-motorcycle"></i> Em Andamento</div>
         <div class="nav-link" id="tab-historico" onclick="alternarAbasAdmin('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico / Finalizados</div>
         <div class="nav-link" id="tab-cardapio" onclick="alternarAbasAdmin('cardapio')"><i class="fas fa-utensils"></i> Alteração do Cardápio</div>
         
-        <!-- Bloco fixado na base com linha divisória corporativa -->
         <div style="position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px 15px; background: var(--dark); border-top: 1px solid rgba(255,255,255,0.1); box-sizing: border-box;">
             <a href="index.html?admin=1" class="nav-link" style="color: var(--primary); background: rgba(255,255,255,0.03); font-weight: bold; margin-bottom: 0; justify-content: center;">
                 <i class="fas fa-shop"></i> Ver Cardápio
             </a>
         </div>
     </aside>
-
+    <!-- ... restante do seu painel interno ... -->
+</div>
 
         <main id="conteudo-painel">
             
@@ -336,8 +335,6 @@
     </div>
     <script>
         const URL_BACKEND_WS = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host;
-        let socketAdmin;
-
         const dicionarioCategorias = {
             "PRATOS_DO_DIA": "🌹 Prato do Dia",
             "FRANGO": "🐔 Frango",
@@ -347,22 +344,64 @@
             "BEBIDA": "🥤 Bebida Gelada"
         };
 
-        function autenticarAdmin() {
-            const u = document.getElementById("usuario-login").value.trim();
-            const s = document.getElementById("senha-login").value.trim();
-            if(u === "admin" && s === "sabor123") {
-                localStorage.setItem("adminAutenticado", "true");
-                
-                document.getElementById("container-login-view").style.display = "none";
-                document.getElementById("painel-adm-wrapper").style.display = "flex";
-                
-                carregarItensAdmin();
-                inicializarControlePedidos();
-                configurarFormularioCadastro();
-            } else {
-                alert("Usuário ou senha incorretos!");
-            }
-        }
+       function autenticarAdmin() {
+    const u = document.getElementById("usuario-login").value.trim();
+    const s = document.getElementById("senha-login").value.trim();
+    if(u === "admin" && s === "sabor123") {
+        localStorage.setItem("adminAutenticado", "true");
+        
+        document.getElementById("container-login-view").style.display = "none";
+        document.getElementById("painel-adm-wrapper").style.display = "flex";
+        
+        carregarItensAdmin();
+        inicializarControlePedidos();
+        configurarFormularioCadastro();
+
+        // 🔥 Injeta o banner de ativação do som por cima do painel administrativo
+        exibirBannerAtivacaoAudio();
+    } else {
+        alert("Usuário ou senha incorretos!");
+    }
+}
+
+// Cria o banner visual de turno apenas após o login com sucesso
+function exibirBannerAtivacaoAudio() {
+    if (document.getElementById('banner-ativacao-painel')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'banner-ativacao-painel';
+    banner.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-family: sans-serif;";
+    banner.innerHTML = `
+        <div style="text-align: center; background: #212529; padding: 30px; border-radius: 8px; border: 2px solid #ffc107; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 style="color: #ffc107; margin-top: 0;">🍕 Painel Sabor Cearense</h3>
+            <p style="margin: 15px 0; font-size: 14px; color: #ddd;">Para começar a receber pedidos e ativar os alertas sonoros na cozinha, inicie o turno de trabalho abaixo.</p>
+            <button onclick="iniciarTurnoAdmin()" style="background: #ffc107; color: #000; border: none; padding: 12px 24px; font-weight: bold; font-size: 16px; border-radius: 4px; cursor: pointer; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+                🔔 INICIAR TURNO & LIGAR SOM
+            </button>
+        </div>
+    `;
+    document.body.appendChild(banner);
+}
+
+// Variável global para gerenciar o áudio sintetizado
+let audioCtxCompartilhado = null;
+
+// Acionada pelo clique no botão do banner
+function iniciarTurnoAdmin() {
+    // 1. Desbloqueia a Web Audio API no navegador vinculando ao clique
+    audioCtxCompartilhado = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Toca o bipe para validar
+    tocarAlertaSonoro();
+
+    // 2. Remove o banner da tela liberando a visão do painel
+    const banner = document.getElementById('banner-ativacao-painel');
+    if (banner) banner.remove();
+
+    // 3. Dispara a sua função existente do WebSocket que gerencia as conexões
+    conectarWebSocketAdmin();
+}
+
 
         function alternarAbasAdmin(abaAlvo) {
             document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
@@ -554,17 +593,39 @@ function inicializarControlePedidos() {
     carregarPedidosAtivos();
 }
 
-        function conectarWebSocketAdmin() {
-            try {
-                socketAdmin = new WebSocket(`${URL_BACKEND_WS}/ws-status`);
-                socketAdmin.onmessage = () => { carregarPedidosAtivos(); };
-                socketAdmin.onclose = () => { setTimeout(conectarWebSocketAdmin, 5000); };
-            } catch (e) { console.error("Falha ao abrir canal WebSocket:", e); }
-        }
-
-        // 🌟 TRAVA GLOBAL ANTIDUPLICAÇÃO (Coloque logo acima da função)
-// 🌟 TRAVA GLOBAL ANTIDUPLICAÇÃO
+        // 🌟 TRAVA GLOBAL ANTIDUPLICAÇÃO
 let carregandoPedidosAtivos = false;
+let socketAdmin = null;
+
+function conectarWebSocketAdmin() {
+    // Evita abrir conexões duplicadas caso o método seja chamado mais de uma vez
+    if (socketAdmin && socketAdmin.readyState === WebSocket.OPEN) return;
+
+    try {
+        socketAdmin = new WebSocket(`${URL_BACKEND_WS}/ws-status`);
+        
+        socketAdmin.onmessage = (event) => {
+            // 1. Atualiza a lista de pedidos na tela do admin
+            carregarPedidosAtivos();
+            
+            // 2. Toca o alerta sonoro de forma segura em background
+            // Como o 'audioCtxCompartilhado' foi liberado no clique do início do turno, o som não será bloqueado
+            tocarAlertaSonoro();
+        };
+        
+        socketAdmin.onclose = () => { 
+            console.warn("Conexão WebSocket perdida. Tentando reconectar em 5 segundos...");
+            setTimeout(conectarWebSocketAdmin, 5000); 
+        };
+        
+        socketAdmin.onerror = (e) => {
+            console.error("Erro no canal WebSocket:", e);
+        };
+    } catch (e) { 
+        console.error("Falha ao abrir canal WebSocket:", e); 
+    }
+}
+
 
 async function carregarPedidosAtivos() {
     if (carregandoPedidosAtivos) return;
@@ -833,7 +894,7 @@ function conectarWebSocketAdmin() {
 }
 
 // Variável global para armazenar o AudioContext após o clique do usuário
-let audioCtxCompartilhado = null;
+// Variável global para armazenar o AudioContext após o clique do operador
 
 function tocarAlertaSonoro() {
     try {
@@ -862,7 +923,7 @@ function tocarAlertaSonoro() {
     }
 }
 
-// FUNÇÃO DE GATILHO: Executada de dentro da página admin.html ao clicar no botão
+// FUNÇÃO DE GATILHO: Executada APENAS dentro da página admin.html ao clicar no botão
 function iniciarTurnoAdmin() {
     // 1. Inicializa e destrava o AudioContext imediatamente na ação do clique
     audioCtxCompartilhado = new (window.AudioContext || window.webkitAudioContext)();
@@ -880,9 +941,15 @@ function iniciarTurnoAdmin() {
     conectarWebSocketAdmin();
 }
 
-// Substituímos o DOMContentLoaded direto para apenas exibir o aviso visual se necessário
+// Interceptador inteligente no carregamento da página
 window.addEventListener('DOMContentLoaded', () => {
-    // Caso queira criar o elemento visual via JS de forma limpa, sem mexer no seu HTML:
+    // 🔥 FILTRO DE SEGURANÇA: Só executa se a URL atual contiver "admin.html"
+    // Isso impede que o banner apareça na tela de login ou ao clicar na engrenagem
+    if (!window.location.pathname.includes('admin.html')) {
+        return; // Sai do script imediatamente se não for a página admin
+    }
+
+    // Cria o elemento visual apenas dentro do ambiente administrativo logado
     const body = document.body;
     const banner = document.createElement('div');
     banner.id = 'banner-ativacao-painel';
