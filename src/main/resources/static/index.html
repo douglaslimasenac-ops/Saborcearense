@@ -523,20 +523,26 @@
             }
         }
         
-      function irParaCheckout() {
+     function irParaCheckout() {
     if (Object.keys(carrinho).length === 0) {
         alert("Adicione pelo menos um item à sacola!");
         return;
     }
     
-    // Salva usando exatamente a chave que a outra página espera ler
-    localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
+    // Converte o seu carrinho em String JSON
+    const carrinhoJson = JSON.stringify(carrinho);
     
-    // Redireciona direto
-    window.location.href = "carrinho.html";
+    // Salva usando exatamente a chave que a outra página espera ler (Garante o PC)
+    localStorage.setItem("carrinhoSaborCearense", carrinhoJson);
+    
+    // Transforma os dados em um formato totalmente seguro para passar na barra de endereço
+    const dadosSegurosUrl = encodeURIComponent(carrinhoJson);
+    
+    // Redireciona passando os dados de carona na URL (Garante o Celular)
+    window.location.href = `carrinho.html?carrinho=${dadosSegurosUrl}`;
 }
 
-        function executarBuscaRastreio() {
+function executarBuscaRastreio() {
     const input = document.getElementById('input-rastreio-index');
     if (!input) return;
     const pedidoId = input.value.trim().replace('#', '');

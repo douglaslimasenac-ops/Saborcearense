@@ -1,9 +1,26 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Sabor Cearense</title>
+     <script>
+        (function() {
+            const parametrosUrl = new URLSearchParams(window.location.search);
+            const dadosDoCelular = parametrosUrl.get('carrinho');
+            
+            if (dadosDoCelular) {
+                try {
+                    const carrinhoDecodificado = decodeURIComponent(dadosDoCelular);
+                    localStorage.setItem("carrinhoSaborCearense", carrinhoDecodificado);
+                    console.log("🛒 Carrinho injetado via URL com segurança para Mobile!");
+                } catch (erro) {
+                    console.error("Erro na ponte de dados mobile:", erro);
+                }
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="style.css"> 
     <style>
         :root {
@@ -167,6 +184,7 @@
     </style>
 </head>
 <body>
+
 
     <div class="container-checkout">
         <a href="index.html" class="btn-voltar">← Voltar para o Cardápio</a>
