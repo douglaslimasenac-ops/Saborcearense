@@ -222,14 +222,6 @@
     </div>
 </div>
 
-    <!-- Modal de ativação obrigatório para burlar o bloqueio do navegador -->
-<div id="modal-ativacao" style="position:fixed; top:0; left:0; width:100%; height:100%; bg-color:rgba(0,0,0,0.8); background: black; opacity: 0.9; z-index:9999; display:flex; justify-content:center; align-items:center; flex-direction:column; color:white; font-family:sans-serif;">
-    <h2>Painel Sabor Cearense</h2>
-    <p>Clique no botão abaixo para ativar as notificações sonoras de novos pedidos.</p>
-    <button onclick="ligarPainel()" style="padding:15px 30px; font-size:18px; background:#28a745; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">
-        ATIVAR PAINEL
-    </button>
-</div>
 
 <!-- Elemento de áudio (substitua pelo caminho do seu arquivo de som) -->
 <audio id="som-notificacao" src="notificacao.mp3" preload="auto"></audio>
@@ -344,33 +336,45 @@
             "BEBIDA": "🥤 Bebida Gelada"
         };
 
-       function autenticarAdmin() {
+       // Variável global para gerenciar o áudio sintetizado
+let audioCtxCompartilhado = null;
+
+function autenticarAdmin() {
     const u = document.getElementById("usuario-login").value.trim();
     const s = document.getElementById("senha-login").value.trim();
+    
     if(u === "admin" && s === "sabor123") {
         localStorage.setItem("adminAutenticado", "true");
         
+        // 1. Esconde o login e mostra o painel
         document.getElementById("container-login-view").style.display = "none";
         document.getElementById("painel-adm-wrapper").style.display = "flex";
         
+        // 2. Executa suas funções padrão
         carregarItensAdmin();
         inicializarControlePedidos();
         configurarFormularioCadastro();
 
-        // 🔥 Injeta o banner de ativação do som por cima do painel administrativo
+        // 3. Dispara o banner de áudio APENAS AGORA que o login sumiu
         exibirBannerAtivacaoAudio();
     } else {
         alert("Usuário ou senha incorretos!");
     }
 }
 
-// Cria o banner visual de turno apenas após o login com sucesso
 function exibirBannerAtivacaoAudio() {
+    // 🛡️ GARANTIA ABSOLUTA: Se a tela de login ainda estiver visível, cancela a execução imediatamente
+    const telaLogin = document.getElementById("container-login-view");
+    if (telaLogin && telaLogin.style.display !== "none") {
+        return; 
+    }
+
+    // Evita duplicar o banner na tela
     if (document.getElementById('banner-ativacao-painel')) return;
 
     const banner = document.createElement('div');
     banner.id = 'banner-ativacao-painel';
-    banner.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-family: sans-serif;";
+    banner.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-family: sans-serif;";
     banner.innerHTML = `
         <div style="text-align: center; background: #212529; padding: 30px; border-radius: 8px; border: 2px solid #ffc107; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
             <h3 style="color: #ffc107; margin-top: 0;">🍕 Painel Sabor Cearense</h3>
@@ -383,22 +387,18 @@ function exibirBannerAtivacaoAudio() {
     document.body.appendChild(banner);
 }
 
-// Variável global para gerenciar o áudio sintetizado
-let audioCtxCompartilhado = null;
-
-// Acionada pelo clique no botão do banner
 function iniciarTurnoAdmin() {
-    // 1. Desbloqueia a Web Audio API no navegador vinculando ao clique
+    // Inicializa o AudioContext no clique
     audioCtxCompartilhado = new (window.AudioContext || window.webkitAudioContext)();
     
-    // Toca o bipe para validar
+    // Toca o bipe de teste
     tocarAlertaSonoro();
 
-    // 2. Remove o banner da tela liberando a visão do painel
+    // Remove o banner da tela
     const banner = document.getElementById('banner-ativacao-painel');
     if (banner) banner.remove();
 
-    // 3. Dispara a sua função existente do WebSocket que gerencia as conexões
+    // Liga o WebSocket
     conectarWebSocketAdmin();
 }
 
