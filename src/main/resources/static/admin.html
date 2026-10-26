@@ -360,7 +360,7 @@
                 const imagemUrl = document.getElementById("imagem").value;
 
                 try {
-                    const res = await fetch(URL_BACKEND + "/api/cardapio", {
+                    const res = await fetch(URL_BACKEND + "/api/admin/pratos", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ nome, preco, categoria, imagemUrl, descricao: "Item profissional.", disponivel: true })
