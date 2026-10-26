@@ -86,6 +86,7 @@ function carregarDadosDoCarrinho() {
 }
 
 function carregarItensDaUrlNoCarrinho() {
+    // 1. Procura o contêiner correto na sua estrutura de checkout
     const containerItens = document.getElementById("itens-selecionados-container") || 
                            document.querySelector(".itens-selecionados") ||
                            document.querySelector(".card-pedido") || 
@@ -98,13 +99,17 @@ function carregarItensDaUrlNoCarrinho() {
         const carrinhoParam = urlParams.get("carrinho");
 
         if (carrinhoParam) {
+            // Decodifica a string crua vinda do parâmetro HTTP
             const itensCarrinho = JSON.parse(decodeURIComponent(carrinhoParam));
 
-            if (Array.isArray(itensCarrinho) && itensCarrinho.length > 0) {
+            // 🌵 CORREÇÃO: Aceita tanto Arrays puros quanto Objetos Indexados do LocalStorage
+            const listaItens = Array.isArray(itensCarrinho) ? itensCarrinho : Object.values(itensCarrinho);
+
+            if (listaItens && listaItens.length > 0) {
                 const listaHtml = document.createElement("div");
                 listaHtml.style.marginBottom = "15px";
 
-                itensCarrinho.forEach(item => {
+                listaItens.forEach(item => {
                     const itemLinha = document.createElement("div");
                     itemLinha.style.display = "flex";
                     itemLinha.style.justifyContent = "space-between";
@@ -113,24 +118,31 @@ function carregarItensDaUrlNoCarrinho() {
                     itemLinha.style.color = "#334155";
                     itemLinha.style.fontSize = "1rem";
 
-                    const nomeFormatado = item.nome ? item.nome.replace(/%20/g, " ") : "Prato";
+                    // 🌵 CORREÇÃO: Garante a limpeza completa de espaços, acentos e caracteres especiais
+                    let nomeFormatado = "Prato";
+                    if (item.nome) {
+                        nomeFormatado = decodeURIComponent(item.nome).replace(/%20/g, " ");
+                    }
+                    
                     const qtd = item.quantidade || item.qtd || 1;
                     const preco = item.preco || 0;
 
                     itemLinha.innerHTML = `
                         <span style="font-weight: 600;">${qtd}x ${nomeFormatado}</span>
-                        <span style="color: #0f766e; font-weight: 700;">R$ ${(qtd * preco).toFixed(2)}</span>
+                        <span style="color: #0f766e; font-weight: 700;">R$ ${(qtd * preco).toFixed(2).replace(".", ",")}</span>
                     `;
                     listaHtml.appendChild(itemLinha);
                 });
 
+                // Insere no topo do elemento pai preservando os botões ou valores abaixo
                 containerItens.prepend(listaHtml);
             }
         }
     } catch (erro) {
-        console.error("Erro ao ler os itens vindo da URL:", erro);
+        console.error("Erro ao ler e processar os itens do carrinho vindos da URL:", erro);
     }
 }
+
 
 function renderizarResumo() {
     const container = document.getElementById("lista-itens-carrinho");
