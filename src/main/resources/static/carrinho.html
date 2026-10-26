@@ -294,55 +294,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById("lista-itens-carrinho");
     const totalTxt = document.getElementById("valor-total");
     
-    // 1. Pega o objeto salvo do localStorage
     const carrinhoObjeto = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
-
-    // 2. Transforma o Objeto em um Array (Lista) para não quebrar o seu código existente
     const itens = Object.values(carrinhoObjeto);
 
-    // 3. Verifica se a lista está vazia
     if (itens.length === 0) {
-        container.innerHTML = `<p style="text-align: center; color: #718096; margin: 20px 0;">Seu carrinho está vazio no momento.</p>`;
+        container.innerHTML = `<p style="text-align: center; color: #718096; margin: 20px 0;">Seu carrinho está vazio.</p>`;
         totalTxt.innerText = "R$ 0,00";
         return;
     }
 
-    // 4. Limpa o container antes de listar
     container.innerHTML = "";
-    let totalAcumulado = 0;
+    let subtotal = 0;
 
-    // 5. Agora o seu .forEach vai funcionar perfeitamente sem erros!
     itens.forEach(item => {
-        // Calcula o valor total deste item (preço x quantidade)
-        const subtotalItem = item.preco * item.quantidade;
-        totalAcumulado += subtotalItem;
-
-        // Injeta o HTML de cada prato escolhido na lista do carrinho
-        container.innerHTML += `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #edf2f7;">
-                <div>
-                    <h4 style="margin: 0; font-size: 16px; color: #2d3748;">${item.nome}</h4>
-                    <span style="font-size: 14px; color: #718096;">Qtd: ${item.quantidade}</span>
-                </div>
-                <span style="font-weight: 600; color: #2d3748;">R$ ${subtotalItem.toFixed(2).replace('.', ',')}</span>
-            </div>
-        `;
+        subtotal += item.preco * item.quantidade;
+        
+        // ... (seu código que adiciona o HTML do item na lista) ...
     });
 
-    // 6. Atualiza o valor total geral na tela
-    totalTxt.innerText = `R$ ${totalAcumulado.toFixed(2).replace('.', ',')}`;
-}
+    // 🌟 CORREÇÃO AQUI: Alimenta a variável global com o subtotal dos produtos (sem usar "let" na frente)
+    totalCalculado = subtotal; 
 
-
-function atualizarTaxaEntrega(valorSelect) {
-    if (!valorSelect) return;
-    const partes = valorSelect.split("|");
-    bairroTextoSelecionado = partes[0];
-    taxaEntregaSelecionada = parseFloat(partes[1]);
-    
-    // Atualiza a exibição do total somando o valor dos pratos com a taxa de entrega
-    const totalComTaxa = totalCalculado + taxaEntregaSelecionada;
-    document.getElementById("valor-total").innerText = `R$ ${totalComTaxa.toFixed(2).replace('.', ',')} (com R$ ${taxaEntregaSelecionada.toFixed(2).replace('.', ',')} de entrega)`;
+    // Exibe o valor inicial dos produtos (antes do bairro ser escolhido)
+    totalTxt.innerHTML = `Valor Total: <strong>R$ ${totalCalculado.toFixed(2).replace('.', ',')}</strong>`;
 }
 
         // ATENÇÃO: Deixe estas duas variáveis fora de qualquer função (no escopo global do script)
@@ -381,17 +355,29 @@ async function enviarPedido(e) {
         }
     }
 
+    // ==========================================
+    // CORREÇÃO DO ERRO AQUI:
+    // ==========================================
+    // 1. Buscamos o objeto do localStorage
+    const carrinhoObjeto = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
+
+    // 2. Convertemos o Objeto em uma Lista (Array) para o seu .forEach original funcionar abaixo
+    const itens = Object.values(carrinhoObjeto);
+
+    if (itens.length === 0) {
+        alert("Seu carrinho está vazio!");
+        return;
+    }
+
+    // --- DAQUI PARA BAIXO O SEU CÓDIGO CONTINUA ORIGINAL ---
+    // O seu loop 'itens.forEach(...)' que vem logo em seguida agora vai rodar sem quebras!
+
+
     // Validação do Bairro e da Taxa
     const bairroSelect = document.getElementById("bairro-entrega").value;
     if (!bairroSelect) { 
         alert("Por favor, selecione o bairro de entrega!"); 
         return; 
-    }
-
-    const itens = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || [];
-    if (itens.length === 0) {
-        alert("Seu carrinho está vazio!");
-        return;
     }
 
     const nome = document.getElementById("nome").value;
