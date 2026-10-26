@@ -534,6 +534,7 @@ function imprimirCupomIFood(pedido) {
     divDivisora3.className = "divider-double";
     containerPrincipal.appendChild(divDivisora3);
     // 5. Itens do Pedido (Lendo diretamente da árvore DOM da sua interface)
+        // 5. Itens do Pedido (Lendo direto dos dados da URL/LocalStorage)
     var elItensTitulo = janelaImpressao.document.createElement("div");
     elItensTitulo.className = "secao-titulo";
     elItensTitulo.textContent = "Itens do Pedido";
@@ -542,22 +543,41 @@ function imprimirCupomIFood(pedido) {
     var tabelaItens = janelaImpressao.document.createElement("table");
     tabelaItens.className = "tabela-itens";
     
-    var itensDaTela = document.querySelectorAll("#lista-itens-carrinho .item-resumo");
     var totalProdutosCalculado = 0;
+    var listaItensImpressao = [];
 
-    if (itensDaTela && itensDaTela.length > 0) {
-        itensDaTela.forEach(function(itemNode) {
+    // Captura os dados brutos da URL ou do LocalStorage para garantir leitura imediata
+    var urlParamsImp = new URLSearchParams(window.location.search);
+    var paramUrlImp = urlParamsImp.get("carrinho");
+    var dadosRawImp = paramUrlImp ? decodeURIComponent(paramUrlImp) : localStorage.getItem("carrinhoSaborCearense") || localStorage.getItem("saborCearense_carrinho");
+
+    if (dadosRawImp) {
+        try {
+            var itensDecodificados = JSON.parse(dadosRawImp);
+            if (Array.isArray(itensDecodificados)) {
+                listaItensImpressao = itensDecodificados;
+            } else if (itensDecodificados && typeof itensDecodificados === 'object' && 'nome' in itensDecodificados) {
+                listaItensImpressao = [itensDecodificados];
+            } else if (itensDecodificados && typeof itensDecodificados === 'object') {
+                listaItensImpressao = Object.values(itensDecodificados);
+            }
+        } catch(e) {
+            console.error("Erro ao ler dados para a impressão:", e);
+        }
+    }
+
+    if (listaItensImpressao && listaItensImpressao.length > 0) {
+        listaItensImpressao.forEach(function(item) {
             var tr = janelaImpressao.document.createElement("tr");
             
-            var qtdTexto = itemNode.querySelector(".item-qtd-tag") ? itemNode.querySelector(".item-qtd-tag").innerText.replace("x", "").trim() : "1";
-            var nomeTexto = itemNode.querySelector(".item-nome") ? itemNode.querySelector(".item-nome").innerText.trim().toUpperCase() : "PRATO";
-            var precoTexto = itemNode.querySelector(".item-preco-sub") ? itemNode.querySelector(".item-preco-sub").innerText.trim() : "R$ 0,00";
+            var nomeTexto = item.nome ? decodeURIComponent(item.nome).toUpperCase() : "PRATO";
+            var qtdTexto = item.quantidade || item.qtd || 1;
+            var precoItem = item.preco || 0;
+            var subtotalItem = qtdTexto * precoItem;
+            
+            totalProdutosCalculado += subtotalItem;
 
-            // Converte o texto em número para somar o subtotal de forma correta
-            var valorNumerico = parseFloat(precoTexto.replace("R$", "").replace(".", "").replace(",", ".").trim()) || 0;
-            totalProdutosCalculado += valorNumerico;
-
-            tr.innerHTML = "<td class='col-qtd'>" + qtdTexto + "x</td><td class='col-nome'>" + nomeTexto + "</td><td class='col-preco'>" + precoTexto + "</td>";
+            tr.innerHTML = "<td class='col-qtd'>" + qtdTexto + "x</td><td class='col-nome'>" + nomeTexto + "</td><td class='col-preco'>R$ " + subtotalItem.toFixed(2).replace(".", ",") + "</td>";
             tabelaItens.appendChild(tr);
         });
         containerPrincipal.appendChild(tabelaItens);
@@ -622,11 +642,4 @@ function imprimirCupomIFood(pedido) {
     setTimeout(function() {
         janelaImpressao.print();
     }, 250);
-}
-
-// Função auxiliar interna do seu script para as divisórias
-function criarDivDivisora(janela, dupla) {
-    var div = janela.document.createElement("div");
-    div.className = dupla ? "divider-double" : "divider-dashed";
-    return div;
 }
