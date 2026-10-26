@@ -1,7 +1,7 @@
 // ==========================================
 // 🌵 CONFIGURAÇÕES E ESTADOS GLOBAIS
 // ==========================================
-const URL_BACKEND = "https://onrender.com";
+const URL_BACKEND = "https://saborcearense-5.onrender.com"
 const URL_API_ADMIN = URL_BACKEND + "/api/admin/pratos";
 const URL_BACKEND_WS = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host;
 
