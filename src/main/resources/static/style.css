@@ -1,16 +1,17 @@
 /* ==========================================================================
-   1. VARIÁVEIS DE CORES E CONFIGURAÇÕES GERAIS
+   1. CONFIGURAÇÃO DE CORES, PALETA CREME E VARIÁVEIS GERAIS
    ========================================================================== */
 :root {
-    --cor-fundo: #fffdf0;        /* Creme bem claro do fundo da página */
-    --cor-primaria: #f19f1b;     /* Laranja institucional do Sabor Cearense */
-    --cor-secundaria: #ffbe1a;   /* Amarelo-ouro dos botões e destaques */
-    --cor-escura: #111111;       /* Preto absoluto dos títulos e cabeçalhos de seções */
-    --cor-texto: #2c2c2c;        /* Cinza escuro para legibilidade de preços/itens */
-    --cor-borda: #f7d08a;        /* Borda suave para os cards e caixas */
-    --cor-aside: #1e1e24;        /* Escuro corporativo para a barra lateral do painel */
+    --primary: #f5a623;        /* Laranja/Dourado oficial dos botões e badges */
+    --dark: #141414;           /* Fundo fosco escuro das faixas de categoria */
+    --bg-creme: #faf6ee;       /* O tom creme exato de fundo da tela */
+    --border-color: #ebdcb9;   /* Cor de borda suave combinando com o creme */
+    --text-main: #111111;      /* Cor primária para tipografias estruturais */
 }
 
+/* ==========================================================================
+   2. CONFIGURAÇÃO BASE E LIMITADOR MOBILE FIRST (ANTI-ESTICA)
+   ========================================================================== */
 * {
     margin: 0;
     padding: 0;
@@ -19,619 +20,380 @@
 }
 
 body {
-    background-color: var(--cor-fundo);
-    color: var(--cor-texto);
-    min-height: 100vh;
-}
-
-/* ==========================================================================
-   2. AMBIENTE DE LOGIN (.login-wrapper)
-   ========================================================================== */
-.login-wrapper {
+    background-color: var(--bg-creme);
+    color: var(--text-main);
     display: flex;
     justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: var(--cor-fundo);
-    padding: 20px;
-}
-
-.login-card {
-    background: #ffffff;
-    border: 3px solid var(--cor-primaria);
-    border-radius: 15px;
-    padding: 40px;
-    width: 100%;
-    max-width: 400px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.05);
-    text-align: center;
-}
-
-.login-logo {
-    width: 120px;
-    height: 120px;
-    background-color: var(--cor-primaria);
-    border-radius: 50%;
-    margin: 0 auto 20px auto;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: #000000;
-    font-weight: bold;
-}
-
-/* ==========================================================================
-   3. ESTRUTURA DO PAINEL ADMINISTRATIVO LADO A LADO (.admin-wrapper)
-   ========================================================================== */
-.admin-wrapper {
-    display: flex;
-    min-height: 100vh;
-    width: 100%;
-}
-
-/* Barra lateral fixa em 260px na esquerda */
-.admin-wrapper aside {
-    width: 260px;
-    min-width: 260px;
-    background-color: var(--cor-aside);
-    color: #ffffff;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    border-right: 4px solid var(--cor-primaria);
-}
-
-/* Área de conteúdo fluido no restante do monitor */
-.admin-wrapper main {
-    flex: 1;
-    padding: 30px;
-    overflow-y: auto;
-    background-color: var(--cor-fundo);
-}
-
-/* ==========================================================================
-   4. ELEMENTOS DO LAYOUT (BASEADO NO APLICATIVO DO CLIENTE)
-   ========================================================================== */
-
-/* Badges e Avisos do Topo */
-.badge-status {
-    background-color: var(--cor-primaria);
-    color: #000000;
-    font-weight: 700;
-    padding: 8px 16px;
-    border-radius: 20px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    margin-bottom: 12px;
-}
-
-.box-info-entrega {
-    background-color: #ffffff;
-    border: 1px solid var(--cor-borda);
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-    max-width: 500px;
-    margin: 0 auto 25px auto;
-    font-size: 13px;
-    line-height: 1.6;
-}
-
-/* Abas e Seletores de Categoria */
-.container-abas {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 25px;
-}
-
-.aba-item {
-    background-color: #ffffff;
-    border: 1px solid var(--cor-borda);
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s ease;
-}
-
-.aba-item.ativa {
-    background-color: var(--cor-primaria);
-    color: #ffffff;
-    border-color: var(--cor-primaria);
-}
-
-/* Cabeçalho de Categoria (Ex: Bebidas Geladas) */
-.categoria-titulo {
-    background-color: var(--cor-escura);
-    color: var(--cor-secundaria);
-    padding: 12px 20px;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-/* Cards de Produtos da Listagem */
-.produto-card {
-    background-color: #ffffff;
-    border: 1px solid var(--cor-borda);
-    border-radius: 8px;
-    padding: 15px 20px;
-    margin-bottom: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-}
-
-.produto-info .nome {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--cor-escura);
-    margin-bottom: 6px;
-}
-
-.produto-info .preco {
-    font-size: 15px;
-    font-weight: 700;
-    color: #2e7d32; /* Verde para destacar o valor monetário */
-}
-
-/* Controles de Quantidade e Botões Redondos (+ / -) */
-.seletor-quantidade {
-    display: flex;
-    align-items: center;
-    border: 1px solid var(--cor-primaria);
-    border-radius: 4px;
-    background: #ffffff;
-    overflow: hidden;
-}
-
-.btn-qtd {
-    background: none;
-    border: none;
-    width: 32px;
-    height: 32px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    color: var(--cor-primaria);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-}
-
-.btn-qtd:hover {
-    background-color: #fff8eb;
-}
-
-.valor-qtd {
-    padding: 0 12px;
-    font-weight: 700;
-    font-size: 14px;
-    color: #000000;
-}
-
-/* Formulários de Alteração de Cardápio (Grid) */
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 8px;
-    border: 1px solid var(--cor-borda);
-}
-
-.form-grupo {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.form-grupo label {
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.form-grupo input, .form-grupo select {
-    padding: 10px;
-    border: 1px solid var(--cor-borda);
-    border-radius: 4px;
-    outline: none;
-}
-
-/* Barra Fixa Inferior de Fechamento / Rodapé */
-.barra-inferior {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background-color: #ffffff;
-    border-top: 3px solid var(--cor-secundaria);
-    padding: 12px 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 1000;
-}
-
-.total-container {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--cor-primaria);
-}
-
-/* Botão Corporativo Otimizado (Avançar para o Carrinho / Ações do Admin) */
-.btn-corporativo {
-    background-color: var(--cor-primaria);
-    color: #000000;
-    font-weight: 700;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 4px 6px rgba(241, 159, 27, 0.2);
-    transition: background 0.2s ease;
-}
-
-.btn-corporativo:hover {
-    background-color: #d6870f;
-}
-
-/* ==========================================
-   1. CONFIGURAÇÕES GERAIS E RESETS
-   ========================================== */
-
-/* O body agora controla as duas grandes colunas lado a lado */
-body {
-    display: flex;
-    width: 100%;
-    min-height: 100vh;
-    background-color: #f8f9fa;
-    color: #333333;
-    overflow-x: hidden;
-}
-
-/* ==========================================
-   2. BARRA LATERAL (SIDEBAR) - CORRIGIDA
-   ========================================== */
-.sidebar {
-    width: 260px;
-    min-width: 260px; /* Garante que ela não encolha */
-    background-color: #151515; /* Preto fosco igual ao print */
-    display: flex;
-    flex-direction: column;
-    padding: 30px 0;
-    height: 100vh;
-    position: sticky; /* Mantém fixa ao scrollar sem quebrar o layout */
-    top: 0;
-    left: 0;
-}
-
-.sidebar-brand {
-    color: #ff9900; /* Amarelo/Laranja do Sabor Cearense */
-    font-size: 1.3rem;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 40px;
-    padding: 0 20px;
-}
-
-.sidebar-menu {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 0 15px;
-}
-
-.menu-item {
-    display: block;
-    color: #ffffff;
-    text-decoration: none;
-    padding: 14px 18px;
-    font-size: 0.9rem;
-    border-radius: 8px;
-    transition: all 0.2s ease-in-out;
-}
-
-/* Estado ativo/selecionado (Ex: Botão Laranja do print) */
-.menu-item.active {
-    background-color: #ff9900;
-    color: #151515;
-    font-weight: bold;
-}
-
-.menu-item:hover:not(.active) {
-    background-color: #252525;
-}
-
-/* Link inferior "Ver Cardápio" */
-.sidebar-footer {
-    margin-top: auto;
-    padding: 0 25px;
-}
-
-.footer-link {
-    color: #ff9900;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: bold;
-}
-
-/* ==========================================
-   3. ÁREA DE CONTEÚDO PRINCIPAL (DIREITA)
-   ========================================== */
-.main-content {
-    flex: 1; /* Ocupa todo o resto do espaço da tela à direita */
-    padding: 40px;
-    background-color: #ffffff;
+    align-items: flex-start;
     min-height: 100vh;
 }
 
-.content-title {
-    font-size: 1.5rem;
-    color: #151515;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 25px;
-    font-weight: bold;
-}
-
-/* Mensagens de estado vazio (Nenhum pedido...) */
-.empty-state-container {
-    border: 1px dashed #e0e0e0;
-    border-radius: 6px;
-    padding: 40px;
-    text-align: center;
-    background-color: #ffffff;
-    margin-top: 10px;
-}
-
-.empty-state-text {
-    color: #dc3545;
-    font-size: 0.95rem;
-    font-weight: 500;
-}
-
-/* ==========================================
-   4. FORMULÁRIO DE CADASTRO (ADICIONAR ITEM)
-   ========================================== */
-.form-container {
-    background-color: #ffffff;
-    margin-bottom: 30px;
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: 2fr 1fr 2fr 1.5fr; /* Distribuição idêntica às colunas da imagem */
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.form-group label {
-    font-size: 0.75rem;
-    color: #666666;
-}
-
-.form-control {
+/* CONTAINER APP MOBILE CENTRALIZADO */
+.container {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #cccccc;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    color: #333333;
-    outline: none;
-    background-color: #ffffff;
-}
-
-.btn-submit-container {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.btn-submit {
-    background-color: #ff9900;
-    color: #151515;
-    border: none;
-    padding: 12px 24px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* ==========================================
-   5. LISTA DE PRODUTOS CADASTRADOS (CARDS)
-   ========================================== */
-.products-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-top: 30px;
-}
-
-.product-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-left: 5px solid #00cc99; /* Linha verde vertical esquerda */
-    border-radius: 6px;
-    padding: 15px 20px;
-}
-
-.product-info-block {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.product-image-placeholder {
-    width: 50px;
-    height: 50px;
-    background-color: #f0f0f0;
-    border: 1px solid #dddddd;
-    border-radius: 4px;
-}
-
-.product-details {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.product-title-line {
-    font-size: 1rem;
-    font-weight: bold;
-    color: #dc3545;
-}
-
-.product-price-input {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.85rem;
-    color: #666666;
-}
-
-.product-price-input input {
-    width: 80px;
-    padding: 4px 6px;
-    border: 1px solid #cccccc;
-    border-radius: 4px;
-}
-
-/* Badge lateral Disponível */
-.badge-available {
-    background-color: #e6fcf5;
-    color: #00cc99;
-    border: 1px solid #00cc99;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.badge-available::before {
-    content: "";
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background-color: #00cc99;
-    border-radius: 50%;
-}
-
-.btn-delete {
-    background-color: #eeeeee;
-    border: none;
-    padding: 8px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    color: #666666;
-}
-/* ==========================================================================
-   5. CORREÇÃO DO LAYOUT DO CLIENTE (index.html)
-   ========================================================================== */
-
-/* Garante o alinhamento centralizado do conteúdo do cliente */
-.client-container {
-    max-width: 800px;
+    max-width: 480px; /* Alinhamento que simula visual de smartphone no PC */
     margin: 0 auto;
-    padding: 20px 20px 100px 20px; /* Margem inferior para não cobrir o rodapé fixo */
+    padding: 20px 16px 110px 16px; /* Padding bottom compensa o rodapé fixo */
+    background-color: var(--bg-creme);
     display: flex;
     flex-direction: column;
-    align-items: center;
 }
 
-/* Centraliza os blocos de cabeçalho do Sabor Cearense */
-.header-cliente {
+/* ==========================================================================
+   3. CABEÇALHO (HEADER APP)
+   ========================================================================== */
+.header-app {
     text-align: center;
-    margin-bottom: 20px;
+    margin: 15px 0 20px 0;
+    color: var(--dark);
     width: 100%;
 }
 
-/* Remove qualquer empilhamento estranho nas seções e modais ocultos */
-.secao-cardapio {
+.header-app h1 {
+    font-size: 2.1rem;
+    margin-bottom: 5px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+}
+/* ==========================================================================
+   4. STATUS DE FUNCIONAMENTO E HORÁRIOS
+   ========================================================================== */
+.status-barra {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    border-radius: 8px;
+    margin: 15px 0 5px 0;
+    background-color: #ffffff;
+    color: var(--dark);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.horario-container {
+    text-align: center;
+    margin: 5px auto 20px auto;
     width: 100%;
-    max-width: 600px;
+}
+
+.horario-dias {
+    margin: 4px 0;
+    font-size: 14px;
+    color: #4A2412;
+    font-weight: bold;
+}
+
+.horario-entregas {
+    margin: 4px 0;
+    font-size: 13px;
+    color: #D32F2F;
+    font-weight: bold;
+    background-color: #FFF3CD;
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    border: 1px solid #FFEBAA;
+}
+
+/* ==========================================================================
+   5. NAVEGAÇÃO SUPERIOR POR ABAS
+   ========================================================================== */
+.abas-navegacao .btn-aba {
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.abas-navegacao .btn-aba:not(.ativo) {
+    background: #ffffff !important;
+    color: var(--dark) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.abas-navegacao .btn-aba.ativo {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--dark) !important;
+}
+
+/* ==========================================================================
+   6. CARDÁPIO E SEÇÃO DE PRODUTOS (ESTILO ANTI-TREPIDAÇÃO IFOOD)
+   ========================================================================== */
+.menu-section {
+    width: 100%;
     margin-top: 15px;
 }
 
-/* Corrige o posicionamento da Barra de Avançar (Amarela) que estava cobrindo a lateral */
-.barra-inferior {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 70px; /* Altura fixa confortável */
-    background-color: #ffffff;
-    border-top: 4px solid var(--cor-secundaria);
-    padding: 0 40px;
+.menu-section h2 {
+    background: var(--dark) !important;
+    color: var(--primary) !important;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-top: 20px;
+    margin-bottom: 15px;
+}
+
+.menu-section h3 {
+    color: var(--dark);
+    border-bottom: 3px solid var(--primary) !important;
+    padding-bottom: 6px;
+    margin-top: 25px;
+    margin-bottom: 14px;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.menu-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    z-index: 9999;
+    background: #ffffff !important;
+    padding: 14px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+    width: 100%;
 }
 
-/* Corrige o botão "Avançar para o Carrinho" dentro da barra inferior */
-.btn-avancar-carrinho {
-    background-color: var(--cor-primaria);
-    color: #000000;
-    font-weight: 700;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
+.menu-item.selecionado {
+    border-left: 6px solid var(--primary) !important;
+    background: #fffdf9 !important;
+}
+
+.foto-produto-container {
+    width: 70px;
+    height: 70px;
+    min-width: 70px;
+    max-width: 70px;
+    min-height: 70px;
+    max-height: 70px;
+    background-color: #f0f0f0; 
+    border-radius: 8px;
+    overflow: hidden;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.foto-produto-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    animation: fadeInSuave 0.3s forwards;
+}
+
+@keyframes fadeInSuave {
+    to { opacity: 1; }
+}
+/* ==========================================================================
+   7. SELETOR DE QUANTIDADE INTEGRADO
+   ========================================================================== */
+.seletor-quantidade {
     display: flex;
     align-items: center;
-    gap: 8px;
-    white-space: nowrap;
+    justify-content: space-between;
+    background-color: #ffffff !important;
+    border: 2px solid var(--primary) !important;
+    border-radius: 6px;
+    padding: 2px 8px;
+    min-width: 85px;
+    height: 32px;
 }
 
-/* Esconde modais ou elementos flutuantes (como Sacola/Rastrear) até que sejam ativados via JS */
-.sacola-flutuante, .rastrear-container {
+.btn-qtd {
+    background: transparent !important;
+    border: none !important;
+    color: var(--dark) !important;
+    font-size: 1.4rem;
+    font-weight: bold;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qtd-numero {
+    font-weight: bold;
+    color: var(--dark);
+    font-size: 1.05rem;
+}
+
+.item-esgotado {
+    opacity: 0.4;
+    background: #f2f2f2 !important;
+    border-left: 4px solid #95a5a6 !important;
+}
+
+.badge-esgotado {
+    color: #7f8c8d;
+    font-weight: bold;
+    background: #e0e0e0;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+/* ==========================================================================
+   8. GAVETA DA SACOLA DE COMPRAS (DRAWER MODAL)
+   ========================================================================== */
+.sacola-drawer-container {
     position: fixed;
-    top: 50%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1050;
+    visibility: hidden;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Disparado pelo .classList.add('open') do seu script JS */
+.sacola-drawer-container.open {
+    visibility: visible;
+}
+
+.sacola-drawer-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.sacola-drawer-content {
+    position: absolute;
+    bottom: -100%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    border: 2px solid var(--cor-primaria);
-    border-radius: 8px;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: #ffffff;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.15);
+    transition: bottom 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+}
+
+.sacola-drawer-container.open .sacola-drawer-content {
+    bottom: 0;
+}
+
+.sacola-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.sacola-drawer-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--dark);
+}
+
+.btn-fechar-drawer {
+    background: #f5f5f5;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sacola-drawer-body {
     padding: 20px;
-    z-index: 10000;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    display: none; /* Só exiba mudando para 'block' ou 'flex' via JavaScript quando clicado */
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* LINHAS DO CARRINHO INJETADAS DINAMICAMENTE */
+.item-sacola-linha {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.item-sacola-linha button {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.sacola-drawer-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #f0f0f0;
+    background: #ffffff;
+}
+
+.sacola-drawer-subtotal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    font-weight: bold;
+    font-size: 1.05rem;
+}
+
+.btn-drawer-finalizar {
+    width: 100%;
+    background-color: var(--primary);
+    color: #111111;
+    border: none;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-drawer-finalizar:hover {
+    background-color: #e0941f;
+}
+
+/* ==========================================================================
+   9. FIXAÇÃO DO RODAPÉ (CARRINHO FLUTUANTE DA TELA PRINCIPAL)
+   ========================================================================== */
+#barra-flutuante,
+.cart-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px; 
+    background-color: #ffffff;
+    border-top: 4px solid var(--primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.06);
+    z-index: 1000;
+    gap: 10px;
+    border-radius: 12px 12px 0 0;
 }
