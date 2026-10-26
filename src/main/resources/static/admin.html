@@ -416,11 +416,12 @@
             } catch(e) { container.innerHTML = `<p style="text-align: center; color: var(--danger);">Erro ao carregar o cardápio.</p>`; }
         }
 
-        async function atualizarPrecoRapido(id, novoPreco) {
+       async function atualizarPrecoRapido(id, novoPreco) {
     const valorFormatado = parseFloat(novoPreco);
     if (isNaN(valorFormatado) || valorFormatado < 0) return;
     try {
-        // 🌟 CORREÇÃO: Envia o preço envelopado em JSON dentro do body
+        // Tenta o formato padrão com JSON no corpo. 
+        // Se o seu Java usar @PathVariable e @RequestParam, mude a URL abaixo para: `${URL_BACKEND}/api/cardapio/${id}/preco?preco=${valorFormatado}`
         const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/preco`, { 
             method: "PUT",
             headers: {
@@ -432,7 +433,9 @@
         if (res.ok) {
             carregarItensAdmin();
         } else {
-            console.error("Erro no servidor ao atualizar preço.");
+            // Se der 404 aqui, significa que o seu método no Java pode não ter o "/preco" no final da rota.
+            console.error(`Erro ${res.status}: Verifique se a rota no Java é realmente /api/cardapio/{id}/preco`);
+            alert("Erro no servidor ao atualizar preço. Verifique o console.");
         }
     } catch(err) { 
         alert("Erro de conexão ao alterar preço."); 
@@ -443,7 +446,7 @@ async function alternarDisponibilidade(id, statusAtual) {
     try {
         const novoStatus = !statusAtual;
         
-        // 🌟 CORREÇÃO: Envia a disponibilidade envelopada em JSON dentro do body
+        // Tenta o formato padrão enviado via corpo (body)
         const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}/disponibilidade`, { 
             method: "PUT", 
             headers: {
@@ -455,7 +458,8 @@ async function alternarDisponibilidade(id, statusAtual) {
         if(res.ok) {
             carregarItensAdmin();
         } else {
-            console.error("Erro no servidor ao mudar disponibilidade.");
+            console.error(`Erro ${res.status}: Verifique se a rota no Java é /api/cardapio/{id}/disponibilidade`);
+            alert("Erro no servidor ao mudar disponibilidade.");
         }
     } catch(e) { 
         alert("Erro ao mudar disponibilidade."); 
@@ -465,11 +469,13 @@ async function alternarDisponibilidade(id, statusAtual) {
 async function deletarItem(id) {
     if(!confirm("Deseja apagar esse item permanentemente?")) return;
     try {
+        // Como deu 404 no delete, verifique se no Java você colocou @DeleteMapping("/{id}") ou apenas @DeleteMapping
         const res = await fetch(`${URL_BACKEND}/api/cardapio/${id}`, { method: "DELETE" });
         if(res.ok) {
             carregarItensAdmin();
         } else {
-            alert("Erro ao deletar. Verifique se o item não está preso a algum pedido pendente.");
+            console.error(`Erro ${res.status}: O endpoint de exclusão falhou.`);
+            alert("Erro ao deletar. Verifique se o item não está associado a pedidos ativos.");
         }
     } catch(e) { 
         alert("Erro ao deletar."); 
@@ -481,7 +487,6 @@ function inicializarControlePedidos() {
     conectarWebSocketAdmin();
     carregarPedidosAtivos();
 }
-
 
         function conectarWebSocketAdmin() {
             try {
