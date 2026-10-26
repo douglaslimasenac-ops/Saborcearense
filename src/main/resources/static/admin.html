@@ -776,6 +776,9 @@ function tocarAlertaSonoro() {
     oscilador.start();
     oscilador.stop(audioContext.currentTime + 0.3); // Apita por 300 milissegundos
 }
+window.addEventListener('DOMContentLoaded', () => {
+    conectarWebSocketAdmin();
+});
 
     </script>
 </body>
