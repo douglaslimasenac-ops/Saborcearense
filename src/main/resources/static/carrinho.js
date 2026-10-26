@@ -348,12 +348,15 @@ async function enviarPedido(e) {
 
         const urlWhatsapp = "https://wa.me/"+ WHATSAPP_NUMERO + "?text=" + encodeURIComponent(mensagem);
         
-        window.open(urlWhatsapp, '_blank');
-        localStorage.removeItem("carrinhoSaborCearense");
-        window.location.href = "index.html?admin=1&aba=RASTREIO"; 
+            window.open(urlWhatsapp, '_blank');
+            localStorage.removeItem("carrinhoSaborCearense");
+            window.location.href = "index.html?admin=1&aba=RASTREIO"; 
 
     } catch (error) {
         console.error("Erro no processamento do pedido:", error);
         alert("Ocorreu uma falha ao enviar o pedido para o servidor, mas você pode tentar reenviar.");
     }
 }
+// Força o navegador a rodar a função e preencher a div assim que a página carregar
+document.addEventListener("DOMContentLoaded", carregarItensDaUrlNoCarrinho);
+
