@@ -538,10 +538,10 @@ function inicializarControlePedidos() {
         }
 
         // 🌟 TRAVA GLOBAL ANTIDUPLICAÇÃO (Coloque logo acima da função)
+// 🌟 TRAVA GLOBAL ANTIDUPLICAÇÃO
 let carregandoPedidosAtivos = false;
 
 async function carregarPedidosAtivos() {
-    // Se a função já estiver rodando, ignora chamadas repetidas instantâneas
     if (carregandoPedidosAtivos) return;
     carregandoPedidosAtivos = true;
 
@@ -619,8 +619,24 @@ async function carregarPedidosAtivos() {
         }
     } catch (e) { console.log("Erro ao carregar histórico de finalizados:", e); }
 
-    // 🌟 LIBERA A TRAVA (Permite novas atualizações após finalizar o processo)
     carregandoPedidosAtivos = false;
+}
+
+// 🌟 FUNÇÃO QUE ESTAVA FALTANDO (Adicionada de volta)
+async function mudarStatusPedido(id, novoStatus) {
+    try {
+        const res = await fetch(`${URL_BACKEND}/api/pedidos/${id}/status?status=${novoStatus}`, { method: "PUT" });
+        if (res.ok) {
+            carregarPedidosAtivos();
+            if (socketAdmin && socketAdmin.readyState === WebSocket.OPEN) {
+                socketAdmin.send(JSON.stringify({ id, status: novoStatus }));
+            }
+        } else {
+            alert("Não foi possível atualizar o status do pedido.");
+        }
+    } catch (e) { 
+        console.error("Erro ao mudar status do pedido:", e);
+    }
 }
 
     </script>
