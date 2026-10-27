@@ -317,7 +317,7 @@ async function enviarPedido(e) {
     const ref = document.getElementById("ponto-referencia").value || "Não informado";
     const pagamento = document.getElementById("pagamento").value;
 
-    const enderecoCompleto = `${enderecoRua}, Bairro: ${bairroTextoSelecionado}`;
+    const enderecoCompleto = `${enderecoRua}, Bairro: ${bairroTextoSelecionado} (Ref: ${ref})`;
     const totalComTaxaGeral = totalCalculado + taxaEntregaSelecionada;
 
     // 4. PREPARAÇÃO DA ABA DO WHATSAPP (Abre vazia para burlar bloqueadores de pop-up)
@@ -326,20 +326,24 @@ async function enviarPedido(e) {
         abaWhatsapp.document.write("<p style='font-family:sans-serif; text-align:center; margin-top:20%; color:#555;'>Salvando seu pedido no Sabor Cearense... Aguarde...</p>");
     }
 
-    // 5. Monta o Payload do Pedido para o seu Backend Java no Render
+    // 5. CORREÇÃO CRÍTICA: Monta o Payload batendo 100% com a sua @Entity do Java
     const dadosPedido = {
         clienteNome: nome,
-        endereco: enderecoCompleto + " (Tel: " + contatoTelefone + ") (Ref: " + ref + ")",
+        telefone: contatoTelefone,  // Adicionado isolado para mapear no private String telefone
+        endereco: enderecoCompleto, // Texto limpo do endereço com a referência
         formaPagamento: pagamento,
-        valorTotal: totalComTaxaGeral 
+        valorTotal: Number(totalComTaxaGeral.toFixed(2)) // Garante formato numérico limpo para o BigDecimal
     };
 
     let pedidoIdGerado = "NOVO";
 
-    // 6. EXECUÇÃO DO FETCH (Obrigatório aguardar a resposta antes de prosseguir)
+    // 6. TRATAMENTO INTELIGENTE DA URL DA API
     if (typeof URL_API_BACKEND !== "undefined" && URL_API_BACKEND) {
         try {
-            const response = await fetch(URL_API_BACKEND + "/api/pedidos", {
+            // Evita duplicação caso a variável já termine com /api/pedidos
+            const urlFinal = URL_API_BACKEND.endsWith("/api/pedidos") ? URL_API_BACKEND : URL_API_BACKEND + "/api/pedidos";
+            
+            const response = await fetch(urlFinal, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(dadosPedido)
@@ -355,7 +359,7 @@ async function enviarPedido(e) {
         }
     }
 
-    // 7. Montagem da Mensagem Textual do WhatsApp (Agora com a certeza se o ID foi gerado ou não)
+    // 7. Montagem da Mensagem Textual do WhatsApp
     let mensagem = "🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n";
     if (pedidoIdGerado !== "NOVO") {
         mensagem += "🆔 *Pedido Nº:* #" + pedidoIdGerado + "\n";
@@ -380,19 +384,18 @@ async function enviarPedido(e) {
     const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : "5585999999999"; 
     const urlWhatsapp = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
     
-    // 8. ETAPA FINAL DE LIMPEZA E REDIRECIONAMENTO Sincronizado
+    // 8. ETAPA FINAL DE LIMPEZA E REDIRECIONAMENTO
     localStorage.removeItem("carrinhoSaborCearense");
 
     if (abaWhatsapp) {
-        abaWhatsapp.location.href = urlWhatsapp; // Altera a aba em background para o zap
+        abaWhatsapp.location.href = urlWhatsapp; 
     } else {
         window.open(urlWhatsapp, '_blank');
     }
     
-    // Altera a página do cliente para o rastreio APENAS após todas as promessas do banco terminarem
+    // Redireciona para o rastreio na tela principal
     window.location.href = "index.html?admin=1&aba=RASTREIO";
 }
-
 
 // Força o navegador a rodar a função e preencher a div assim que a página carregar
 document.addEventListener("DOMContentLoaded", carregarItensDaUrlNoCarrinho);
