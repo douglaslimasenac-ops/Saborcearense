@@ -242,10 +242,7 @@
             const fechamentoMinutos = (15 * 60) + 0;  
 
             const statusLoja = document.getElementById("status-loja");
-            const parametrosUrl = new URLSearchParams(window.location.search);
-            const modoAdminSecreto = parametrosUrl.get("admin") === "1";
-            const adminStorage = localStorage.getItem("adminAutenticado");
-            const isAdmin = modoAdminSecreto || (adminStorage && adminStorage.trim() === "true");
+            const isAdmin = Boolean(localStorage.getItem("adminToken"));
 
             if (diaSemana === 0 || minutosAtuais < aberturaMinutos || minutosAtuais > fechamentoMinutos) {
                 if (isAdmin) {

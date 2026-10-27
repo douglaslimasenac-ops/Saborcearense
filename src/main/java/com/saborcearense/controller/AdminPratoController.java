@@ -7,10 +7,10 @@ import org.springframework.web.bind.annotation.*;
 
 import com.saborcearense.model.Produto;
 import com.saborcearense.repository.ItemCardapioRepository;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/admin/pratos")
-@CrossOrigin(origins = "*") 
 public class AdminPratoController {
 
     @Autowired 
@@ -22,17 +22,19 @@ public class AdminPratoController {
     }
 
     @PostMapping
-    public ResponseEntity<Produto> adicionar(@RequestBody Produto novoPrato) {
+    public ResponseEntity<Produto> adicionar(@Valid @RequestBody Produto novoPrato) {
         return ResponseEntity.ok(itemCardapioRepository.save(novoPrato));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Produto> atualizar(@PathVariable Long id, @RequestBody Produto pratoAtualizado) {
+    public ResponseEntity<Produto> atualizar(@PathVariable Long id, @Valid @RequestBody Produto pratoAtualizado) {
         return itemCardapioRepository.findById(id)
             .map(prato -> {
                 prato.setNome(pratoAtualizado.getNome());
                 prato.setDescricao(pratoAtualizado.getDescricao());
                 prato.setPreco(pratoAtualizado.getPreco());
+                prato.setCategoria(pratoAtualizado.getCategoria());
+                prato.setImagemUrl(pratoAtualizado.getImagemUrl());
                 prato.setDisponivel(pratoAtualizado.isDisponivel()); 
                 return ResponseEntity.ok(itemCardapioRepository.save(prato));
             })

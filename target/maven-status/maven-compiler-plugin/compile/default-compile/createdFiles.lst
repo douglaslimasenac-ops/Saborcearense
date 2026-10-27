@@ -1,0 +1,17 @@
+com\saborcearense\model\Pedido.class
+com\saborcearense\controller\AdminAuthController$LoginRequest.class
+com\saborcearense\config\WebSecurityConfig.class
+com\saborcearense\DeliveryApplication.class
+com\saborcearense\controller\AdminPratoController.class
+com\saborcearense\model\Produto.class
+com\saborcearense\config\WebSocketConfig.class
+com\saborcearense\model\Prato.class
+com\saborcearense\controller\CardapioController.class
+com\saborcearense\security\AdminTokenService.class
+com\saborcearense\config\WebSocketConfig$1.class
+com\saborcearense\controller\PedidoController.class
+com\saborcearense\repository\PedidoRepository.class
+com\saborcearense\controller\ClienteController.class
+com\saborcearense\security\AdminAuthInterceptor.class
+com\saborcearense\controller\AdminAuthController.class
+com\saborcearense\repository\ItemCardapioRepository.class

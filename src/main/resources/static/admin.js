@@ -20,6 +20,19 @@ let socketAdmin = null;
 let pingTimerAdmin = null;
 let audioCtxCompartilhado = null;
 
+async function fetchAdmin(url, options = {}) {
+    const token = localStorage.getItem("adminToken");
+    const headers = { ...(options.headers || {}) };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await fetch(url, { ...options, headers });
+    if (response.status === 401) {
+        localStorage.removeItem("adminToken");
+        alert("Sua sessao administrativa nao e mais valida. Faca login novamente.");
+        window.location.reload();
+    }
+    return response;
+}
+
 // ==========================================
 // 🔐 FLUXO DE AUTENTICAÇÃO SEGURO
 // ==========================================
@@ -54,10 +67,10 @@ function configurarFormularioCadastro() {
         const imagemUrl = document.getElementById("imagem").value;
 
         try {
-            const res = await fetch(URL_BACKEND + "/api/admin/pratos", {
+            const res = await fetchAdmin(URL_BACKEND + "/api/admin/pratos", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nome, preco, category: categoria, imagemUrl, descricao: "Item profissional.", disponivel: true })
+                body: JSON.stringify({ nome, preco, categoria, imagemUrl, descricao: "Item profissional.", disponivel: true })
             });
             if(res.ok) {
                 form.reset();
@@ -118,7 +131,7 @@ async function atualizarPrecoRapido(id, novoPreco) {
     const pratoAntigo = listaPratosLocal.find(p => p.id === id) || {};
 
     try {
-        const res = await fetch(`${URL_API_ADMIN}/${id}`, { 
+        const res = await fetchAdmin(`${URL_API_ADMIN}/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
@@ -146,7 +159,7 @@ async function alternarDisponibilidade(id, statusAtual) {
         const novoStatus = !statusAtual;
         const pratoAntigo = listaPratosLocal.find(p => p.id === id) || {};
         
-        const res = await fetch(`${URL_API_ADMIN}/${id}`, { 
+        const res = await fetchAdmin(`${URL_API_ADMIN}/${id}`, {
             method: "PUT", 
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
@@ -172,7 +185,7 @@ async function alternarDisponibilidade(id, statusAtual) {
 async function deletarItem(id) {
     if (!confirm("Deseja apagar esse item permanentemente?")) return;
     try {
-        const res = await fetch(`${URL_API_ADMIN}/${id}`, { method: "DELETE" });
+        const res = await fetchAdmin(`${URL_API_ADMIN}/${id}`, { method: "DELETE" });
         if (res.ok || res.status === 204) {
             carregarItensAdmin();
         } else {
@@ -193,7 +206,8 @@ function conectarWebSocketAdmin() {
     if (socketAdmin && socketAdmin.readyState === WebSocket.OPEN) return;
 
     try {
-        socketAdmin = new WebSocket(`${URL_BACKEND_WS}/ws-status`);
+        const token = encodeURIComponent(localStorage.getItem("adminToken") || "");
+        socketAdmin = new WebSocket(`${URL_BACKEND_WS}/ws-status?token=${token}`);
         
         socketAdmin.onopen = () => {
             console.log("Conectado ao WebSocket do Render.");
@@ -318,7 +332,7 @@ async function carregarPedidosAtivos() {
     if (containerHistorico) containerHistorico.innerHTML = "";
 
     try {
-        const resAtivos = await fetch(URL_BACKEND + "/api/pedidos/ativos");
+        const resAtivos = await fetchAdmin(URL_BACKEND + "/api/pedidos/ativos");
         if (resAtivos.ok) {
             const pedidosAtivos = await resAtivos.json();
             let temAtivos = false;
@@ -366,7 +380,7 @@ async function carregarPedidosAtivos() {
     } catch (e) { console.log("Erro ao carregar pedidos ativos:", e); }
 
     try {
-        const resTodos = await fetch(URL_BACKEND + "/api/pedidos");
+        const resTodos = await fetchAdmin(URL_BACKEND + "/api/pedidos");
         if (resTodos.ok) {
             const todosPedidos = await resTodos.json();
             let temFinalizados = false;
@@ -402,7 +416,7 @@ async function carregarPedidosAtivos() {
 
 async function mudarStatusPedido(id, novoStatus) {
     try {
-        const res = await fetch(`${URL_BACKEND}/api/pedidos/${id}/status?status=${novoStatus}`, { method: "PUT" });
+        const res = await fetchAdmin(`${URL_BACKEND}/api/pedidos/${id}/status?status=${encodeURIComponent(novoStatus)}`, { method: "PUT" });
         if (res.ok) {
             carregarPedidosAtivos();
             if (socketAdmin && socketAdmin.readyState === WebSocket.OPEN) {
@@ -415,7 +429,7 @@ async function mudarStatusPedido(id, novoStatus) {
         console.error("Erro ao mudar status do pedido:", e);
     }
 }
-function autenticarAdmin() {
+async function autenticarAdmin() {
     const campoUsuario = document.getElementById("usuario-login");
     const campoSenha = document.getElementById("senha-login");
 
@@ -425,10 +439,20 @@ function autenticarAdmin() {
     }
 
     const u = campoUsuario.value.trim();
-    const s = campoSenha.value.trim();
-    
-    if (u === "admin" && s === "sabor123") {
-        localStorage.setItem("adminAutenticado", "true");
+    const s = campoSenha.value;
+
+    try {
+        const resposta = await fetch(URL_BACKEND + "/api/admin/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({ username: u, password: s })
+        });
+        if (!resposta.ok) {
+            alert("Usuario ou senha incorretos!");
+            return;
+        }
+        const dados = await resposta.json();
+        localStorage.setItem("adminToken", dados.token);
         document.getElementById("container-login-view").style.display = "none";
         document.getElementById("painel-adm-wrapper").style.display = "flex";
         
@@ -436,8 +460,8 @@ function autenticarAdmin() {
         if (typeof inicializarControlePedidos === "function") inicializarControlePedidos();
         if (typeof configurarFormularioCadastro === "function") configurarFormularioCadastro();
         if (typeof exibirBannerAtivacaoAudio === "function") exibirBannerAtivacaoAudio();
-    } else {
-        alert("Usuario ou senha incorretos!");
+    } catch (erro) {
+        alert("Nao foi possivel conectar ao servidor de autenticacao.");
     }
 }
 

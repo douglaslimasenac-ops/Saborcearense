@@ -12,7 +12,6 @@ import jakarta.annotation.PostConstruct;
 
 @RestController
 @RequestMapping("/api/cardapio")
-@CrossOrigin(origins = "*")
 public class CardapioController {
 
     @Autowired

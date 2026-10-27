@@ -1,56 +1,446 @@
+/* ==========================================================================
+   1. CONFIGURAÇÃO DE CORES, PALETA CREME E VARIÁVEIS GERAIS
+   ========================================================================== */
 :root {
-    --primary: #f5a623;       /* Amarelo Alaranjado do logotipo */
-    --primary-hover: #d48a17; /* Mostarda um pouco mais escuro para o hover */
-    --dark: #111111;          /* Preto rústico dos textos da logo */
-    --light-bg: #fffcf5;      /* Fundo bege bem suave estilo comida caseira quentinha */
-    --border-color: #ebdcb9;  /* Bordas em tom pastel combinando */
+    --primary: #f5a623;        /* Laranja/Dourado oficial dos botões e badges */
+    --dark: #141414;           /* Fundo fosco escuro das faixas de categoria */
+    --bg-creme: #faf6ee;       /* O tom creme exato de fundo da tela */
+    --border-color: #ebdcb9;   /* Cor de borda suave combinando com o creme */
+    --text-main: #111111;      /* Cor primária para tipografias estruturais */
+}
+
+/* ==========================================================================
+   2. CONFIGURAÇÃO BASE E LIMITADOR MOBILE FIRST (ANTI-ESTICA)
+   ========================================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--light-bg);
-    margin: 0;
-    padding: 0;
-    color: var(--dark);
+    background-color: var(--bg-creme);
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
 }
 
+/* CONTAINER APP MOBILE CENTRALIZADO */
 .container {
-    max-width: 600px;
+    width: 100%;
+    max-width: 480px; /* Alinhamento que simula visual de smartphone no PC */
     margin: 0 auto;
-    padding: 16px 16px 140px 16px; /* Espaço para não cobrir o conteúdo com a barra */
+    padding: 20px 16px 110px 16px; /* Padding bottom compensa o rodapé fixo */
+    background-color: var(--bg-creme);
+    display: flex;
+    flex-direction: column;
 }
 
-/* Barra do Carrinho Flutuante Travada no Rodapé */
-.barra-carrinho {
-    position: fixed;
-    bottom: 0;
-    left: 0;
+/* ==========================================================================
+   3. CABEÇALHO (HEADER APP)
+   ========================================================================== */
+.header-app {
+    text-align: center;
+    margin: 15px 0 20px 0;
+    color: var(--dark);
     width: 100%;
-    box-sizing: border-box;
-    background: var(--dark);
-    color: #fff;
-    padding: 16px 24px;
+}
+
+.header-app h1 {
+    font-size: 2.1rem;
+    margin-bottom: 5px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+}
+/* ==========================================================================
+   4. STATUS DE FUNCIONAMENTO E HORÁRIOS
+   ========================================================================== */
+.status-barra {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    border-radius: 8px;
+    margin: 15px 0 5px 0;
+    background-color: #ffffff;
+    color: var(--dark);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.horario-container {
+    text-align: center;
+    margin: 5px auto 20px auto;
+    width: 100%;
+}
+
+.horario-dias {
+    margin: 4px 0;
+    font-size: 14px;
+    color: #4A2412;
+    font-weight: bold;
+}
+
+.horario-entregas {
+    margin: 4px 0;
+    font-size: 13px;
+    color: #D32F2F;
+    font-weight: bold;
+    background-color: #FFF3CD;
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    border: 1px solid #FFEBAA;
+}
+
+/* ==========================================================================
+   5. NAVEGAÇÃO SUPERIOR POR ABAS
+   ========================================================================== */
+.abas-navegacao .btn-aba {
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.abas-navegacao .btn-aba:not(.ativo) {
+    background: #ffffff !important;
+    color: var(--dark) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.abas-navegacao .btn-aba.ativo {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--dark) !important;
+}
+
+/* ==========================================================================
+   6. CARDÁPIO E SEÇÃO DE PRODUTOS (ESTILO ANTI-TREPIDAÇÃO IFOOD)
+   ========================================================================== */
+.menu-section {
+    width: 100%;
+    margin-top: 15px;
+}
+
+.menu-section h2 {
+    background: var(--dark) !important;
+    color: var(--primary) !important;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-top: 20px;
+    margin-bottom: 15px;
+}
+
+.menu-section h3 {
+    color: var(--dark);
+    border-bottom: 3px solid var(--primary) !important;
+    padding-bottom: 6px;
+    margin-top: 25px;
+    margin-bottom: 14px;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.menu-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
-    z-index: 9999;
-    border-top: 3px solid var(--primary);
+    background: #ffffff !important;
+    padding: 14px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+    width: 100%;
 }
 
-.btn-avancar {
-    background: var(--primary);
-    border: none;
-    color: var(--dark); /* Texto escuro para dar contraste no botão amarelo */
-    padding: 12px 24px;
+.menu-item.selecionado {
+    border-left: 6px solid var(--primary) !important;
+    background: #fffdf9 !important;
+}
+
+.foto-produto-container {
+    width: 70px;
+    height: 70px;
+    min-width: 70px;
+    max-width: 70px;
+    min-height: 70px;
+    max-height: 70px;
+    background-color: #f0f0f0; 
+    border-radius: 8px;
+    overflow: hidden;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.foto-produto-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
+    animation: fadeInSuave 0.3s forwards;
+}
+
+@keyframes fadeInSuave {
+    to { opacity: 1; }
+}
+/* ==========================================================================
+   7. SELETOR DE QUANTIDADE INTEGRADO
+   ========================================================================== */
+.seletor-quantidade {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #ffffff !important;
+    border: 2px solid var(--primary) !important;
     border-radius: 6px;
-    font-weight: bold;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s;
+    padding: 2px 8px;
+    min-width: 85px;
+    height: 32px;
 }
 
-.btn-avancar:hover {
-    background: var(--primary-hover);
-    transform: scale(1.02);
+.btn-qtd {
+    background: transparent !important;
+    border: none !important;
+    color: var(--dark) !important;
+    font-size: 1.4rem;
+    font-weight: bold;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qtd-numero {
+    font-weight: bold;
+    color: var(--dark);
+    font-size: 1.05rem;
+}
+
+.item-esgotado {
+    opacity: 0.4;
+    background: #f2f2f2 !important;
+    border-left: 4px solid #95a5a6 !important;
+}
+
+.badge-esgotado {
+    color: #7f8c8d;
+    font-weight: bold;
+    background: #e0e0e0;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+/* ==========================================================================
+   8. GAVETA DA SACOLA DE COMPRAS (DRAWER MODAL)
+   ========================================================================== */
+.sacola-drawer-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1050;
+    visibility: hidden;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Disparado pelo .classList.add('open') do seu script JS */
+.sacola-drawer-container.open {
+    visibility: visible;
+}
+
+.sacola-drawer-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.sacola-drawer-content {
+    position: absolute;
+    bottom: -100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: #ffffff;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.15);
+    transition: bottom 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+}
+
+.sacola-drawer-container.open .sacola-drawer-content {
+    bottom: 0;
+}
+
+.sacola-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.sacola-drawer-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--dark);
+}
+
+.btn-fechar-drawer {
+    background: #f5f5f5;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sacola-drawer-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* LINHAS DO CARRINHO INJETADAS DINAMICAMENTE */
+.item-sacola-linha {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.item-sacola-linha button {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.sacola-drawer-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #f0f0f0;
+    background: #ffffff;
+}
+
+.sacola-drawer-subtotal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    font-weight: bold;
+    font-size: 1.05rem;
+}
+
+.btn-drawer-finalizar {
+    width: 100%;
+    background-color: var(--primary);
+    color: #111111;
+    border: none;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-drawer-finalizar:hover {
+    background-color: #e0941f;
+}
+
+/* ==========================================================================
+   9. FIXAÇÃO DO RODAPÉ (CARRINHO FLUTUANTE DA TELA PRINCIPAL)
+   ========================================================================== */
+#barra-flutuante,
+.cart-bar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;                     /* Move a lateral esquerda do rodapé para o centro exato do monitor */
+    transform: translateX(-50%);   /* Desloca 50% da largura do próprio rodapé para a esquerda, centralizando-o perfeitamente */
+    width: 100%;
+    max-width: 480px;              /* Limita o tamanho exato para casar com o design do seu app no PC */
+    background-color: #ffffff;
+    border-top: 4px solid var(--primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.06);
+    z-index: 1000;
+    gap: 10px;
+    border-radius: 12px 12px 0 0;  /* Mantém as bordinhas arredondadas no topo */
+    box-sizing: border-box;        /* Garante que o padding não estoure os 480px */
+}
+
+
+/* ==========================================================================
+   MELHORIA DOS BOTÕES DE CATEGORIA (ABAS)
+   ========================================================================== */
+
+/* Remove a barra de rolagem horizontal nativa feia se houver muitos botões */
+.abas-navegacao {
+    scrollbar-width: none; /* Firefox */
+}
+.abas-navegacao::-webkit-scrollbar {
+    display: none; /* Chrome, Safari e Edge */
+}
+
+/* Estilo padrão de todos os botões de aba */
+.abas-navegacao .btn-aba {
+    flex: 1;
+    background: #ffffff !important;
+    color: #334155 !important; /* Cor cinza escuro moderna para o texto */
+    border: 1px solid #e2e8f0 !important; /* Borda fina e elegante */
+    padding: 10px 14px !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Efeito ao passar o mouse por cima (Desktop) */
+.abas-navegacao .btn-aba:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* ESTADO ATIVO - Quando a aba está selecionada (Preenchimento Laranja Oficial) */
+.abas-navegacao .btn-aba.ativo {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: #111111 !important; /* Texto escuro para dar contraste no amarelo */
+    box-shadow: 0 4px 12px rgba(245, 166, 35, 0.2) !important; /* Leve brilho na aba ativa */
 }

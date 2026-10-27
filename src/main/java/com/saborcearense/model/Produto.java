@@ -8,6 +8,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "produto")
@@ -18,12 +21,16 @@ public class Produto {
     private Long id;
 
     @Column(nullable = false, length = 100)
+    @NotBlank
     private String nome;
 
     @Column(nullable = false, length = 50)
+    @NotBlank
     private String categoria;
 
     @Column(nullable = false, precision = 10, scale = 2)
+    @NotNull
+    @DecimalMin(value = "0.00")
     private BigDecimal preco;
 
     @Column(length = 255)

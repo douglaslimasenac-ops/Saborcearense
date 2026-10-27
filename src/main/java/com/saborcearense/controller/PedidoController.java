@@ -1,10 +1,12 @@
 package com.saborcearense.controller;
 
 import java.util.List;
+import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable; // Supondo o padrão do seu projeto
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 import org.springframework.web.socket.TextMessage; // Adicione este import no topo da classe
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +25,6 @@ import com.saborcearense.repository.PedidoRepository;
 
 @RestController
 @RequestMapping("/api/pedidos")
-@CrossOrigin(origins = "*")
 public class PedidoController {
         // --- ADICIONE ESTE ENDPOINT EXATAMENTE ASSIM NO SEU PEDIDOCONTROLLER ---
     // Ele lista TODOS os pedidos do banco (ativos + entregues), permitindo alimentar o histórico
@@ -41,9 +43,7 @@ public class PedidoController {
     public List<Pedido> listarPedidosAtivos() {
         // Se o seu repositório não tiver essa query nativa, o Spring Boot aceita o método abaixo
         // ou você pode filtrar via stream na lista completa:
-        return pedidoRepository.findAll().stream()
-                .filter(pedido -> ! "ENTREGUE".equalsIgnoreCase(pedido.getStatus()))
-                .toList();
+        return pedidoRepository.findByStatusNotIgnoreCase("ENTREGUE");
     } // <-- ESSA CHAVE ESTAVA FALTANDO AQUI PARA FECHAR A FUNÇÃO DOS ATIVOS!
 
     // 🔍 BUSCAR STATUS POR ID: Chamado pelo site para rastrear o pedido
@@ -55,11 +55,16 @@ public class PedidoController {
     }
 
    @PostMapping
-    public Pedido receberNovoPedido(@RequestBody Pedido novoPedido) {
+    public Pedido receberNovoPedido(@Valid @RequestBody Pedido novoPedido) {
         // Define o status inicial padrão exigido pela linha do tempo
         if (novoPedido.getStatus() == null || novoPedido.getStatus().isEmpty()) {
             novoPedido.setStatus("RECEBIDO");
         }
+        String statusNormalizado = novoPedido.getStatus().trim().toUpperCase();
+        if (!java.util.Set.of("RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE").contains(statusNormalizado)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status de pedido invalido");
+        }
+        novoPedido.setStatus(statusNormalizado);
         
         System.out.println("Sabor Cearense: Novo pedido recebido do cliente " + novoPedido.getClienteNome());
         
@@ -80,7 +85,7 @@ public class PedidoController {
                 }
             }
             System.out.println("🌵 Sabor Cearense: Alerta de novo pedido enviado via WebSocket!");
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.err.println("Erro ao enviar pedido via WebSocket: " + e.getMessage());
         }
 
@@ -92,14 +97,16 @@ public class PedidoController {
     public ResponseEntity<Pedido> mudarStatusPedido(
             @PathVariable Long id, 
             @RequestParam String status) {
+        String statusNormalizado = status == null ? "" : status.trim().toUpperCase();
+        if (!java.util.Set.of("RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE").contains(statusNormalizado)) {
+            return ResponseEntity.badRequest().build();
+        }
         
         return pedidoRepository.findById(id).map(pedido -> {
-            pedido.setStatus(status.toUpperCase().trim());
+            pedido.setStatus(statusNormalizado);
             Pedido pedidoAtualizado = pedidoRepository.save(pedido);
             System.out.println("Sabor Cearense: Pedido #" + id + " alterado para o status: " + status);
             return ResponseEntity.ok(pedidoAtualizado);
         }).orElse(ResponseEntity.notFound().build());
     }
 }
-
-

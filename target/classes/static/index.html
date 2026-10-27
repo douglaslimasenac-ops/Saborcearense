@@ -5,216 +5,396 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sabor Cearense - Cardápio</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .header-app { text-align: center; margin: 20px 0; color: var(--dark); }
-        .header-app h1 { font-size: 2.2rem; margin-bottom: 5px; font-weight: 900; }
-        .menu-section h2 { background: var(--dark); color: var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 1.25rem; margin-top: 25px; }
-        .menu-section h3 { color: var(--dark); border-bottom: 3px solid var(--primary); padding-bottom: 4px; margin-top: 20px; font-size: 1.15rem; }
-        
-        .seletor-quantidade {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: #fff;
-            border: 2px solid var(--primary);
-            border-radius: 6px;
-            padding: 2px 8px;
-            min-width: 85px;
-            height: 32px;
-        }
-        .btn-qtd {
-            background: transparent;
-            border: none;
-            color: var(--dark);
-            font-size: 1.4rem;
-            font-weight: bold;
-            cursor: pointer;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .qtd-numero { font-weight: bold; color: var(--dark); font-size: 1.05rem; }
-
-        .menu-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #fff;
-            padding: 14px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-        }
-        .menu-item.selecionado { border-left: 6px solid var(--primary); background: #fffdf7; }
-        .item-info h4 { margin: 0 0 6px 0; font-size: 1.05rem; color: var(--dark); }
-        .preco { color: #27ae60; font-weight: bold; font-size: 1.1rem; }
-        .item-esgotado { opacity: 0.4; background: #f2f2f2!important; border-left: 4px solid #95a5a6!important; }
-        .badge-esgotado { color: #7f8c8d; font-weight: bold; background: #e0e0e0; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; }
-        
-        .status-barra {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px;
-            font-weight: bold;
-            border-radius: 8px;
-            margin: 15px 0;
-            background-color: #fff;
-            color: var(--dark);
-            border: 2px solid var(--border-color);
-        }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-        .status-aberto { background-color: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
-        .status-fechado { background-color: #e74c3c; box-shadow: 0 0 6px #e74c3c; }
-
-        .btn-avancar {
-            background-color: #f5a623 !important; /* Amarelo Alaranjado corrigido */
-            color: #111111 !important; /* Preto Rústico */
-            border: none;
-            padding: 10px 20px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-avancar:hover {
-            background-color: #e0941f !important;
-        }
-    </style>
 </head>
-<body style="padding-bottom: 90px;">
+<body>
 
-    <div class="container">
-        <header class="header-app">
-            <h1>🌵 Sabor Cearense 🌵</h1>
-            <p style="font-weight: 500; font-size: 1.1rem; margin-top: -5px;">Comida Caseira Legítima</p>
-            <p style="font-size: 0.9rem; font-weight: bold; color: #555; background: var(--primary); display: inline-block; padding: 4px 12px; border-radius: 20px;">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
-        </header>
+   <!-- CONTAINER CENTRAL DO APLICATIVO -->
+<div class="container">
+    
+    <!-- CABEÇALHO COM BOTÃO DE ADMIN -->
+    <header class="header-app" style="position: relative;">
+        <a href="admin.html" title="Acessar Painel do Administrador" style="position: absolute; top: -10px; right: 10px; text-decoration: none; font-size: 1.4rem; color: #a0aec0; transition: color 0.2s;">⚙️</a>
+        <h1>🌵 Sabor Cearense 🌵</h1>
+        <p style="font-weight: 500; font-size: 1.1rem; margin-top: -5px;">Comida Caseira Legítima</p>
+        <p style="font-size: 0.9rem; font-weight: bold; color: #555; background: var(--primary); display: inline-block; padding: 4px 12px; border-radius: 20px;">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
+    </header>
 
-        <div id="status-loja" class="status-barra">Carregando funcionamento...</div>
+    <!-- STATUS DE FUNCIONAMENTO -->
+    <div id="status-loja" class="status-barra">Carregando funcionamento...</div>
 
-        <main>
-            <section class="menu-section">
-                <h2>🌹 Pratos do Dia</h2>
-                <div id="section-PRATOS_DO_DIA" class="menu-items"></div>
-            </section>
-
-            <section class="menu-section">
-                <h2>📌 Pratos Principais</h2>
-                <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px;"><em>Todos acompanham arroz, feijão e farofa</em></p>
-                
-                <h3>🐔 Frango</h3>
-                <div id="section-FRANGO" class="menu-items"></div>
-                
-                <h3>🥩 Carne</h3>
-                <div id="section-CARNE" class="menu-items"></div>
-                
-                <h3>🐟 Outros</h3>
-                <div id="section-OUTROS" class="menu-items"></div>
-            </section>
-
-            <section class="menu-section">
-                <h2>😋 Sobremesas - R\$ 8,00</h2>
-                <div id="section-SOBREMESA" class="menu-items"></div>
-            </section>
-
-            <!-- Nova Seção de Bebidas Geladas -->
-            <section class="menu-section">
-                <h2>🥤 Bebidas Geladas</h2>
-                <div id="section-BEBIDA" class="menu-items"></div>
-            </section>
-        </main>
-
-        <footer style="text-align: center; margin-top: 40px;">
-            <a href="admin.html" style="color: #999; text-decoration: none; font-size: 0.85rem; font-weight: bold;">⚙ Acessar Painel do Administrador</a>
-        </footer>
+    <!-- HORÁRIOS DE ENTREGA -->
+    <div class="horario-container">
+        <p class="horario-dias">📅 Segunda a Sábado</p>
+        <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
     </div>
 
-    <div class="barra-carrinho" style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999; display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px; box-shadow: 0 -3px 10px rgba(0,0,0,0.1); box-sizing: border-box;">
-        <div style="font-size: 1.05rem; font-weight: 500; color: #111111;">Total selecionado: <span id="total-flutuante" style="color: #f5a623; font-weight: bold; font-size: 1.2rem;">R\$ 0,00</span></div>
-        <button onclick="irParaFinalizacao()" class="btn-avancar">Avançar para o Carrinho ➔</button>
+    <!-- BOTÃO CENTRAL DE RASTREIO -->
+    <div style="text-align: center; margin: -10px auto 20px auto; max-width: 650px; padding: 0 10px;">
+        <button type="button" id="open-tracking-btn" onclick="abrirAbaRastreioOculta()" style="background: #e6f0fa; border: 1.5px solid #4a90e2; padding: 10px 20px; font-weight: bold; border-radius: 30px; cursor: pointer; color: #2a64a6; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+            🔍 Já fez um pedido? Clique aqui para rastrear
+        </button>
     </div>
-    <script>
-        const URL_BACKEND = "https://saborcearense-5.onrender.com";
-        let carrinho = {};
 
-        document.addEventListener("DOMContentLoaded", () => {
-            verificarStatusLoja();
-            carregarCardapio();
+    <!-- ABAS DE NAVEGAÇÃO -->
+    <div class="abas-navegacao" style="display: flex; justify-content: space-between; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px;">
+        <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')">🍽️ do Dia</button>
+        <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')">📌 Principais</button>
+        <button class="btn-aba" onclick="alternarAba('SOBREMESA')">🍪 Sobremesa</button>
+        <button class="btn-aba" onclick="alternarAba('BEBIDA')">🥤 Bebida</button>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL DO CARDÁPIO -->
+    <main>
+        <section id="aba-PRATOS_DO_DIA" class="menu-section">
+            <h2>🌹 Pratos do Dia</h2>
+            <div id="section-PRATOS_DO_DIA" class="menu-items"></div>
+        </section>
+
+        <section id="aba-PRINCIPAIS" class="menu-section" style="display: none;">
+            <h2>📌 Pratos Principais</h2>
+            <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px; margin-bottom: 15px;"><em>Todos acompanham arroz, feijão e farofa</em></p>
+            
+            <h3>🐔 Frango</h3>
+            <div id="section-FRANGO" class="menu-items"></div>
+            
+            <h3>🥩 Carne</h3>
+            <div id="section-CARNE" class="menu-items"></div>
+            
+            <h3>🐟 Outros</h3>
+            <div id="section-OUTROS" class="menu-items"></div>
+        </section>
+
+        <section id="aba-SOBREMESA" class="menu-section" style="display: none;">
+            <h2>😋 Sobremesas - R$ 8,00</h2>
+            <div id="section-SOBREMESA" class="menu-items"></div>
+        </section>
+
+        <section id="aba-BEBIDA" class="menu-section" style="display: none;">
+            <h2>🥤 Bebidas Geladas</h2>
+            <div id="section-BEBIDA" class="menu-items"></div>
+        </section>
+
+        <!-- SEÇÃO DE RASTREIO OCULTA -->
+        <section id="aba-RASTREIO" class="menu-section" style="display: none; background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.01); margin-top: 25px;">
+            <h2 style="background: var(--dark); color: var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 1.25rem; margin-top: 0; margin-bottom: 20px;">🔍 Acompanhar Meu Pedido</h2>
+            
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 25px; display: flex; gap: 10px;">
+                <input type="number" id="input-rastreio-index" placeholder="Digite o Nº do seu Pedido" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; text-align: center; font-size: 1rem;">
+                <button onclick="executarBuscaRastreio()" style="background: var(--primary); border: none; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer;">Consultar</button>
+            </div>
+
+            <div id="wrapper-linha-tempo" style="display: none;">
+                <div style="background: #edf2f7; display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; margin-bottom: 20px;">Pedido #<span id="txt-index-id">...</span></div>
+                
+                <div class="linha-tempo" style="display: flex; justify-content: space-between; position: relative; margin: 30px 0; padding: 0 10px;">
+                    <div id="p-RECEBIDO" class="passo-front">
+                        <div class="circulo-front">1</div>
+                        <div class="legenda-front">Recebido</div>
+                    </div>
+                    <div id="p-PREPARO" class="passo-front">
+                        <div class="circulo-front">2</div>
+                        <div class="legenda-front">Preparo</div>
+                    </div>
+                    <div id="p-ENTREGA" class="passo-front">
+                        <div class="circulo-front">3</div>
+                        <div class="legenda-front">Entrega</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 🌵 BARRA FIXA INFERIOR (RODAPÉ RESUMO) -->
+    <div id="barra-flutuante" class="cart-bar">
+        
+        <!-- Valores e totalizadores (Agrupados à esquerda) -->
+        <div style="text-align: left; cursor: pointer;" onclick="abrirSacola()">
+            <span id="txt-qtd-itens" style="font-size: 0.8rem; color: #64748b; display: block; font-weight: 500;">0 itens</span>
+            <div id="txt-valor-total" style="font-weight: 800; color: #27ae60; font-size: 1.15rem;">R$ 0,00</div>
+        </div>
+
+        <!-- Botões de navegação (Agrupados à direita) -->
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button onclick="abrirSacola()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: bold; border-radius: 8px; cursor: pointer; color: #475569; font-size: 0.85rem;">
+                🛒 Ver Sacola
+            </button>
+            <button onclick="irParaCheckout()" style="background: #22c55e; color: white; border: none; padding: 10px 16px; font-size: 0.95rem; font-weight: bold; border-radius: 8px; cursor: pointer;">
+                Avançar ➔
+            </button>
+        </div>
+
+    </div> <!-- Fim da barra flutuante -->
+
+</div> <!-- FIM DO CONTAINER CENTRAL -->
+
+
+<!-- 🌵 GAVETA MODAL DA SACOLA (RESTRUTURADA EM CAMADA ÚNICA) -->
+<div id="painel-sacola-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 99999; display: none; font-family: sans-serif;">
+    <!-- Fundo escuro clicável para fechar -->
+    <div onclick="fecharSacola()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    
+    <!-- Caixa interna com as propriedades responsivas móveis aplicadas via JavaScript -->
+    <div id="conteudo-gaveta-sacola" style="position: fixed; background: #ffffff; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.24); transition: all 0.3s ease-in-out; border-radius: 16px; width: 90%; max-width: 450px; top: 50%; left: 50%; transform: translate(-50%, -50%); max-height: 85vh; box-sizing: border-box;">
+        
+        <!-- Cabeçalho -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f0f0f0;">
+            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #1e293b;">Sua Sacola</h3>
+            <button onclick="fecharSacola()" style="background: #f5f5f5; border: none; width: 32px; height: 32px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+        </div>
+        
+        <!-- Lista de Produtos Rolável -->
+        <div id="lista-produtos-sacola" style="padding: 20px; overflow-y: auto; flex: 1; min-height: 150px; max-height: 50vh; box-sizing: border-box;">
+            <!-- Injetado dinamicamente via JS -->
+        </div>
+
+        <!-- Rodapé do Modal -->
+        <div style="padding: 20px; border-top: 1px solid #f0f0f0; background: #fafafa; border-radius: 0 0 16px 16px;">
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; margin-bottom: 15px; color: #1e293b;">
+                <span>Subtotal:</span>
+                <span id="txt-modal-subtotal">R$ 0,00</span>
+            </div>
+            <button onclick="irParaCheckout()" style="width: 100%; padding: 14px; background: #22c55e; color: #ffffff; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: background 0.2s;">
+                Confirmar e Ir para o Pagamento ➔
+            </button>
+        </div>
+    </div>
+</div>
+
+
+    <!-- SCRIPTS DE LOGICA -->
+    <script src="index.js"></script>
+    <!-- INTERCEPTADOR DE ACOMPANHAMENTOS DO SABOR CEARENSE -->
+<!-- SISTEMA AUTOMÁTICO DE ACAMPONHAMENTOS E SACOLA DO SABOR CEARENSE -->
+<!-- INTERCEPTADOR EXCLUSIVO DE ACOMPANHAMENTOS - SABOR CEARENSE -->
+<!-- SISTEMA DEFINITIVO DE ACOMPANHAMENTOS E SACOLA - SABOR CEARENSE -->
+<script>
+// Cria e garante a função global para os botões do seu cardápio
+window.mudarQuantidade = function(id, mudanca, nome, preco) {
+    // 1. Se o cliente estiver diminuindo a quantidade (botão -), executa direto na sacola
+    if (mudanca < 0) {
+        atualizarArmazenamentoSacola(id, mudanca, nome, preco);
+        return;
+    }
+
+    // 2. Filtro automático: Se for bebida ou sobremesa, pula os acompanhamentos e adiciona direto
+    var nomeMinusculo = nome.toLowerCase();
+    var termosPular = ["coca", "suco", "guaraná", "fanta", "água", "bebida", "pudim", "doce", "sobremesa", "cerveja", "sprite", "fanta"];
+    var devePular = termosPular.some(function(termo) { return nomeMinusculo.includes(termo); });
+
+    // Se o prato já tiver os parênteses de acompanhamento no nome, adiciona direto
+    if (devePular || (nome.includes("(") && nome.includes(")")) ) {
+        atualizarArmazenamentoSacola(id, mudanca, nome, preco);
+        return;
+    }
+
+    // 3. Monta o HTML do Modal de Acompanhamentos na tela
+    var modal = document.createElement("div");
+    modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 999999; font-family: sans-serif; padding: 15px; box-sizing: border-box;";
+    
+    modal.innerHTML = `
+        <div style="background: #fff; padding: 20px; border-radius: 12px; max-width: 360px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <h3 style="margin-top: 0; color: #141414; font-size: 1.1rem; border-bottom: 2px solid #e76f51; padding-bottom: 8px; font-weight: bold;">🌵 Acompanhamentos do Prato</h3>
+            <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">Escolha até 2 opções para o seu <strong>${nome}</strong>:</p>
+            
+            <div id="lista-opcoes-acomp" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Maionese" style="width: 18px; height: 18px;"> Maionese</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Macarronese" style="width: 18px; height: 18px;"> Macarronese</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Salada de Legumes" style="width: 18px; height: 18px;"> Salada de Legumes</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Purê" style="width: 18px; height: 18px;"> Purê</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Espaguete" style="width: 18px; height: 18px;"> Espaguete</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Fritas" style="width: 18px; height: 18px;"> Fritas</label>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button id="btn-cancelar-acomp" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; font-weight: bold; cursor: pointer; color: #475569;">Cancelar</button>
+                <button id="btn-confirmar-acomp" style="flex: 1; padding: 10px; border: none; background: #22c55e; color: #fff; border-radius: 6px; font-weight: bold; cursor: pointer;">Confirmar</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+
+    // Trava a seleção em no máximo 2 opções marcadas
+    var checkboxes = modal.querySelectorAll("#lista-opcoes-acomp input");
+    checkboxes.forEach(function(cb) {
+        cb.addEventListener("change", function() {
+            var marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
+            if (marcados.length > 2) {
+                cb.checked = false;
+                alert("⚠️ Você pode escolher no máximo 2 acompanhamentos!");
+            }
         });
+    });
 
-        async function verificarStatusLoja() {
-            try {
-                const resposta = await fetch(URL_BACKEND + "/api/cardapio/status");
-                const dadosStatus = await resposta.json();
-                const msg = dadosStatus.mensagem || "";
-                const classeCor = msg.toLowerCase().includes("fechado") ? "status-fechado" : "status-aberto";
-                document.getElementById("status-loja").innerHTML = `<span class="status-dot ${classeCor}"></span> <span>${msg}</span>`;
-            } catch (erro) {
-                document.getElementById("status-loja").innerHTML = `<span class="status-dot status-fechado"></span> <span>Servidor Offline</span>`;
-            }
+    // Ação do Botão Cancelar
+    modal.querySelector("#btn-cancelar-acomp").onclick = function() { modal.remove(); };
+
+    // Ação do Botão Confirmar
+    modal.querySelector("#btn-confirmar-acomp").onclick = function() {
+        var marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
+        var acompanhamentos = [];
+        marcados.forEach(function(cb) { acompanhamentos.push(cb.value); });
+
+        var nomeItemComAcomp = nome;
+        if (acompanhamentos.length > 0) {
+            nomeItemComAcomp += " (" + acompanhamentos.join(", ") + ")";
         }
 
-        async function carregarCardapio() {
-            try {
-                const resposta = await fetch(URL_BACKEND + "/api/cardapio");
-                const pratos = await resposta.json();
-                const secoes = ["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS", "SOBREMESA", "BEBIDA"];
-                secoes.forEach(sec => { if(document.getElementById("section-"+sec)) document.getElementById("section-"+sec).innerHTML = ""; });
+        modal.remove();
+        atualizarArmazenamentoSacola(id, mudanca, nomeItemComAcomp, preco);
+    };
+};
+// FUNÇÃO INTERNA DA SACOLA: Salva os dados e atualiza as IDs reais do seu HTML
+function atualizarArmazenamentoSacola(idItem, qtdMudanca, nomeFinal, precoFinal) {
+    var carrinho = [];
+    var localData = localStorage.getItem("carrinhoSaborCearense") || localStorage.getItem("saborCearense_carrinho");
+    if (localData) {
+        try { carrinho = JSON.parse(localData); } catch(e) { carrinho = []; }
+    }
+    if (!Array.isArray(carrinho)) { carrinho = []; }
 
-                pratos.forEach(prato => {
-                    let secaoAlvo = String(prato.descricao).trim().toUpperCase(); 
-                    const container = document.getElementById("section-" + secaoAlvo);
-                    if (container) {
-                        let controleHTML = prato.esgotado 
-                            ? `<span class="badge-esgotado">Esgotado</span>` 
-                            : `<div class="seletor-quantidade">
-                                <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, -1, '${prato.nome}', ${prato.preco})">-</button>
-                                <span class="qtd-numero" id="qtd-${prato.id}">0</span>
-                                <button class="btn-qtd" onclick="mudarQuantidade(${prato.id}, 1, '${prato.nome}', ${prato.preco})">+</button>
-                               </div>`;
+    var itemExistente = carrinho.find(function(item) { return item.nome === nomeFinal; });
 
-                        container.innerHTML += `
-                            <div class="menu-item ${prato.esgotado ? 'item-esgotado' : ''}" id="item-${prato.id}">
-                                <div class="item-info"><h4>${prato.nome}</h4><span class="preco">R$ ${prato.preco.toFixed(2).replace('.', ',')}</span></div>
-                                <div class="item-controles">${controleHTML}</div>
-                            </div>`;
-                    }
-                });
-            } catch (erro) { console.error(erro); }
+    if (itemExistente) {
+        itemExistente.quantidade += qtdMudanca;
+        if (itemExistente.quantidade <= 0) {
+            carrinho = carrinho.filter(function(item) { return item.nome !== nomeFinal; });
         }
+    } else if (qtdMudanca > 0) {
+        carrinho.push({
+            id: idItem,
+            nome: nomeFinal,
+            preco: parseFloat(precoFinal),
+            quantidade: 1
+        });
+    }
 
-        function mudarQuantidade(id, alteracao, nome, preco) {
-            if (!carrinho[id]) carrinho[id] = { id: id, nome: nome, qtd: 0, preco: preco };
-            carrinho[id].qtd += alteracao;
-            if (carrinho[id].qtd <= 0) {
-                delete carrinho[id];
-                if(document.getElementById(`item-${id}`)) document.getElementById(`item-${id}`).classList.remove("selecionado");
-                if(document.getElementById(`qtd-${id}`)) document.getElementById(`qtd-${id}`).innerText = "0";
-            } else {
-                if(document.getElementById(`item-${id}`)) document.getElementById(`item-${id}`).classList.add("selecionado");
-                if(document.getElementById(`qtd-${id}`)) document.getElementById(`qtd-${id}`).innerText = carrinho[id].qtd;
-            }
-            atualizarTotalFlutuante();
-        }
+    // Salva as informações nas chaves do LocalStorage
+    localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
+    localStorage.setItem("saborCearense_carrinho", JSON.stringify(carrinho));
 
-        function atualizarTotalFlutuante() {
-            let total = 0;
-            for (let id in carrinho) { total += carrinho[id].qtd * carrinho[id].preco; }
-            document.getElementById("total-flutuante").innerText = "R\$ " + total.toFixed(2).replace('.', ',');
-        }
+    // 1. ATUALIZA A BARRA FIXA INFERIOR DO SEU HTML
+    var txtQtdBarra = document.getElementById("txt-qtd-itens");
+    var txtValorBarra = document.getElementById("txt-valor-total");
+    var totalItensContagem = 0;
+    var valorTotalContagem = 0;
 
-        function irParaFinalizacao() {
-            let itensLista = Object.values(carrinho).filter(item => item.qtd > 0);
-            if (itensLista.length === 0) { alert("Por favor, adicione um item antes de avançar."); return; }
-            localStorage.setItem('itensCarrinhoSaborCearense', JSON.stringify(itensLista));
-            window.location.href = "carrinho.html";
+    carrinho.forEach(function(item) {
+        totalItensContagem += item.quantidade;
+        valorTotalContagem += item.quantidade * item.preco;
+    });
+
+    if (txtQtdBarra) txtQtdBarra.innerText = totalItensContagem + " itens";
+    if (txtValorBarra) txtValorBarra.innerText = "R$ " + valorTotalContagem.toFixed(2).replace(".", ",");
+
+    // 2. ATUALIZA O CONTEÚDO VISUAL DA GAVETA DA SACOLA (IDs REAIS DO SEU BODY)
+    var containerSacolaCorpo = document.getElementById("lista-produtos-sacola");
+    var txtSubtotalModalGaveta = document.getElementById("txt-modal-subtotal");
+    
+    if (containerSacolaCorpo) {
+        containerSacolaCorpo.innerHTML = "";
+        if (carrinho.length === 0) {
+            containerSacolaCorpo.innerHTML = "<p style='text-align:center;color:#64748b;padding:30px;font-weight:500;'>Sua sacola está vazia.</p>";
+        } else {
+            carrinho.forEach(function(item) {
+                var itemDivHTML = document.createElement("div");
+                itemDivHTML.style = "display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #edf2f7; gap:10px;";
+                itemDivHTML.innerHTML = `
+                    <div style="flex:1;">
+                        <div style="font-weight:700 !important; color:#141414 !important; font-size:15px !important; line-height:1.3 !important; display:block !important; visibility:visible !important;">${item.nome}</div>
+                        <div style="color:#e76f51; font-weight:700; font-size:0.9rem; margin-top:3px;">R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <button onclick="mudarQuantidade(${item.id}, -1, '${item.nome}', ${item.preco})" style="width:28px; height:28px; background:#f1f5f9; border:1px solid #cbd5e1; font-weight:bold; border-radius:4px; cursor:pointer; color:#475569;">-</button>
+                        <span style="font-weight:bold; min-width:15px; text-align:center; color:#1a202c;">${item.quantidade}</span>
+                        <button onclick="mudarQuantidade(${item.id}, 1, '${item.nome}', ${item.preco})" style="width:28px; height:28px; background:#f1f5f9; border:1px solid #cbd5e1; font-weight:bold; border-radius:4px; cursor:pointer; color:#475569;">+</button>
+                    </div>
+                `;
+                containerSacolaCorpo.appendChild(itemDivHTML);
+            });
         }
-    </script>
+    }
+    if (txtSubtotalModalGaveta) txtSubtotalModalGaveta.innerText = "R$ " + valorTotalContagem.toFixed(2).replace(".", ",");
+
+    // 3. GERENCIA AS FUNÇÕES DE ABRIR E FECHAR A SUA GAVETA MODAL
+    var gavetaModalHTML = document.getElementById("painel-sacola-modal");
+    
+    window.abrirSacola = function() {
+        if (gavetaModalHTML) gavetaModalHTML.style.display = "block";
+    };
+    window.fecharSacola = function() {
+        if (gavetaModalHTML) gavetaModalHTML.style.display = "none";
+    };
+    
+    // Se o cliente acabou de adicionar um prato (+), força a abertura da gaveta para exibir o prato
+    if (gavetaModalHTML && qtdMudanca > 0) {
+        abrirSacola();
+    }
+}
+
+// Inicializa os textos e pratos salvos assim que carregar o cardápio
+document.addEventListener("DOMContentLoaded", function() {
+    atualizarArmazenamentoSacola(0, 0, "", 0);
+});
+
+// Vincula a ação de redirecionamento para o seu botão "Avançar para o Pagamento"
+window.irParaCheckout = function() {
+    var dadosCarrinhoSalvos = localStorage.getItem("carrinhoSaborCearense") || "[]";
+    window.location.href = "carrinho.html?carrinho=" + encodeURIComponent(dadosCarrinhoSalvos);
+};
+</script>
+<!-- 🌵 AJUSTE VISUAL RESPONSIVO DEFINITIVO - PC E CELULAR -->
+<style>
+    /* Força o fundo escuro a cobrir a tela inteira */
+    #painel-sacola-modal {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.5) !important;
+        z-index: 999999 !important;
+    }
+
+    /* Estilo centralizado e limpo para o COMPUTADOR (Telas grandes) */
+    @media (min-width: 769px) {
+        #conteudo-gaveta-sacola {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: 450px !important;
+            height: auto !important;
+            max-height: 85vh !important;
+            border-radius: 16px !important;
+            bottom: auto !important;
+            right: auto !important;
+        }
+    }
+
+    /* Estilo em formato de gaveta para o CELULAR (Telas pequenas) */
+    @media (max-width: 768px) {
+        #conteudo-gaveta-sacola {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            max-height: 80vh !important;
+            border-radius: 20px 20px 0 0 !important;
+            top: auto !important;
+            transform: none !important;
+        }
+    }
+
+    /* Estilização interna dos itens da lista para não ficarem colados */
+    .item-sacola-linha {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 12px 0 !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+    }
+</style>
+
 </body>
 </html>

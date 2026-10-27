@@ -3,6 +3,9 @@ package com.saborcearense.model;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "pedidos")
@@ -15,10 +18,16 @@ public class Pedido {
     @Column(nullable = false)
     private String status = "RECEBIDO"; // RECEBIDO, PREPARO, ENTREGA, ENTREGUE
 
+    @NotBlank
     private String clienteNome;
+    @NotBlank
     private String telefone;
+    @NotBlank
     private String endereco;
+    @NotBlank
     private String formaPagamento;
+    @NotNull
+    @DecimalMin(value = "0.00")
     private BigDecimal valorTotal;
     private LocalDateTime dataCriacao = LocalDateTime.now();
 

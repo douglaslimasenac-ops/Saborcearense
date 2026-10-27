@@ -278,8 +278,7 @@ async function enviarPedido(e) {
     const diaSemana = agora.getDay();
     const minutosAtuais = (agora.getHours() * 60) + agora.getMinutes();
     
-    const parametrosUrl = new URLSearchParams(window.location.search);
-    const modoAdminSecreto = parametrosUrl.get("admin") === "1" || localStorage.getItem("adminAutenticado") === "true";
+    const modoAdminSecreto = Boolean(localStorage.getItem("adminToken"));
 
     if (diaSemana === 0 || minutosAtuais < (11 * 60 + 30) || minutosAtuais > (15 * 60)) {
         if (!modoAdminSecreto) {

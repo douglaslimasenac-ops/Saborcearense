@@ -5,236 +5,394 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acompanhar Pedido - Sabor Cearense</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cloudflare.com">
     <style>
-        :root {
-            --primary: #f5a623;
-            --dark: #111111;
-            --bg: #fffcf5;
-            --card-bg: #ffffff;
-            --border: #e2e8f0;
-            --muted: #a0aec0;
-            --success: #2ecc71;
+        body { background-color: #fffcf5; color: #111111; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px 20px; margin: 0; }
+        .container-status { max-width: 550px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; text-align: center; }
+        h2 { color: #f5a623; font-weight: 800; margin-bottom: 25px; }
+        
+        .box-busca {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 10px;
         }
-
-        body {
-            background-color: var(--bg);
-            color: var(--dark);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 30px 20px;
-            margin: 0;
-        }
-
-        .container-status {
-            max-width: 550px;
-            margin: 40px auto;
-            background: var(--card-bg);
-            padding: 35px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
-            border: 1px solid var(--border);
+        .box-busca input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-weight: bold;
             text-align: center;
+            font-size: 1rem;
         }
-
-        .topo-status h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 5px; }
-        .pedido-id { color: var(--muted); font-size: 0.9rem; font-weight: 600; margin-bottom: 30px; }
-
-        /* Estilização Avançada da Linha do Tempo (Timeline) */
-        .timeline {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-            text-align: left;
-            margin: 35px 0;
-            position: relative;
-            padding-left: 20px;
+        .box-busca button {
+            background: #f5a623;
+            border: none;
+            padding: 12px 20px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
         }
+        .box-busca button:hover { background: #e0941f; }
 
-        /* Linha vertical de fundo ligando os pontos */
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 5px;
-            top: 10px;
-            bottom: 10px;
-            width: 3px;
-            background: #edf2f7;
-            z-index: 1;
-        }
-
-        .passo {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            position: relative;
-            z-index: 2;
-            opacity: 0.4;
-            transition: all 0.4s ease;
-        }
-
-        /* Ponto indicador da linha do tempo */
-        .ponto-status {
-            width: 13px;
-            height: 13px;
-            border-radius: 50%;
-            background: var(--muted);
-            border: 3px solid #fff;
-            box-shadow: 0 0 0 2px var(--muted);
-            transition: all 0.4s ease;
-        }
-
-        .passo-texto h4 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--dark); }
-        .passo-texto p { margin: 2px 0 0 0; font-size: 0.85rem; color: var(--muted); }
-
-        /* Estados ativos de progresso (Injetados via JS) */
-        .passo.concluido { opacity: 0.6; }
-        .passo.concluido .ponto-status {
-            background: var(--success);
-            box-shadow: 0 0 0 2px var(--success);
-        }
-
-        .passo.atual {
-            opacity: 1;
-            transform: scale(1.02);
-        }
-        .passo.atual .ponto-status {
-            background: var(--primary);
-            box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.3);
-            animation: pulsar 1.5s infinite;
-        }
-
-        @keyframes pulsar {
-            0% { box-shadow: 0 0 0 0px rgba(245, 166, 35, 0.5); }
-            100% { box-shadow: 0 0 0 8px rgba(245, 166, 35, 0); }
-        }
-
-        .btn-inicio {
-            display: inline-block;
-            margin-top: 15px;
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 0.95rem;
-        }
-        .btn-inicio:hover { text-decoration: underline; }
+        .pedido-id { background: #edf2f7; display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; margin-bottom: 30px; }
+        .status-atual { font-size: 1.4rem; font-weight: 800; margin: 20px 0; color: #2d3748; }
+        .linha-tempo { display: flex; justify-content: space-between; position: relative; margin: 40px 0; padding: 0 10px; }
+        .linha-tempo::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 4px; background: #e2e8f0; z-index: 1; }
+        .passo { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; width: 60px; }
+        .circulo { width: 34px; height: 34px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #718096; border: 3px solid #ffffff; transition: all 0.3s; }
+        .legenda { font-size: 0.75rem; font-weight: bold; color: #a0aec0; margin-top: 8px; white-space: nowrap; }
+        
+        .passo.concluido .circulo { background: #27ae60; color: white; }
+        .passo.concluido .legenda { color: #27ae60; }
+        .passo.atual .circulo { background: #f5a623; color: white; box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.25); }
+        .passo.atual .legenda { color: #f5a623; font-size: 0.8rem; }
+        
+        .btn-atualizar { background-color: #f5a623; color: #111111; border: none; padding: 14px 24px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px; width: 100%; transition: background 0.2s; font-size: 1rem; }
+        .btn-atualizar:hover { background-color: #e0941f; }
     </style>
 </head>
 <body>
 
     <div class="container-status">
-        <div class="topo-status">
-            <h2>🌵 Acompanhe seu Pedido</h2>
-            <div id="pedido-id" class="pedido-id">Pedido #0000</div>
-        </div>
-
-        <!-- LINHA DO TEMPO EM TEMPO REAL -->
-        <div class="timeline">
-            <!-- Passo 1 -->
-            <div id="passo-RECEBIDO" class="passo atual">
-                <div class="ponto-status"></div>
-                <div class="passo-texto">
-                    <h4>Pedido Recebido</h4>
-                    <p>O restaurante recebeu o seu pedido</p>
-                </div>
-            </div>
-
-            <!-- Passo 2 -->
-            <div id="passo-PREPARO" class="passo">
-                <div class="ponto-status"></div>
-                <div class="passo-texto">
-                    <h4>Em Preparo</h4>
-                    <p>Sua comida caseira está sendo feita com capricho</p>
-                </div>
-            </div>
-
-            <!-- Passo 3 -->
-            <div id="passo-ENTREGA" class="passo">
-                <div class="ponto-status"></div>
-                <div class="passo-texto">
-                    <h4>Saiu para Entrega</h4>
-                    <p>O entregador já está a caminho da sua casa</p>
-                </div>
-            </div>
-
-            <!-- Passo 4 -->
-            <div id="passo-ENTREGUE" class="passo">
-                <div class="ponto-status"></div>
-                <div class="passo-texto">
-                    <h4>Entregue</h4>
-                    <p>Bom apetite! Aproveite o Sabor Cearense</p>
-                </div>
-            </div>
-        </div>
-
-        <p id="msg-conexao" style="font-size: 0.85rem; color: var(--muted); font-style: italic;">Conectando ao rastreador em tempo real...</p>
+        <h2>🌵 Rastreamento do Pedido 🌵</h2>
         
-        <a href="index.html" class="btn-inicio">← Voltar para a Página Inicial</a>
+        <!-- BUSCADOR DE SESSÃO FLEXÍVEL -->
+        <div class="box-busca">
+            <input type="number" id="input-busca-id" placeholder="Digite o Nº do seu Pedido">
+            <button onclick="buscarNovoPedido()">Buscar</button>
+        </div>
+
+        <div class="pedido-id" id="area-id">Pedido #<span id="txt-pedido-id">...</span></div>
+        
+        <div class="linha-tempo">
+            <div id="passo-RECEBIDO" class="passo">
+                <div class="circulo">1</div>
+                <div class="legenda">Recebido</div>
+            </div>
+            <div id="passo-PREPARO" class="passo">
+                <div class="circulo">2</div>
+                <div class="legenda">Preparo</div>
+            </div>
+            <div id="passo-ENTREGA" class="passo">
+                <div class="circulo">3</div>
+                <div class="legenda">A caminho</div>
+            </div>
+            <div id="passo-ENTREGUE" class="passo">
+                <div class="circulo">4</div>
+                <div class="legenda">Entregue</div>
+            </div>
+        </div>
+
+        <div class="status-atual" id="txt-status-nome">Insira o número do pedido acima...</div>
+        <p style="color: #718096; font-size: 0.9rem; margin-bottom: 25px;">Acompanhe o status real das suas entregas do Sabor Cearense.</p>
+        
+        <button class="btn-atualizar" onclick="consultarStatus()"><i class="fas fa-rotate"></i> Atualizar Status</button>
+        <br><br>
+        <a href="index.html?admin=1" style="color: #f5a623; font-weight: bold; text-decoration: none; font-size: 0.9rem;">Ir para o Cardápio</a>
     </div>
     <script>
-        // Configurações de Conexão com o Backend
-        const URL_BACKEND_HTTP = "https://onrender.com";
-        // Convertendo a URL HTTP para o protocolo WS (WebSocket) oficial do Render
-        const URL_BACKEND_WS = "wss://://onrender.com";
+    // 1. Definição da URL oficial do seu backend no Render
+    const URL_BACKEND = "https://saborcearense-5.onrender.com";
 
-        let socket;
+    // 2. Captura o ID vindo da gaveta (URL) ou do localStorage anterior
+    const urlParams = new URLSearchParams(window.location.search);
+    let idDaUrl = urlParams.get('id');
 
-        document.addEventListener("DOMContentLoaded", () => {
-            // Gera um ID simulado ou captura o ID real do pedido guardado no fluxo
-            const idPedidoAleatorio = Math.floor(1000 + Math.random() * 9000);
-            document.getElementById("pedido-id").innerText = `Pedido #${idPedidoAleatorio}`;
+    let pedidoId = idDaUrl || localStorage.getItem("ultimoPedidoIdSaborCearense");
 
-            conectarWebSocket();
-        });
-
-        function conectarWebSocket() {
-            // Cria a conexão estável de WebSocket com o Spring Boot
-            socket = new WebSocket(URL_BACKEND_WS);
-
-            socket.onopen = () => {
-                document.getElementById("msg-conexao").innerText = "🟢 Conectado ao rastreador em tempo real";
-                document.getElementById("msg-conexao").style.color = "#2ecc71";
-            };
-
-            socket.onmessage = (evento) => {
-                // Recebe o status do backend (Ex: "PREPARO", "ENTREGA", "ENTREGUE")
-                const novoStatus = evento.data.trim().toUpperCase();
-                atualizarLinhaDoTempo(novoStatus);
-            };
-
-            socket.onclose = () => {
-                document.getElementById("msg-conexao").innerText = "🔴 Conexão perdida. Tentando reconectar...";
-                document.getElementById("msg-conexao").style.color = "#e74c3c";
-                // Tenta reconectar automaticamente a cada 5 segundos se o servidor cair
-                setTimeout(conectarWebSocket, 5000);
-            };
-
-            socket.onerror = (erro) => {
-                console.error("Erro no WebSocket:", erro);
-            };
+    document.addEventListener("DOMContentLoaded", () => {
+        if (pedidoId) {
+            // Sincroniza o ID no localStorage para persistência
+            localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoId);
+            
+            if (document.getElementById("txt-pedido-id")) {
+                document.getElementById("txt-pedido-id").innerText = `#${pedidoId}`;
+            }
+            if (document.getElementById("input-busca-id")) {
+                document.getElementById("input-busca-id").value = pedidoId;
+            }
+            
+            // Executa a primeira busca imediatamente ao carregar
+            consultarStatus();
+            
+            // Configura a ATUALIZAÇÃO EM TEMPO REAL (Polling) a cada 7 segundos
+            setInterval(consultarStatus, 7000);
+        } else {
+            const elementoStatus = document.getElementById("txt-status-nome") || document.getElementById("txt-index-status");
+            if (elementoStatus) {
+                elementoStatus.innerText = "Insira o número do pedido acima para rastrear.";
+            }
         }
+    });
 
-        // Função Inteligente: Move a bolinha laranja e pinta as anteriores de verde
-        function atualizarLinhaDoTempo(status) {
-            const passosOrdem = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
-            const indiceAlvo = passosOrdem.indexOf(status);
+    function buscarNovoPedido() {
+        const inputElement = document.getElementById("input-busca-id");
+        if (!inputElement) return;
 
-            if (indiceAlvo === -1) return; // Status inválido ou desconhecido ignorado
+        const inputVal = inputElement.value.trim();
+        if (!inputVal) {
+            alert("Por favor, digite um número de pedido válido.");
+            return;
+        }
+        
+        // Salva a nova pesquisa
+        pedidoId = inputVal.replace('#', '').trim();
+        localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoId);
+        
+        if (document.getElementById("txt-pedido-id")) {
+            document.getElementById("txt-pedido-id").innerText = `#${pedidoId}`;
+        }
+        
+        consultarStatus();
+    }
 
-            passosOrdem.forEach((idPasso, index) => {
-                const elemento = document.getElementById(`passo-${idPasso}`);
-                if (!elemento) return;
-
-                // Limpa as classes de estado anteriores
-                elemento.classList.remove("atual", "concluido");
-
-                if (index < indiceAlvo) {
-                    // Passos passados ficam marcados em verde (concluído)
-                    elemento.classList.add("concluido");
-                } else if (index === indiceAlvo) {
-                    // Passo atual ganha o destaque pulsante em laranja (atual)
-                    elemento.classList.add("atual");
+    // AQUI ESTÁ O ASYNC QUE EVITA O ERRO DO AWAIT:
+    async function consultarStatus() {
+        if (!pedidoId) return;
+        try {
+            const idLimpo = pedidoId.toString().replace('#', '').trim();
+            
+            const res = await fetch(`${URL_BACKEND}/api/pedidos/${idLimpo}`);
+            if (res.ok) {
+                const pedido = await res.json();
+                
+                if (document.getElementById("txt-pedido-id")) {
+                    document.getElementById("txt-pedido-id").innerText = `#${idLimpo}`;
                 }
-            });
+
+                // Atualiza a interface visual da linha do tempo
+                atualizarInterfaceLinhaTempo(pedido.status);
+                
+                // Atualiza o horário do último recebimento de sinal (Tempo Real)
+                const txtAtt = document.getElementById("txt-ultima-att");
+                if (txtAtt) {
+                    const agora = new Date();
+                    txtAtt.innerText = agora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                }
+                
+            } else if (res.status === 404) {
+                const elementoStatus = document.getElementById("txt-status-nome") || document.getElementById("txt-index-status");
+                if (elementoStatus) {
+                    elementoStatus.innerText = "Pedido não localizado no sistema.";
+                }
+                limparLinhaTempo();
+            }
+        } catch (e) { 
+            console.error("Erro ao buscar status:", e); 
         }
-    </script>
+    }
+    // Injeta dinamicamente os estilos de animações profissionais para garantir o funcionamento
+// Injeta os estilos profissionais milimetricamente calibrados para a sua linha do tempo horizontal
+(function injetarEstilosRastreioModerno() {
+    if (document.getElementById("estilos-rastreio-horizontal")) return;
+    const style = document.createElement("style");
+    style.id = "estilos-rastreio-horizontal";
+    style.innerHTML = `
+        /* Suaviza as transições de cor e tamanho de todas as etapas e textos */
+        [id^="p-"], [id^="step-"], .step, .timeline-item {
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        /* --------------------------------------------------------------------------
+           1. ESTADO ATUAL / ATIVO (Onde o pedido está agora - Efeito Glow Pulsante)
+           -------------------------------------------------------------------------- */
+        .atual, .active {
+            opacity: 1 !important;
+            transform: scale(1.08) !important; /* Destaca levemente o círculo atual */
+        }
+
+        /* Encontra o círculo numérico da etapa atual e faz ele pulsar em vermelho com brilho */
+        .atual .timeline-badge, .active .timeline-badge,
+        .atual .badge, .active .badge,
+        .atual [class*="circle"], .active [class*="circle"],
+        .atual > div:first-child, .active > div:first-child,
+        .atual span:first-child, .active span:first-child {
+            background-color: #e63946 !important; /* Vermelho temático */
+            color: #ffffff !important;
+            border-color: #e63946 !important;
+            font-weight: bold !important;
+            animation: pulsoGlowHorizontal 2s infinite ease-in-out !important;
+        }
+
+        /* Muda o texto da legenda abaixo da bolinha ativa para vermelho em negrito */
+        .atual p, .active p, .atual span, .active span, .atual div, .active div {
+            color: #e63946 !important;
+            font-weight: 700 !important;
+        }
+
+        /* --------------------------------------------------------------------------
+           2. ESTADO CONCLUÍDO (Etapas passadas - Verde Profissional estável)
+           -------------------------------------------------------------------------- */
+        .concluido, .completed {
+            opacity: 0.9 !important;
+        }
+
+        /* Transforma os círculos numéricos anteriores em verde */
+        .concluido .timeline-badge, .completed .timeline-badge,
+        .concluido .badge, .completed .badge,
+        .concluido [class*="circle"], .completed [class*="circle"],
+        .concluido > div:first-child, .completed > div:first-child,
+        .concluido span:first-child, .completed span:first-child {
+            background-color: #10b981 !important; /* Verde iFood / Mercado Livre */
+            color: #ffffff !important;
+            border-color: #10b981 !important;
+        }
+
+        /* Deixa as legendas das etapas concluídas em um tom cinza escuro nítido */
+        .concluido p, .completed p, .concluido span, .completed span {
+            color: #475569 !important;
+            font-weight: 500 !important;
+        }
+
+        /* --------------------------------------------------------------------------
+           3. ANIMAÇÃO DE PULSO (EFEITO RADAR/GLOW)
+           -------------------------------------------------------------------------- */
+        @keyframes pulsoGlowHorizontal {
+            0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.6); }
+            70% { box-shadow: 0 0 0 12px rgba(230, 57, 70, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); }
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
+function atualizarInterfaceLinhaTempo(statusOriginal) {
+    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+    
+    const dicionarioNomes = {
+        "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
+        "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
+        "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
+        "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
+    };
+
+    let statusDoBanco = statusOriginal ? statusOriginal.toUpperCase() : "RECEBIDO";
+    if (statusDoBanco === "PREPARANDO") statusDoBanco = "PREPARO";
+    if (statusDoBanco === "SAIU_ENTREGA") statusDoBanco = "ENTREGA";
+
+    const txtStatus = document.getElementById("txt-index-status") || document.getElementById("txt-status-nome");
+    if (txtStatus) {
+        txtStatus.innerText = dicionarioNomes[statusDoBanco] || statusDoBanco;
+    }
+
+    const indexAtual = ordens.indexOf(statusDoBanco);
+
+    // 1. Injeta a animação profissional de pulso (Glow) na página se ela não existir
+    if (!document.getElementById("animacao-sabor-cearense")) {
+        const style = document.createElement("style");
+        style.id = "animacao-sabor-cearense";
+        style.innerHTML = `
+            @keyframes pulsoGlowSabor {
+                0% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0.6); transform: scale(1.1); }
+                70% { box-shadow: 0 0 0 12px rgba(230, 57, 70, 0); transform: scale(1.1); }
+                100% { box-shadow: 0 0 0 0 rgba(230, 57, 70, 0); transform: scale(1.1); }
+            }
+            /* Suaviza a transição de cores e tamanhos das bolinhas */
+            .circulo {
+                transition: all 0.4s ease-in-out !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // 2. Varre as etapas usando a sua estrutura exata de IDs: passo-STATUS
+    ordens.forEach((st, idx) => {
+        const elemento = document.getElementById("passo-" + st) || 
+                         document.getElementById("p-" + st) || 
+                         document.getElementById("step-" + st);
+                         
+        if (!elemento) return;
+        
+        // Remove classes de controle lógico antigas
+        elemento.classList.remove("concluido", "atual", "completed", "active");
+        
+        // Encontra a bolinha cinza que tem a classe '.circulo' dentro do passo
+        const bolinhaCirculo = elemento.querySelector(".circulo");
+        const legendaTexto = elemento.querySelector(".legenda") || elemento.querySelector("p");
+
+        if (bolinhaCirculo) {
+            // Reseta estilos residuais para aplicar o novo estado de forma limpa
+            bolinhaCirculo.style.backgroundColor = "";
+            bolinhaCirculo.style.borderColor = "";
+            bolinhaCirculo.style.color = "";
+            bolinhaCirculo.style.animation = "";
+            bolinhaCirculo.style.transform = "";
+        }
+        if (legendaTexto) {
+            legendaTexto.style.color = "";
+            legendaTexto.style.fontWeight = "";
+        }
+
+        // 3. Aplica as animações e cores com efeito cascata profissional
+        setTimeout(() => {
+            if (idx < indexAtual) {
+                // ETAPA CONCLUÍDA: Transforma a bolinha em Verde iFood/Mercado Livre
+                elemento.classList.add("concluido", "completed");
+                if (bolinhaCirculo) {
+                    bolinhaCirculo.style.backgroundColor = "#10b981";
+                    bolinhaCirculo.style.borderColor = "#10b981";
+                    bolinhaCirculo.style.color = "#ffffff";
+                }
+                if (legendaTexto) {
+                    legendaTexto.style.color = "#475569";
+                }
+            } else if (idx === indexAtual) {
+                // ETAPA ATUAL: Transforma a bolinha em Vermelho Sabor Cearense e Ativa o Pulso
+                elemento.classList.add("atual", "active");
+                if (bolinhaCirculo) {
+                    bolinhaCirculo.style.backgroundColor = "#e63946";
+                    bolinhaCirculo.style.borderColor = "#e63946";
+                    bolinhaCirculo.style.color = "#ffffff";
+                    bolinhaCirculo.style.animation = "pulsoGlowSabor 2s infinite ease-in-out";
+                }
+                if (legendaTexto) {
+                    legendaTexto.style.color = "#e63946";
+                    legendaTexto.style.fontWeight = "700";
+                }
+                
+                // Centraliza a etapa na tela de forma suave em telas menores
+                elemento.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }
+        }, idx * 100); // Delay sutil de 100ms por etapa criando efeito cascata elegante
+    });
+}
+
+function limparLinhaTempo() {
+    const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+    ordens.forEach(st => {
+        const elemento = document.getElementById("passo-" + st) || 
+                         document.getElementById("p-" + st) || 
+                         document.getElementById("step-" + st);
+                         
+        if (elemento) {
+            elemento.classList.remove("concluido", "atual", "completed", "active");
+            const bolinhaCirculo = elemento.querySelector(".circulo");
+            const legendaTexto = elemento.querySelector(".legenda") || elemento.querySelector("p");
+            
+            if (bolinhaCirculo) {
+                bolinhaCirculo.style.backgroundColor = "";
+                bolinhaCirculo.style.borderColor = "";
+                bolinhaCirculo.style.color = "";
+                bolinhaCirculo.style.animation = "";
+                bolinhaCirculo.style.transform = "";
+            }
+            if (legendaTexto) {
+                legendaTexto.style.color = "";
+                legendaTexto.style.fontWeight = "";
+            }
+        }
+    });
+}
+
+
+
+</script>
+
 </body>
 </html>

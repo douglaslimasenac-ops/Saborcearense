@@ -1,9 +1,26 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - Sabor Cearense</title>
+     <script>
+        (function() {
+            const parametrosUrl = new URLSearchParams(window.location.search);
+            const dadosDoCelular = parametrosUrl.get('carrinho');
+            
+            if (dadosDoCelular) {
+                try {
+                    const carrinhoDecodificado = decodeURIComponent(dadosDoCelular);
+                    localStorage.setItem("carrinhoSaborCearense", carrinhoDecodificado);
+                    console.log("🛒 Carrinho injetado via URL com segurança para Mobile!");
+                } catch (erro) {
+                    console.error("Erro na ponte de dados mobile:", erro);
+                }
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="style.css"> 
     <style>
         :root {
@@ -64,7 +81,6 @@
             padding-bottom: 12px;
         }
 
-        /* Lista de Itens do Carrinho */
         .item-resumo {
             display: flex;
             justify-content: space-between;
@@ -91,8 +107,6 @@
             font-weight: 700;
             color: #4a5568;
         }
-
-        /* Bloco de Destaque para o Valor Total */
         .total-container {
             background: #fffdf5;
             border: 2px dashed var(--primary);
@@ -110,7 +124,6 @@
             color: var(--success);
         }
 
-        /* Formulários Organizados */
         .form-grupo {
             margin-bottom: 18px;
             display: flex;
@@ -137,7 +150,6 @@
             box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
         }
 
-        /* Botão de Finalização Principal */
         .btn-enviar {
             background-color: var(--primary);
             color: var(--dark);
@@ -160,20 +172,24 @@
             transform: translateY(-1px);
             box-shadow: 0 6px 15px rgba(245, 166, 35, 0.4);
         }
+
+        .box-pix {
+            background: #f0fdf4;
+            border: 1px dashed #bbf7d0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
-
     <div class="container-checkout">
-        <!-- Botão Voltar Alinhado -->
         <a href="index.html" class="btn-voltar">← Voltar para o Cardápio</a>
         
-        <!-- CARD 1: RESUMO DO PEDIDO -->
         <div class="secao-card">
             <h2>🛒 Itens Selecionados</h2>
-            <div id="lista-itens-carrinho">
-                <!-- Injeção de itens via JS -->
-            </div>
+            <div id="lista-itens-carrinho"></div>
             
             <div class="total-container">
                 <span>Valor Total:</span>
@@ -181,126 +197,76 @@
             </div>
         </div>
 
-        <!-- CARD 2: DADOS DE ENTREGA -->
-        <div class="secao-card">
-            <h2>📍 Dados de Entrega e Pagamento</h2>
-            <form id="form-pedido">
+        <form id="form-pedido">
+            <div class="secao-card">
+                <h2>👤 Passo 1: Seus Dados de Entrega</h2>
                 <div class="form-grupo">
                     <label for="nome">Nome Completo</label>
                     <input type="text" id="nome" required placeholder="Digite o nome de quem vai receber">
                 </div>
 
                 <div class="form-grupo">
-                    <label for="endereco">Endereço Completo</label>
-                    <input type="text" id="endereco" required placeholder="Rua, Número, Bloco, Apartamento e Bairro">
+                    <label for="telefone">WhatsApp / Telefone de Contato</label>
+                    <input type="tel" id="telefone" required placeholder="Ex: (21) 99999-9999">
+                </div>
+
+                <div class="form-grupo">
+                    <label for="bairro-entrega">Selecione o Bairro de Entrega</label>
+                    <select id="bairro-entrega" required onchange="atualizarTaxaEntrega(this.value)">
+                        <option value="" disabled selected>Escolha o seu bairro...</option>
+                        <option value="Engenho Novo|0.00">Engenho Novo - R$ 0,00</option>
+                        <option value="Méier|3.00">Fátima - R$ 3,00</option>
+                        <option value="Grajaú|5.00">Grajaú - R$ 5,00</option>
+                        <option value="Andaraí|6.00">Andaraí - R$ 6,00</option>
+                        <option value="Tijuca|7.00">Tijuca - R$ 7,00</option>
+                        <option value="Cachambi|5.00">Cachambi - R$ 5,00</option>   
+                    </select>
+                </div>
+
+                <div class="form-grupo">
+                    <label for="endereco">Rua, Número, Bloco ou Apto</label>
+                    <input type="text" id="endereco" required placeholder="Ex: Rua São Paulo, 123 - Bloco B Apto 202">
                 </div>
 
                 <div class="form-grupo">
                     <label for="ponto-referencia">Ponto de Referência (Opcional)</label>
-                    <input type="text" id="ponto-referencia" placeholder="Ex: Próximo à praça principal ou mercadinho">
+                    <input type="text" id="ponto-referencia" placeholder="Ex: Próximo ao mercadinho ou praça">
                 </div>
+            </div>
 
+            <div class="secao-card">
+                <h2>💳 Passo 2: Forma de Pagamento</h2>
                 <div class="form-grupo">
-                    <label for="pagamento">Forma de Pagamento</label>
-                    <select id="pagamento" required>
-                        <option value="Pix">Pix (Rápido e Seguro)</option>
-                        <option value="Dinheiro">Dinheiro</option>
-                        <option value="Cartão de Crédito">Cartão de Crédito</option>
-                        <option value="Cartão de Débito">Cartão de Débito</option>
+                    <label for="pagamento">Escolha como deseja pagar:</label>
+                    <select id="pagamento" required onchange="controlarExibicaoPix(this.value)">
+                        <option value="Pix" selected>Pix (Copia e Cola Direto no Site)</option>
+                        <option value="Dinheiro">Dinheiro (Pagar na Entrega)</option>
+                        <option value="Cartão de Crédito">Cartão de Crédito (Na Entrega)</option>
+                        <option value="Cartão de Débito">Cartão de Débito (Na Entrega)</option>
                     </select>
                 </div>
 
-                <button type="submit" class="btn-enviar">Finalizar e Enviar para o WhatsApp 🌵</button>
-            </form>
-        </div>
-    </div>
-    <script>
-        // Configuração do WhatsApp do Restaurante (Substitua pelo número correto com DDD)
-        const WHATSAPP_NUMERO = "5585999999999"; 
-        let totalCalculado = 0;
+                <div style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 15px; color: #4a5568; font-weight: 500;">Total a pagar:</span>
+                    <span id="pagamento-valor-total" style="font-size: 18px; font-weight: 700; color: #141414;">R$ 0,00</span>
+                </div>
+            </div>
 
-        document.addEventListener("DOMContentLoaded", () => {
-            renderizarResumo();
-            document.getElementById("form-pedido").addEventListener("submit", enviarPedido);
-        });
-
-        // Função Premium: Renderiza os itens e faz o cálculo automático do preço
-        function renderizarResumo() {
-            const container = document.getElementById("lista-itens-carrinho");
-            const totalTxt = document.getElementById("valor-total");
+            <div id="container-pix-dinamico" class="box-pix" style="display: block;">
+                <p style="margin: 0 0 8px 0; font-weight: bold; color: #166534; font-size: 0.95rem;">🔑 Chave CNPJ do Sabor Cearense:</p>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="chave-pix-texto" value="21974720736" readonly style="flex: 1; padding: 10px; border: 1px solid #bbf7d0; border-radius: 6px; font-weight: bold; text-align: center; background: #fff; color: #166534;">
+                    <button type="button" onclick="copiarChavePix()" style="background: #22c55e; color: white; border: none; padding: 0 15px; font-weight: bold; border-radius: 6px; cursor: pointer;">Copiar</button>
+                </div>
+                <p style="margin: 8px 0 0 0; font-size: 0.8rem; color: #166534;">💡 Copie o número acima, faça a transferência no seu banco e clique no botão abaixo para nos enviar o comprovante!</p>
+            </div>
             
-            // Lendo a chave exata gerada pelo seu index.html
-            const itens = JSON.parse(localStorage.getItem("itensCarrinhoSaborCearense")) || [];
-
-            if (itens.length === 0) {
-                container.innerHTML = `<p style="text-align: center; color: #718096; margin: 20px 0;">Seu carrinho está vazio no momento.</p>`;
-                totalTxt.innerText = "R\$ 0,00";
-                return;
-            }
-
-            container.innerHTML = "";
-            totalCalculado = 0;
-
-            itens.forEach(item => {
-                const subtotalItem = item.preco * item.qtd; 
-                totalCalculado += subtotalItem;
-
-                const div = document.createElement("div");
-                div.className = "item-resumo";
-                div.innerHTML = `
-                    <div>
-                        <span class="item-qtd-tag">${item.qtd}x</span>
-                        <span class="item-nome">${item.nome}</span>
-                    </div>
-                    <span class="item-preco-sub">R$ ${subtotalItem.toFixed(2).replace('.', ',')}</span>
-                `;
-                container.appendChild(div);
-            });
-
-            totalTxt.innerText = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
-        }
-
-        // Função de envio de dados e formatação para o WhatsApp
-        function enviarPedido(e) {
-            e.preventDefault();
-
-            const itens = JSON.parse(localStorage.getItem("itensCarrinhoSaborCearense")) || [];
-
-            if (itens.length === 0) {
-                alert("Seu carrinho está vazio!");
-                return;
-            }
-
-            const nome = document.getElementById("nome").value;
-            const endereco = document.getElementById("endereco").value;
-            const ref = document.getElementById("ponto-referencia").value || "Não informado";
-            const pagamento = document.getElementById("pagamento").value;
-
-            // Formatação Premium da mensagem enviada
-            let mensagem = `🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n`;
-            mensagem += `👤 *Cliente:* ${nome}\n`;
-            mensagem += `📍 *Endereço:* ${endereco}\n`;
-            mensagem += `🔍 *Referência:* ${ref}\n`;
-            mensagem += `💳 *Pagamento:* ${pagamento}\n\n`;
-            mensagem += `🛒 *Itens do Pedido:*\n`;
-
-            itens.forEach(item => {
-                const subtotal = (item.preco * item.qtd).toFixed(2).replace('.', ',');
-                mensagem += `• ${item.qtd}x _${item.nome}_ - R$ ${subtotal}\n`;
-            });
-
-            mensagem += `\n💰 *Total do Pedido:* R$ ${totalCalculado.toFixed(2).replace('.', ',')}\n\n`;
-            mensagem += `_Aguardando confirmação do restaurante pelo painel..._`;
-
-            // Link Oficial de Envio
-            const urlWhatsapp = `https://whatsapp.com/{WHATSAPP_NUMERO}&text=${encodeURIComponent(mensagem)}`;
-            // Abre o WhatsApp em uma nova aba para enviar a mensagem do pedido
-window.open(urlWhatsapp, '_blank');
-
-// Redireciona a página atual do cliente para a linha do tempo
-window.location.href = "acompanhar.html";
-
-        }
-    </script>
+            <div style="margin-top: 25px;">
+                <button type="button" class="btn-enviar" onclick="enviarPedido(event)">Finalizar e Enviar para o WhatsApp 🌵</button>
+            </div>
+        </form>
+    </div>
+     <!-- Vincle o seu novo arquivo externo aqui de forma limpa -->
+    <script src="carrinho.js"></script>
 </body>
 </html>
