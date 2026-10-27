@@ -15,17 +15,19 @@ const WHATSAPP_NUMERO = "5521974720736";
 // ==========================================
 // 🌐 EVENTOS DE INICIALIZAÇÃO (DOM)
 // ==========================================
+// ==========================================
+// 🌐 EVENTOS DE INICIALIZAÇÃO (DOM) - ATUALIZADO
+// ==========================================
 document.addEventListener("DOMContentLoaded", function() {
-    // 1. Carrega dados primários do carrinho
+    // 1. Limpa resíduos corrompidos de testes antigos
+    localStorage.removeItem("carrinho");
+    localStorage.removeItem("cart");
+    localStorage.removeItem("saborCearense_carrinho");
+
+    // 2. Carrega dados primários do carrinho
     carregarDadosDoCarrinho();
     carregarItensDaUrlNoCarrinho();
     renderizarResumo();
-
-    // 2. Tenta buscar informações salvas da sacola da página anterior
-    const dadosSalvos = localStorage.getItem('saborCearense_carrinho');
-    if (dadosSalvos) {
-        carrinho = JSON.parse(dadosSalvos);
-    }
 
     // 3. Monitora o envio do formulário de checkout e validação
     const formulario = document.getElementById("form-pedido");
@@ -33,6 +35,7 @@ document.addEventListener("DOMContentLoaded", function() {
         formulario.addEventListener("submit", enviarPedido);
     }
 });
+
 
 // ==========================================
 // 📦 GERENCIAMENTO E RENDERIZAÇÃO DE DADOS

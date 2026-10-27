@@ -272,15 +272,33 @@
 // 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS - SABOR CEARENSE (CORRIGIDO)
 // =========================================================================
 
-// Esta é a função principal que deve ser chamada no clique do botão "+" do cardápio
+// =========================================================================
+// 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS - SABOR CEARENSE (DEFINITIVO)
+// =========================================================================
+
+// LIMPEZA DE SEGURANÇA: Limpa dados antigos/corrompidos do localStorage ao carregar a página
+document.addEventListener("DOMContentLoaded", () => {
+    // Se houver lixo de versões anteriores que travavam o script, removemos
+    if (localStorage.getItem("carrinho") && !localStorage.getItem("carrinhoSaborCearense")) {
+        localStorage.removeItem("carrinho");
+        localStorage.removeItem("cart");
+    }
+});
+
+// Esta é a função principal que gerencia o clique do botão "+" do cardápio
+// =========================================================================
+// 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS - SABOR CEARENSE (DEFINITIVO)
+// =========================================================================
+
+// Esta é a função que gerencia o clique do botão "+" do cardápio
 function mudarQuantidade(id, valor, nome, preco) {
-    // Se o cliente estiver diminuindo a quantidade (-1), executa direto sem abrir o modal
+    // Se estiver diminuindo a quantidade (-1), executa direto sem abrir o modal
     if (valor < 0) {
         executarMudarQuantidadeReal(id, valor, nome, preco);
         return;
     }
 
-    // Validação automática: Se for bebida, sobremesa ou adicionais, pula os acompanhamentos e adiciona direto
+    // Validação automática: Pula acompanhamentos para bebidas e sobremesas
     const nomeMinusculo = nome.toLowerCase();
     const termosPular = ["coca", "suco", "guarana", "fanta", "agua", "bebida", "pudim", "doce", "sobremesa", "cerveja"];
     const devePular = termosPular.some(termo => nomeMinusculo.includes(termo));
@@ -338,24 +356,24 @@ function mudarQuantidade(id, valor, nome, preco) {
         const acompanhamentos = [];
         marcados.forEach(cb => acompanhamentos.push(cb.value));
 
-        // Formata o nome adicionando as escolhas (Ex: "Frango com Quiabo (Purê, Fritas)")
+        // Formata o nome adicionando as escolhas
         let nomeItemComAcomp = nome;
         if (acompanhamentos.length > 0) {
             nomeItemComAcomp += " (" + acompanhamentos.join(", ") + ")";
         }
 
-        // Gera um ID único combinando o ID original + as iniciais das escolhas para evitar duplicações erradas
+        // Gera um ID único combinando as iniciais das escolhas para diferenciar pratos iguais com acompanhamentos distintos
         const sufixoAcomp = acompanhamentos.map(a => a.substring(0,3)).join("-");
         const idUnicoItem = sufixoAcomp ? `${id}-${sufixoAcomp.toLowerCase()}` : id;
 
         modal.remove();
         
-        // Insere de fato na sacola flutuante usando a lógica original do sistema
+        // Dispara a lógica de inserção estruturada
         executarMudarQuantidadeReal(idUnicoItem, valor, nomeItemComAcomp, preco);
     };
 }
 
-// Lógica de manipulação do objeto do carrinho extraída e integrada perfeitamente com seu código original
+// Manipulação nativa unificada com o dicionário global por IDs do seu sistema
 function ejecutarMudarQuantidadeReal(id, valor, nome, preco) {
     if (!carrinho[id]) {
         if (valor <= 0) return;
@@ -372,16 +390,18 @@ function ejecutarMudarQuantidadeReal(id, valor, nome, preco) {
         delete carrinho[id];
     }
 
-    // Mantém o sincronismo nativo com o contador visual do cardápio (+ e -)
+    dadosSacola = carrinho;
+
+    // Sincroniza o contador visual do prato (+ e -)
     const elementoQtd = document.getElementById(`qtd-${id}`);
     if (elementoQtd) {
         elementoQtd.innerText = carrinho[id] ? carrinho[id].quantidade : 0;
     }
 
-    // Salva no localStorage no formato esperado pela função irParaCheckout()
+    // Salva na chave definitiva lida pelo checkout
     localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
 
-    // Força a atualização da gaveta lateral da sacola na hora
+    // Atualiza a sacola flutuante na barra lateral
     if (typeof renderizarItensSacola === "function") {
         renderizarItensSacola();
     }
