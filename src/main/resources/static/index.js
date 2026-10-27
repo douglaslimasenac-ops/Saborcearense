@@ -168,9 +168,9 @@
         // 🌵 FORÇA O VÍNCULO GLOBAL COM O HTML PARA ELIMINAR O ERRO "NOT DEFINED"
 
         function abrirSacola() {
-            document.getElementById('painel-sacola-modal').classList.add('open');
-            renderizarItensSacola();
-        }
+    document.getElementById('painel-sacola-modal').classList.add('open');
+    renderizarItensSacola(); // <-- Essa linha garante a atualização imediata da descrição
+}
 
         function fecharSacola() {
             document.getElementById('painel-sacola-modal').classList.remove('open');
@@ -428,7 +428,14 @@ function executarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
     localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
     atualizarPrecosBarraFlutuante();
     renderizarItensSacola();
+
+    // 🌵 ADICIONE ESTA LINHA AQUI NO FINAL DA FUNÇÃO:
+    // Ela força a gaveta lateral a abrir sozinha mostrando as descrições completas assim que o item é adicionado!
+    if (typeof abrirSacola === "function") {
+        abrirSacola();
+    }
 }
+
 
 function atualizarPrecosBarraFlutuante() {
     const listaItens = Object.values(carrinho);
