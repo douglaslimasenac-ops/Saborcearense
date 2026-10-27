@@ -43,7 +43,7 @@ public class PedidoController {
     public List<Pedido> listarPedidosAtivos() {
         // Se o seu repositório não tiver essa query nativa, o Spring Boot aceita o método abaixo
         // ou você pode filtrar via stream na lista completa:
-        return pedidoRepository.findByStatusNotIgnoreCase("ENTREGUE");
+        return pedidoRepository.findByStatusNotIn(java.util.List.of("ENTREGUE", "CANCELADO"));
     } // <-- ESSA CHAVE ESTAVA FALTANDO AQUI PARA FECHAR A FUNÇÃO DOS ATIVOS!
 
     // 🔍 BUSCAR STATUS POR ID: Chamado pelo site para rastrear o pedido
@@ -61,7 +61,7 @@ public class PedidoController {
             novoPedido.setStatus("RECEBIDO");
         }
         String statusNormalizado = novoPedido.getStatus().trim().toUpperCase();
-        if (!java.util.Set.of("RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE").contains(statusNormalizado)) {
+        if (!java.util.Set.of("RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE", "CANCELADO").contains(statusNormalizado)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status de pedido invalido");
         }
         novoPedido.setStatus(statusNormalizado);
@@ -98,7 +98,7 @@ public class PedidoController {
             @PathVariable Long id, 
             @RequestParam String status) {
         String statusNormalizado = status == null ? "" : status.trim().toUpperCase();
-        if (!java.util.Set.of("RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE").contains(statusNormalizado)) {
+        if (!java.util.Set.of("RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE", "CANCELADO").contains(statusNormalizado)) {
             return ResponseEntity.badRequest().build();
         }
         

@@ -291,6 +291,52 @@
         .card-pedido {
             border-left-color: var(--primary);
         }
+        .resumo-financeiro {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin: 0 0 20px;
+        }
+        .resumo-card {
+            padding: 16px;
+            border: 1px solid #eadbc5;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #fffaf1, #fff);
+            box-shadow: 0 8px 18px rgba(79, 52, 23, 0.08);
+        }
+        .resumo-card span {
+            display: block;
+            color: #806b51;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .resumo-card strong {
+            display: block;
+            margin-top: 5px;
+            color: #8a5316;
+            font-size: 1.25rem;
+        }
+        .itens-pedido {
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 14px;
+            background: #fffaf1;
+            border: 1px solid #f1dfc4;
+        }
+        .itens-pedido > strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #6b461e;
+        }
+        .item-pedido-linha {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 7px 0;
+            border-top: 1px dashed #eadbc5;
+            color: #4a3a29;
+        }
         #login-admin {
             border-color: #eadbc5;
             border-radius: 22px;
@@ -314,6 +360,8 @@
             .acoes-pedido-bloco { flex-wrap: wrap; }
             .card-produto { flex-wrap: wrap; }
             .controles-prod { width: 100%; display: flex; justify-content: flex-end; gap: 8px; }
+            .resumo-financeiro { grid-template-columns: 1fr; }
+            .item-pedido-linha { align-items: flex-start; }
         }
         @media (max-width: 420px) {
             #login-admin { padding: 28px 20px; }
@@ -367,6 +415,7 @@
                 <div class="admin-header">
                     <h2>🛵 Pedidos em Andamento (Tempo Real)</h2>
                 </div>
+                <div id="resumo-financeiro" class="resumo-financeiro" aria-live="polite"></div>
                 
                 <!-- CONTAINER INTEGRADO PARA CARDS DO WEBSOCKET -->
                 <div id="container-novos-pedidos" style="margin-bottom: 20px; display: none;">
@@ -381,6 +430,7 @@
                 <div class="admin-header">
                     <h2>✅ Histórico de Pedidos Finalizados</h2>
                 </div>
+                <div id="resumo-historico" class="resumo-financeiro" aria-live="polite"></div>
                 <div id="lista-pedidos-finalizados" style="display: flex; flex-direction: column; gap: 15px;"></div>
             </section>
 

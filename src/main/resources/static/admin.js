@@ -341,6 +341,59 @@ function iniciarTurnoAdmin() {
 // ==========================================
 // 📋 RENDERIZAÇÃO DA VISÃO DE PEDIDOS
 // ==========================================
+function escaparHtml(valor) {
+    return String(valor ?? "").replace(/[&<>"']/g, caractere => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+    }[caractere]));
+}
+
+function obterItensPedido(pedido) {
+    if (!pedido.itens) return [];
+    try {
+        const itens = typeof pedido.itens === "string" ? JSON.parse(pedido.itens) : pedido.itens;
+        if (Array.isArray(itens)) return itens;
+        if (itens && typeof itens === "object") return Object.values(itens);
+    } catch (erro) {
+        console.error(`Itens inválidos no pedido #${pedido.id}:`, erro);
+    }
+    return [];
+}
+
+function renderizarItensPedido(pedido) {
+    const itens = obterItensPedido(pedido);
+    if (!itens.length) {
+        return `<div class="itens-pedido"><strong>Itens:</strong><span>Não informado</span></div>`;
+    }
+
+    return `
+        <div class="itens-pedido">
+            <strong>Itens do pedido</strong>
+            ${itens.map(item => {
+                const quantidade = Number(item.quantidade || 1);
+                const preco = Number(item.preco || 0);
+                const subtotal = quantidade * preco;
+                return `<div class="item-pedido-linha">
+                    <span><b>${quantidade}x</b> ${escaparHtml(item.nome || "Item")}</span>
+                    <strong>R$ ${subtotal.toFixed(2).replace(".", ",")}</strong>
+                </div>`;
+            }).join("")}
+        </div>
+    `;
+}
+
+function atualizarResumoFinanceiro(pedidos, elementoId) {
+    const elemento = document.getElementById(elementoId);
+    if (!elemento) return;
+    const validos = pedidos.filter(pedido => pedido.status !== "CANCELADO");
+    const total = validos.reduce((soma, pedido) => soma + Number(pedido.valorTotal || 0), 0);
+    const ticketMedio = validos.length ? total / validos.length : 0;
+    elemento.innerHTML = `
+        <div class="resumo-card"><span>Pedidos</span><strong>${validos.length}</strong></div>
+        <div class="resumo-card"><span>Saldo geral</span><strong>R$ ${total.toFixed(2).replace(".", ",")}</strong></div>
+        <div class="resumo-card"><span>Ticket médio</span><strong>R$ ${ticketMedio.toFixed(2).replace(".", ",")}</strong></div>
+    `;
+}
+
 async function carregarPedidosAtivos() {
     if (carregandoPedidosAtivos) return;
     carregandoPedidosAtivos = true;
@@ -355,10 +408,11 @@ async function carregarPedidosAtivos() {
         const resAtivos = await fetchAdmin(URL_BACKEND + "/api/pedidos/ativos");
         if (resAtivos.ok) {
             const pedidosAtivos = await resAtivos.json();
+            atualizarResumoFinanceiro(pedidosAtivos, "resumo-financeiro");
             let temAtivos = false;
 
             pedidosAtivos.forEach(pedido => {
-                if (pedido.status === 'ENTREGUE') return;
+                if (pedido.status === 'ENTREGUE' || pedido.status === 'CANCELADO') return;
                 temAtivos = true;
 
                 const card = document.createElement("div");
@@ -369,14 +423,17 @@ async function carregarPedidosAtivos() {
                             <h4 style="margin: 0 0 6px 0; color: #1e293b;">📋 Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                             <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
                             <small style="color: #0f766e; font-weight: 700; font-size: 0.9rem;">💳 Forma de Pagamento: ${pedido.formaPagamento}</small>
+                            <small style="display: block; margin-top: 6px; color: #b45309; font-weight: 800;">💰 Total: R$ ${Number(pedido.valorTotal || 0).toFixed(2).replace(".", ",")}</small>
                             ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                         </div>
                         <span class="badge-cat" style="background: #fffbeb; color: #b45309; border-color: #fde68a;">Status: ${pedido.status}</span>
                     </div>
+                    ${renderizarItensPedido(pedido)}
                     <div class="acoes-pedido-bloco" style="border-top: 1px solid #f1f5f9; padding-top: 14px; display: flex; gap: 10px; justify-content: flex-end;">
                         <button class="btn-status-toggle ativo" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;" onclick="mudarStatusPedido(${pedido.id}, 'PREPARO')">👨‍🍳 Preparar</button>
                         <button class="btn-status-toggle ativo" style="background: #f0fdf4; color: #166534; border-color: #bbf7d0;" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGA')">🛵 Despachar</button>
                         <button class="btn-status-toggle inativo" style="background: #f8fafc; color: #1e293b; border-color: #cbd5e1;" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGUE')">✅ Finalizar</button>
+                        <button class="btn-status-toggle inativo" style="background: #fff1f2; color: #be123c; border-color: #fecdd3;" onclick="cancelarPedido(${pedido.id})">✕ Cancelar</button>
                     </div>
                 `;
 
@@ -404,25 +461,28 @@ async function carregarPedidosAtivos() {
         const resTodos = await fetchAdmin(URL_BACKEND + "/api/pedidos");
         if (resTodos.ok) {
             const todosPedidos = await resTodos.json();
+            atualizarResumoFinanceiro(todosPedidos, "resumo-financeiro");
+            atualizarResumoFinanceiro(todosPedidos, "resumo-historico");
             let temFinalizados = false;
 
             todosPedidos.forEach(pedido => {
-                if (pedido.status !== 'ENTREGUE') return;
+                if (pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO') return;
                 temFinalizados = true;
 
                 const card = document.createElement("div");
                 card.className = "card-pedido";
-                card.style.borderLeft = "5px solid var(--success)";
+                card.style.borderLeft = pedido.status === "CANCELADO" ? "5px solid #e11d48" : "5px solid var(--success)";
                 card.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
-                            <h4 style="margin: 0 0 6px 0; color: #1e293b;">✅ Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
+                            <h4 style="margin: 0 0 6px 0; color: #1e293b;">${pedido.status === "CANCELADO" ? "✕" : "✅"} Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                             <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
-                            <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento}</small>
+                            <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento} · 💰 R$ ${Number(pedido.valorTotal || 0).toFixed(2).replace(".", ",")}</small>
                             ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                         </div>
-                        <span class="badge-cat" style="background: #e6f4ea; color: #137333; border-color: #ceead6;">Status: ENTREGUE</span>
+                        <span class="badge-cat" style="background: ${pedido.status === "CANCELADO" ? "#fff1f2" : "#e6f4ea"}; color: ${pedido.status === "CANCELADO" ? "#be123c" : "#137333"}; border-color: ${pedido.status === "CANCELADO" ? "#fecdd3" : "#ceead6"};">Status: ${pedido.status}</span>
                     </div>
+                    ${renderizarItensPedido(pedido)}
                 `;
                 if (containerHistorico) containerHistorico.appendChild(card);
             });
@@ -451,6 +511,12 @@ async function mudarStatusPedido(id, novoStatus) {
         console.error("Erro ao mudar status do pedido:", e);
     }
 }
+
+async function cancelarPedido(id) {
+    if (!confirm(`Cancelar o pedido #${id}? Essa ação ficará registrada no histórico.`)) return;
+    await mudarStatusPedido(id, "CANCELADO");
+}
+
 async function autenticarAdmin() {
     const campoUsuario = document.getElementById("usuario-login");
     const campoSenha = document.getElementById("senha-login");
@@ -521,12 +587,14 @@ function imprimirCupomIFood(pedido) {
 
     var nomeClienteFinal = (pedido.clienteNome || pedido.nomeCliente || "Não informado").toUpperCase();
     var enderecoBruto = pedido.endereco || "RETIRADA NO ESTABELECIMENTO";
-    var telefoneFinal = "Não informado";
+    var telefoneFinal = (pedido.telefone || pedido.telefoneContato || "").toString().trim() || "Não informado";
     var referenciaFinal = "Não informada";
     
     var matchTel = enderecoBruto.match(/\(Tel:\s*([^)]+)\)/);
-    if (matchTel) {
+    if (matchTel && telefoneFinal === "Não informado") {
         telefoneFinal = matchTel[1].trim();
+    }
+    if (matchTel) {
         enderecoBruto = enderecoBruto.replace(matchTel[0], ""); 
     }
 

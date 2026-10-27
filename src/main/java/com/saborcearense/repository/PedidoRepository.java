@@ -9,5 +9,7 @@ import java.util.List;
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     List<Pedido> findByStatusNotIgnoreCase(String status);
 
+    List<Pedido> findByStatusNotIn(java.util.Collection<String> statuses);
+
     List<Pedido> findByTelefone(String telefone);
 }
