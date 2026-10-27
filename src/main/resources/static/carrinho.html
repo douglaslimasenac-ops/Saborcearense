@@ -181,6 +181,94 @@
             margin-top: 10px;
             display: none;
         }
+
+        /* Acabamento artesanal premium do checkout */
+        body {
+            background: radial-gradient(circle at 8% 0%, rgba(217, 144, 36, 0.12), transparent 25rem), #f8f3ea;
+            color: #2f2922;
+        }
+        .container-checkout {
+            max-width: 680px;
+        }
+        .btn-voltar {
+            color: #a85e16;
+            padding: 8px 0;
+        }
+        .secao-card {
+            padding: 26px;
+            border: 1px solid #eadbc5;
+            border-radius: 20px;
+            box-shadow: 0 10px 28px rgba(79, 52, 23, 0.08);
+        }
+        .secao-card h2 {
+            color: #29231d;
+            border-bottom-color: #f4eadb;
+        }
+        .item-resumo {
+            padding: 14px 0;
+            border-bottom-color: #f0e5d6;
+        }
+        .item-qtd-tag {
+            color: #a85e16;
+            background: #f7e7c7;
+            border-radius: 999px;
+        }
+        .item-preco-sub {
+            color: #a85e16;
+        }
+        .total-container {
+            background: #fffaf2;
+            border-color: #d99024;
+            border-radius: 14px;
+        }
+        .total-preco {
+            color: #237a4b;
+        }
+        .form-grupo label {
+            color: #5f5448;
+        }
+        .form-grupo input,
+        .form-grupo select,
+        .form-grupo textarea {
+            padding: 13px 14px;
+            border: 1px solid #eadbc5;
+            border-radius: 11px;
+            color: #2f2922;
+            background: #fffdf9;
+        }
+        .form-grupo textarea {
+            resize: vertical;
+            min-height: 84px;
+            font-family: inherit;
+        }
+        .form-grupo input:focus,
+        .form-grupo select:focus,
+        .form-grupo textarea:focus {
+            border-color: #d99024;
+            box-shadow: 0 0 0 4px rgba(217, 144, 36, 0.14);
+        }
+        .btn-enviar {
+            border-radius: 999px;
+            background: linear-gradient(135deg, #d99024, #e8ad4c);
+            box-shadow: 0 8px 18px rgba(168, 94, 22, 0.24);
+        }
+        .btn-enviar:hover {
+            background: linear-gradient(135deg, #c47b17, #d99024);
+        }
+        .box-pix {
+            border-radius: 14px;
+            border-color: #a7d9b8;
+        }
+        @media (max-width: 520px) {
+            body { padding: 18px 12px; }
+            .secao-card { padding: 20px 16px; }
+            .container-checkout { width: 100%; }
+            .total-container { gap: 12px; font-size: 1rem; }
+            .total-preco { font-size: 1.2rem; }
+            .item-resumo { gap: 10px; }
+            .item-nome { overflow-wrap: anywhere; }
+            .item-preco-sub { white-space: nowrap; }
+        }
     </style>
 </head>
 <body>
@@ -231,6 +319,11 @@
                 <div class="form-grupo">
                     <label for="ponto-referencia">Ponto de Referência (Opcional)</label>
                     <input type="text" id="ponto-referencia" placeholder="Ex: Próximo ao mercadinho ou praça">
+                </div>
+
+                <div class="form-grupo">
+                    <label for="observacao">Observação do Pedido (Opcional)</label>
+                    <textarea id="observacao" maxlength="500" rows="3" placeholder="Ex: Tirar cebola, enviar talheres ou tocar o interfone"></textarea>
                 </div>
             </div>
 

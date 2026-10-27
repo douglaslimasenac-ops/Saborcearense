@@ -34,6 +34,7 @@ public class AdminPratoController {
                 prato.setDescricao(pratoAtualizado.getDescricao());
                 prato.setPreco(pratoAtualizado.getPreco());
                 prato.setCategoria(pratoAtualizado.getCategoria());
+                prato.setDiaSemana(pratoAtualizado.getDiaSemana());
                 prato.setImagemUrl(pratoAtualizado.getImagemUrl());
                 prato.setDisponivel(pratoAtualizado.isDisponivel()); 
                 return ResponseEntity.ok(itemCardapioRepository.save(prato));

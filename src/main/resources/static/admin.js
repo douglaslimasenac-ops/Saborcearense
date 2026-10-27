@@ -64,13 +64,14 @@ function configurarFormularioCadastro() {
         const nome = document.getElementById("nome").value;
         const preco = parseFloat(document.getElementById("preco").value);
         const categoria = document.getElementById("categoria").value;
+        const diaSemana = document.getElementById("diaSemana").value;
         const imagemUrl = document.getElementById("imagem").value;
 
         try {
             const res = await fetchAdmin(URL_BACKEND + "/api/admin/pratos", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nome, preco, categoria, imagemUrl, descricao: "Item profissional.", disponivel: true })
+                body: JSON.stringify({ nome, preco, categoria, diaSemana, imagemUrl, descricao: "Item profissional.", disponivel: true })
             });
             if(res.ok) {
                 form.reset();
@@ -96,13 +97,14 @@ async function carregarItensAdmin() {
             div.className = `card-produto ${esgotado ? 'esgotado-style' : 'disponivel-style'}`;
             
             const nomeCategoria = dicionarioCategorias[item.categoria] || item.categoria || "Geral";
+            const diaLabel = item.diaSemana ? ` · ${item.diaSemana}` : "";
 
             div.innerHTML = `
                 <div style="display: flex; gap: 15px; align-items: center;">
                     <img src="${item.imagemUrl || 'https://unsplash.com'}" 
                          style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc;">
                     <div class="info-prod">
-                        <h4>${item.nome} <span class="badge-cat">${nomeCategoria}</span></h4>
+                        <h4>${item.nome} <span class="badge-cat">${nomeCategoria}${diaLabel}</span></h4>
                         <div style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; color: #4a5568;">
                             <span>Preço: R$</span>
                             <input type="number" step="0.01" value="${Number(item.preco || 0).toFixed(2)}" 
@@ -139,6 +141,7 @@ async function atualizarPrecoRapido(id, novoPreco) {
                 nome: pratoAntigo.nome || "",
                 descricao: pratoAntigo.descricao || "",
                 categoria: pratoAntigo.categoria || "",
+                diaSemana: pratoAntigo.diaSemana || "",
                 imagemUrl: pratoAntigo.imagemUrl || "",
                 disponivel: pratoAntigo.disponivel !== undefined ? pratoAntigo.disponivel : true,
                 preco: valorFormatado
@@ -167,6 +170,7 @@ async function alternarDisponibilidade(id, statusAtual) {
                 nome: pratoAntigo.nome || "",
                 descricao: pratoAntigo.descricao || "",
                 categoria: pratoAntigo.categoria || "",
+                diaSemana: pratoAntigo.diaSemana || "",
                 imagemUrl: pratoAntigo.imagemUrl || "",
                 preco: pratoAntigo.preco || 0,
                 disponivel: novoStatus
@@ -349,6 +353,7 @@ async function carregarPedidosAtivos() {
                             <h4 style="margin: 0 0 6px 0; color: #1e293b;">📋 Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                             <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
                             <small style="color: #0f766e; font-weight: 700; font-size: 0.9rem;">💳 Forma de Pagamento: ${pedido.formaPagamento}</small>
+                            ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                         </div>
                         <span class="badge-cat" style="background: #fffbeb; color: #b45309; border-color: #fde68a;">Status: ${pedido.status}</span>
                     </div>
@@ -398,6 +403,7 @@ async function carregarPedidosAtivos() {
                             <h4 style="margin: 0 0 6px 0; color: #1e293b;">✅ Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                             <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
                             <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento}</small>
+                            ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                         </div>
                         <span class="badge-cat" style="background: #e6f4ea; color: #137333; border-color: #ceead6;">Status: ENTREGUE</span>
                     </div>
@@ -492,7 +498,7 @@ function imprimirCupomIFood(pedido) {
     janelaImpressao.document.close();
 
     var elEstilo = janelaImpressao.document.createElement("style");
-    var regrasCSS = "body { font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.4; margin: 0; padding: 4px; color: #000; background: #fff; } .text-center { text-align: center; } .text-right { text-align: right; } .negrito { font-weight: bold; } .divider-dashed { border-top: 1px dashed #000; margin: 6px 0; } .divider-double { border-top: 3px double #000; margin: 8px 0; } .tag-tipo-entrega { font-size: 22px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 4px; margin-bottom: 8px; letter-spacing: 1px; } .titulo-loja { font-size: 15px; margin: 0; font-weight: bold; text-transform: uppercase; } .subtitulo-loja { font-size: 11px; margin: 2px 0; } .id-pedido { font-size: 18px; font-weight: bold; margin: 4px 0; } .secao-titulo { font-size: 13px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; } .bloco-conteudo { margin-bottom: 6px; } .tabela-itens { width: 100%; border-collapse: collapse; margin: 5px 0; } .tabela-itens td { vertical-align: top; padding: 2px 0; } .col-qtd { width: 12%; font-weight: bold; } .col-nome { width: 63%; } .col-preco { width: 25%; text-align: right; } .linha-financeiro { display: flex; justify-content: space-between; margin: 2px 0; } .linha-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 5px; padding-top: 4px; border-top: 1px dashed #000; } .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 5px 0; white-space: pre-wrap; font-size: 12px; font-weight: bold; } @media print { @page { size: 80mm auto; margin: 0; } body { padding: 5mm 4mm; } }";
+    var regrasCSS = "body { font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.4; margin: 0; padding: 4px; color: #000; background: #fff; } .text-center { text-align: center; } .text-right { text-align: right; } .negrito { font-weight: bold; } .divider-dashed { border-top: 1px dashed #000; margin: 6px 0; } .divider-double { border-top: 3px double #000; margin: 8px 0; } .tag-tipo-entrega { font-size: 22px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 4px; margin-bottom: 8px; letter-spacing: 1px; } .titulo-loja { font-size: 15px; margin: 0; font-weight: bold; text-transform: uppercase; } .subtitulo-loja { font-size: 11px; margin: 2px 0; } .id-pedido { font-size: 18px; font-weight: bold; margin: 4px 0; } .secao-titulo { font-size: 13px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; } .bloco-conteudo { margin-bottom: 6px; } .tabela-itens { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 5px 0; } .tabela-itens th { border-bottom: 1px solid #000; font-size: 10px; padding: 2px 0; text-align: left; } .tabela-itens td { vertical-align: top; padding: 4px 0; border-bottom: 1px dotted #999; overflow-wrap: anywhere; } .col-qtd { width: 12%; font-weight: bold; } .col-nome { width: 63%; } .col-preco { width: 25%; text-align: right !important; white-space: nowrap; } .linha-financeiro { display: flex; justify-content: space-between; margin: 2px 0; } .linha-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 5px; padding-top: 4px; border-top: 1px dashed #000; } .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 5px 0; white-space: pre-wrap; font-size: 12px; font-weight: bold; } @media print { @page { size: 80mm auto; margin: 0; } body { padding: 5mm 4mm; } }";
     
     elEstilo.textContent = regrasCSS;
     janelaImpressao.document.head.appendChild(elEstilo);
@@ -557,8 +563,7 @@ function imprimirCupomIFood(pedido) {
     var divDivisora3 = janelaImpressao.document.createElement("div");
     divDivisora3.className = "divider-double";
     containerPrincipal.appendChild(divDivisora3);
-    // 5. Itens do Pedido (Lendo diretamente da árvore DOM da sua interface)
-        // 5. Itens do Pedido (Lendo direto dos dados da URL/LocalStorage)
+    // 5. Itens do Pedido
     var elItensTitulo = janelaImpressao.document.createElement("div");
     elItensTitulo.className = "secao-titulo";
     elItensTitulo.textContent = "Itens do Pedido";
@@ -566,18 +571,18 @@ function imprimirCupomIFood(pedido) {
 
     var tabelaItens = janelaImpressao.document.createElement("table");
     tabelaItens.className = "tabela-itens";
+    tabelaItens.innerHTML = "<thead><tr><th class='col-qtd'>QTD</th><th class='col-nome'>ITEM</th><th class='col-preco'>VALOR</th></tr></thead><tbody></tbody>";
+    var corpoTabelaItens = tabelaItens.querySelector("tbody");
     
     var totalProdutosCalculado = 0;
     var listaItensImpressao = [];
 
-    // Captura os dados brutos da URL ou do LocalStorage para garantir leitura imediata
-    var urlParamsImp = new URLSearchParams(window.location.search);
-    var paramUrlImp = urlParamsImp.get("carrinho");
-    var dadosRawImp = paramUrlImp ? decodeURIComponent(paramUrlImp) : localStorage.getItem("carrinhoSaborCearense") || localStorage.getItem("saborCearense_carrinho");
-
-    if (dadosRawImp) {
+    // Os itens ficam persistidos no pedido; o localStorage pertence ao navegador do cliente.
+    if (pedido.itens) {
         try {
-            var itensDecodificados = JSON.parse(dadosRawImp);
+            var itensDecodificados = typeof pedido.itens === "string"
+                ? JSON.parse(pedido.itens)
+                : pedido.itens;
             if (Array.isArray(itensDecodificados)) {
                 listaItensImpressao = itensDecodificados;
             } else if (itensDecodificados && typeof itensDecodificados === 'object' && 'nome' in itensDecodificados) {
@@ -594,7 +599,7 @@ function imprimirCupomIFood(pedido) {
         listaItensImpressao.forEach(function(item) {
             var tr = janelaImpressao.document.createElement("tr");
             
-            var nomeTexto = item.nome ? decodeURIComponent(item.nome).toUpperCase() : "PRATO";
+            var nomeTexto = item.nome ? item.nome.toString().toUpperCase() : "PRATO";
             var qtdTexto = item.quantidade || item.qtd || 1;
             var precoItem = item.preco || 0;
             var subtotalItem = qtdTexto * precoItem;
@@ -602,7 +607,7 @@ function imprimirCupomIFood(pedido) {
             totalProdutosCalculado += subtotalItem;
 
             tr.innerHTML = "<td class='col-qtd'>" + qtdTexto + "x</td><td class='col-nome'>" + nomeTexto + "</td><td class='col-preco'>R$ " + subtotalItem.toFixed(2).replace(".", ",") + "</td>";
-            tabelaItens.appendChild(tr);
+            corpoTabelaItens.appendChild(tr);
         });
         containerPrincipal.appendChild(tabelaItens);
     } else {
@@ -611,6 +616,13 @@ function imprimirCupomIFood(pedido) {
         elFallback.className = "negrito";
         elFallback.textContent = "Nenhum prato listado na descrição deste pedido.";
         containerPrincipal.appendChild(elFallback);
+    }
+
+    if (pedido.observacao && pedido.observacao.trim()) {
+        var elObservacao = janelaImpressao.document.createElement("div");
+        elObservacao.className = "bloco-obs";
+        elObservacao.textContent = "OBSERVAÇÃO: " + pedido.observacao.trim();
+        containerPrincipal.appendChild(elObservacao);
     }
 
     var divDivisora4 = janelaImpressao.document.createElement("div");
@@ -629,7 +641,11 @@ function imprimirCupomIFood(pedido) {
             taxaEntrega = parseFloat(partesBairro[1]) || 0;
         }
     }
-    var totalGeralExibir = subtotalExibir + taxaEntrega;
+    var totalPedido = Number(pedido.valorTotal);
+    var totalGeralExibir = Number.isFinite(totalPedido) ? totalPedido : subtotalExibir + taxaEntrega;
+    if (totalGeralExibir >= subtotalExibir) {
+        taxaEntrega = totalGeralExibir - subtotalExibir;
+    }
 
     var elFinanceiro = janelaImpressao.document.createElement("div");
     elFinanceiro.className = "bloco-conteudo";

@@ -29,6 +29,10 @@ public class Pedido {
     @NotNull
     @DecimalMin(value = "0.00")
     private BigDecimal valorTotal;
+    @Lob
+    private String itens;
+    @Column(length = 500)
+    private String observacao;
     private LocalDateTime dataCriacao = LocalDateTime.now();
 
     public Pedido() {}
@@ -48,6 +52,10 @@ public class Pedido {
     public void setFormaPagamento(String formaPagamento) { this.formaPagamento = formaPagamento; }
     public BigDecimal getValorTotal() { return valorTotal; }
     public void setValorTotal(BigDecimal valorTotal) { this.valorTotal = valorTotal; }
+    public String getItens() { return itens; }
+    public void setItens(String itens) { this.itens = itens; }
+    public String getObservacao() { return observacao; }
+    public void setObservacao(String observacao) { this.observacao = observacao; }
     public LocalDateTime getDataCriacao() { return dataCriacao; }
     public void setDataCriacao(LocalDateTime dataCriacao) { this.dataCriacao = dataCriacao; }
 }

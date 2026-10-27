@@ -28,6 +28,9 @@ public class Produto {
     @NotBlank
     private String categoria;
 
+    @Column(name = "dia_semana", length = 20)
+    private String diaSemana;
+
     @Column(nullable = false, precision = 10, scale = 2)
     @NotNull
     @DecimalMin(value = "0.00")
@@ -65,6 +68,14 @@ public class Produto {
 
     public void setCategoria(String categoria) {
         this.categoria = categoria;
+    }
+
+    public String getDiaSemana() {
+        return diaSemana;
+    }
+
+    public void setDiaSemana(String diaSemana) {
+        this.diaSemana = diaSemana;
     }
 
     public BigDecimal getPreco() {

@@ -23,22 +23,12 @@ public class CardapioController {
             System.out.println("Sabor Cearense: Populando base de dados com o cardápio oficial...");
             
             // --- PRATOS DO DIA ---
-            repository.save(criarProdutoInicial("Frango com Quiabo", "PRATOS_DO_DIA", 24.00, "Delicioso frango caipira com quiabo fresco."));
-            repository.save(criarProdutoInicial("Carne Assada", "PRATOS_DO_DIA", 28.00, "Carne assada de panela macia e suculenta."));
-            repository.save(criarProdutoInicial("Costela com Batata", "PRATOS_DO_DIA", 33.00, "Costela bovina cozida com batatas macias."));
-            repository.save(criarProdutoInicial("Frango Assado", "PRATOS_DO_DIA", 24.00, "Tradicional frango assado bem temperado."));
-            repository.save(criarProdutoInicial("Dobradinha", "PRATOS_DO_DIA", 24.00, "Dobradinha tradicional bem temperada com feijão branco."));
-            repository.save(criarProdutoInicial("Pernil Assado", "PRATOS_DO_DIA", 22.00, "Fatias de pernil assado temperado nas ervas."));
-            repository.save(criarProdutoInicial("Tilápia com Baião", "PRATOS_DO_DIA", 25.00, "Filé de tilápia grelhado acompanhado de baião de dois."));
-            repository.save(criarProdutoInicial("Jardineira", "PRATOS_DO_DIA", 25.00, "Carne cozida com legumes variados do dia."));
-            repository.save(criarProdutoInicial("Strogonoff", "PRATOS_DO_DIA", 24.00, "Strogonoff de frango cremoso acompanhado de batata palha."));
-            repository.save(criarProdutoInicial("Língua com Batata", "PRATOS_DO_DIA", 22.00, "Língua de boi ao molho com batatas cozidas."));
-            repository.save(criarProdutoInicial("Mocotó", "PRATOS_DO_DIA", 24.00, "Caldo de mocotó tradicional nordestino legítimo."));
-            repository.save(criarProdutoInicial("Almôndega", "PRATOS_DO_DIA", 25.00, "Almôndegas caseiras ao molho de tomate."));
-            repository.save(criarProdutoInicial("Rabada", "PRATOS_DO_DIA", 30.00, "Rabada robusta cozida lentamente com agrião."));
-            repository.save(criarProdutoInicial("Churrasco Misto", "PRATOS_DO_DIA", 30.00, "Espeto misto de carnes grelhadas na chapa."));
-            repository.save(criarProdutoInicial("Peixe ao Molho", "PRATOS_DO_DIA", 30.00, "Filé de peixe cozido no leite de coco."));
-            repository.save(criarProdutoInicial("Carré à Mineira", "PRATOS_DO_DIA", 24.00, "Carré suíno grelhado com couve refogada."));
+            repository.save(criarProdutoInicial("Frango com Quiabo", "PRATOS_DO_DIA", 24.00, "Delicioso frango caipira com quiabo fresco.", "SEGUNDA"));
+            repository.save(criarProdutoInicial("Costela com Batata", "PRATOS_DO_DIA", 33.00, "Costela bovina cozida com batatas macias.", "TERCA"));
+            repository.save(criarProdutoInicial("Dobradinha", "PRATOS_DO_DIA", 24.00, "Dobradinha tradicional bem temperada com feijão branco.", "QUARTA"));
+            repository.save(criarProdutoInicial("Tilápia empanada com Baião de Dois", "PRATOS_DO_DIA", 25.00, "Filé de tilápia empanado acompanhado de baião de dois.", "QUINTA"));
+            repository.save(criarProdutoInicial("Rabada", "PRATOS_DO_DIA", 30.00, "Rabada robusta cozida lentamente com agrião.", "SEXTA"));
+            repository.save(criarProdutoInicial("Churrasco Misto", "PRATOS_DO_DIA", 30.00, "Espeto misto de carnes grelhadas na chapa.", "SABADO"));
 
             // --- PRATOS PRINCIPAIS: FRANGO ---
             repository.save(criarProdutoInicial("Frango Grelhado", "FRANGO", 22.00, "Filé de peito de frango grelhado na chapa."));
@@ -110,11 +100,16 @@ public class CardapioController {
     }
 
      private Produto criarProdutoInicial(String nome, String categoria, double preco, String descricao) {
+        return criarProdutoInicial(nome, categoria, preco, descricao, null);
+    }
+
+    private Produto criarProdutoInicial(String nome, String categoria, double preco, String descricao, String diaSemana) {
         Produto produto = new Produto();
         produto.setNome(nome);
         produto.setCategoria(categoria);
         produto.setPreco(java.math.BigDecimal.valueOf(preco)); 
         produto.setDescricao(descricao);
+        produto.setDiaSemana(diaSemana);
 
         // Fallback: Imagem padrão leve de comida
         String urlImagem = "https://unsplash.com";

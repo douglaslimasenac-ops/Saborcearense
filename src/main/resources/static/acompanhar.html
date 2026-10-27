@@ -55,6 +55,68 @@
         
         .btn-atualizar { background-color: #f5a623; color: #111111; border: none; padding: 14px 24px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px; width: 100%; transition: background 0.2s; font-size: 1rem; }
         .btn-atualizar:hover { background-color: #e0941f; }
+
+        body {
+            background: radial-gradient(circle at 8% 0%, rgba(217, 144, 36, 0.12), transparent 25rem), #f8f3ea;
+            color: #2f2922;
+            padding: 28px 16px;
+        }
+        .container-status {
+            max-width: 590px;
+            padding: 34px 30px;
+            border: 1px solid #eadbc5;
+            border-radius: 24px;
+            box-shadow: 0 14px 34px rgba(79, 52, 23, 0.1);
+        }
+        .container-status h2 {
+            color: #a85e16;
+            font-size: 1.65rem;
+        }
+        .box-busca {
+            padding: 10px;
+            border: 1px solid #eadbc5;
+            border-radius: 14px;
+            background: #fffaf2;
+        }
+        .box-busca input {
+            border-color: #eadbc5;
+            border-radius: 10px;
+            background: #fff;
+        }
+        .box-busca button,
+        .btn-atualizar {
+            border-radius: 999px;
+            background: linear-gradient(135deg, #d99024, #e8ad4c);
+            box-shadow: 0 7px 16px rgba(168, 94, 22, 0.2);
+        }
+        .pedido-id {
+            color: #a85e16;
+            background: #f7e7c7;
+            border: 1px solid #efd2a6;
+        }
+        .linha-tempo::before {
+            background: #eadbc5;
+        }
+        .circulo {
+            background: #f4eadb;
+            color: #766b5f;
+            border-color: #fff;
+        }
+        .passo.concluido .circulo { background: #237a4b; }
+        .passo.concluido .legenda { color: #237a4b; }
+        .passo.atual .circulo {
+            background: #d99024;
+            box-shadow: 0 0 0 5px rgba(217, 144, 36, 0.2);
+        }
+        .passo.atual .legenda { color: #a85e16; }
+        @media (max-width: 520px) {
+            .container-status { padding: 26px 18px; }
+            .linha-tempo { margin-right: -6px; margin-left: -6px; }
+            .legenda { font-size: 0.68rem; }
+            .box-busca { flex-direction: column; }
+            .box-busca button { width: 100%; }
+            .status-atual { font-size: 1.2rem; }
+        }
     </style>
 </head>
 <body>

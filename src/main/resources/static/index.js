@@ -8,6 +8,7 @@
             carregarCardapio();
             verificarHorarioFuncionamento();
         });
+        const DIAS_SEMANA = ["DOMINGO", "SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO"];
         async function carregarCardapio() {
             try {
                 const res = await fetch(URL_BACKEND + "/api/cardapio");
@@ -39,7 +40,10 @@
                     "PRATOS_DO_DIA": "", "FRANGO": "", "CARNE": "", "OUTROS": "", "SOBREMESA": "", "BEBIDA": ""
                 };
 
-                itens.forEach(item => {
+                const diaAtual = DIAS_SEMANA[new Date().getDay()];
+                itens
+                .filter(item => item.categoria?.toUpperCase() !== "PRATOS_DO_DIA" || item.diaSemana === diaAtual)
+                .forEach(item => {
                     const esgotado = !item.disponivel;
                     
                     const nomeNormalizado = item.nome

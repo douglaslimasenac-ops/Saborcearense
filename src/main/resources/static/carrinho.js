@@ -9,8 +9,8 @@ let taxaEntregaSelecionada = 0;
 let bairroTextoSelecionado = "";
 let carrinho = {};
 
-const URL_API_BACKEND = ""; 
-const WHATSAPP_NUMERO = "/5521974720736"; 
+const URL_API_BACKEND = window.location.origin;
+const WHATSAPP_NUMERO = "5521974720736";
 
 // ==========================================
 // 🌐 EVENTOS DE INICIALIZAÇÃO (DOM)
@@ -40,7 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
         verificarHorarioFuncionamento();
     }
 
-    // ... restante do código ...
+    if (document.getElementById("lista-itens-carrinho")) {
+        carregarItensDaUrlNoCarrinho();
+    }
 });
 
 // ==========================================
@@ -314,6 +316,7 @@ async function enviarPedido(e) {
     const contatoTelefone = document.getElementById("telefone").value.toString().trim(); // Garante formato de String limpa para o Java
     const enderecoRua = document.getElementById("endereco").value;
     const ref = document.getElementById("ponto-referencia").value || "Não informado";
+    const observacao = document.getElementById("observacao").value.trim();
     const pagamento = document.getElementById("pagamento").value;
 
     const enderecoCompleto = `${enderecoRua}, Bairro: ${bairroTextoSelecionado} (Ref: ${ref})`;
@@ -332,6 +335,8 @@ async function enviarPedido(e) {
         endereco: enderecoCompleto,
         formaPagamento: pagamento,
         valorTotal: Number(totalComTaxaGeral.toFixed(2)),
+        itens: JSON.stringify(itens),
+        observacao,
         status: "RECEBIDO" // Já manda o status padrão esperado pelo @PostMapping
     };
 
@@ -340,7 +345,8 @@ async function enviarPedido(e) {
         // 6. BUSCA INTELIGENTE E CORREÇÃO DA URL DA API (Evita Erro 404)
     let urlBase = typeof URL_API_BACKEND !== "undefined" ? URL_API_BACKEND : (window.URL_API_BACKEND || "");
     
-    if (urlBase) {
+    let pedidoSalvoComSucesso = false;
+    if (urlBase && urlBase !== "null") {
         try {
             // Remove barras extras do final e garante que o caminho termine exatamente em /api/pedidos
             let urlLimpa = urlBase.replace(/\/$/, ""); 
@@ -364,6 +370,7 @@ async function enviarPedido(e) {
                 const pedidoSalvo = await response.json();
                 pedidoIdGerado = pedidoSalvo.id; // Vincula o ID real gerado pelo banco Java
                 localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
+                pedidoSalvoComSucesso = true;
             } else {
                 console.error("O backend recusou os dados. Status do erro:", response.status);
             }
@@ -372,6 +379,12 @@ async function enviarPedido(e) {
         }
     } else {
         console.error("A variável global URL_API_BACKEND não foi localizada.");
+    }
+
+    if (!pedidoSalvoComSucesso) {
+        if (abaWhatsapp) abaWhatsapp.close();
+        alert("Não foi possível registrar o pedido no sistema. Tente novamente.");
+        return;
     }
 
 
@@ -393,6 +406,10 @@ async function enviarPedido(e) {
         mensagem += "• " + item.quantidade + "x _" + item.nome + "_ - R$ " + subtotal + "\n";
     });
 
+    if (observacao) {
+        mensagem += "\n📝 *Observação:* " + observacao + "\n";
+    }
+
     mensagem += "\n🛵 *Taxa de Entrega:* R$ " + taxaEntregaSelecionada.toFixed(2).replace('.', ',');
     mensagem += "\n💰 *Total do Pedido:* R$ " + totalComTaxaGeral.toFixed(2).replace('.', ',') + "\n\n";
     mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
@@ -409,5 +426,5 @@ async function enviarPedido(e) {
         window.open(urlWhatsapp, '_blank');
     }
     
-    window.location.href = "index.html?admin=1&aba=RASTREIO";
+    window.location.href = `acompanhar.html?id=${encodeURIComponent(pedidoIdGerado)}`;
 }
