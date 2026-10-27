@@ -266,208 +266,27 @@
         alert("Adicione pelo menos um item à sacola!");
         return;
     }
-    
-    // Converte o seu carrinho em String JSON
-    const carrinhoJson = JSON.stringify(carrinho);
-    
-    // Salva usando exatamente a chave que a outra página espera ler (Garante o PC)
-    localStorage.setItem("carrinhoSaborCearense", carrinhoJson);
-    
-    // Transforma os dados em um formato totalmente seguro para passar na barra de endereço
-    const dadosSegurosUrl = encodeURIComponent(carrinhoJson);
-    
-    // Redireciona passando os dados de carona na URL (Garante o Celular)
-    window.location.href = `carrinho.html?carrinho=${dadosSegurosUrl}`;
 }
-
-function executarBuscaRastreio() {
-    const input = document.getElementById('input-rastreio-index');
-    if (!input) return;
-    const pedidoId = input.value.trim().replace('#', '');
-    if (!pedidoId) {
-        alert('Por favor, digite o número do pedido.');
-        return;
-    }
-    window.location.href = `acompanhar.html?id=${pedidoId}`;
-}
-// Função principal que substitui o clique do seu botão de adicionar atual
-function adicionarAoCarrinhoSaborCearense(nomePrato, precoPrato) {
-    // 1. Cria a estrutura do Modal na tela dinamicamente
-    const modal = document.createElement("div");
-    modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; font-family: sans-serif; padding: 15px; box-sizing: border-box;";
     
-    modal.innerHTML = `
-        <div style="background: #fff; padding: 20px; border-radius: 12px; max-width: 360px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-            <h3 style="margin-top: 0; color: #141414; font-size: 1.1rem; border-bottom: 2px solid #e76f51; padding-bottom: 8px;">🌵 Acompanhamentos do Prato</h3>
-            <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Escolha até 2 options para o seu <strong>${nomePrato}</strong>:</p>
-            
-            <div id="lista-opcoes-acomp" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" value="Maionese" style="width: 18px; height: 18px;"> Maionese</label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" value="Macarronese" style="width: 18px; height: 18px;"> Macarronese</label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" value="Salada de Legumes" style="width: 18px; height: 18px;"> Salada de Legumes</label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" value="Purê" style="width: 18px; height: 18px;"> Purê</label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" value="Espaguete" style="width: 18px; height: 18px;"> Espaguete</label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" value="Fritas" style="width: 18px; height: 18px;"> Fritas</label>
-            </div>
-            
-            <div style="display: flex; gap: 10px;">
-                <button id="btn-cancelar-acomp" style="flex: 1; padding: 10px; border: 1px solid #ccc; background: #fff; border-radius: 6px; font-weight: bold; cursor: pointer;">Cancelar</button>
-                <button id="btn-confirmar-acomp" style="flex: 1; padding: 10px; border: none; background: #22c55e; color: #fff; border-radius: 6px; font-weight: bold; cursor: pointer;">Adicionar</button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
+    // =========================================================================
+// 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS - SABOR CEARENSE (CORRIGIDO)
+// =========================================================================
 
-    // 2. Trava a seleção em no máximo 2 acompanhamentos
-    const checkboxes = modal.querySelectorAll("#lista-opcoes-acomp input");
-    checkboxes.forEach(cb => {
-        cb.addEventListener("change", () => {
-            const marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
-            if (marcados.length > 2) {
-                cb.checked = false;
-                alert("⚠️ Você pode escolher no máximo 2 acompanhamentos!");
-            }
-        });
-    });
-
-    // 3. Ação do Botão Cancelar
-    modal.querySelector("#btn-cancelar-acomp").onclick = () => {
-        modal.remove();
-    };
-
-    // 4. Ação do Botão Confirmar (Integração Cirúrgica com o seu Carrinho)
-    modal.querySelector("#btn-confirmar-acomp").onclick = () => {
-        const marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
-        const acompanhamentos = [];
-        marcados.forEach(cb => acompanhamentos.push(cb.value));
-
-        // Formata o nome do prato adicionando os acompanhamentos
-        let nomeItemComAcomp = nomePrato;
-        if (acompanhamentos.length > 0) {
-            nomeItemComAcomp += " (" + acompanhamentos.join(", ") + ")";
-        }
-
-        // Define um ID único baseado no nome completo do prato + acompanhamentos
-        // Isso evita duplicados e separa pratos iguais com acompanhamentos diferentes!
-        const idItem = nomeItemComAcomp.toLowerCase().replace(/[^a-z0-9]/g, "-");
-
-        // Se o item já existir no seu carrinho, aumenta a quantidade
-        if (carrinho[idItem]) {
-            carrinho[idItem].quantidade += 1;
-        } else {
-            // Se não existir, cria o item exatamente com a estrutura que sua sacola espera
-            carrinho[idItem] = {
-                nome: nomeItemComAcomp,
-                preco: parseFloat(precoPrato),
-                quantidade: 1
-            };
-        }
-
-        // Atualiza a memória local (localStorage) para o carrinho.html também receber o prato com os acompanhamentos
-        localStorage.setItem('carrinho', JSON.stringify(carrinho));
-
-        // Fecha o modal da tela
-        modal.remove();
-
-        // CHAMA A SUA FUNÇÃO ORIGINAL PARA DESENHAR NA TELA IMEDIATAMENTE!
-        if (typeof renderizarItensSacola === "function") {
-            renderizarItensSacola();
-        }
-
-        // Se houver uma função de atualizar o valor total na barra lateral, chama ela também
-        if (typeof atualizarTotalSacola === "function") atualizarTotalSacola();
-        if (typeof atualizarTotais === "function") atualizarTotais();
-    };
-}
-
-function abrirModalAcompanhamentos(nomePrato, precoPrato) {
-    // Se for Bebida ou Sobremesa, adiciona direto sem perguntar acompanhamento
-    const nomeMinusculo = nomePrato.toLowerCase();
-    if (nomeMinusculo.includes("coca") || nomeMinusculo.includes("suco") || nomeMinusculo.includes("guaraná") || nomeMinusculo.includes("Água") || nomeMinusculo.includes("pudim") || nomeMinusculo.includes("doce")) {
-        executarAdicaoNaSacolaReal(nomePrato, precoPrato);
+// Esta é a função principal que deve ser chamada no clique do botão "+" do cardápio
+function mudarQuantidade(id, valor, nome, preco) {
+    // Se o cliente estiver diminuindo a quantidade (-1), executa direto sem abrir o modal
+    if (valor < 0) {
+        executarMudarQuantidadeReal(id, valor, nome, preco);
         return;
     }
 
-    // 1. Cria a estrutura do Modal na tela dinamicamente
-    const modal = document.createElement("div");
-    modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 99999; font-family: sans-serif; padding: 15px; box-sizing: border-box;";
-    
-    modal.innerHTML = `
-        <div style="background: #fff; padding: 20px; border-radius: 12px; max-width: 360px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-            <h3 style="margin-top: 0; color: #141414; font-size: 1.1rem; border-bottom: 2px solid #e76f51; padding-bottom: 8px;">🌵 Acompanhamentos do Prato</h3>
-            <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Escolha até 2 opções para o seu <strong>${nomePrato}</strong>:</p>
-            
-            <div id="lista-opcoes-acomp" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;"><input type="checkbox" value="Maionese" style="width: 18px; height: 18px;"> Maionese</label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;"><input type="checkbox" value="Macarronese" style="width: 18px; height: 18px;"> Macarronese</label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;"><input type="checkbox" value="Salada de Legumes" style="width: 18px; height: 18px;"> Salada de Legumes</label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;"><input type="checkbox" value="Purê" style="width: 18px; height: 18px;"> Purê</label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;"><input type="checkbox" value="Espaguete" style="width: 18px; height: 18px;"> Espaguete</label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 500;"><input type="checkbox" value="Fritas" style="width: 18px; height: 18px;"> Fritas</label>
-            </div>
-            
-            <div style="display: flex; gap: 10px;">
-                <button id="btn-cancelar-acomp" style="flex: 1; padding: 10px; border: 1px solid #ccc; background: #fff; border-radius: 6px; font-weight: bold; cursor: pointer;">Cancelar</button>
-                <button id="btn-confirmar-acomp" style="flex: 1; padding: 10px; border: none; background: #22c55e; color: #fff; border-radius: 6px; font-weight: bold; cursor: pointer;">Confirmar</button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-
-    // 2. Trava a seleção em no máximo 2 acompanhamentos
-    const checkboxes = modal.querySelectorAll("#lista-opcoes-acomp input");
-    checkboxes.forEach(cb => {
-        cb.addEventListener("change", () => {
-            const marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
-            if (marcados.length > 2) {
-                cb.checked = false;
-                alert("⚠️ Você pode escolher no máximo 2 acompanhamentos!");
-            }
-        });
-    });
-
-    // 3. Ação do Botão Cancelar
-    modal.querySelector("#btn-cancelar-acomp").onclick = () => { modal.remove(); };
-
-    // 4. Ação do Botão Confirmar
-    modal.querySelector("#btn-confirmar-acomp").onclick = () => {
-        const marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
-        const acompanhamentos = [];
-        marcados.forEach(cb => acompanhamentos.push(cb.value));
-
-        // Formata o nome final do prato injetando as escolhas
-        let nomeItemComAcomp = nomePrato;
-        if (acompanhamentos.length > 0) {
-            nomeItemComAcomp += " (" + acompanhamentos.join(", ") + ")";
-        }
-
-        modal.remove();
-        
-        // Dispara a função real que insere o prato na sua sacola atual
-        executarAdicaoNaSacolaReal(nomeItemComAcomp, precoPrato);
-    };
-}
-
-function executarAdicaoNaSacolaReal(nomeFormatado, preco) {
-    // Localize o nome da sua função atual que adiciona pratos na sacola
-    // Exemplo: se a sua função antiga se chamava adicionarPrato(nome, preco), chame ela aqui:
-    if (typeof adicionarAoCarrinhoSaborCearense === "function") {
-        adicionarAoCarrinhoSaborCearense(nomeFormatado, preco);
-    } else if (typeof adicionarItem === "function") {
-        adicionarItem(nomeFormatado, preco);
-    }
-}
-// 🌵 FUNÇÃO INTERMEDIÁRIA: Abre a janela flutuante de acompanhamentos
-function abrirModalAcompanhamentos(nomePrato, precoPrato, idPrato) {
-    // Validação automática: Se for bebida ou sobremesa, pula os acompanhamentos e adiciona direto
-    const nomeMinusculo = nomePrato.toLowerCase();
-    const termosPular = ["coca", "suco", "guaraná", "fanta", "água", "bebida", "pudim", "doce", "sobremesa", "cerveja"];
+    // Validação automática: Se for bebida, sobremesa ou adicionais, pula os acompanhamentos e adiciona direto
+    const nomeMinusculo = nome.toLowerCase();
+    const termosPular = ["coca", "suco", "guarana", "fanta", "agua", "bebida", "pudim", "doce", "sobremesa", "cerveja"];
     const devePular = termosPular.some(termo => nomeMinusculo.includes(termo));
 
     if (devePular) {
-        enviarParaSuaFuncaoOriginal(nomePrato, precoPrato, idPrato);
+        executarMudarQuantidadeReal(id, valor, nome, preco);
         return;
     }
 
@@ -478,15 +297,15 @@ function abrirModalAcompanhamentos(nomePrato, precoPrato, idPrato) {
     modal.innerHTML = `
         <div style="background: #fff; padding: 20px; border-radius: 12px; max-width: 360px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
             <h3 style="margin-top: 0; color: #141414; font-size: 1.1rem; border-bottom: 2px solid #e76f51; padding-bottom: 8px; font-weight: bold;">🌵 Acompanhamentos do Prato</h3>
-            <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">Escolha até 2 opções para o seu <strong>${nomePrato}</strong>:</p>
+            <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">Escolha até 2 opções para o seu <strong>${nome}</strong>:</p>
             
             <div id="lista-opcoes-acomp" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Maionese" style="width: 18px; height: 18px;"> Maionese</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Macarronese" style="width: 18px; height: 18px;"> Macarronese</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Salada de Legumes" style="width: 18px; height: 18px;"> Salada de Legumes</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Purê" style="width: 18px; height: 18px;"> Purê</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Espaguete" style="width: 18px; height: 18px;"> Espaguete</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Fritas" style="width: 18px; height: 18px;"> Fritas</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem; color: #141414;"><input type="checkbox" value="Maionese" style="width: 18px; height: 18px;"> Maionese</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem; color: #141414;"><input type="checkbox" value="Macarronese" style="width: 18px; height: 18px;"> Macarronese</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem; color: #141414;"><input type="checkbox" value="Salada de Legumes" style="width: 18px; height: 18px;"> Salada de Legumes</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem; color: #141414;"><input type="checkbox" value="Purê" style="width: 18px; height: 18px;"> Purê</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem; color: #141414;"><input type="checkbox" value="Espaguete" style="width: 18px; height: 18px;"> Espaguete</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem; color: #141414;"><input type="checkbox" value="Fritas" style="width: 18px; height: 18px;"> Fritas</label>
             </div>
             
             <div style="display: flex; gap: 10px;">
@@ -520,20 +339,50 @@ function abrirModalAcompanhamentos(nomePrato, precoPrato, idPrato) {
         marcados.forEach(cb => acompanhamentos.push(cb.value));
 
         // Formata o nome adicionando as escolhas (Ex: "Frango com Quiabo (Purê, Fritas)")
-        let nomeItemComAcomp = nomePrato;
+        let nomeItemComAcomp = nome;
         if (acompanhamentos.length > 0) {
             nomeItemComAcomp += " (" + acompanhamentos.join(", ") + ")";
         }
 
+        // Gera um ID único combinando o ID original + as iniciais das escolhas para evitar duplicações erradas
+        const sufixoAcomp = acompanhamentos.map(a => a.substring(0,3)).join("-");
+        const idUnicoItem = sufixoAcomp ? `${id}-${sufixoAcomp.toLowerCase()}` : id;
+
         modal.remove();
         
-        // Passa o nome já formatado para a engrenagem do seu carrinho original
-        enviarParaSuaFuncaoOriginal(nomeItemComAcomp, precoPrato, idPrato);
+        // Insere de fato na sacola flutuante usando a lógica original do sistema
+        executarMudarQuantidadeReal(idUnicoItem, valor, nomeItemComAcomp, preco);
     };
 }
 
-function enviarParaSuaFuncaoOriginal(nomeFinal, preco, id) {
-    // Altere a chamada abaixo para o nome real da função que adiciona itens na sua sacola
-    // Exemplos comuns: adicionarItem(nomeFinal, preco) ou adicionarAoCarrinho(id, nomeFinal, preco)
-    adicionarAoCarrinho(nomeFinal, preco); 
+// Lógica de manipulação do objeto do carrinho extraída e integrada perfeitamente com seu código original
+function ejecutarMudarQuantidadeReal(id, valor, nome, preco) {
+    if (!carrinho[id]) {
+        if (valor <= 0) return;
+        carrinho[id] = {
+            nome: nome,
+            preco: parseFloat(preco),
+            quantidade: 0
+        };
+    }
+
+    carrinho[id].quantidade += valor;
+
+    if (carrinho[id].quantidade <= 0) {
+        delete carrinho[id];
+    }
+
+    // Mantém o sincronismo nativo com o contador visual do cardápio (+ e -)
+    const elementoQtd = document.getElementById(`qtd-${id}`);
+    if (elementoQtd) {
+        elementoQtd.innerText = carrinho[id] ? carrinho[id].quantidade : 0;
+    }
+
+    // Salva no localStorage no formato esperado pela função irParaCheckout()
+    localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
+
+    // Força a atualização da gaveta lateral da sacola na hora
+    if (typeof renderizarItensSacola === "function") {
+        renderizarItensSacola();
+    }
 }
