@@ -311,8 +311,13 @@ async function enviarPedido(e) {
     }
 
     const bairroTextoSelecionado = selectBairro.options[selectBairro.selectedIndex]?.text || selectBairro.value;
-    const taxaEntregaSelecionada = typeof window.taxaEntregaSelecionada !== "undefined" ? window.taxaEntregaSelecionada : 0;
-    const totalCalculado = typeof window.totalCalculado !== "undefined" ? window.totalCalculado : 0;
+    const subtotalDoPedido = itens.reduce((soma, item) => {
+        const preco = Number(item.preco || item.valor || 0);
+        const quantidade = Number(item.quantidade || item.qtd || 1);
+        return soma + (preco * quantidade);
+    }, 0);
+    const taxaDoPedido = Number(taxaEntregaSelecionada || 0);
+    const totalComTaxaGeral = subtotalDoPedido + taxaDoPedido;
 
     const nome = document.getElementById("nome").value;
     const contatoTelefone = document.getElementById("telefone").value.toString().trim(); // Garante formato de String limpa para o Java
@@ -322,8 +327,6 @@ async function enviarPedido(e) {
     const pagamento = document.getElementById("pagamento").value;
 
     const enderecoCompleto = `${enderecoRua}, Bairro: ${bairroTextoSelecionado} (Ref: ${ref})`;
-    const totalComTaxaGeral = totalCalculado + taxaEntregaSelecionada;
-
     // 4. PREPARAÇÃO DA ABA DO WHATSAPP (Burlar bloqueadores de pop-up nativos)
     const abaWhatsapp = window.open("about:blank", "_blank");
     if (abaWhatsapp) {
@@ -337,7 +340,11 @@ async function enviarPedido(e) {
         endereco: enderecoCompleto,
         formaPagamento: pagamento,
         valorTotal: Number(totalComTaxaGeral.toFixed(2)),
-        itens: JSON.stringify(itens),
+        itens: JSON.stringify(itens.map(item => ({
+            ...item,
+            preco: Number(item.preco || item.valor || 0),
+            quantidade: Number(item.quantidade || item.qtd || 1)
+        }))),
         observacao,
         status: "RECEBIDO" // Já manda o status padrão esperado pelo @PostMapping
     };

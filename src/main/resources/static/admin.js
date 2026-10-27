@@ -368,6 +368,10 @@ function obterItensPedido(pedido) {
     return [];
 }
 
+function obterPrecoItem(item) {
+    return Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0);
+}
+
 function renderizarItensPedido(pedido) {
     const itens = obterItensPedido(pedido);
     if (!itens.length) {
@@ -379,7 +383,7 @@ function renderizarItensPedido(pedido) {
             <strong>Itens do pedido</strong>
             ${itens.map(item => {
                 const quantidade = Number(item.quantidade || 1);
-                const preco = Number(item.preco || 0);
+                const preco = obterPrecoItem(item);
                 const subtotal = quantidade * preco;
                 return `<div class="item-pedido-linha">
                     <span><b>${quantidade}x</b> ${escaparHtml(item.nome || "Item")}</span>
@@ -390,11 +394,22 @@ function renderizarItensPedido(pedido) {
     `;
 }
 
+function calcularTotalItensPedido(pedido) {
+    return obterItensPedido(pedido).reduce((total, item) => {
+        return total + (Number(item.quantidade || item.qtd || 1) * obterPrecoItem(item));
+    }, 0);
+}
+
+function obterTotalPedido(pedido) {
+    const totalRegistrado = Number(pedido.valorTotal ?? pedido.total ?? 0);
+    return totalRegistrado > 0 ? totalRegistrado : calcularTotalItensPedido(pedido);
+}
+
 function atualizarResumoFinanceiro(pedidos, elementoId) {
     const elemento = document.getElementById(elementoId);
     if (!elemento) return;
     const validos = pedidos.filter(pedido => pedido.status !== "CANCELADO");
-    const total = validos.reduce((soma, pedido) => soma + Number(pedido.valorTotal || 0), 0);
+    const total = validos.reduce((soma, pedido) => soma + obterTotalPedido(pedido), 0);
     const ticketMedio = validos.length ? total / validos.length : 0;
     elemento.innerHTML = `
         <div class="resumo-card"><span>Pedidos</span><strong>${validos.length}</strong></div>
@@ -447,7 +462,7 @@ async function carregarPedidosAtivos() {
                             <h4 style="margin: 0 0 6px 0; color: #1e293b;">📋 Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                             <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
                             <small style="color: #0f766e; font-weight: 700; font-size: 0.9rem;">💳 Forma de Pagamento: ${pedido.formaPagamento}</small>
-                            <small style="display: block; margin-top: 6px; color: #b45309; font-weight: 800;">💰 Total: R$ ${Number(pedido.valorTotal || 0).toFixed(2).replace(".", ",")}</small>
+                            <small style="display: block; margin-top: 6px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
                             ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                         </div>
                         <span class="badge-cat" style="background: #fffbeb; color: #b45309; border-color: #fde68a;">Status: ${pedido.status}</span>
@@ -501,7 +516,7 @@ async function carregarPedidosAtivos() {
                         <div>
                             <h4 style="margin: 0 0 6px 0; color: #1e293b;">${pedido.status === "CANCELADO" ? "✕" : "✅"} Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                             <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
-                            <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento} · 💰 R$ ${Number(pedido.valorTotal || 0).toFixed(2).replace(".", ",")}</small>
+                            <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento} · 💰 R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
                             ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                         </div>
                         <span class="badge-cat" style="background: ${pedido.status === "CANCELADO" ? "#fff1f2" : "#e6f4ea"}; color: ${pedido.status === "CANCELADO" ? "#be123c" : "#137333"}; border-color: ${pedido.status === "CANCELADO" ? "#fecdd3" : "#ceead6"};">Status: ${pedido.status}</span>
@@ -709,7 +724,7 @@ function imprimirCupomIFood(pedido) {
             
             var nomeTexto = item.nome ? item.nome.toString().toUpperCase() : "PRATO";
             var qtdTexto = item.quantidade || item.qtd || 1;
-            var precoItem = item.preco || 0;
+            var precoItem = obterPrecoItem(item);
             var subtotalItem = qtdTexto * precoItem;
             
             totalProdutosCalculado += subtotalItem;
@@ -738,7 +753,8 @@ function imprimirCupomIFood(pedido) {
     containerPrincipal.appendChild(divDivisora4);
 
     // 6. Fechamento Financeiro
-    var subtotalExibir = totalProdutosCalculado > 0 ? totalProdutosCalculado : Number(pedido.total || pedido.valorTotal || 0);
+    var valorPedido = Number(pedido.valorTotal ?? pedido.total ?? 0);
+    var subtotalExibir = totalProdutosCalculado > 0 ? totalProdutosCalculado : valorPedido;
     
     // Captura dinamicamente o valor da taxa do bairro selecionado no formulário
     var selectBairro = document.getElementById("bairro-entrega");
@@ -750,7 +766,7 @@ function imprimirCupomIFood(pedido) {
         }
     }
     var totalPedido = Number(pedido.valorTotal);
-    var totalGeralExibir = Number.isFinite(totalPedido) ? totalPedido : subtotalExibir + taxaEntrega;
+    var totalGeralExibir = totalPedido > 0 ? totalPedido : subtotalExibir + taxaEntrega;
     if (totalGeralExibir >= subtotalExibir) {
         taxaEntrega = totalGeralExibir - subtotalExibir;
     }
