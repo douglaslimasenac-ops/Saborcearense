@@ -3,7 +3,8 @@
 // ==========================================
 const URL_BACKEND = "https://saborcearense-5.onrender.com"
 const URL_API_ADMIN = URL_BACKEND + "/api/admin/pratos";
-const URL_BACKEND_WS = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host;
+const backendUrl = new URL(URL_BACKEND);
+const URL_BACKEND_WS = (backendUrl.protocol === "https:" ? "wss://" : "ws://") + backendUrl.host;
 
 const dicionarioCategorias = {
     "PRATOS_DO_DIA": "🌹 Prato do Dia",
@@ -219,13 +220,19 @@ function conectarWebSocketAdmin() {
         };
 
         socketAdmin.onmessage = (event) => {
+            let dados;
             try {
-                const dados = JSON.parse(event.data);
-                if (dados.tipo === "PONG") return; 
-            } catch(e){}
+                dados = JSON.parse(event.data);
+                if (dados.tipo === "PING" || dados.tipo === "PONG") return;
+            } catch(e) {
+                console.error("Mensagem inválida recebida no WebSocket:", e);
+                return;
+            }
             
             carregarPedidosAtivos();
-            tocarAlertaSonoro();
+            if (dados.status === "RECEBIDO" && dados.clienteNome) {
+                tocarAlertaSonoro();
+            }
         };
         
         socketAdmin.onclose = () => { 
@@ -288,7 +295,14 @@ function exibirBannerAtivacaoAudio() {
 function inicializarAudioContext() {
     try {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) {
+            console.error("Este navegador não oferece suporte a notificações sonoras.");
+            return;
+        }
         audioCtxCompartilhado = new AudioContextClass();
+        audioCtxCompartilhado.resume().catch((erro) => {
+            console.error("Não foi possível ativar o áudio:", erro);
+        });
         console.log("Contexto de áudio inicializado via clique administrativo.");
     } catch (e) {
         console.error("Falha ao inicializar o AudioContext:", e);
@@ -299,7 +313,9 @@ function tocarAlertaSonoro() {
     if (!audioCtxCompartilhado) return;
     
     if (audioCtxCompartilhado.state === "suspended") {
-        audioCtxCompartilhado.resume();
+        audioCtxCompartilhado.resume().catch((erro) => {
+            console.error("Não foi possível reativar o áudio:", erro);
+        });
     }
 
     const osc = audioCtxCompartilhado.createOscillator();
