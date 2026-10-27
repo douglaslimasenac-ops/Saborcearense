@@ -147,5 +147,186 @@
 
     <!-- SCRIPTS DE LOGICA -->
     <script src="index.js"></script>
+    <!-- INTERCEPTADOR DE ACOMPANHAMENTOS DO SABOR CEARENSE -->
+<!-- SISTEMA AUTOMÁTICO DE ACAMPONHAMENTOS E SACOLA DO SABOR CEARENSE -->
+<!-- INTERCEPTADOR EXCLUSIVO DE ACOMPANHAMENTOS - SABOR CEARENSE -->
+<!-- SISTEMA DEFINITIVO DE ACOMPANHAMENTOS E SACOLA - SABOR CEARENSE -->
+<script>
+// Cria e garante a função global para os botões do seu cardápio
+window.mudarQuantidade = function(id, mudanca, nome, preco) {
+    // 1. Se o cliente estiver diminuindo a quantidade (botão -), executa direto na sacola
+    if (mudanca < 0) {
+        atualizarArmazenamentoSacola(id, mudanca, nome, preco);
+        return;
+    }
+
+    // 2. Filtro automático: Se for bebida ou sobremesa, pula os acompanhamentos e adiciona direto
+    var nomeMinusculo = nome.toLowerCase();
+    var termosPular = ["coca", "suco", "guaraná", "fanta", "água", "bebida", "pudim", "doce", "sobremesa", "cerveja", "sprite", "fanta"];
+    var devePular = termosPular.some(function(termo) { return nomeMinusculo.includes(termo); });
+
+    // Se o prato já tiver os parênteses de acompanhamento no nome, adiciona direto
+    if (devePular || (nome.includes("(") && nome.includes(")")) ) {
+        atualizarArmazenamentoSacola(id, mudanca, nome, preco);
+        return;
+    }
+
+    // 3. Monta o HTML do Modal de Acompanhamentos na tela
+    var modal = document.createElement("div");
+    modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 999999; font-family: sans-serif; padding: 15px; box-sizing: border-box;";
+    
+    modal.innerHTML = `
+        <div style="background: #fff; padding: 20px; border-radius: 12px; max-width: 360px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <h3 style="margin-top: 0; color: #141414; font-size: 1.1rem; border-bottom: 2px solid #e76f51; padding-bottom: 8px; font-weight: bold;">🌵 Acompanhamentos do Prato</h3>
+            <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">Escolha até 2 opções para o seu <strong>${nome}</strong>:</p>
+            
+            <div id="lista-opcoes-acomp" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Maionese" style="width: 18px; height: 18px;"> Maionese</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Macarronese" style="width: 18px; height: 18px;"> Macarronese</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Salada de Legumes" style="width: 18px; height: 18px;"> Salada de Legumes</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Purê" style="width: 18px; height: 18px;"> Purê</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Espaguete" style="width: 18px; height: 18px;"> Espaguete</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Fritas" style="width: 18px; height: 18px;"> Fritas</label>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button id="btn-cancelar-acomp" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; font-weight: bold; cursor: pointer; color: #475569;">Cancelar</button>
+                <button id="btn-confirmar-acomp" style="flex: 1; padding: 10px; border: none; background: #22c55e; color: #fff; border-radius: 6px; font-weight: bold; cursor: pointer;">Confirmar</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+
+    // Trava a seleção em no máximo 2 opções marcadas
+    var checkboxes = modal.querySelectorAll("#lista-opcoes-acomp input");
+    checkboxes.forEach(function(cb) {
+        cb.addEventListener("change", function() {
+            var marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
+            if (marcados.length > 2) {
+                cb.checked = false;
+                alert("⚠️ Você pode escolher no máximo 2 acompanhamentos!");
+            }
+        });
+    });
+
+    // Ação do Botão Cancelar
+    modal.querySelector("#btn-cancelar-acomp").onclick = function() { modal.remove(); };
+
+    // Ação do Botão Confirmar
+    modal.querySelector("#btn-confirmar-acomp").onclick = function() {
+        var marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
+        var acompanhamentos = [];
+        marcados.forEach(function(cb) { acompanhamentos.push(cb.value); });
+
+        var nomeItemComAcomp = nome;
+        if (acompanhamentos.length > 0) {
+            nomeItemComAcomp += " (" + acompanhamentos.join(", ") + ")";
+        }
+
+        modal.remove();
+        atualizarArmazenamentoSacola(id, mudanca, nomeItemComAcomp, preco);
+    };
+};
+// FUNÇÃO INTERNA DA SACOLA: Salva os dados e atualiza as IDs reais do seu HTML
+function atualizarArmazenamentoSacola(idItem, qtdMudanca, nomeFinal, precoFinal) {
+    var carrinho = [];
+    var localData = localStorage.getItem("carrinhoSaborCearense") || localStorage.getItem("saborCearense_carrinho");
+    if (localData) {
+        try { carrinho = JSON.parse(localData); } catch(e) { carrinho = []; }
+    }
+    if (!Array.isArray(carrinho)) { carrinho = []; }
+
+    var itemExistente = carrinho.find(function(item) { return item.nome === nomeFinal; });
+
+    if (itemExistente) {
+        itemExistente.quantidade += qtdMudanca;
+        if (itemExistente.quantidade <= 0) {
+            carrinho = carrinho.filter(function(item) { return item.nome !== nomeFinal; });
+        }
+    } else if (qtdMudanca > 0) {
+        carrinho.push({
+            id: idItem,
+            nome: nomeFinal,
+            preco: parseFloat(precoFinal),
+            quantidade: 1
+        });
+    }
+
+    // Salva as informações nas chaves do LocalStorage
+    localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
+    localStorage.setItem("saborCearense_carrinho", JSON.stringify(carrinho));
+
+    // 1. ATUALIZA A BARRA FIXA INFERIOR DO SEU HTML
+    var txtQtdBarra = document.getElementById("txt-qtd-itens");
+    var txtValorBarra = document.getElementById("txt-valor-total");
+    var totalItensContagem = 0;
+    var valorTotalContagem = 0;
+
+    carrinho.forEach(function(item) {
+        totalItensContagem += item.quantidade;
+        valorTotalContagem += item.quantidade * item.preco;
+    });
+
+    if (txtQtdBarra) txtQtdBarra.innerText = totalItensContagem + " itens";
+    if (txtValorBarra) txtValorBarra.innerText = "R$ " + valorTotalContagem.toFixed(2).replace(".", ",");
+
+    // 2. ATUALIZA O CONTEÚDO VISUAL DA GAVETA DA SACOLA (IDs REAIS DO SEU BODY)
+    var containerSacolaCorpo = document.getElementById("lista-produtos-sacola");
+    var txtSubtotalModalGaveta = document.getElementById("txt-modal-subtotal");
+    
+    if (containerSacolaCorpo) {
+        containerSacolaCorpo.innerHTML = "";
+        if (carrinho.length === 0) {
+            containerSacolaCorpo.innerHTML = "<p style='text-align:center;color:#64748b;padding:30px;font-weight:500;'>Sua sacola está vazia.</p>";
+        } else {
+            carrinho.forEach(function(item) {
+                var itemDivHTML = document.createElement("div");
+                itemDivHTML.style = "display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #edf2f7; gap:10px;";
+                itemDivHTML.innerHTML = `
+                    <div style="flex:1;">
+                        <div style="font-weight:700 !important; color:#141414 !important; font-size:15px !important; line-height:1.3 !important; display:block !important; visibility:visible !important;">${item.nome}</div>
+                        <div style="color:#e76f51; font-weight:700; font-size:0.9rem; margin-top:3px;">R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <button onclick="mudarQuantidade(${item.id}, -1, '${item.nome}', ${item.preco})" style="width:28px; height:28px; background:#f1f5f9; border:1px solid #cbd5e1; font-weight:bold; border-radius:4px; cursor:pointer; color:#475569;">-</button>
+                        <span style="font-weight:bold; min-width:15px; text-align:center; color:#1a202c;">${item.quantidade}</span>
+                        <button onclick="mudarQuantidade(${item.id}, 1, '${item.nome}', ${item.preco})" style="width:28px; height:28px; background:#f1f5f9; border:1px solid #cbd5e1; font-weight:bold; border-radius:4px; cursor:pointer; color:#475569;">+</button>
+                    </div>
+                `;
+                containerSacolaCorpo.appendChild(itemDivHTML);
+            });
+        }
+    }
+    if (txtSubtotalModalGaveta) txtSubtotalModalGaveta.innerText = "R$ " + valorTotalContagem.toFixed(2).replace(".", ",");
+
+    // 3. GERENCIA AS FUNÇÕES DE ABRIR E FECHAR A SUA GAVETA MODAL
+    var gavetaModalHTML = document.getElementById("painel-sacola-modal");
+    
+    window.abrirSacola = function() {
+        if (gavetaModalHTML) gavetaModalHTML.style.display = "block";
+    };
+    window.fecharSacola = function() {
+        if (gavetaModalHTML) gavetaModalHTML.style.display = "none";
+    };
+    
+    // Se o cliente acabou de adicionar um prato (+), força a abertura da gaveta para exibir o prato
+    if (gavetaModalHTML && qtdMudanca > 0) {
+        abrirSacola();
+    }
+}
+
+// Inicializa os textos e pratos salvos assim que carregar o cardápio
+document.addEventListener("DOMContentLoaded", function() {
+    atualizarArmazenamentoSacola(0, 0, "", 0);
+});
+
+// Vincula a ação de redirecionamento para o seu botão "Avançar para o Pagamento"
+window.irParaCheckout = function() {
+    var dadosCarrinhoSalvos = localStorage.getItem("carrinhoSaborCearense") || "[]";
+    window.location.href = "carrinho.html?carrinho=" + encodeURIComponent(dadosCarrinhoSalvos);
+};
+</script>
+
 </body>
 </html>
