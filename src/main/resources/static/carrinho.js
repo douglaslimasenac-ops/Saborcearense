@@ -10,7 +10,7 @@ let bairroTextoSelecionado = "";
 let carrinho = {};
 
 const URL_API_BACKEND = ""; 
-const WHATSAPP_NUMERO = "5521974720736"; 
+const WHATSAPP_NUMERO = "/5521974720736"; 
 
 // ==========================================
 // 🌐 EVENTOS DE INICIALIZAÇÃO (DOM)
@@ -307,7 +307,6 @@ async function enviarPedido(e) {
         return; 
     }
 
-    // RESOLÇÃO DO BUG 1: Resgata o texto do bairro e valores dinamicamente caso não sejam globais
     const bairroTextoSelecionado = selectBairro.options[selectBairro.selectedIndex]?.text || selectBairro.value;
     const taxaEntregaSelecionada = typeof window.taxaEntregaSelecionada !== "undefined" ? window.taxaEntregaSelecionada : 0;
     const totalCalculado = typeof window.totalCalculado !== "undefined" ? window.totalCalculado : 0;
@@ -321,6 +320,14 @@ async function enviarPedido(e) {
     const enderecoCompleto = `${enderecoRua}, Bairro: ${bairroTextoSelecionado}`;
     const totalComTaxaGeral = totalCalculado + taxaEntregaSelecionada;
 
+    // ==========================================
+    // PASSO CHAVE: Abre a aba imediatamente no clique para o navegador NÃO bloquear
+    // ==========================================
+    const abaWhatsapp = window.open("about:blank", "_blank");
+    if (abaWhatsapp) {
+        abaWhatsapp.document.write("<p style='font-family:sans-serif; text-align:center; margin-top:20%; color:#555;'>Processando seu pedido na cozinha do Sabor Cearense... Aguarde...</p>");
+    }
+
     // 4. Monta o Payload do Pedido para o seu Backend Java no Render
     const dadosPedido = {
         clienteNome: nome,
@@ -329,69 +336,68 @@ async function enviarPedido(e) {
         valorTotal: totalComTaxaGeral 
     };
 
-    try {
-        let pedidoIdGerado = "NOVO";
-        
-        // Verifica se a URL da API existe antes de fazer o fetch para não travar o fluxo caso caia
-        if (typeof URL_API_BACKEND !== "undefined" && URL_API_BACKEND) {
-            try {
-                const response = await fetch(URL_API_BACKEND + "/api/pedidos", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(dadosPedido)
-                });
+    let pedidoIdGerado = "NOVO";
 
-                if (response.ok) {
-                    const pedidoSalvo = await response.json();
-                    pedidoIdGerado = pedidoSalvo.id;
-                    localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
-                }
-            } catch (apiError) {
-                console.error("Falha ao salvar no backend, mas o pedido seguirá para o WhatsApp:", apiError);
+    if (typeof URL_API_BACKEND !== "undefined" && URL_API_BACKEND) {
+        try {
+            const response = await fetch(URL_API_BACKEND + "/api/pedidos", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(dadosPedido)
+            });
+
+            if (response.ok) {
+                const pedidoSalvo = await response.json();
+                pedidoIdGerado = pedidoSalvo.id;
+                localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
             }
+        } catch (apiError) {
+            console.error("Falha ao salvar no backend, o pedido seguirá por contingência via WhatsApp:", apiError);
         }
-
-        // 5. Montagem da Mensagem do WhatsApp do Estabelecimento
-        let mensagem = "🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n";
-        if (pedidoIdGerado !== "NOVO") {
-            mensagem += "🆔 *Pedido Nº:* #" + pedidoIdGerado + "\n";
-        }
-        mensagem += "👤 *Cliente:* " + nome + "\n";
-        mensagem += "📞 *Contato:* " + contatoTelefone + "\n";
-        mensagem += "📍 *Bairro:* " + bairroTextoSelecionado + "\n";
-        mensagem += "🏠 *Endereço:* " + enderecoRua + "\n";
-        mensagem += "🔍 *Referência:* " + ref + "\n";
-        mensagem += "💳 *Pagamento:* " + pagamento + "\n\n";
-        mensagem += "🛒 *Itens do Pedido:*\n";
-
-        itens.forEach(item => {
-            const subtotal = (item.preco * item.quantidade).toFixed(2).replace('.', ',');
-            mensagem += "• " + item.quantidade + "x _" + item.nome + "_ - R$ " + subtotal + "\n";
-        });
-
-        mensagem += "\n🛵 *Taxa de Entrega:* R$ " + taxaEntregaSelecionada.toFixed(2).replace('.', ',');
-        mensagem += "\n💰 *Total do Pedido:* R$ " + totalComTaxaGeral.toFixed(2).replace('.', ',') + "\n\n";
-        mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
-
-        // RESOLUÇÃO DO BUG 2: Fallback caso a constante global não esteja definida
-        const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : "5585999999999"; 
-        const urlWhatsapp = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
-        
-        // RESOLUÇÃO DO BUG 3: Limpa o carrinho e redireciona de forma segura após abrir o WhatsApp
-        localStorage.removeItem("carrinhoSaborCearense");
-        
-        // Abre o WhatsApp
-        window.open(urlWhatsapp, '_blank');
-        
-        // Pequeno intervalo de 300ms antes de redirecionar para dar tempo do navegador processar o pop-up
-        setTimeout(() => {
-            window.location.href = "index.html?admin=1&aba=RASTREIO";
-        }, 300);
-
-    } catch (error) {
-        console.error("Erro no processamento do pedido:", error);
-        alert("Ocorreu uma falha ao processar o seu pedido, mas você pode tentar reenviar.");
     }
+
+    // 5. Montagem da Mensagem do WhatsApp do Estabelecimento
+    let mensagem = "🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n";
+    if (pedidoIdGerado !== "NOVO") {
+        mensagem += "🆔 *Pedido Nº:* #" + pedidoIdGerado + "\n";
+    }
+    mensagem += "👤 *Cliente:* " + nome + "\n";
+    mensagem += "📞 *Contato:* " + contatoTelefone + "\n";
+    mensagem += "📍 *Bairro:* " + bairroTextoSelecionado + "\n";
+    mensagem += "🏠 *Endereço:* " + enderecoRua + "\n";
+    mensagem += "🔍 *Referência:* " + ref + "\n";
+    mensagem += "💳 *Pagamento:* " + pagamento + "\n\n";
+    mensagem += "🛒 *Itens do Pedido:*\n";
+
+    itens.forEach(item => {
+        const subtotal = (item.preco * item.quantidade).toFixed(2).replace('.', ',');
+        mensagem += "• " + item.quantidade + "x _" + item.nome + "_ - R$ " + subtotal + "\n";
+    });
+
+    mensagem += "\n🛵 *Taxa de Entrega:* R$ " + taxaEntregaSelecionada.toFixed(2).replace('.', ',');
+    mensagem += "\n💰 *Total do Pedido:* R$ " + totalComTaxaGeral.toFixed(2).replace('.', ',') + "\n\n";
+    mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
+
+    const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : "5585999999999"; 
+    const urlWhatsapp = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
+    
+    // Limpa o carrinho localmente de forma segura antes do redirecionamento
+    localStorage.removeItem("carrinhoSaborCearense");
+
+    // ==========================================
+    // DIRECIONAMENTO SEGURO
+    // ==========================================
+    if (abaWhatsapp) {
+        // Redireciona a aba que abrimos anteriormente para o link do WhatsApp gerado
+        abaWhatsapp.location.href = urlWhatsapp;
+    } else {
+        // Caso o navegador tenha uma trava extrema e impeça a aba inicial, tenta o redirecionamento direto por contingência
+        window.location.href = urlWhatsapp;
+        return;
+    }
+    
+    // Redireciona a tela principal do app para a aba do acompanhamento/rastreio
+    window.location.href = "index.html?admin=1&aba=RASTREIO";
 }
 
 // Força o navegador a rodar a função e preencher a div assim que a página carregar
