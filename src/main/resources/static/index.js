@@ -299,7 +299,7 @@ function adicionarAoCarrinhoSaborCearense(nomePrato, precoPrato) {
     modal.innerHTML = `
         <div style="background: #fff; padding: 20px; border-radius: 12px; max-width: 360px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
             <h3 style="margin-top: 0; color: #141414; font-size: 1.1rem; border-bottom: 2px solid #e76f51; padding-bottom: 8px;">🌵 Acompanhamentos do Prato</h3>
-            <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Escolha até 2 opções para o seu <strong>${nomePrato}</strong>:</p>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Escolha até 2 options para o seu <strong>${nomePrato}</strong>:</p>
             
             <div id="lista-opcoes-acomp" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" value="Maionese" style="width: 18px; height: 18px;"> Maionese</label>
@@ -336,56 +336,48 @@ function adicionarAoCarrinhoSaborCearense(nomePrato, precoPrato) {
         modal.remove();
     };
 
-    // 4. Ação do Botão Confirmar (Salva com segurança total no sistema)
+    // 4. Ação do Botão Confirmar (Integração Cirúrgica com o seu Carrinho)
     modal.querySelector("#btn-confirmar-acomp").onclick = () => {
         const marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
         const acompanhamentos = [];
         marcados.forEach(cb => acompanhamentos.push(cb.value));
 
-        // Formata o nome juntando o prato e os acompanhamentos
+        // Formata o nome do prato adicionando os acompanhamentos
         let nomeItemComAcomp = nomePrato;
         if (acompanhamentos.length > 0) {
             nomeItemComAcomp += " (" + acompanhamentos.join(", ") + ")";
         }
 
-        const dadosItem = {
-            nome: nomeItemComAcomp,
-            preco: parseFloat(precoPrato),
-            quantidade: 1
-        };
+        // Define um ID único baseado no nome completo do prato + acompanhamentos
+        // Isso evita duplicados e separa pratos iguais com acompanhamentos diferentes!
+        const idItem = nomeItemComAcomp.toLowerCase().replace(/[^a-z0-9]/g, "-");
 
-        // LÊ, ATUALIZA E SALVA NO LOCALSTORAGE ORIGINAL DO SEU SITE
-        // Isso garante que o carrinho.html receba o item perfeitamente
-        let itensAtuais = [];
-        try {
-            const localData = localStorage.getItem("carrinho") || localStorage.getItem("cart");
-            if (localData) {
-                itensAtuais = JSON.parse(localData);
-                if (!Array.isArray(itensAtuais)) itensAtuais = [];
-            }
-        } catch(e) {
-            itensAtuais = [];
-        }
-
-        // Verifica se o item já existe para somar quantidade, se não adiciona um novo
-        const indexExistente = itensAtuais.findIndex(item => item.nome === dadosItem.nome);
-        if (indexExistente > -1) {
-            itensAtuais[indexExistente].quantidade += 1;
+        // Se o item já existir no seu carrinho, aumenta a quantidade
+        if (carrinho[idItem]) {
+            carrinho[idItem].quantidade += 1;
         } else {
-            itensAtuais.push(dadosItem);
+            // Se não existir, cria o item exatamente com a estrutura que sua sacola espera
+            carrinho[idItem] = {
+                nome: nomeItemComAcomp,
+                preco: parseFloat(precoPrato),
+                quantidade: 1
+            };
         }
 
-        // Devolve de volta para o navegador nos dois formatos comuns para evitar erros
-        const jsonString = JSON.stringify(itensAtuais);
-        localStorage.setItem("carrinho", jsonString);
-        localStorage.setItem("cart", jsonString);
+        // Atualiza a memória local (localStorage) para o carrinho.html também receber o prato com os acompanhamentos
+        localStorage.setItem('carrinho', JSON.stringify(carrinho));
 
-        // Remove o modal da tela
+        // Fecha o modal da tela
         modal.remove();
 
-        // RECARREGA A PÁGINA PARA A SACOLA ATUALIZAR SOZINHA COM O ITEM NOVO
-        // É a forma mais segura do mundo para atualizar a tela sem mexer em outras funções!
-        window.location.reload();
+        // CHAMA A SUA FUNÇÃO ORIGINAL PARA DESENHAR NA TELA IMEDIATAMENTE!
+        if (typeof renderizarItensSacola === "function") {
+            renderizarItensSacola();
+        }
+
+        // Se houver uma função de atualizar o valor total na barra lateral, chama ela também
+        if (typeof atualizarTotalSacola === "function") atualizarTotalSacola();
+        if (typeof atualizarTotais === "function") atualizarTotais();
     };
 }
 
