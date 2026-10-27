@@ -1500,6 +1500,32 @@ button {
         display: block !important;
     }
 
+    .preview-imagem-prato {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 8px;
+        padding: 8px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fffaf2;
+        color: var(--text-muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    .preview-imagem-prato[hidden] {
+        display: none;
+    }
+
+    .preview-imagem-prato img {
+        width: 58px;
+        height: 58px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 1px solid var(--border);
+    }
+
     /* Estado inicial da sacola: oculto em qualquer tamanho de tela. */
     #painel-sacola-modal {
         display: none !important;

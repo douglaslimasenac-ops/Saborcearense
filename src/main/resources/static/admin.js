@@ -24,6 +24,7 @@ let audioCtxCompartilhado = null;
 let idsPedidosConhecidos = new Set();
 let idsPedidosAlertados = new Set();
 let primeiraCargaPedidos = true;
+let termoBuscaProdutos = "";
 
 async function fetchAdmin(url, options = {}) {
     const token = localStorage.getItem("adminToken");
@@ -47,6 +48,13 @@ window.addEventListener('DOMContentLoaded', function() {
     if (botaoLogin) {
         botaoLogin.addEventListener('click', autenticarAdmin);
     }
+    const buscaProdutos = document.getElementById("busca-produtos-admin");
+    if (buscaProdutos) {
+        buscaProdutos.addEventListener("input", () => {
+            termoBuscaProdutos = buscaProdutos.value.trim().toLocaleLowerCase("pt-BR");
+            renderizarItensAdmin();
+        });
+    }
 });
 
 function alternarAbasAdmin(abaAlvo) {
@@ -64,13 +72,53 @@ function alternarAbasAdmin(abaAlvo) {
 function configurarFormularioCadastro() {
     const form = document.getElementById("form-novo-prato");
     if (!form) return;
+    const campoImagem = document.getElementById("imagem");
+    const previewImagem = document.getElementById("preview-imagem-prato");
+    const previewImagemEl = document.getElementById("preview-imagem-prato-img");
+
+    const atualizarPreviewImagem = () => {
+        const valor = campoImagem.value.trim();
+        if (!valor) {
+            previewImagem.hidden = true;
+            previewImagemEl.removeAttribute("src");
+            return;
+        }
+
+        try {
+            new URL(valor);
+            previewImagemEl.src = valor;
+            previewImagem.hidden = false;
+        } catch {
+            previewImagem.hidden = true;
+        }
+    };
+
+    campoImagem.addEventListener("input", atualizarPreviewImagem);
+    previewImagemEl.addEventListener("error", () => {
+        previewImagem.hidden = true;
+        alert("Não foi possível carregar essa imagem. Use o endereço direto do arquivo.");
+    });
+
     form.onsubmit = async function(e) {
         e.preventDefault();
         const nome = document.getElementById("nome").value;
         const preco = parseFloat(document.getElementById("preco").value);
         const categoria = document.getElementById("categoria").value;
         const diaSemana = document.getElementById("diaSemana").value;
-        const imagemUrl = document.getElementById("imagem").value;
+        const imagemUrl = campoImagem.value.trim();
+
+        if (imagemUrl) {
+            try {
+                const urlImagem = new URL(imagemUrl);
+                if (!["http:", "https:"].includes(urlImagem.protocol)) {
+                    throw new Error("Protocolo de imagem inválido");
+                }
+            } catch {
+                alert("Informe uma URL válida para a imagem, começando com https://.");
+                campoImagem.focus();
+                return;
+            }
+        }
 
         try {
             const res = await fetchAdmin(URL_BACKEND + "/api/admin/pratos", {
@@ -80,6 +128,7 @@ function configurarFormularioCadastro() {
             });
             if(res.ok) {
                 form.reset();
+                atualizarPreviewImagem();
                 carregarItensAdmin();
             } else { alert("Erro ao criar novo produto."); }
         } catch(err) { alert("Erro de conexao ao salvar."); }
@@ -94,9 +143,25 @@ async function carregarItensAdmin() {
         const itens = await res.json();
         
         listaPratosLocal = itens;
-        container.innerHTML = "";
-        
-        itens.forEach(item => {
+        renderizarItensAdmin();
+    } catch(e) { container.innerHTML = `<p style="text-align: center; color: var(--danger);">Erro ao carregar o cardápio.</p>`; }
+}
+
+function renderizarItensAdmin() {
+    const container = document.getElementById("lista-itens-admin");
+    if (!container) return;
+    container.innerHTML = "";
+    const itensFiltrados = listaPratosLocal.filter(item => {
+        const texto = `${item.nome || ""} ${item.categoria || ""} ${item.diaSemana || ""}`.toLocaleLowerCase("pt-BR");
+        return texto.includes(termoBuscaProdutos);
+    });
+
+    if (!itensFiltrados.length) {
+        container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px;">Nenhum item encontrado.</p>`;
+        return;
+    }
+
+    itensFiltrados.forEach(item => {
             const div = document.createElement("div");
             const esgotado = !item.disponivel;
             div.className = `card-produto ${esgotado ? 'esgotado-style' : 'disponivel-style'}`;
@@ -127,8 +192,7 @@ async function carregarItensAdmin() {
                 </div>
             `;
             container.appendChild(div);
-        });
-    } catch(e) { container.innerHTML = `<p style="text-align: center; color: var(--danger);">Erro ao carregar o cardápio.</p>`; }
+    });
 }
 
 async function atualizarPrecoRapido(id, novoPreco) {
@@ -378,6 +442,12 @@ function renderizarItensPedido(pedido) {
         return `<div class="itens-pedido"><strong>Itens:</strong><span>Não informado</span></div>`;
     }
 
+    function obterTaxaEntregaPedido(pedido) {
+        const subtotal = calcularTotalItensPedido(pedido);
+        const total = obterTotalPedido(pedido);
+        return Math.max(0, total - subtotal);
+    }
+
     return `
         <div class="itens-pedido">
             <strong>Itens do pedido</strong>
@@ -462,7 +532,8 @@ async function carregarPedidosAtivos() {
                             <h4 style="margin: 0 0 6px 0; color: #1e293b;">📋 Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                             <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
                             <small style="color: #0f766e; font-weight: 700; font-size: 0.9rem;">💳 Forma de Pagamento: ${pedido.formaPagamento}</small>
-                            <small style="display: block; margin-top: 6px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                            <small style="display: block; margin-top: 6px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                            <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
                             ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                         </div>
                         <span class="badge-cat" style="background: #fffbeb; color: #b45309; border-color: #fde68a;">Status: ${pedido.status}</span>
@@ -516,7 +587,9 @@ async function carregarPedidosAtivos() {
                         <div>
                             <h4 style="margin: 0 0 6px 0; color: #1e293b;">${pedido.status === "CANCELADO" ? "✕" : "✅"} Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                             <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
-                            <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento} · 💰 R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                            <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento}</small>
+                            <small style="display: block; margin-top: 4px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                            <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
                             ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                         </div>
                         <span class="badge-cat" style="background: ${pedido.status === "CANCELADO" ? "#fff1f2" : "#e6f4ea"}; color: ${pedido.status === "CANCELADO" ? "#be123c" : "#137333"}; border-color: ${pedido.status === "CANCELADO" ? "#fecdd3" : "#ceead6"};">Status: ${pedido.status}</span>
@@ -619,7 +692,7 @@ function imprimirCupomIFood(pedido) {
     janelaImpressao.document.close();
 
     var elEstilo = janelaImpressao.document.createElement("style");
-    var regrasCSS = "body { font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.4; margin: 0; padding: 4px; color: #000; background: #fff; } .text-center { text-align: center; } .text-right { text-align: right; } .negrito { font-weight: bold; } .divider-dashed { border-top: 1px dashed #000; margin: 6px 0; } .divider-double { border-top: 3px double #000; margin: 8px 0; } .tag-tipo-entrega { font-size: 22px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 4px; margin-bottom: 8px; letter-spacing: 1px; } .titulo-loja { font-size: 15px; margin: 0; font-weight: bold; text-transform: uppercase; } .subtitulo-loja { font-size: 11px; margin: 2px 0; } .id-pedido { font-size: 18px; font-weight: bold; margin: 4px 0; } .secao-titulo { font-size: 13px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; } .bloco-conteudo { margin-bottom: 6px; } .tabela-itens { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 5px 0; } .tabela-itens th { border-bottom: 1px solid #000; font-size: 10px; padding: 2px 0; text-align: left; } .tabela-itens td { vertical-align: top; padding: 4px 0; border-bottom: 1px dotted #999; overflow-wrap: anywhere; } .col-qtd { width: 12%; font-weight: bold; } .col-nome { width: 63%; } .col-preco { width: 25%; text-align: right !important; white-space: nowrap; } .linha-financeiro { display: flex; justify-content: space-between; margin: 2px 0; } .linha-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 5px; padding-top: 4px; border-top: 1px dashed #000; } .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 5px 0; white-space: pre-wrap; font-size: 12px; font-weight: bold; } @media print { @page { size: 80mm auto; margin: 0; } body { padding: 5mm 4mm; } }";
+    var regrasCSS = "body { width: 72mm; max-width: 72mm; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.35; margin: 0 auto; padding: 3mm 2mm; color: #000; background: #fff; overflow-wrap: anywhere; } .text-center { text-align: center; } .text-right { text-align: right; } .negrito { font-weight: bold; } .divider-dashed { border-top: 1px dashed #000; margin: 6px 0; } .divider-double { border-top: 3px double #000; margin: 8px 0; } .tag-tipo-entrega { font-size: 20px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 4px; margin-bottom: 8px; letter-spacing: 1px; } .titulo-loja { font-size: 15px; margin: 0; font-weight: bold; text-transform: uppercase; } .subtitulo-loja { font-size: 10px; margin: 2px 0; } .id-pedido { font-size: 17px; font-weight: bold; margin: 4px 0; } .secao-titulo { font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; } .bloco-conteudo { margin-bottom: 6px; } .tabela-itens { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 5px 0; } .tabela-itens th { border-bottom: 1px solid #000; font-size: 10px; padding: 2px 0; text-align: left; } .tabela-itens td { vertical-align: top; padding: 4px 0; border-bottom: 1px dotted #999; overflow-wrap: anywhere; } .col-qtd { width: 12%; font-weight: bold; } .col-nome { width: 63%; } .col-preco { width: 25%; text-align: right !important; white-space: nowrap; } .linha-financeiro { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0; } .linha-total { display: flex; justify-content: space-between; gap: 8px; font-size: 16px; font-weight: bold; margin-top: 5px; padding-top: 4px; border-top: 1px dashed #000; } .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 5px 0; white-space: pre-wrap; font-size: 12px; font-weight: bold; } @media print { @page { size: 80mm auto; margin: 0; } body { width: 72mm; max-width: 72mm; padding: 4mm 2mm; } }";
     
     elEstilo.textContent = regrasCSS;
     janelaImpressao.document.head.appendChild(elEstilo);

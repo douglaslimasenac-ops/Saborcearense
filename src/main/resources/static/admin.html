@@ -46,6 +46,10 @@
             box-shadow: 4px 0 10px rgba(0,0,0,0.05);
             flex-shrink: 0;
             min-height: 100vh;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            box-sizing: border-box;
         }
         aside h2 {
             font-size: 1.4rem;
@@ -149,6 +153,26 @@
         }
 
         .grid-produtos { display: flex; flex-direction: column; gap: 14px; }
+
+        .busca-cardapio {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 16px;
+            padding: 12px 16px;
+            border: 1px solid #eadbc5;
+            border-radius: 12px;
+            background: #fffaf2;
+        }
+        .busca-cardapio input {
+            flex: 1;
+            min-width: 0;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: #29231d;
+            font-size: 0.95rem;
+        }
         
         .card-produto { 
             display: flex; 
@@ -347,6 +371,8 @@
             aside {
                 width: 100%;
                 min-height: auto;
+                height: auto;
+                position: relative;
                 padding: 18px 14px;
             }
             aside h2 { margin-bottom: 16px; }
@@ -395,7 +421,7 @@
 
     <!-- WRAPPER DO PAINEL PRINCIPAL -->
     <div class="admin-wrapper" id="painel-adm-wrapper" style="display: none;">
-        <aside id="menu-lateral" style="position: relative;">
+        <aside id="menu-lateral">
             <h2>Sabor Cearense</h2>
             <div class="nav-link active" id="tab-ativos" onclick="alternarAbasAdmin('ativos')"><i class="fas fa-motorcycle"></i> Em Andamento</div>
             <div class="nav-link" id="tab-historico" onclick="alternarAbasAdmin('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico / Finalizados</div>
@@ -452,7 +478,13 @@
                     </div>
                     <div class="form-grupo">
                         <label for="imagem">URL da Imagem</label>
-                        <input type="text" id="imagem" placeholder="https://link-da-foto.com">
+                        <input type="url" id="imagem" placeholder="https://site.com/imagem-do-prato.jpg"
+                               autocomplete="url" inputmode="url">
+                        <small>Use o link direto da imagem, terminando em .jpg, .jpeg, .png ou .webp.</small>
+                        <div id="preview-imagem-prato" class="preview-imagem-prato" hidden>
+                            <img id="preview-imagem-prato-img" alt="Prévia da imagem do prato">
+                            <span>Prévia da imagem</span>
+                        </div>
                     </div>
                     <div class="form-grupo">
                         <label for="categoria">Definir Categoria</label>
@@ -482,6 +514,12 @@
                     </div>
                 </form>
 
+                <div class="busca-cardapio">
+                    <span aria-hidden="true">🔎</span>
+                    <input type="search" id="busca-produtos-admin"
+                           placeholder="Buscar prato por nome ou categoria..."
+                           autocomplete="off">
+                </div>
                 <div id="lista-itens-admin" class="grid-produtos"></div>
             </section>
         </main>
