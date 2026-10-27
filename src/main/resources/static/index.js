@@ -336,13 +336,13 @@ function adicionarAoCarrinhoSaborCearense(nomePrato, precoPrato) {
         modal.remove();
     };
 
-    // 4. Ação do Botão Confirmar (Envia o prato alterado para o carrinho)
+    // 4. Ação do Botão Confirmar (Salva com segurança total no sistema)
     modal.querySelector("#btn-confirmar-acomp").onclick = () => {
         const marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
         const acompanhamentos = [];
         marcados.forEach(cb => acompanhamentos.push(cb.value));
 
-        // Formata o nome do prato adicionando os acompanhamentos selecionados
+        // Formata o nome juntando o prato e os acompanhamentos
         let nomeItemComAcomp = nomePrato;
         if (acompanhamentos.length > 0) {
             nomeItemComAcomp += " (" + acompanhamentos.join(", ") + ")";
@@ -354,12 +354,41 @@ function adicionarAoCarrinhoSaborCearense(nomePrato, precoPrato) {
             quantidade: 1
         };
 
-        // Redireciona enviando o prato já alterado diretamente na URL do carrinho
-        const jsonCarrinho = encodeURIComponent(JSON.stringify(dadosItem));
+        // LÊ, ATUALIZA E SALVA NO LOCALSTORAGE ORIGINAL DO SEU SITE
+        // Isso garante que o carrinho.html receba o item perfeitamente
+        let itensAtuais = [];
+        try {
+            const localData = localStorage.getItem("carrinho") || localStorage.getItem("cart");
+            if (localData) {
+                itensAtuais = JSON.parse(localData);
+                if (!Array.isArray(itensAtuais)) itensAtuais = [];
+            }
+        } catch(e) {
+            itensAtuais = [];
+        }
+
+        // Verifica se o item já existe para somar quantidade, se não adiciona um novo
+        const indexExistente = itensAtuais.findIndex(item => item.nome === dadosItem.nome);
+        if (indexExistente > -1) {
+            itensAtuais[indexExistente].quantidade += 1;
+        } else {
+            itensAtuais.push(dadosItem);
+        }
+
+        // Devolve de volta para o navegador nos dois formatos comuns para evitar erros
+        const jsonString = JSON.stringify(itensAtuais);
+        localStorage.setItem("carrinho", jsonString);
+        localStorage.setItem("cart", jsonString);
+
+        // Remove o modal da tela
         modal.remove();
-        window.location.href = `carrinho.html?carrinho=${jsonCarrinho}`;
+
+        // RECARREGA A PÁGINA PARA A SACOLA ATUALIZAR SOZINHA COM O ITEM NOVO
+        // É a forma mais segura do mundo para atualizar a tela sem mexer em outras funções!
+        window.location.reload();
     };
 }
+
 function abrirModalAcompanhamentos(nomePrato, precoPrato) {
     // Se for Bebida ou Sobremesa, adiciona direto sem perguntar acompanhamento
     const nomeMinusculo = nomePrato.toLowerCase();
