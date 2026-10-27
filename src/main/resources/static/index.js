@@ -305,21 +305,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });         
 
-// =========================================================================
-// 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS E SACOLA - CORRIGIDO DEFINITIVO
-// =========================================================================
-
-// =========================================================================
-// 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS E SACOLA - PARTE FINAL COMPLETA
-// =========================================================================
-
-// =========================================================================
-// 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS E SACOLA - ALINHADO AO SEU HTML
-// =========================================================================
-
-// =========================================================================
-// 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS E SACOLA - ALINHADO AO SEU HTML
-// =========================================================================
 
 function mudarQuantidade(id, valor, nome, preco) {
     if (valor < 0) {
@@ -393,6 +378,10 @@ function mudarQuantidade(id, valor, nome, preco) {
     };
 }
 
+// =========================================================================
+// 🌵 SISTEMA DE RENDERIZAÇÃO BLINDADO CONTRA ERROS - SABOR CEARENSE
+// =========================================================================
+
 function executarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
     const idContadorVisual = idOriginal || idChave;
 
@@ -414,6 +403,7 @@ function executarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
 
     dadosSacola = carrinho;
 
+    // Atualiza o número "0" para "1" ao lado do prato no cardápio
     const elementoQtd = document.getElementById(`qtd-${idContadorVisual}`);
     if (elementoQtd) {
         let totalAcumulado = 0;
@@ -426,16 +416,49 @@ function executarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
     }
 
     localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
+    
+    // Roda as atualizações de tela protegidas contra erros
     atualizarPrecosBarraFlutuante();
     renderizarItensSacola();
-
-    // 🌵 ADICIONE ESTA LINHA AQUI NO FINAL DA FUNÇÃO:
-    // Ela força a gaveta lateral a abrir sozinha mostrando as descrições completas assim que o item é adicionado!
-    if (typeof abrirSacola === "function") {
-        abrirSacola();
-    }
 }
 
+function renderizarItensSacola() {
+    const containerLista = document.getElementById('lista-produtos-sacola');
+    if (!containerLista) {
+        console.warn("Aviso: A div 'lista-produtos-sacola' não foi encontrada no HTML.");
+        return;
+    }
+    
+    containerLista.innerHTML = '';
+    const itens = Object.entries(carrinho);
+
+    if (itens.length === 0) {
+        containerLista.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">Sua sacola está vazia.</p>`;
+        return;
+    }
+
+    itens.forEach(([chaveId, item]) => {
+        const idBaseOriginal = String(chaveId).split("-")[0];
+        
+        // Criamos o HTML usando estruturas inline simples para não quebrar com classes CSS ausentes
+        const divItem = document.createElement("div");
+        divItem.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9; text-align: left;";
+        
+        divItem.innerHTML = `
+            <div style="flex: 1; padding-right: 10px;">
+                <div style="font-weight: 600; font-size: 14px; color: #1e293b;">${item.nome}</div>
+                <div style="font-size: 13px; color: #27ae60; font-weight: 700; margin-top: 2px;">R$ ${(item.preco * item.quantidade).toFixed(2).replace('.', ',')}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <button onclick="executarMudarQuantidadeReal('${chaveId}', -1, '${item.nome}', ${item.preco}, '${idBaseOriginal}');" style="padding: 2px 8px; font-weight: bold; cursor: pointer;">-</button>
+                <span style="font-weight: bold; min-width: 15px; text-align: center;">${item.quantidade}</span>
+                <button onclick="executarMudarQuantidadeReal('${chaveId}', 1, '${item.nome}', ${item.preco}, '${idBaseOriginal}');" style="padding: 2px 8px; font-weight: bold; cursor: pointer;">+</button>
+            </div>
+        `;
+        
+        containerLista.appendChild(divItem);
+    });
+}
 
 function atualizarPrecosBarraFlutuante() {
     const listaItens = Object.values(carrinho);
@@ -447,7 +470,7 @@ function atualizarPrecosBarraFlutuante() {
         totalDinheiro += (item.preco * item.quantidade);
     });
 
-    // Mapeamento exato com base no HTML que você enviou
+    // Atualiza os elementos verificando se eles realmente existem na tela antes de aplicar o texto
     const txtItens = document.getElementById("txt-qtd-itens");
     if (txtItens) txtItens.innerText = `${totalQtd} itens`;
 
@@ -458,14 +481,63 @@ function atualizarPrecosBarraFlutuante() {
     if (txtModalSubtotal) txtModalSubtotal.innerText = `R$ ${totalDinheiro.toFixed(2).replace('.', ',')}`;
 }
 
-function irParaCheckout() {
-    const totalItensAtuais = Object.keys(carrinho).length;
-    if (totalItensAtuais === 0) {
-        alert("Sua sacola está vazia! Adicione pelo menos um prato.");
-        return;
-    }
+// Garante que a gaveta mude de estilo CSS para ficar visível na tela
+function abrirSacola() {
+    const modalSacola = document.getElementById('painel-sacola-modal');
+    if (modalSacola) {
+        // 1. Blindagem Híbrida: Garante visibilidade máxima em qualquer tamanho de tela
+        modalSacola.style.visibility = "visible";
+        modalSacola.style.display = "block";
+        modalSacola.style.zIndex = "99999"; // Fica por cima do rodapé no PC e no Celular
+        modalSacola.classList.add('open');
 
-    const listaItensEnvio = Object.values(carrinho);
-    const parametroUrlseguro = encodeURIComponent(JSON.stringify(listaItensEnvio));
-    window.location.href = `checkout.html?carrinho=${parametroUrlseguro}`;
+        // 2. Controla o comportamento do painel branco interno
+        const conteudoGaveta = modalSacola.querySelector('.sacola-drawer-content');
+        if (conteudoGaveta) {
+            // Detecta se o usuário está no computador (telas maiores que 768px)
+            if (window.innerWidth > 768) {
+                conteudoGaveta.style.position = "fixed";
+                conteudoGaveta.style.top = "50%";
+                conteudoGaveta.style.left = "50%";
+                conteudoGaveta.style.transform = "translate(-50%, -50%)"; // Centraliza como modal no PC
+                conteudoGaveta.style.bottom = "auto";
+                conteudoGaveta.style.borderRadius = "20px"; // Bordas arredondadas completas no PC
+            } else {
+                // Comportamento perfeito para o Celular: desliza de baixo para cima
+                conteudoGaveta.style.position = "absolute";
+                conteudoGaveta.style.bottom = "0";
+                conteudoGaveta.style.left = "50%";
+                conteudoGaveta.style.transform = "translateX(-50%)";
+                conteudoGaveta.style.top = "auto";
+                conteudoGaveta.style.borderRadius = "20px 20px 0 0"; // Estilo gaveta de app
+            }
+        }
+
+        // 3. Renderiza os pratos com as descrições e acompanhamentos escolhidos
+        renderizarItensSacola();
+        console.log("🌵 Sabor Cearense: Sacola híbrida aberta com sucesso!");
+    } else {
+        console.error("Erro: O elemento HTML 'painel-sacola-modal' não foi localizado.");
+    }
+}
+
+function fecharSacola() {
+    const modalSacola = document.getElementById('painel-sacola-modal');
+    if (modalSacola) {
+        modalSacola.classList.remove('open');
+        
+        const conteudoGaveta = modalSacola.querySelector('.sacola-drawer-content');
+        if (conteudoGaveta && window.innerWidth <= 768) {
+            // No celular, joga a gaveta de volta para baixo da tela
+            conteudoGaveta.style.bottom = "-100%";
+        }
+
+        // Espera 300ms (tempo da animação) para ocultar a estrutura completa com segurança
+        setTimeout(() => {
+            if (!modalSacola.classList.contains('open')) {
+                modalSacola.style.visibility = "hidden";
+                modalSacola.style.display = "none";
+            }
+        }, 300);
+    }
 }
