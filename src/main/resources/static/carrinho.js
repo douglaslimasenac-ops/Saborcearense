@@ -341,15 +341,21 @@ async function enviarPedido(e) {
 
     let pedidoIdGerado = "NOVO";
 
-    // 6. BUSCA INTELIGENTE DA URL GLOBAL (Buscando em escopo e no objeto window)
+        // 6. BUSCA INTELIGENTE E CORREÇÃO DA URL DA API (Evita Erro 404)
     let urlBase = typeof URL_API_BACKEND !== "undefined" ? URL_API_BACKEND : (window.URL_API_BACKEND || "");
     
     if (urlBase) {
         try {
-            // Remove barras duplicadas ou trata sufixos dinamicamente
-            const urlFinal = urlBase.endsWith("/api/pedidos") ? urlBase : urlBase.replace(/\/$/, "") + "/api/pedidos";
+            // Remove barras extras do final e garante que o caminho termine exatamente em /api/pedidos
+            let urlLimpa = urlBase.replace(/\/$/, ""); 
+            if (!urlLimpa.endsWith("/api/pedidos")) {
+                urlLimpa += "/api/pedidos";
+            }
             
-            const response = await fetch(urlFinal, {
+            console.log("Enviando pedido para o endereço correto:", urlLimpa);
+
+            // Faz a chamada e espera obrigatoriamente a resposta física do Render
+            const response = await fetch(urlLimpa, {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",
@@ -360,7 +366,7 @@ async function enviarPedido(e) {
 
             if (response.ok) {
                 const pedidoSalvo = await response.json();
-                pedidoIdGerado = pedidoSalvo.id; // Vincula o ID gerado pelo auto-incremento do banco
+                pedidoIdGerado = pedidoSalvo.id; // Vincula o ID real gerado pelo banco Java
                 localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
             } else {
                 console.error("O backend recusou os dados. Status do erro:", response.status);
@@ -369,8 +375,9 @@ async function enviarPedido(e) {
             console.error("Falha ao processar requisição fetch para o Render:", apiError);
         }
     } else {
-        console.error("A variável global URL_API_BACKEND não pôde ser localizada em nenhum escopo.");
+        console.error("A variável global URL_API_BACKEND não foi localizada.");
     }
+
 
     // 7. Montagem da Mensagem Textual do WhatsApp
     let mensagem = "🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n";
