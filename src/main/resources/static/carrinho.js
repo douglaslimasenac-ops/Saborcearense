@@ -23,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!localStorage.getItem("SaborCearense_v2_Acomp")) {
         localStorage.removeItem("carrinho");
         localStorage.removeItem("cart");
-        localStorage.removeItem("carrinhoSaborCearense");
         localStorage.removeItem("saborCearense_carrinho");
         // Marca que o navegador já limpou o lixo das versões anteriores
         localStorage.setItem("SaborCearense_v2_Acomp", "true");
@@ -43,8 +42,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ... restante do código ...
 });
-
-
 
 // ==========================================
 // 📦 GERENCIAMENTO E RENDERIZAÇÃO DE DADOS
