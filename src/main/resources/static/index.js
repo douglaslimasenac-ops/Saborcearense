@@ -521,7 +521,6 @@ function irParaCheckout() {
     window.location.href = `carrinho.html?carrinho=${encodeURIComponent(JSON.stringify(listaItens))}`;
 }
 
-// Garante carregamento dos valores salvos ao abrir o app
 document.addEventListener("DOMContentLoaded", () => {
     atualizarValoresBarraFixo();
 });
