@@ -429,31 +429,43 @@ async function enviarPedido(e) {
     }
 
 
-    // 7. Montagem da Mensagem Textual do WhatsApp
-    let mensagem = "🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n";
+    // 7. Montagem da mensagem organizada para o WhatsApp
+    const formatarMoedaWhatsApp = valor => `R$ ${Number(valor || 0).toFixed(2).replace(".", ",")}`;
+    let mensagem = "🌵 *SABOR CEARENSE* 🌵\n";
+    mensagem += "━━━━━━━━━━━━━━━━━━━━\n";
+    mensagem += "✅ *NOVO PEDIDO RECEBIDO*\n";
     if (pedidoIdGerado !== "NOVO") {
-        mensagem += "🆔 *Pedido Nº:* #" + pedidoIdGerado + "\n";
+        mensagem += "🆔 *Pedido:* #" + pedidoIdGerado + "\n";
     }
-    mensagem += "👤 *Cliente:* " + nome + "\n";
-    mensagem += "📞 *Contato:* " + contatoTelefone + "\n";
-    mensagem += "📍 *Bairro:* " + bairroTextoSelecionado + "\n";
-    mensagem += "🏠 *Endereço:* " + enderecoRua + "\n";
-    mensagem += "🔍 *Referência:* " + ref + "\n";
-    mensagem += "💳 *Pagamento:* " + pagamento + "\n\n";
-    mensagem += "🛒 *Itens do Pedido:*\n";
+
+    mensagem += "\n👤 *DADOS DO CLIENTE*\n";
+    mensagem += "Nome: " + nome + "\n";
+    mensagem += "WhatsApp: " + contatoTelefone + "\n";
+
+    mensagem += "\n📍 *ENDEREÇO DE ENTREGA*\n";
+    mensagem += "Bairro: " + bairroTextoSelecionado + "\n";
+    mensagem += "Endereço: " + enderecoRua + "\n";
+    mensagem += "Referência: " + ref + "\n";
+
+    mensagem += "\n🛒 *ITENS DO PEDIDO*\n";
 
     itens.forEach(item => {
-        const subtotal = (item.preco * item.quantidade).toFixed(2).replace('.', ',');
-        mensagem += "• " + item.quantidade + "x _" + item.nome + "_ - R$ " + subtotal + "\n";
+        const subtotal = Number(item.preco || 0) * Number(item.quantidade || 1);
+        mensagem += "• " + item.quantidade + "x _" + item.nome + "_ — " + formatarMoedaWhatsApp(subtotal) + "\n";
     });
 
     if (observacao) {
-        mensagem += "\n📝 *Observação:* " + observacao + "\n";
+        mensagem += "\n📝 *OBSERVAÇÃO DO PEDIDO*\n" + observacao + "\n";
     }
 
-    mensagem += "\n🛵 *Taxa de Entrega:* R$ " + taxaEntregaSelecionada.toFixed(2).replace('.', ',');
-    mensagem += "\n💰 *Total do Pedido:* R$ " + totalComTaxaGeral.toFixed(2).replace('.', ',') + "\n\n";
-    mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
+    mensagem += "\n💳 *PAGAMENTO*\n";
+    mensagem += "Forma: " + pagamento + "\n";
+    mensagem += "\n🧾 *RESUMO DO PEDIDO*\n";
+    mensagem += "Subtotal: " + formatarMoedaWhatsApp(subtotalDoPedido) + "\n";
+    mensagem += "Taxa de entrega: " + formatarMoedaWhatsApp(taxaDoPedido) + "\n";
+    mensagem += "💰 *TOTAL: " + formatarMoedaWhatsApp(totalComTaxaGeral) + "*\n";
+    mensagem += "\n━━━━━━━━━━━━━━━━━━━━\n";
+    mensagem += "Por favor, confirme o recebimento do pedido.";
 
     const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : (window.WHATSAPP_NUMERO || "5585999999999"); 
     const urlWhatsapp = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
