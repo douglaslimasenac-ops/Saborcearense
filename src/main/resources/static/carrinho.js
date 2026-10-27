@@ -291,7 +291,9 @@ async function enviarPedido(e) {
         }
     }
 
-    // 2. Resgata e valida a Sacola localmente
+        // ========================================================
+    // 2. Resgata e valida a Sacola localmente (CORRIGIDO PARA O NOME EXATO)
+    // ========================================================
     const carrinhoObjeto = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
     const itens = Object.values(carrinhoObjeto);
 
@@ -299,6 +301,7 @@ async function enviarPedido(e) {
         alert("Seu carrinho está vazio!");
         return;
     }
+
 
     // 3. Validação dos Campos do Formulário
     const selectBairro = document.getElementById("bairro-entrega");
@@ -392,7 +395,7 @@ async function enviarPedido(e) {
     mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
 
     const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : (window.WHATSAPP_NUMERO || "5585999999999"); 
-    const urlWhatsapp = "https://wa.me" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
+    const urlWhatsapp = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
     
     // 8. ETAPA FINAL DE LIMPEZA DO CARRINHO E REDIRECIONAMENTOS
     localStorage.removeItem("carrinhoSaborCearense");
