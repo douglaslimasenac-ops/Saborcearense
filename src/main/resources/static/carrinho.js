@@ -312,7 +312,7 @@ async function enviarPedido(e) {
     const totalCalculado = typeof window.totalCalculado !== "undefined" ? window.totalCalculado : 0;
 
     const nome = document.getElementById("nome").value;
-    const contatoTelefone = document.getElementById("telefone").value;
+    const contatoTelefone = document.getElementById("telefone").value.toString().trim(); // Garante formato de String limpa para o Java
     const enderecoRua = document.getElementById("endereco").value;
     const ref = document.getElementById("ponto-referencia").value || "Não informado";
     const pagamento = document.getElementById("pagamento").value;
@@ -320,43 +320,53 @@ async function enviarPedido(e) {
     const enderecoCompleto = `${enderecoRua}, Bairro: ${bairroTextoSelecionado} (Ref: ${ref})`;
     const totalComTaxaGeral = totalCalculado + taxaEntregaSelecionada;
 
-    // 4. PREPARAÇÃO DA ABA DO WHATSAPP (Abre vazia para burlar bloqueadores de pop-up)
+    // 4. PREPARAÇÃO DA ABA DO WHATSAPP (Burlar bloqueadores de pop-up nativos)
     const abaWhatsapp = window.open("about:blank", "_blank");
     if (abaWhatsapp) {
         abaWhatsapp.document.write("<p style='font-family:sans-serif; text-align:center; margin-top:20%; color:#555;'>Salvando seu pedido no Sabor Cearense... Aguarde...</p>");
     }
 
-    // 5. CORREÇÃO CRÍTICA: Monta o Payload batendo 100% com a sua @Entity do Java
+    // 5. Payload mapeado cirurgicamente com a Entity Java e os Getters/Setters do Controller
     const dadosPedido = {
         clienteNome: nome,
-        telefone: contatoTelefone,  // Adicionado isolado para mapear no private String telefone
-        endereco: enderecoCompleto, // Texto limpo do endereço com a referência
+        telefone: contatoTelefone,
+        endereco: enderecoCompleto,
         formaPagamento: pagamento,
-        valorTotal: Number(totalComTaxaGeral.toFixed(2)) // Garante formato numérico limpo para o BigDecimal
+        valorTotal: Number(totalComTaxaGeral.toFixed(2)),
+        status: "RECEBIDO" // Já manda o status padrão esperado pelo @PostMapping
     };
 
     let pedidoIdGerado = "NOVO";
 
-    // 6. TRATAMENTO INTELIGENTE DA URL DA API
-    if (typeof URL_API_BACKEND !== "undefined" && URL_API_BACKEND) {
+    // 6. BUSCA INTELIGENTE DA URL GLOBAL (Buscando em escopo e no objeto window)
+    let urlBase = typeof URL_API_BACKEND !== "undefined" ? URL_API_BACKEND : (window.URL_API_BACKEND || "");
+    
+    if (urlBase) {
         try {
-            // Evita duplicação caso a variável já termine com /api/pedidos
-            const urlFinal = URL_API_BACKEND.endsWith("/api/pedidos") ? URL_API_BACKEND : URL_API_BACKEND + "/api/pedidos";
+            // Remove barras duplicadas ou trata sufixos dinamicamente
+            const urlFinal = urlBase.endsWith("/api/pedidos") ? urlBase : urlBase.replace(/\/$/, "") + "/api/pedidos";
             
             const response = await fetch(urlFinal, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
                 body: JSON.stringify(dadosPedido)
             });
 
             if (response.ok) {
                 const pedidoSalvo = await response.json();
-                pedidoIdGerado = pedidoSalvo.id; // ID retornado com sucesso do Banco Java
+                pedidoIdGerado = pedidoSalvo.id; // Vincula o ID gerado pelo auto-incremento do banco
                 localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
+            } else {
+                console.error("O backend recusou os dados. Status do erro:", response.status);
             }
         } catch (apiError) {
-            console.error("Falha ao salvar no painel admin:", apiError);
+            console.error("Falha ao processar requisição fetch para o Render:", apiError);
         }
+    } else {
+        console.error("A variável global URL_API_BACKEND não pôde ser localizada em nenhum escopo.");
     }
 
     // 7. Montagem da Mensagem Textual do WhatsApp
@@ -381,10 +391,10 @@ async function enviarPedido(e) {
     mensagem += "\n💰 *Total do Pedido:* R$ " + totalComTaxaGeral.toFixed(2).replace('.', ',') + "\n\n";
     mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
 
-    const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : "5585999999999"; 
-    const urlWhatsapp = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
+    const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : (window.WHATSAPP_NUMERO || "5585999999999"); 
+    const urlWhatsapp = "https://wa.me" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
     
-    // 8. ETAPA FINAL DE LIMPEZA E REDIRECIONAMENTO
+    // 8. ETAPA FINAL DE LIMPEZA DO CARRINHO E REDIRECIONAMENTOS
     localStorage.removeItem("carrinhoSaborCearense");
 
     if (abaWhatsapp) {
@@ -393,10 +403,5 @@ async function enviarPedido(e) {
         window.open(urlWhatsapp, '_blank');
     }
     
-    // Redireciona para o rastreio na tela principal
     window.location.href = "index.html?admin=1&aba=RASTREIO";
 }
-
-// Força o navegador a rodar a função e preencher a div assim que a página carregar
-document.addEventListener("DOMContentLoaded", carregarItensDaUrlNoCarrinho);
-
