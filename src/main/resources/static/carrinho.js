@@ -30,12 +30,18 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("🌵 Sabor Cearense: Memória de versões antigas limpa com sucesso!");
     }
 
-   // Em vez de chamar direto, verifica se a função existe na página atual:
-if (typeof carregarCardapio === "function") {
-    carregarCardapio();
-}
 
-    verificarHorarioFuncionamento();
+    // CORREÇÃO LINHA 33: Só executa se estiver na página do cardápio
+    if (typeof carregarCardapio === "function") {
+        carregarCardapio();
+    }
+
+    // CORREÇÃO LINHA 38: Só executa se a função de horário existir na tela atual
+    if (typeof verificarHorarioFuncionamento === "function") {
+        verificarHorarioFuncionamento();
+    }
+
+    // ... restante do código ...
 });
 
 
