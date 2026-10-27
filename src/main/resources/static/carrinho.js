@@ -43,6 +43,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("lista-itens-carrinho")) {
         carregarItensDaUrlNoCarrinho();
     }
+    const campoObservacao = document.getElementById("observacao");
+    if (campoObservacao) {
+        const contador = document.getElementById("contador-observacao");
+        const atualizarContador = () => {
+            if (contador) contador.textContent = campoObservacao.value.length;
+        };
+        campoObservacao.addEventListener("input", atualizarContador);
+        atualizarContador();
+    }
 });
 
 // ==========================================
@@ -169,16 +178,7 @@ function carregarItensDaUrlNoCarrinho() {
             if (typeof subtotalProdutos !== "undefined") subtotalProdutos = subtotalCalculadoUrl;
 
             // 2. Atualiza a exibição do preço na caixa superior do resumo
-            const campoTotal = document.getElementById("valor-total");
-            if (campoTotal) {
-                campoTotal.innerHTML = `<strong>R$ ${subtotalCalculadoUrl.toFixed(2).replace('.', ',')}</strong>`;
-            }
-            
-            // 3. Atualiza o preço final localizado lá no Passo 2 do Pagamento
-            const campoTotalPagar = document.getElementById("pagamento-valor-total");
-            if (campoTotalPagar) {
-                campoTotalPagar.innerText = `R$ ${subtotalCalculadoUrl.toFixed(2).replace('.', ',')}`;
-            }
+            atualizarResumoFinanceiroTela();
         }
     } catch (erro) {
         console.error("Erro ao renderizar itens da URL do Sabor Cearense:", erro);
@@ -209,7 +209,7 @@ function renderizarResumo() {
 
     totalCalculado = subtotal; 
 
-    totalTxt.innerHTML = `Valor Total: <strong>R$ ${totalCalculado.toFixed(2).replace('.', ',')}</strong>`;
+    atualizarResumoFinanceiroTela();
     const pagTotal = document.getElementById("pagamento-valor-total");
     if (pagTotal) pagTotal.innerText = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
 }
@@ -225,26 +225,28 @@ function atualizarTaxaEntrega(valorSelect) {
     
     const totalComTaxa = totalCalculado + taxaEntregaSelecionada;
     
-    const totalTxt = document.getElementById("valor-total");
-    if (totalTxt) {
-        totalTxt.innerHTML = `Valor Total: <strong>R$ ${totalComTaxa.toFixed(2).replace('.', ',')}</strong> (com R$ ${taxaEntregaSelecionada.toFixed(2).replace('.', ',')} de entrega)`;
-    }
-
-    const pagamentoTotalTxt = document.getElementById("pagamento-valor-total");
-    if (pagamentoTotalTxt) {
-        pagamentoTotalTxt.innerText = `R$ ${totalComTaxa.toFixed(2).replace('.', ',')}`;
-    }
+    atualizarResumoFinanceiroTela();
 }
 
 function atualizarValoresTela() {
+    totalCalculado = subtotalProdutos;
+    atualizarResumoFinanceiroTela();
+}
+
+function atualizarResumoFinanceiroTela() {
+    const subtotal = Number(totalCalculado || subtotalProdutos || 0);
+    const taxa = Number(taxaEntregaSelecionada || valorTaxaEntrega || 0);
+    const totalGeral = subtotal + taxa;
+    const formatar = valor => `R$ ${valor.toFixed(2).replace(".", ",")}`;
+    const campoSubtotal = document.getElementById("subtotal-produtos");
+    const campoTaxa = document.getElementById("taxa-entrega");
     const campoTotal = document.getElementById("valor-total");
     const campoTotalPagar = document.getElementById("pagamento-valor-total");
-    const totalGeral = subtotalProdutos + valorTaxaEntrega;
 
-    const valorFormatado = "R$ " + totalGeral.toFixed(2).replace(".", ",");
-    
-    if (campoTotal) campoTotal.textContent = valorFormatado;
-    if (campoTotalPagar) campoTotalPagar.textContent = valorFormatado;
+    if (campoSubtotal) campoSubtotal.textContent = formatar(subtotal);
+    if (campoTaxa) campoTaxa.textContent = formatar(taxa);
+    if (campoTotal) campoTotal.textContent = formatar(totalGeral);
+    if (campoTotalPagar) campoTotalPagar.textContent = formatar(totalGeral);
 }
 
 // ==========================================

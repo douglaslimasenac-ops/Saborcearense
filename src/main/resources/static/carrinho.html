@@ -123,6 +123,43 @@
             font-size: 1.4rem;
             color: var(--success);
         }
+        .secao-card .secao-intro {
+            margin: -10px 0 20px;
+            color: #806b51;
+            font-size: 0.9rem;
+        }
+        .form-grupo small {
+            margin-top: 5px;
+            color: #927d65;
+            font-size: 0.78rem;
+        }
+        .resumo-taxa {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            color: #806b51;
+            font-size: 0.9rem;
+        }
+        .resumo-taxa + .total-container {
+            margin-top: 8px;
+        }
+        .aviso-entrega {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 16px;
+            padding: 13px 15px;
+            border: 1px solid #efd2a6;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #fff8e8, #fffaf2);
+            color: #7a4b16;
+            font-size: 0.88rem;
+            line-height: 1.4;
+        }
+        .aviso-entrega strong {
+            display: block;
+            color: #6b4215;
+        }
 
         .form-grupo {
             margin-bottom: 18px;
@@ -279,15 +316,28 @@
             <h2>🛒 Itens Selecionados</h2>
             <div id="lista-itens-carrinho"></div>
             
+            <div class="resumo-taxa">
+                <span>Subtotal dos itens</span>
+                <span id="subtotal-produtos">R$ 0,00</span>
+            </div>
+            <div class="resumo-taxa">
+                <span>Taxa de entrega</span>
+                <span id="taxa-entrega">R$ 0,00</span>
+            </div>
             <div class="total-container">
                 <span>Valor Total:</span>
                 <span id="valor-total" class="total-preco">R$ 0,00</span>
+            </div>
+            <div class="aviso-entrega">
+                <span aria-hidden="true">🛵</span>
+                <div><strong>Prazo estimado de entrega: 40 a 50 minutos</strong>O tempo pode variar conforme o movimento e a distância.</div>
             </div>
         </div>
 
         <form id="form-pedido">
             <div class="secao-card">
-                <h2>👤 Passo 1: Seus Dados de Entrega</h2>
+                <h2>👤 Seus dados</h2>
+                <p class="secao-intro">Informe como podemos identificar e contatar você.</p>
                 <div class="form-grupo">
                     <label for="nome">Nome Completo</label>
                     <input type="text" id="nome" required placeholder="Digite o nome de quem vai receber">
@@ -298,6 +348,11 @@
                     <input type="tel" id="telefone" required placeholder="Ex: (21) 99999-9999">
                 </div>
 
+            </div>
+
+            <div class="secao-card">
+                <h2>📍 Endereço de entrega</h2>
+                <p class="secao-intro">Preencha o local onde deseja receber o pedido.</p>
                 <div class="form-grupo">
                     <label for="bairro-entrega">Selecione o Bairro de Entrega</label>
                     <select id="bairro-entrega" required onchange="atualizarTaxaEntrega(this.value)">
@@ -314,21 +369,31 @@
                 <div class="form-grupo">
                     <label for="endereco">Rua, Número, Bloco ou Apto</label>
                     <input type="text" id="endereco" required placeholder="Ex: Rua São Paulo, 123 - Bloco B Apto 202">
+                    <small>Inclua número, bloco, apartamento ou complemento.</small>
                 </div>
 
                 <div class="form-grupo">
                     <label for="ponto-referencia">Ponto de Referência (Opcional)</label>
                     <input type="text" id="ponto-referencia" placeholder="Ex: Próximo ao mercadinho ou praça">
                 </div>
-
-                <div class="form-grupo">
-                    <label for="observacao">Observação do Pedido (Opcional)</label>
-                    <textarea id="observacao" maxlength="500" rows="3" placeholder="Ex: Tirar cebola, enviar talheres ou tocar o interfone"></textarea>
+                <div class="aviso-entrega">
+                    <span aria-hidden="true">⏱️</span>
+                    <div><strong>Receba em aproximadamente 40 a 50 minutos</strong>Confirme o endereço para agilizar a entrega.</div>
                 </div>
             </div>
 
             <div class="secao-card">
-                <h2>💳 Passo 2: Forma de Pagamento</h2>
+                <h2>📝 Observação do pedido</h2>
+                <p class="secao-intro">Algum detalhe especial para preparar ou entregar seu pedido?</p>
+                <div class="form-grupo">
+                    <label for="observacao">Observação do Pedido (Opcional)</label>
+                    <textarea id="observacao" maxlength="500" rows="3" placeholder="Ex: Tirar cebola, enviar talheres ou tocar o interfone"></textarea>
+                    <small><span id="contador-observacao">0</span>/500 caracteres</small>
+                </div>
+            </div>
+
+            <div class="secao-card">
+                <h2>💳 Forma de pagamento</h2>
                 <div class="form-grupo">
                     <label for="pagamento">Escolha como deseja pagar:</label>
                     <select id="pagamento" required onchange="controlarExibicaoPix(this.value)">
@@ -342,6 +407,10 @@
                 <div style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-size: 15px; color: #4a5568; font-weight: 500;">Total a pagar:</span>
                     <span id="pagamento-valor-total" style="font-size: 18px; font-weight: 700; color: #141414;">R$ 0,00</span>
+                </div>
+                <div class="aviso-entrega">
+                    <span aria-hidden="true">✅</span>
+                    <div><strong>Depois da confirmação, a entrega leva de 40 a 50 minutos</strong>Fique atento ao telefone informado no pedido.</div>
                 </div>
             </div>
 

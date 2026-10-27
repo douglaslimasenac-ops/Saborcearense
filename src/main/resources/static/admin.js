@@ -19,7 +19,11 @@ let listaPratosLocal = [];
 let carregandoPedidosAtivos = false;
 let socketAdmin = null;
 let pingTimerAdmin = null;
+let pedidosTimerAdmin = null;
 let audioCtxCompartilhado = null;
+let idsPedidosConhecidos = new Set();
+let idsPedidosAlertados = new Set();
+let primeiraCargaPedidos = true;
 
 async function fetchAdmin(url, options = {}) {
     const token = localStorage.getItem("adminToken");
@@ -205,6 +209,10 @@ async function deletarItem(id) {
 function inicializarControlePedidos() {
     conectarWebSocketAdmin();
     carregarPedidosAtivos();
+    if (pedidosTimerAdmin) clearInterval(pedidosTimerAdmin);
+    pedidosTimerAdmin = setInterval(() => {
+        carregarPedidosAtivos();
+    }, 5000);
 }
 
 function conectarWebSocketAdmin() {
@@ -230,7 +238,8 @@ function conectarWebSocketAdmin() {
             }
             
             carregarPedidosAtivos();
-            if (dados.status === "RECEBIDO" && dados.clienteNome) {
+            if (dados.status === "RECEBIDO" && dados.clienteNome && dados.id) {
+                idsPedidosAlertados.add(dados.id);
                 tocarAlertaSonoro();
             }
         };
@@ -410,6 +419,21 @@ async function carregarPedidosAtivos() {
             const pedidosAtivos = await resAtivos.json();
             atualizarResumoFinanceiro(pedidosAtivos, "resumo-financeiro");
             let temAtivos = false;
+
+            const novosPedidos = primeiraCargaPedidos
+                ? []
+                : pedidosAtivos.filter(pedido =>
+                    pedido.status === "RECEBIDO" &&
+                    pedido.id &&
+                    !idsPedidosConhecidos.has(pedido.id) &&
+                    !idsPedidosAlertados.has(pedido.id)
+                );
+            novosPedidos.forEach(pedido => {
+                idsPedidosAlertados.add(pedido.id);
+                tocarAlertaSonoro();
+            });
+            pedidosAtivos.forEach(pedido => idsPedidosConhecidos.add(pedido.id));
+            primeiraCargaPedidos = false;
 
             pedidosAtivos.forEach(pedido => {
                 if (pedido.status === 'ENTREGUE' || pedido.status === 'CANCELADO') return;
