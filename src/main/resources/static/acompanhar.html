@@ -50,6 +50,7 @@
         .painel-pedido h3 { margin: 0 0 12px; color: #6b461e; font-size: 1rem; }
         .item-acompanhamento { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px dashed #eadbc5; color: #4a3a29; }
         .total-acompanhamento { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 2px solid #eadbc5; color: #8a5316; font-size: 1.1rem; font-weight: 800; }
+        .linha-financeira-acompanhamento { display: flex; justify-content: space-between; padding-top: 8px; color: #806b51; font-size: 0.88rem; }
         .meta-acompanhamento { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; color: #806b51; font-size: 0.78rem; }
         .acoes-rapidas { display: flex; gap: 8px; margin-top: 14px; }
         .btn-secundario { flex: 1; padding: 10px; border: 1px solid #eadbc5; border-radius: 999px; background: #fff; color: #8a5316; cursor: pointer; font-weight: 700; }
@@ -174,6 +175,8 @@
         <div class="painel-pedido" id="painel-pedido">
             <h3>🧾 Resumo do pedido</h3>
             <div id="itens-acompanhamento"></div>
+            <div class="linha-financeira-acompanhamento"><span>Subtotal dos itens</span><strong id="subtotal-acompanhamento">R$ 0,00</strong></div>
+            <div class="linha-financeira-acompanhamento"><span>Taxa de entrega</span><strong id="taxa-acompanhamento">R$ 0,00</strong></div>
             <div class="total-acompanhamento"><span>Total</span><span id="total-acompanhamento">R$ 0,00</span></div>
             <div class="meta-acompanhamento">
                 <span id="pagamento-acompanhamento"></span>
@@ -316,14 +319,27 @@
         } catch (erro) {
             console.error("Não foi possível ler os itens do pedido:", erro);
         }
+        const totalItens = itens.reduce((total, item) => {
+            const quantidade = Number(item.quantidade || item.qtd || 1);
+            const preco = Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0);
+            return total + (quantidade * preco);
+        }, 0);
+        const totalRegistrado = Number(pedido.valorTotal ?? pedido.total ?? 0);
+        const totalPedido = totalRegistrado > 0 ? totalRegistrado : totalItens;
+        const taxaEntrega = Math.max(0, totalPedido - totalItens);
+        const formatarMoeda = valor => `R$ ${valor.toFixed(2).replace(".", ",")}`;
+
         itensEl.innerHTML = itens.length
             ? itens.map(item => {
                 const quantidade = Number(item.quantidade || 1);
-                const subtotal = quantidade * Number(item.preco || 0);
+                const preco = Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0);
+                const subtotal = quantidade * preco;
                 return `<div class="item-acompanhamento"><span><b>${quantidade}x</b> ${escaparTexto(item.nome || "Item")}</span><strong>R$ ${subtotal.toFixed(2).replace(".", ",")}</strong></div>`;
             }).join("")
             : "<div class='item-acompanhamento'>Itens do pedido não disponíveis.</div>";
-        document.getElementById("total-acompanhamento").textContent = `R$ ${Number(pedido.valorTotal || 0).toFixed(2).replace(".", ",")}`;
+        document.getElementById("subtotal-acompanhamento").textContent = formatarMoeda(totalItens);
+        document.getElementById("taxa-acompanhamento").textContent = formatarMoeda(taxaEntrega);
+        document.getElementById("total-acompanhamento").textContent = formatarMoeda(totalPedido);
         document.getElementById("pagamento-acompanhamento").textContent = `💳 ${pedido.formaPagamento || "Pagamento não informado"}`;
         painel.classList.add("visivel");
     }

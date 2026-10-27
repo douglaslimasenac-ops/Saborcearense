@@ -83,9 +83,9 @@
         <section id="aba-RASTREIO" class="menu-section" style="display: none; background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.01); margin-top: 25px;">
             <h2 style="background: var(--dark); color: var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 1.25rem; margin-top: 0; margin-bottom: 20px;">🔍 Acompanhar Meu Pedido</h2>
             
-            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 25px; display: flex; gap: 10px;">
-                <input type="number" id="input-rastreio-index" placeholder="Digite o Nº do seu Pedido" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; text-align: center; font-size: 1rem;">
-                <button onclick="executarBuscaRastreio()" style="background: var(--primary); border: none; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer;">Consultar</button>
+            <div class="rastreio-busca">
+                <input type="text" inputmode="numeric" id="input-rastreio-index" placeholder="Digite o número do pedido" aria-label="Número do pedido">
+                <button onclick="executarBuscaRastreio()">Consultar pedido</button>
             </div>
 
             <div id="wrapper-linha-tempo" style="display: none;">
@@ -113,17 +113,17 @@
     <div id="barra-flutuante" class="cart-bar">
         
         <!-- Valores e totalizadores (Agrupados à esquerda) -->
-        <div style="text-align: left; cursor: pointer;" onclick="abrirSacola()">
-            <span id="txt-qtd-itens" style="font-size: 0.8rem; color: #64748b; display: block; font-weight: 500;">0 itens</span>
-            <div id="txt-valor-total" style="font-weight: 800; color: #27ae60; font-size: 1.15rem;">R$ 0,00</div>
+        <div class="cart-bar-resumo" onclick="abrirSacola()">
+            <span id="txt-qtd-itens">0 itens</span>
+            <div id="txt-valor-total">R$ 0,00</div>
         </div>
 
         <!-- Botões de navegação (Agrupados à direita) -->
-        <div style="display: flex; gap: 8px; align-items: center;">
-            <button onclick="abrirSacola()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: bold; border-radius: 8px; cursor: pointer; color: #475569; font-size: 0.85rem;">
+        <div class="cart-bar-acoes">
+            <button class="cart-bar-ver" onclick="abrirSacola()">
                 🛒 Ver Sacola
             </button>
-            <button onclick="irParaCheckout()" style="background: #22c55e; color: white; border: none; padding: 10px 16px; font-size: 0.95rem; font-weight: bold; border-radius: 8px; cursor: pointer;">
+            <button class="cart-bar-avancar" onclick="irParaCheckout()">
                 Avançar ➔
             </button>
         </div>
@@ -134,31 +134,31 @@
 
 
 <!-- 🌵 GAVETA MODAL DA SACOLA (RESTRUTURADA EM CAMADA ÚNICA) -->
-<div id="painel-sacola-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 99999; display: none; font-family: sans-serif;">
+<div id="painel-sacola-modal">
     <!-- Fundo escuro clicável para fechar -->
-    <div onclick="fecharSacola()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    <div class="sacola-overlay" onclick="fecharSacola()"></div>
     
     <!-- Caixa interna com as propriedades responsivas móveis aplicadas via JavaScript -->
-    <div id="conteudo-gaveta-sacola" style="position: fixed; background: #ffffff; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.24); transition: all 0.3s ease-in-out; border-radius: 16px; width: 90%; max-width: 450px; top: 50%; left: 50%; transform: translate(-50%, -50%); max-height: 85vh; box-sizing: border-box;">
+    <div id="conteudo-gaveta-sacola">
         
         <!-- Cabeçalho -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f0f0f0;">
-            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #1e293b;">Sua Sacola</h3>
-            <button onclick="fecharSacola()" style="background: #f5f5f5; border: none; width: 32px; height: 32px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+        <div class="sacola-cabecalho">
+            <div><span class="sacola-kicker">SEU PEDIDO</span><h3>Sua Sacola</h3><small>Confira seus itens antes de continuar</small></div>
+            <button class="sacola-fechar" onclick="fecharSacola()" aria-label="Fechar sacola">✕</button>
         </div>
         
         <!-- Lista de Produtos Rolável -->
-        <div id="lista-produtos-sacola" style="padding: 20px; overflow-y: auto; flex: 1; min-height: 150px; max-height: 50vh; box-sizing: border-box;">
+        <div id="lista-produtos-sacola">
             <!-- Injetado dinamicamente via JS -->
         </div>
 
         <!-- Rodapé do Modal -->
-        <div style="padding: 20px; border-top: 1px solid #f0f0f0; background: #fafafa; border-radius: 0 0 16px 16px;">
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; margin-bottom: 15px; color: #1e293b;">
+        <div class="sacola-rodape">
+            <div class="sacola-total">
                 <span>Subtotal:</span>
                 <span id="txt-modal-subtotal">R$ 0,00</span>
             </div>
-            <button onclick="irParaCheckout()" style="width: 100%; padding: 14px; background: #22c55e; color: #ffffff; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: background 0.2s;">
+            <button class="sacola-finalizar" onclick="irParaCheckout()">
                 Confirmar e Ir para o Pagamento ➔
             </button>
         </div>
@@ -194,25 +194,39 @@ window.mudarQuantidade = function(id, mudanca, nome, preco) {
 
     // 3. Monta o HTML do Modal de Acompanhamentos na tela
     var modal = document.createElement("div");
-    modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 999999; font-family: sans-serif; padding: 15px; box-sizing: border-box;";
+    modal.className = "modal-acompanhamentos";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-label", "Escolha de acompanhamentos");
     
     modal.innerHTML = `
-        <div style="background: #fff; padding: 20px; border-radius: 12px; max-width: 360px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-            <h3 style="margin-top: 0; color: #141414; font-size: 1.1rem; border-bottom: 2px solid #e76f51; padding-bottom: 8px; font-weight: bold;">🌵 Acompanhamentos do Prato</h3>
-            <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">Escolha até 2 opções para o seu <strong>${nome}</strong>:</p>
-            
-            <div id="lista-opcoes-acomp" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Maionese" style="width: 18px; height: 18px;"> Maionese</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Macarronese" style="width: 18px; height: 18px;"> Macarronese</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Salada de Legumes" style="width: 18px; height: 18px;"> Salada de Legumes</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Purê" style="width: 18px; height: 18px;"> Purê</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Espaguete" style="width: 18px; height: 18px;"> Espaguete</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Fritas" style="width: 18px; height: 18px;"> Fritas</label>
+        <div class="modal-acompanhamentos-conteudo">
+            <div class="modal-acompanhamentos-cabecalho">
+                <div>
+                    <span class="modal-acompanhamentos-kicker">PERSONALIZE SEU PRATO</span>
+                    <h3>🌵 Acompanhamentos</h3>
+                </div>
+                <button type="button" class="modal-acompanhamentos-fechar" aria-label="Fechar">✕</button>
             </div>
+            <div class="modal-acompanhamentos-prato">
+                <span class="modal-acompanhamentos-prato-icone">🍽️</span>
+                <div><small>Você está escolhendo para</small><strong>${nome}</strong></div>
+            </div>
+            <p class="modal-acompanhamentos-instrucao">Escolha até <strong>2 acompanhamentos</strong> para deixar seu pedido do seu jeito.</p>
             
-            <div style="display: flex; gap: 10px;">
-                <button id="btn-cancelar-acomp" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; font-weight: bold; cursor: pointer; color: #475569;">Cancelar</button>
-                <button id="btn-confirmar-acomp" style="flex: 1; padding: 10px; border: none; background: #22c55e; color: #fff; border-radius: 6px; font-weight: bold; cursor: pointer;">Confirmar</button>
+            <div id="lista-opcoes-acomp" class="lista-opcoes-acomp">
+                <label class="opcao-acompanhamento"><input type="checkbox" value="Maionese"><span class="opcao-acompanhamento-icone">🥗</span><span>Maionese</span><b>+</b></label>
+                <label class="opcao-acompanhamento"><input type="checkbox" value="Macarronese"><span class="opcao-acompanhamento-icone">🍝</span><span>Macarronese</span><b>+</b></label>
+                <label class="opcao-acompanhamento"><input type="checkbox" value="Salada de Legumes"><span class="opcao-acompanhamento-icone">🥕</span><span>Salada de Legumes</span><b>+</b></label>
+                <label class="opcao-acompanhamento"><input type="checkbox" value="Purê"><span class="opcao-acompanhamento-icone">🥔</span><span>Purê</span><b>+</b></label>
+                <label class="opcao-acompanhamento"><input type="checkbox" value="Espaguete"><span class="opcao-acompanhamento-icone">🍝</span><span>Espaguete</span><b>+</b></label>
+                <label class="opcao-acompanhamento"><input type="checkbox" value="Fritas"><span class="opcao-acompanhamento-icone">🍟</span><span>Fritas</span><b>+</b></label>
+            </div>
+            <div class="acompanhamentos-selecao-status"><span id="contador-acomp">0</span>/2 selecionados</div>
+            
+            <div class="modal-acompanhamentos-acoes">
+                <button type="button" id="btn-cancelar-acomp" class="btn-acomp-cancelar">Agora não</button>
+                <button type="button" id="btn-confirmar-acomp" class="btn-acomp-confirmar">Adicionar ao pedido <span>→</span></button>
             </div>
         </div>
     `;
@@ -224,8 +238,10 @@ window.mudarQuantidade = function(id, mudanca, nome, preco) {
     checkboxes.forEach(function(cb) {
         cb.addEventListener("change", function() {
             var marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
+            modal.querySelector("#contador-acomp").textContent = marcados.length;
             if (marcados.length > 2) {
                 cb.checked = false;
+                modal.querySelector("#contador-acomp").textContent = 2;
                 alert("⚠️ Você pode escolher no máximo 2 acompanhamentos!");
             }
         });
@@ -233,6 +249,16 @@ window.mudarQuantidade = function(id, mudanca, nome, preco) {
 
     // Ação do Botão Cancelar
     modal.querySelector("#btn-cancelar-acomp").onclick = function() { modal.remove(); };
+    modal.querySelector(".modal-acompanhamentos-fechar").onclick = function() { modal.remove(); };
+    modal.addEventListener("click", function(event) {
+        if (event.target === modal) modal.remove();
+    });
+    document.addEventListener("keydown", function fecharComEscape(event) {
+        if (event.key === "Escape" && document.body.contains(modal)) {
+            modal.remove();
+            document.removeEventListener("keydown", fecharComEscape);
+        }
+    });
 
     // Ação do Botão Confirmar
     modal.querySelector("#btn-confirmar-acomp").onclick = function() {
@@ -303,16 +329,16 @@ function atualizarArmazenamentoSacola(idItem, qtdMudanca, nomeFinal, precoFinal)
         } else {
             carrinho.forEach(function(item) {
                 var itemDivHTML = document.createElement("div");
-                itemDivHTML.style = "display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #edf2f7; gap:10px;";
+                itemDivHTML.className = "item-sacola-linha";
                 itemDivHTML.innerHTML = `
-                    <div style="flex:1;">
-                        <div style="font-weight:700 !important; color:#141414 !important; font-size:15px !important; line-height:1.3 !important; display:block !important; visibility:visible !important;">${item.nome}</div>
-                        <div style="color:#e76f51; font-weight:700; font-size:0.9rem; margin-top:3px;">R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</div>
+                    <div class="item-sacola-info">
+                        <div class="item-sacola-nome">${item.nome}</div>
+                        <div class="item-sacola-preco">R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</div>
                     </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <button onclick="mudarQuantidade(${item.id}, -1, '${item.nome}', ${item.preco})" style="width:28px; height:28px; background:#f1f5f9; border:1px solid #cbd5e1; font-weight:bold; border-radius:4px; cursor:pointer; color:#475569;">-</button>
-                        <span style="font-weight:bold; min-width:15px; text-align:center; color:#1a202c;">${item.quantidade}</span>
-                        <button onclick="mudarQuantidade(${item.id}, 1, '${item.nome}', ${item.preco})" style="width:28px; height:28px; background:#f1f5f9; border:1px solid #cbd5e1; font-weight:bold; border-radius:4px; cursor:pointer; color:#475569;">+</button>
+                    <div class="item-sacola-controles">
+                        <button onclick="mudarQuantidade(${item.id}, -1, '${item.nome}', ${item.preco})" aria-label="Diminuir quantidade">−</button>
+                        <span>${item.quantidade}</span>
+                        <button onclick="mudarQuantidade(${item.id}, 1, '${item.nome}', ${item.preco})" aria-label="Aumentar quantidade">+</button>
                     </div>
                 `;
                 containerSacolaCorpo.appendChild(itemDivHTML);

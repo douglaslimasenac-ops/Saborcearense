@@ -124,7 +124,9 @@
             document.querySelectorAll('.btn-aba').forEach(btn => {
                 btn.classList.remove('ativo');
             });
-            if(event && event.currentTarget) event.currentTarget.classList.add('ativo');
+            if (typeof event !== "undefined" && event.currentTarget) {
+                event.currentTarget.classList.add('ativo');
+            }
 
             const barraFlutuante = document.getElementById("barra-flutuante");
             if(barraFlutuante) {
@@ -134,6 +136,10 @@
 
         function abrirAbaRastreioOculta() {
             alternarAba('RASTREIO');
+            const input = document.getElementById("input-rastreio-index");
+            if (input) {
+                window.setTimeout(() => input.focus(), 100);
+            }
             const btnRastreio = document.getElementById("btn-rodape-rastreio");
             if (btnRastreio) {
                 btnRastreio.innerHTML = "📋 Voltar ao Cardápio";
@@ -224,15 +230,20 @@
     atualizarPrecosBarraFlutuante();
 }
 
-        function ejecutarBuscaRastreio() {
+        function executarBuscaRastreio() {
             const input = document.getElementById('input-rastreio-index');
             if (!input) return;
-            const pedidoId = input.value.trim().replace('#', '');
+            const pedidoId = input.value.trim().replace(/^#/, '');
             if (!pedidoId) {
                 alert('Por favor, digite o número do pedido.');
                 return;
             }
-            window.location.href = `acompanhar.html?id=${pedidoId}`;
+            if (!/^\d+$/.test(pedidoId)) {
+                alert('Digite apenas o número do pedido.');
+                input.focus();
+                return;
+            }
+            window.location.href = `acompanhar.html?id=${encodeURIComponent(pedidoId)}`;
         }
 
         function verificarHorarioFuncionamento() {
