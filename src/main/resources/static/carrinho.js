@@ -272,12 +272,11 @@ function copiarChavePix() {
 // 🚀 ENVIAR PEDIDO E INTEGRAÇÃO BACKEND / WHATSAPP
 // ==========================================
 async function enviarPedido(e) {
-    // 1. Evita que a página mude ou resete antes da hora
     if (e && typeof e.preventDefault === "function") {
         e.preventDefault();
     }
 
-    // 2. Validação de Horário Comercial de Delivery
+    // 1. Validação de Horário Comercial de Delivery
     const agora = new Date();
     const diaSemana = agora.getDay();
     const minutosAtuais = (agora.getHours() * 60) + agora.getMinutes();
@@ -292,7 +291,7 @@ async function enviarPedido(e) {
         }
     }
 
-    // 3. Resgata e valida a Sacola localmente
+    // 2. Resgata e valida a Sacola localmente
     const carrinhoObjeto = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
     const itens = Object.values(carrinhoObjeto);
 
@@ -301,7 +300,7 @@ async function enviarPedido(e) {
         return;
     }
 
-    // 4. Validação dos Campos do Formulário
+    // 3. Validação dos Campos do Formulário
     const selectBairro = document.getElementById("bairro-entrega");
     if (!selectBairro || !selectBairro.value) { 
         alert("Por favor, selecione o bairro de entrega!"); 
@@ -321,15 +320,13 @@ async function enviarPedido(e) {
     const enderecoCompleto = `${enderecoRua}, Bairro: ${bairroTextoSelecionado}`;
     const totalComTaxaGeral = totalCalculado + taxaEntregaSelecionada;
 
-    // ========================================================
-    // TÉCNICA DE REDIRECIONAMENTO SEGURO CONTRA BLOQUEIO DE POPUP
-    // ========================================================
+    // 4. PREPARAÇÃO DA ABA DO WHATSAPP (Abre vazia para burlar bloqueadores de pop-up)
     const abaWhatsapp = window.open("about:blank", "_blank");
     if (abaWhatsapp) {
-        abaWhatsapp.document.write("<p style='font-family:sans-serif; text-align:center; margin-top:20%; color:#555;'>Processando seu pedido na cozinha do Sabor Cearense... Aguarde...</p>");
+        abaWhatsapp.document.write("<p style='font-family:sans-serif; text-align:center; margin-top:20%; color:#555;'>Salvando seu pedido no Sabor Cearense... Aguarde...</p>");
     }
 
-    // 5. Envio dos Dados para o seu Backend Java no Render (Para o Painel Admin)
+    // 5. Monta o Payload do Pedido para o seu Backend Java no Render
     const dadosPedido = {
         clienteNome: nome,
         endereco: enderecoCompleto + " (Tel: " + contatoTelefone + ") (Ref: " + ref + ")",
@@ -339,7 +336,7 @@ async function enviarPedido(e) {
 
     let pedidoIdGerado = "NOVO";
 
-    // Verifica se a variável de URL do backend existe e dispara a gravação no banco
+    // 6. EXECUÇÃO DO FETCH (Obrigatório aguardar a resposta antes de prosseguir)
     if (typeof URL_API_BACKEND !== "undefined" && URL_API_BACKEND) {
         try {
             const response = await fetch(URL_API_BACKEND + "/api/pedidos", {
@@ -350,7 +347,7 @@ async function enviarPedido(e) {
 
             if (response.ok) {
                 const pedidoSalvo = await response.json();
-                pedidoIdGerado = pedidoSalvo.id; // Pega o ID gerado pelo banco Java
+                pedidoIdGerado = pedidoSalvo.id; // ID retornado com sucesso do Banco Java
                 localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
             }
         } catch (apiError) {
@@ -358,7 +355,7 @@ async function enviarPedido(e) {
         }
     }
 
-    // 6. Montagem da Mensagem Textual do WhatsApp
+    // 7. Montagem da Mensagem Textual do WhatsApp (Agora com a certeza se o ID foi gerado ou não)
     let mensagem = "🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n";
     if (pedidoIdGerado !== "NOVO") {
         mensagem += "🆔 *Pedido Nº:* #" + pedidoIdGerado + "\n";
@@ -383,17 +380,16 @@ async function enviarPedido(e) {
     const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : "5585999999999"; 
     const urlWhatsapp = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
     
-    // Limpa a sacola local
+    // 8. ETAPA FINAL DE LIMPEZA E REDIRECIONAMENTO Sincronizado
     localStorage.removeItem("carrinhoSaborCearense");
 
-    // Envia o link montado para a aba que já estava aberta
     if (abaWhatsapp) {
-        abaWhatsapp.location.href = urlWhatsapp;
+        abaWhatsapp.location.href = urlWhatsapp; // Altera a aba em background para o zap
     } else {
         window.open(urlWhatsapp, '_blank');
     }
     
-    // 7. Redireciona a tela do cliente de volta para o cardápio, direto na aba do rastreador
+    // Altera a página do cliente para o rastreio APENAS após todas as promessas do banco terminarem
     window.location.href = "index.html?admin=1&aba=RASTREIO";
 }
 
