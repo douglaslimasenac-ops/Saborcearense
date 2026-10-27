@@ -425,6 +425,253 @@ window.irParaCheckout = function() {
         padding: 12px 0 !important;
         border-bottom: 1px solid #f1f5f9 !important;
     }
+
+    /* Camada final da sacola: fechado = totalmente invisível. */
+    #painel-sacola-modal {
+        display: none !important;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 99999 !important;
+        background: rgba(35, 25, 16, 0.68) !important;
+        backdrop-filter: blur(4px);
+    }
+
+    #painel-sacola-modal.open {
+        display: block !important;
+    }
+
+    #painel-sacola-modal .sacola-overlay {
+        position: absolute !important;
+        inset: 0 !important;
+    }
+
+    #painel-sacola-modal #conteudo-gaveta-sacola {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: min(92vw, 470px) !important;
+        max-height: 86vh !important;
+        overflow: hidden !important;
+        transform: translate(-50%, -50%) !important;
+        border: 1px solid #eadbc5 !important;
+        border-radius: 24px !important;
+        background: #fffaf2 !important;
+        box-shadow: 0 24px 70px rgba(25, 16, 8, 0.3) !important;
+    }
+
+    #painel-sacola-modal .sacola-cabecalho {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        align-items: flex-start !important;
+        justify-content: space-between !important;
+        gap: 16px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 20px !important;
+        border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+        background: linear-gradient(135deg, #33291f, #171411) !important;
+        color: #fffaf1 !important;
+    }
+
+    #painel-sacola-modal .sacola-cabecalho > div {
+        min-width: 0 !important;
+    }
+
+    #painel-sacola-modal .sacola-kicker {
+        display: block !important;
+        color: #e8ad4c !important;
+        font-size: 0.65rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 1px !important;
+    }
+
+    #painel-sacola-modal .sacola-cabecalho h3 {
+        margin: 4px 0 3px !important;
+        color: #fffaf1 !important;
+        font-size: 1.35rem !important;
+        line-height: 1.2 !important;
+    }
+
+    #painel-sacola-modal .sacola-cabecalho small {
+        color: rgba(255, 250, 241, 0.72) !important;
+        font-size: 0.75rem !important;
+    }
+
+    #painel-sacola-modal .sacola-fechar {
+        flex: 0 0 34px !important;
+        width: 34px !important;
+        height: 34px !important;
+        padding: 0 !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        border-radius: 50% !important;
+        background: rgba(255,255,255,0.1) !important;
+        color: #fff !important;
+        cursor: pointer !important;
+    }
+
+    #painel-sacola-modal #lista-produtos-sacola {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        min-height: 110px !important;
+        max-height: 50vh !important;
+        box-sizing: border-box !important;
+        padding: 10px 20px !important;
+        overflow-y: auto !important;
+        background: #fffaf2 !important;
+    }
+
+    #painel-sacola-modal .item-sacola-linha {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 15px 0 !important;
+        border-bottom: 1px dashed #eadbc5 !important;
+    }
+
+    #painel-sacola-modal .item-sacola-info {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+    }
+
+    #painel-sacola-modal .item-sacola-nome {
+        color: #33291f !important;
+        font-size: 0.9rem !important;
+        font-weight: 800 !important;
+        line-height: 1.35 !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    #painel-sacola-modal .item-sacola-preco {
+        margin-top: 4px !important;
+        color: #9a5b16 !important;
+        font-size: 0.8rem !important;
+        font-weight: 800 !important;
+    }
+
+    #painel-sacola-modal .item-sacola-controles {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    #painel-sacola-modal .item-sacola-controles button {
+        width: 29px !important;
+        height: 29px !important;
+        padding: 0 !important;
+        border: 1px solid #efd2a6 !important;
+        border-radius: 50% !important;
+        background: #fff !important;
+        color: #9a5b16 !important;
+        cursor: pointer !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+    }
+
+    #painel-sacola-modal .item-sacola-controles span {
+        min-width: 18px !important;
+        color: #33291f !important;
+        text-align: center !important;
+        font-weight: 800 !important;
+    }
+
+    #painel-sacola-modal .sacola-rodape {
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 16px 20px 20px !important;
+        border-top: 1px solid #eadbc5 !important;
+        background: #fff5e6 !important;
+    }
+
+    #painel-sacola-modal .sacola-total {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        margin-bottom: 13px !important;
+        color: #33291f !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+    }
+
+    #painel-sacola-modal .sacola-total span:last-child {
+        color: #9a5b16 !important;
+    }
+
+    #painel-sacola-modal .sacola-finalizar {
+        display: block !important;
+        width: 100% !important;
+        min-height: 47px !important;
+        padding: 0 16px !important;
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(135deg, #d99024, #e8ad4c) !important;
+        color: #29231d !important;
+        cursor: pointer !important;
+        font-family: inherit !important;
+        font-size: 0.92rem !important;
+        font-weight: 850 !important;
+        box-shadow: 0 7px 16px rgba(168, 94, 22, 0.2) !important;
+    }
+
+    #barra-flutuante .cart-bar-acoes {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    #barra-flutuante .cart-bar-ver,
+    #barra-flutuante .cart-bar-avancar {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 42px !important;
+        padding: 0 15px !important;
+        border-radius: 999px !important;
+        cursor: pointer !important;
+        font-family: inherit !important;
+        font-size: 0.82rem !important;
+        font-weight: 800 !important;
+        white-space: nowrap !important;
+    }
+
+    #barra-flutuante .cart-bar-ver {
+        border: 1px solid #eadbc5 !important;
+        background: #fffaf2 !important;
+        color: #5a321d !important;
+    }
+
+    #barra-flutuante .cart-bar-avancar {
+        border: 0 !important;
+        background: linear-gradient(135deg, #d99024, #e8ad4c) !important;
+        color: #29231d !important;
+        box-shadow: 0 6px 15px rgba(168, 94, 22, 0.22) !important;
+    }
+
+    @media (max-width: 768px) {
+        #painel-sacola-modal #conteudo-gaveta-sacola {
+            top: auto !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            max-height: 84vh !important;
+            transform: none !important;
+            border-radius: 24px 24px 0 0 !important;
+        }
+    }
+
+    @media (max-width: 520px) {
+        #barra-flutuante .cart-bar-ver,
+        #barra-flutuante .cart-bar-avancar {
+            padding: 0 10px !important;
+            font-size: 0.74rem !important;
+        }
+    }
 </style>
 
 </body>

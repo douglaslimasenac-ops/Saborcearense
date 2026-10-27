@@ -647,7 +647,6 @@ function imprimirCupomIFood(pedido) {
 
     var tipoServico = pedido.endereco ? "ENTREGA" : "RETIRADA";
     var pagamentoFinal = (pedido.formaPagamento || "Não informado").toUpperCase();
-    var observacaoFinal = pedido.observacao || "";
     
     var dataAgora = new Date();
     var dataFinal = dataAgora.toLocaleDateString("pt-BR");
@@ -744,7 +743,7 @@ function imprimirCupomIFood(pedido) {
     if (pedido.observacao && pedido.observacao.trim()) {
         var elObservacao = janelaImpressao.document.createElement("div");
         elObservacao.className = "bloco-obs";
-        elObservacao.textContent = "OBSERVAÇÃO: " + pedido.observacao.trim();
+        elObservacao.textContent = "OBSERVAÇÃO DO PEDIDO: " + pedido.observacao.trim();
         containerPrincipal.appendChild(elObservacao);
     }
 
@@ -780,14 +779,6 @@ function imprimirCupomIFood(pedido) {
         <div class='linha-total'><span>TOTAL</span><span>R$ ${totalGeralExibir.toFixed(2).replace(".", ",")}</span></div>
     `;
     containerPrincipal.appendChild(elFinanceiro);
-
-    // 7. Observações
-    if (observacaoFinal.trim() !== "") {
-        var elObs = janelaImpressao.document.createElement("div");
-        elObs.className = "bloco-obs";
-        elObs.textContent = "OBS: " + observacaoFinal;
-        containerPrincipal.appendChild(elObs);
-    }
 
     var divDivisora5 = janelaImpressao.document.createElement("div");
     divDivisora5.className = "divider-dashed";

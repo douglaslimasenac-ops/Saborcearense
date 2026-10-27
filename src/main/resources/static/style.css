@@ -1491,6 +1491,15 @@ button {
         padding-left: 8px;
     }
 
+    /* Estado global da sacola: nenhum texto aparece no cardápio antes da abertura. */
+    #painel-sacola-modal {
+        display: none !important;
+    }
+
+    #painel-sacola-modal.open {
+        display: block !important;
+    }
+
     /* Estado inicial da sacola: oculto em qualquer tamanho de tela. */
     #painel-sacola-modal {
         display: none !important;
@@ -1532,6 +1541,28 @@ button {
             transform: none !important;
             border-radius: 24px 24px 0 0 !important;
         }
+    }
+
+    /* A sacola precisa ficar totalmente fora do fluxo até receber a classe open. */
+    #painel-sacola-modal {
+        display: none !important;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 99999 !important;
+    }
+
+    #painel-sacola-modal.open {
+        display: block !important;
+    }
+
+    #painel-sacola-modal .sacola-overlay {
+        position: absolute !important;
+        inset: 0 !important;
+    }
+
+    #painel-sacola-modal #conteudo-gaveta-sacola {
+        position: fixed !important;
+        z-index: 1 !important;
     }
 
     .header-app {
@@ -1578,4 +1609,13 @@ button {
         padding-left: 7px !important;
         font-size: 0.72rem !important;
     }
+}
+
+/* Estado global da sacola: nenhum texto aparece no cardápio antes da abertura. */
+#painel-sacola-modal {
+    display: none !important;
+}
+
+#painel-sacola-modal.open {
+    display: block !important;
 }
