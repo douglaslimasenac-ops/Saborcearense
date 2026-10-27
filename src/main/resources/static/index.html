@@ -8,115 +8,125 @@
 </head>
 <body>
 
-    <!-- CONTAINER CENTRAL DO APLICATIVO -->
-    <div class="container">
+   <!-- CONTAINER CENTRAL DO APLICATIVO -->
+<div class="container">
+    
+    <!-- CABEÇALHO COM BOTÃO DE ADMIN -->
+    <header class="header-app" style="position: relative;">
+        <a href="admin.html" title="Acessar Painel do Administrador" style="position: absolute; top: -10px; right: 10px; text-decoration: none; font-size: 1.4rem; color: #a0aec0; transition: color 0.2s;">⚙️</a>
+        <h1>🌵 Sabor Cearense 🌵</h1>
+        <p style="font-weight: 500; font-size: 1.1rem; margin-top: -5px;">Comida Caseira Legítima</p>
+        <p style="font-size: 0.9rem; font-weight: bold; color: #555; background: var(--primary); display: inline-block; padding: 4px 12px; border-radius: 20px;">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
+    </header>
+
+    <!-- STATUS DE FUNCIONAMENTO -->
+    <div id="status-loja" class="status-barra">Carregando funcionamento...</div>
+
+    <!-- HORÁRIOS DE ENTREGA -->
+    <div class="horario-container">
+        <p class="horario-dias">📅 Segunda a Sábado</p>
+        <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
+    </div>
+
+    <!-- BOTÃO CENTRAL DE RASTREIO -->
+    <div style="text-align: center; margin: -10px auto 20px auto; max-width: 650px; padding: 0 10px;">
+        <button type="button" id="open-tracking-btn" onclick="abrirAbaRastreioOculta()" style="background: #e6f0fa; border: 1.5px solid #4a90e2; padding: 10px 20px; font-weight: bold; border-radius: 30px; cursor: pointer; color: #2a64a6; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+            🔍 Já fez um pedido? Clique aqui para rastrear
+        </button>
+    </div>
+
+    <!-- ABAS DE NAVEGAÇÃO -->
+    <div class="abas-navegacao" style="display: flex; justify-content: space-between; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px;">
+        <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')">🍽️ do Dia</button>
+        <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')">📌 Principais</button>
+        <button class="btn-aba" onclick="alternarAba('SOBREMESA')">🍪 Sobremesa</button>
+        <button class="btn-aba" onclick="alternarAba('BEBIDA')">🥤 Bebida</button>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL DO CARDÁPIO -->
+    <main>
+        <section id="aba-PRATOS_DO_DIA" class="menu-section">
+            <h2>🌹 Pratos do Dia</h2>
+            <div id="section-PRATOS_DO_DIA" class="menu-items"></div>
+        </section>
+
+        <section id="aba-PRINCIPAIS" class="menu-section" style="display: none;">
+            <h2>📌 Pratos Principais</h2>
+            <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px; margin-bottom: 15px;"><em>Todos acompanham arroz, feijão e farofa</em></p>
+            
+            <h3>🐔 Frango</h3>
+            <div id="section-FRANGO" class="menu-items"></div>
+            
+            <h3>🥩 Carne</h3>
+            <div id="section-CARNE" class="menu-items"></div>
+            
+            <h3>🐟 Outros</h3>
+            <div id="section-OUTROS" class="menu-items"></div>
+        </section>
+
+        <section id="aba-SOBREMESA" class="menu-section" style="display: none;">
+            <h2>😋 Sobremesas - R$ 8,00</h2>
+            <div id="section-SOBREMESA" class="menu-items"></div>
+        </section>
+
+        <section id="aba-BEBIDA" class="menu-section" style="display: none;">
+            <h2>🥤 Bebidas Geladas</h2>
+            <div id="section-BEBIDA" class="menu-items"></div>
+        </section>
+
+        <!-- SEÇÃO DE RASTREIO OCULTA -->
+        <section id="aba-RASTREIO" class="menu-section" style="display: none; background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.01); margin-top: 25px;">
+            <h2 style="background: var(--dark); color: var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 1.25rem; margin-top: 0; margin-bottom: 20px;">🔍 Acompanhar Meu Pedido</h2>
+            
+            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 25px; display: flex; gap: 10px;">
+                <input type="number" id="input-rastreio-index" placeholder="Digite o Nº do seu Pedido" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; text-align: center; font-size: 1rem;">
+                <button onclick="executarBuscaRastreio()" style="background: var(--primary); border: none; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer;">Consultar</button>
+            </div>
+
+            <div id="wrapper-linha-tempo" style="display: none;">
+                <div style="background: #edf2f7; display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; margin-bottom: 20px;">Pedido #<span id="txt-index-id">...</span></div>
+                
+                <div class="linha-tempo" style="display: flex; justify-content: space-between; position: relative; margin: 30px 0; padding: 0 10px;">
+                    <div id="p-RECEBIDO" class="passo-front">
+                        <div class="circulo-front">1</div>
+                        <div class="legenda-front">Recebido</div>
+                    </div>
+                    <div id="p-PREPARO" class="passo-front">
+                        <div class="circulo-front">2</div>
+                        <div class="legenda-front">Preparo</div>
+                    </div>
+                    <div id="p-ENTREGA" class="passo-front">
+                        <div class="circulo-front">3</div>
+                        <div class="legenda-front">Entrega</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 🌵 BARRA FIXA INFERIOR (RODAPÉ RESUMO) -->
+    <div id="barra-flutuante" class="cart-bar">
         
-        <!-- CABEÇALHO COM BOTÃO DE ADMIN -->
-        <header class="header-app" style="position: relative;">
-            <a href="admin.html" title="Acessar Painel do Administrador" style="position: absolute; top: -10px; right: 10px; text-decoration: none; font-size: 1.4rem; color: #a0aec0; transition: color 0.2s;">⚙️</a>
-            <h1>🌵 Sabor Cearense 🌵</h1>
-            <p style="font-weight: 500; font-size: 1.1rem; margin-top: -5px;">Comida Caseira Legítima</p>
-            <p style="font-size: 0.9rem; font-weight: bold; color: #555; background: var(--primary); display: inline-block; padding: 4px 12px; border-radius: 20px;">🕒 Pedidos até 15h | 💳 Pix, Dinheiro, Cartão</p>
-        </header>
-
-        <!-- STATUS DE FUNCIONAMENTO -->
-        <div id="status-loja" class="status-barra">Carregando funcionamento...</div>
-
-        <!-- HORÁRIOS DE ENTREGA -->
-        <div class="horario-container">
-            <p class="horario-dias">📅 Segunda a Sábado</p>
-            <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
+        <!-- Valores e totalizadores (Agrupados à esquerda) -->
+        <div style="text-align: left; cursor: pointer;" onclick="abrirSacola()">
+            <span id="txt-qtd-itens" style="font-size: 0.8rem; color: #64748b; display: block; font-weight: 500;">0 itens</span>
+            <div id="txt-valor-total" style="font-weight: 800; color: #27ae60; font-size: 1.15rem;">R$ 0,00</div>
         </div>
 
-        <!-- BOTÃO CENTRAL DE RASTREIO -->
-        <div style="text-align: center; margin: -10px auto 20px auto; max-width: 650px; padding: 0 10px;">
-            <button type="button" id="open-tracking-btn" onclick="abrirAbaRastreioOculta()" style="background: #e6f0fa; border: 1.5px solid #4a90e2; padding: 10px 20px; font-weight: bold; border-radius: 30px; cursor: pointer; color: #2a64a6; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                🔍 Já fez um pedido? Clique aqui para rastrear
+        <!-- Botões de navegação (Agrupados à direita) -->
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button onclick="abrirSacola()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: bold; border-radius: 8px; cursor: pointer; color: #475569; font-size: 0.85rem;">
+                🛒 Ver Sacola
+            </button>
+            <button onclick="irParaCheckout()" style="background: #22c55e; color: white; border: none; padding: 10px 16px; font-size: 0.95rem; font-weight: bold; border-radius: 8px; cursor: pointer;">
+                Avançar ➔
             </button>
         </div>
 
-        <!-- ABAS DE NAVEGAÇÃO -->
-        <div class="abas-navegacao" style="display: flex; justify-content: space-between; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px;">
-            <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')">🍽️ do Dia</button>
-            <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')">📌 Principais</button>
-            <button class="btn-aba" onclick="alternarAba('SOBREMESA')">🍪 Sobremesa</button>
-            <button class="btn-aba" onclick="alternarAba('BEBIDA')">🥤 Bebida</button>
+    </div> <!-- Fim da barra flutuante -->
 
-        </div>
-        <!-- CONTEÚDO PRINCIPAL DO CARDÁPIO -->
-        <main>
-            <section id="aba-PRATOS_DO_DIA" class="menu-section">
-                <h2>🌹 Pratos do Dia</h2>
-                <div id="section-PRATOS_DO_DIA" class="menu-items"></div>
-            </section>
+</div> <!-- FIM DO CONTAINER CENTRAL -->
 
-            <section id="aba-PRINCIPAIS" class="menu-section" style="display: none;">
-                <h2>📌 Pratos Principais</h2>
-                <p style="font-size: 0.9rem; color: #7f8c8d; margin-top: -10px; margin-bottom: 15px;"><em>Todos acompanham arroz, feijão e farofa</em></p>
-                
-                <h3>🐔 Frango</h3>
-                <div id="section-FRANGO" class="menu-items"></div>
-                
-                <h3>🥩 Carne</h3>
-                <div id="section-CARNE" class="menu-items"></div>
-                
-                <h3>🐟 Outros</h3>
-                <div id="section-OUTROS" class="menu-items"></div>
-            </section>
-
-            <section id="aba-SOBREMESA" class="menu-section" style="display: none;">
-                <h2>😋 Sobremesas - R$ 8,00</h2>
-                <div id="section-SOBREMESA" class="menu-items"></div>
-            </section>
-
-            <section id="aba-BEBIDA" class="menu-section" style="display: none;">
-                <h2>🥤 Bebidas Geladas</h2>
-                <div id="section-BEBIDA" class="menu-items"></div>
-            </section>
-
-            <!-- SEÇÃO DE RASTREIO OCULTA -->
-            <section id="aba-RASTREIO" class="menu-section" style="display: none; background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.01); margin-top: 25px;">
-                <h2 style="background: var(--dark); color: var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 1.25rem; margin-top: 0; margin-bottom: 20px;">🔍 Acompanhar Meu Pedido</h2>
-                
-                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 25px; display: flex; gap: 10px;">
-                    <input type="number" id="input-rastreio-index" placeholder="Digite o Nº do seu Pedido" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; text-align: center; font-size: 1rem;">
-                    <button onclick="executarBuscaRastreio()" style="background: var(--primary); border: none; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer;">Consultar</button>
-                </div>
-
-                <div id="wrapper-linha-tempo" style="display: none;">
-                    <div style="background: #edf2f7; display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; margin-bottom: 20px;">Pedido #<span id="txt-index-id">...</span></div>
-                    
-                    <div class="linha-tempo" style="display: flex; justify-content: space-between; position: relative; margin: 30px 0; padding: 0 10px;">
-                        <div id="p-RECEBIDO" class="passo-front">
-                            <div class="circulo-front">1</div>
-                            <div class="legenda-front">Recebido</div>
-                        </div>
-                        <div id="p-PREPARO" class="passo-front">
-                            <div class="circulo-front">2</div>
-                            <div class="legenda-front">Preparo</div>
-                        </div>
-                        <div id="p-ENTREGA" class="passo-front">
-                            <div class="circulo-front">3</div>
-                            <div class="legenda-front">Entrega</div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div> <!-- FIM DO CONTAINER -->
- <!-- 🌵 BARRA FIXA INFERIOR (RODAPÉ RESUMO) -->
-<div id="barra-flutuante" style="position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background: #ffffff; box-shadow: 0 -4px 10px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 9999; font-family: sans-serif;">
-    <button onclick="abrirSacola()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: bold; border-radius: 8px; cursor: pointer; color: #475569; font-size: 0.85rem;">
-        🛒 Ver Sacola
-    </button>
-    <div style="text-align: right;" onclick="abrirSacola()">
-        <span id="txt-qtd-itens" style="font-size: 0.8rem; color: #64748b; display: block; font-weight: 500;">0 itens</span>
-        <div id="txt-valor-total" style="font-weight: 800; color: #27ae60; font-size: 1.15rem;">R$ 0,00</div>
-    </div>
-    <button onclick="irParaCheckout()" style="background: #22c55e; color: white; border: none; padding: 10px 16px; font-size: 0.95rem; font-weight: bold; border-radius: 8px; cursor: pointer;">
-        Avançar ➔
-    </button>
-</div>
 
 <!-- 🌵 GAVETA MODAL DA SACOLA (RESTRUTURADA EM CAMADA ÚNICA) -->
 <div id="painel-sacola-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 99999; display: none; font-family: sans-serif;">
@@ -333,6 +343,58 @@ window.irParaCheckout = function() {
     window.location.href = "carrinho.html?carrinho=" + encodeURIComponent(dadosCarrinhoSalvos);
 };
 </script>
+<!-- 🌵 AJUSTE VISUAL RESPONSIVO DEFINITIVO - PC E CELULAR -->
+<style>
+    /* Força o fundo escuro a cobrir a tela inteira */
+    #painel-sacola-modal {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.5) !important;
+        z-index: 999999 !important;
+    }
+
+    /* Estilo centralizado e limpo para o COMPUTADOR (Telas grandes) */
+    @media (min-width: 769px) {
+        #conteudo-gaveta-sacola {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: 450px !important;
+            height: auto !important;
+            max-height: 85vh !important;
+            border-radius: 16px !important;
+            bottom: auto !important;
+            right: auto !important;
+        }
+    }
+
+    /* Estilo em formato de gaveta para o CELULAR (Telas pequenas) */
+    @media (max-width: 768px) {
+        #conteudo-gaveta-sacola {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            max-height: 80vh !important;
+            border-radius: 20px 20px 0 0 !important;
+            top: auto !important;
+            transform: none !important;
+        }
+    }
+
+    /* Estilização interna dos itens da lista para não ficarem colados */
+    .item-sacola-linha {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 12px 0 !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+    }
+</style>
 
 </body>
 </html>

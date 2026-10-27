@@ -30,7 +30,11 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("🌵 Sabor Cearense: Memória de versões antigas limpa com sucesso!");
     }
 
+   // Em vez de chamar direto, verifica se a função existe na página atual:
+if (typeof carregarCardapio === "function") {
     carregarCardapio();
+}
+
     verificarHorarioFuncionamento();
 });
 
