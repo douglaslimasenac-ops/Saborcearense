@@ -296,6 +296,78 @@
             border-radius: 14px;
             border-color: #a7d9b8;
         }
+        .checkout-etapas {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 4px 0 18px;
+            padding: 0 4px;
+        }
+        .checkout-etapa-indicador {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #9a8b7b;
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+        .checkout-etapa-indicador span {
+            display: grid;
+            width: 30px;
+            height: 30px;
+            place-items: center;
+            border-radius: 50%;
+            background: #eadbc5;
+            color: #806b51;
+            font-weight: 800;
+        }
+        .checkout-etapa-indicador.ativo {
+            color: #5a321d;
+        }
+        .checkout-etapa-indicador.ativo span {
+            background: #d99024;
+            color: #29231d;
+        }
+        .checkout-etapa-linha {
+            flex: 1;
+            height: 1px;
+            background: #eadbc5;
+        }
+        .checkout-etapa-conteudo {
+            display: none;
+        }
+        .checkout-etapa-conteudo.ativa {
+            display: block;
+        }
+        .btn-continuar-checkout,
+        .btn-voltar-checkout {
+            width: 100%;
+            min-height: 48px;
+            border: 0;
+            border-radius: 999px;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 800;
+        }
+        .btn-continuar-checkout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 2px 0 20px;
+            background: linear-gradient(135deg, #d99024, #e8ad4c);
+            color: #29231d;
+            box-shadow: 0 8px 18px rgba(168, 94, 22, 0.2);
+        }
+        .btn-continuar-checkout span {
+            font-size: 1.25rem;
+        }
+        .btn-voltar-checkout {
+            margin-bottom: 10px;
+            border: 1px solid #eadbc5;
+            background: #fffaf2;
+            color: #6b513d;
+        }
         @media (max-width: 520px) {
             body { padding: 18px 12px; }
             .secao-card { padding: 20px 16px; }
@@ -305,6 +377,8 @@
             .item-resumo { gap: 10px; }
             .item-nome { overflow-wrap: anywhere; }
             .item-preco-sub { white-space: nowrap; }
+            .checkout-etapa-indicador strong { display: none; }
+            .checkout-etapa-indicador span { width: 28px; height: 28px; }
         }
     </style>
 </head>
@@ -331,6 +405,19 @@
         </div>
 
         <form id="form-pedido">
+            <div class="checkout-etapas" aria-label="Etapas do pedido">
+                <div class="checkout-etapa-indicador ativo" data-etapa-indicador="dados">
+                    <span>1</span>
+                    <strong>Entrega</strong>
+                </div>
+                <div class="checkout-etapa-linha"></div>
+                <div class="checkout-etapa-indicador" data-etapa-indicador="pagamento">
+                    <span>2</span>
+                    <strong>Pagamento</strong>
+                </div>
+            </div>
+
+            <section class="checkout-etapa-conteudo ativa" data-etapa="dados">
             <div class="secao-card">
                 <h2>👤 Seus dados</h2>
                 <p class="secao-intro">Informe como podemos identificar e contatar você.</p>
@@ -384,8 +471,15 @@
                 </div>
             </div>
 
+            <button type="button" class="btn-continuar-checkout" onclick="irParaEtapaPagamento()">
+                Continuar para pagamento <span>→</span>
+            </button>
+            </section>
+
+            <section class="checkout-etapa-conteudo" data-etapa="pagamento" hidden>
             <div class="secao-card">
                 <h2>💳 Forma de pagamento</h2>
+                <p class="secao-intro">Escolha como deseja pagar e confira o total do pedido.</p>
                 <div class="form-grupo">
                     <label for="pagamento">Escolha como deseja pagar:</label>
                     <select id="pagamento" required onchange="controlarExibicaoPix(this.value)">
@@ -412,8 +506,10 @@
             </div>
             
             <div style="margin-top: 25px;">
+                <button type="button" class="btn-voltar-checkout" onclick="voltarParaEtapaDados()">← Voltar para entrega</button>
                 <button type="button" class="btn-enviar" onclick="enviarPedido(event)">Finalizar e Enviar para o WhatsApp 🌵</button>
             </div>
+            </section>
         </form>
     </div>
      <!-- Vincle o seu novo arquivo externo aqui de forma limpa -->

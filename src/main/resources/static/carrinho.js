@@ -269,6 +269,38 @@ function copiarChavePix() {
     }
 }
 
+function atualizarEtapaCheckout(etapaAtual) {
+    document.querySelectorAll(".checkout-etapa-conteudo").forEach(etapa => {
+        const ativa = etapa.dataset.etapa === etapaAtual;
+        etapa.classList.toggle("ativa", ativa);
+        etapa.hidden = !ativa;
+    });
+
+    document.querySelectorAll("[data-etapa-indicador]").forEach(indicador => {
+        indicador.classList.toggle("ativo", indicador.dataset.etapaIndicador === etapaAtual);
+    });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function irParaEtapaPagamento() {
+    const camposObrigatorios = ["nome", "telefone", "bairro-entrega", "endereco"];
+    const camposInvalidos = camposObrigatorios
+        .map(id => document.getElementById(id))
+        .filter(campo => campo && !campo.checkValidity());
+
+    if (camposInvalidos.length > 0) {
+        camposInvalidos[0].reportValidity();
+        return;
+    }
+
+    atualizarEtapaCheckout("pagamento");
+}
+
+function voltarParaEtapaDados() {
+    atualizarEtapaCheckout("dados");
+}
+
 // ==========================================
 // 🚀 ENVIAR PEDIDO E INTEGRAÇÃO BACKEND / WHATSAPP
 // ==========================================
