@@ -104,47 +104,52 @@
             </section>
         </main>
     </div> <!-- FIM DO CONTAINER -->
-    <!-- BARRA FIXA INFERIOR (RODAPÉ DO CARRINHO) -->
-    <div class="cart-bar" id="barra-flutuante">
-        <button onclick="abrirAbaRastreioOculta()" id="btn-rodape-rastreio" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; color: #475569; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;">
-            🔍 Rastrear Pedido
-        </button>
+ <!-- 🌵 BARRA FIXA INFERIOR (RODAPÉ RESUMO) -->
+<div id="barra-flutuante" style="position: fixed; bottom: 0; left: 0; right: 0; height: 65px; background: #ffffff; box-shadow: 0 -4px 10px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 9999; font-family: sans-serif;">
+    <button onclick="abrirSacola()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: bold; border-radius: 8px; cursor: pointer; color: #475569; font-size: 0.85rem;">
+        🛒 Ver Sacola
+    </button>
+    <div style="text-align: right;" onclick="abrirSacola()">
+        <span id="txt-qtd-itens" style="font-size: 0.8rem; color: #64748b; display: block; font-weight: 500;">0 itens</span>
+        <div id="txt-valor-total" style="font-weight: 800; color: #27ae60; font-size: 1.15rem;">R$ 0,00</div>
+    </div>
+    <button onclick="irParaCheckout()" style="background: #22c55e; color: white; border: none; padding: 10px 16px; font-size: 0.95rem; font-weight: bold; border-radius: 8px; cursor: pointer;">
+        Avançar ➔
+    </button>
+</div>
 
-        <div style="margin-left: auto; text-align: right; padding-right: 15px;" onclick="abrirSacola()">
-            <span id="txt-qtd-itens" style="font-size: 0.8rem; color: #64748b; display: block; font-weight: 500;">0 itens</span>
-            <div id="txt-valor-total" style="font-weight: 800; color: #27ae60; font-size: 1.15rem; line-height: 1;">R$ 0,00</div>
+<!-- 🌵 GAVETA MODAL DA SACOLA (RESTRUTURADA EM CAMADA ÚNICA) -->
+<div id="painel-sacola-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 99999; display: none; font-family: sans-serif;">
+    <!-- Fundo escuro clicável para fechar -->
+    <div onclick="fecharSacola()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    
+    <!-- Caixa interna com as propriedades responsivas móveis aplicadas via JavaScript -->
+    <div id="conteudo-gaveta-sacola" style="position: fixed; background: #ffffff; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.24); transition: all 0.3s ease-in-out; border-radius: 16px; width: 90%; max-width: 450px; top: 50%; left: 50%; transform: translate(-50%, -50%); max-height: 85vh; box-sizing: border-box;">
+        
+        <!-- Cabeçalho -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f0f0f0;">
+            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #1e293b;">Sua Sacola</h3>
+            <button onclick="fecharSacola()" style="background: #f5f5f5; border: none; width: 32px; height: 32px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+        </div>
+        
+        <!-- Lista de Produtos Rolável -->
+        <div id="lista-produtos-sacola" style="padding: 20px; overflow-y: auto; flex: 1; min-height: 150px; max-height: 50vh; box-sizing: border-box;">
+            <!-- Injetado dinamicamente via JS -->
         </div>
 
-        <!-- Mude a função do onclick desse botão na barra-flutuante -->
-<button onclick="irParaCheckout()" class="btn-avancar" id="botao-avancar-checkout" style="padding: 10px 16px; font-size: 0.95rem; white-space: nowrap;">Avançar ➔</button>
-    </div>
-
-    <!-- MODAL DA GAVETA DA SACOLA -->
-    <div id="painel-sacola-modal" class="sacola-drawer-container">
-        <div class="sacola-drawer-overlay" onclick="fecharSacola()"></div>
-        <div class="sacola-drawer-content">
-            <div class="sacola-drawer-header">
-                <h3>Sua Sacola</h3>
-                <button class="btn-fechar-drawer" onclick="fecharSacola()">✕</button>
+        <!-- Rodapé do Modal -->
+        <div style="padding: 20px; border-top: 1px solid #f0f0f0; background: #fafafa; border-radius: 0 0 16px 16px;">
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; margin-bottom: 15px; color: #1e293b;">
+                <span>Subtotal:</span>
+                <span id="txt-modal-subtotal">R$ 0,00</span>
             </div>
-            
-            <div id="lista-produtos-sacola" class="sacola-drawer-body">
-                <!-- Itens injetados via JS -->
-            </div>
-
-            <div class="sacola-drawer-footer">
-                <div class="sacola-drawer-subtotal">
-                    <span>Subtotal:</span>
-                    <span id="txt-modal-subtotal">R$ 0,00</span>
-                </div>
-                <div style="padding-top: 10px;">
-                    <button class="btn-drawer-finalizar" onclick="irParaCheckout()">
-                        Avançar para o Pagamento ➔
-                    </button>
-                </div>
-            </div>
+            <button onclick="irParaCheckout()" style="width: 100%; padding: 14px; background: #22c55e; color: #ffffff; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: background 0.2s;">
+                Confirmar e Ir para o Pagamento ➔
+            </button>
         </div>
     </div>
+</div>
+
 
     <!-- SCRIPTS DE LOGICA -->
     <script src="index.js"></script>
