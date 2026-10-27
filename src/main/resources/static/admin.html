@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão Executiva - Sabor Cearense</title>
-    <!-- FontAwesome para os ícones originais -->
-    <link rel="stylesheet" href="https://cloudflare.com">
     <style>
         :root {
             --primary: #f5a623;
@@ -366,6 +364,32 @@
             border-radius: 22px;
             box-shadow: 0 18px 42px rgba(79, 52, 23, 0.12);
         }
+        .imagem-produto-edicao {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .imagem-produto-edicao input {
+            flex: 1;
+            min-width: 0;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+        .imagem-produto-edicao button {
+            padding: 8px 10px;
+            border: 0;
+            border-radius: 8px;
+            background: var(--primary);
+            color: var(--dark);
+            cursor: pointer;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
         @media (max-width: 700px) {
             .admin-wrapper { display: block !important; }
             aside {
@@ -400,8 +424,6 @@
 </head>
 <body>
     <!-- Elemento de áudio original para alertas sonoros -->
-    <audio id="som-notificacao" src="notificacao.mp3" preload="auto"></audio>
-
     <!-- CONTAINER DA TELA DE LOGIN -->
     <div class="login-wrapper" id="container-login-view">
         <div id="login-admin">
@@ -480,7 +502,6 @@
                         <label for="imagem">URL da Imagem</label>
                         <input type="url" id="imagem" placeholder="https://site.com/imagem-do-prato.jpg"
                                autocomplete="url" inputmode="url">
-                        <small>Use o link direto da imagem, terminando em .jpg, .jpeg, .png ou .webp.</small>
                         <div id="preview-imagem-prato" class="preview-imagem-prato" hidden>
                             <img id="preview-imagem-prato-img" alt="Prévia da imagem do prato">
                             <span>Prévia da imagem</span>

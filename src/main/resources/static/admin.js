@@ -181,6 +181,12 @@ function renderizarItensAdmin() {
                                 class="input-preco-rapido" 
                                 onchange="atualizarPrecoRapido(${item.id}, this.value)">
                         </div>
+                        <div class="imagem-produto-edicao">
+                            <input type="url" id="imagem-produto-${item.id}"
+                                value="${escaparHtml(item.imagemUrl || "")}"
+                                placeholder="Cole aqui a URL da imagem">
+                            <button type="button" onclick="atualizarImagemRapido(${item.id})">Salvar imagem</button>
+                        </div>
                     </div>
                 </div>
                 <div class="controles-prod">
@@ -193,6 +199,52 @@ function renderizarItensAdmin() {
             `;
             container.appendChild(div);
     });
+}
+
+async function atualizarImagemRapido(id) {
+    const campo = document.getElementById(`imagem-produto-${id}`);
+    const imagemUrl = campo ? campo.value.trim() : "";
+    const pratoAntigo = listaPratosLocal.find(p => p.id === id);
+    if (!pratoAntigo) {
+        alert("Não foi possível localizar este prato.");
+        return;
+    }
+
+    if (imagemUrl) {
+        try {
+            const urlImagem = new URL(imagemUrl);
+            if (!["http:", "https:"].includes(urlImagem.protocol)) throw new Error();
+        } catch {
+            alert("Informe uma URL válida começando com https://.");
+            campo.focus();
+            return;
+        }
+    }
+
+    try {
+        const res = await fetchAdmin(`${URL_API_ADMIN}/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                id,
+                nome: pratoAntigo.nome || "",
+                descricao: pratoAntigo.descricao || "",
+                categoria: pratoAntigo.categoria || "",
+                diaSemana: pratoAntigo.diaSemana || "",
+                imagemUrl,
+                disponivel: pratoAntigo.disponivel !== undefined ? pratoAntigo.disponivel : true,
+                preco: pratoAntigo.preco || 0
+            })
+        });
+        if (!res.ok) {
+            alert("Não foi possível salvar a imagem.");
+            return;
+        }
+        await carregarItensAdmin();
+    } catch (erro) {
+        console.error("Erro ao atualizar imagem do prato:", erro);
+        alert("Erro de conexão ao salvar a imagem.");
+    }
 }
 
 async function atualizarPrecoRapido(id, novoPreco) {
@@ -442,12 +494,6 @@ function renderizarItensPedido(pedido) {
         return `<div class="itens-pedido"><strong>Itens:</strong><span>Não informado</span></div>`;
     }
 
-    function obterTaxaEntregaPedido(pedido) {
-        const subtotal = calcularTotalItensPedido(pedido);
-        const total = obterTotalPedido(pedido);
-        return Math.max(0, total - subtotal);
-    }
-
     return `
         <div class="itens-pedido">
             <strong>Itens do pedido</strong>
@@ -462,6 +508,12 @@ function renderizarItensPedido(pedido) {
             }).join("")}
         </div>
     `;
+}
+
+function obterTaxaEntregaPedido(pedido) {
+    const subtotal = calcularTotalItensPedido(pedido);
+    const total = obterTotalPedido(pedido);
+    return Math.max(0, total - subtotal);
 }
 
 function calcularTotalItensPedido(pedido) {
