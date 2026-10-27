@@ -297,7 +297,7 @@
     }
     // Codifica o carrinho atual e redireciona para a página de checkout
     const dadosCarrinho = encodeURIComponent(JSON.stringify(carrinho));
-    window.location.href = `checkout.html?carrinho=${dadosCarrinho}`;
+    window.location.href = `carrinho.html?carrinho=${dadosCarrinho}`;
 }
 
     // =========================================================================
@@ -477,15 +477,7 @@ function abrirSacola() {
     const gaveta = document.getElementById('conteudo-gaveta-sacola');
     if (!modal || !gaveta) return;
 
-    // Exibe o fundo escuro e traz a sacola para a frente
-    modal.style.display = "block";
-    modal.style.position = "fixed";
-    modal.style.top = "0";
-    modal.style.left = "0";
-    modal.style.width = "100vw";
-    modal.style.height = "100vh";
-    modal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-    modal.style.zIndex = "99999";
+    modal.classList.add("open");
 
     renderizarItensSacola();
 
@@ -517,7 +509,7 @@ function abrirSacola() {
 
 function fecharSacola() {
     const modal = document.getElementById('painel-sacola-modal');
-    if (modal) modal.style.display = "none";
+    if (modal) modal.classList.remove("open");
 }
 
 function irParaCheckout() {
@@ -526,7 +518,7 @@ function irParaCheckout() {
         alert("Sua sacola está vazia! Escolha um prato do cardápio.");
         return;
     }
-    window.location.href = `checkout.html?carrinho=${encodeURIComponent(JSON.stringify(listaItens))}`;
+    window.location.href = `carrinho.html?carrinho=${encodeURIComponent(JSON.stringify(listaItens))}`;
 }
 
 // Garante carregamento dos valores salvos ao abrir o app

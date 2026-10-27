@@ -351,10 +351,10 @@ function atualizarArmazenamentoSacola(idItem, qtdMudanca, nomeFinal, precoFinal)
     var gavetaModalHTML = document.getElementById("painel-sacola-modal");
     
     window.abrirSacola = function() {
-        if (gavetaModalHTML) gavetaModalHTML.style.display = "block";
+        if (gavetaModalHTML) gavetaModalHTML.classList.add("open");
     };
     window.fecharSacola = function() {
-        if (gavetaModalHTML) gavetaModalHTML.style.display = "none";
+        if (gavetaModalHTML) gavetaModalHTML.classList.remove("open");
     };
     
     // Se o cliente acabou de adicionar um prato (+), força a abertura da gaveta para exibir o prato

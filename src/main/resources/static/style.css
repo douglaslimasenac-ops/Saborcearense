@@ -392,6 +392,52 @@ body {
         padding: 9px;
     }
 
+    /* Correção final de camadas: a sacola fica oculta até ser aberta. */
+    #painel-sacola-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        background: rgba(35, 25, 16, 0.68);
+        backdrop-filter: blur(4px);
+    }
+
+    #painel-sacola-modal.open {
+        display: block;
+    }
+
+    #painel-sacola-modal .sacola-overlay {
+        position: absolute;
+        inset: 0;
+    }
+
+    #painel-sacola-modal #conteudo-gaveta-sacola {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        display: flex;
+        width: min(92%, 470px);
+        max-height: 86vh;
+        overflow: hidden;
+        transform: translate(-50%, -50%);
+        border: 1px solid var(--border-color);
+        border-radius: 24px;
+        background: #fffaf2;
+        box-shadow: 0 24px 70px rgba(25, 16, 8, 0.3);
+    }
+
+    @media (max-width: 768px) {
+        #painel-sacola-modal #conteudo-gaveta-sacola {
+            top: auto;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            max-height: 84vh;
+            transform: none;
+            border-radius: 24px 24px 0 0;
+        }
+    }
+
     /* Sacola e barra de compra: mesma linguagem visual do cardápio */
     #barra-flutuante {
         display: flex !important;
@@ -1443,6 +1489,49 @@ button {
     .container {
         padding-right: 8px;
         padding-left: 8px;
+    }
+
+    /* Estado inicial da sacola: oculto em qualquer tamanho de tela. */
+    #painel-sacola-modal {
+        display: none !important;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 99999 !important;
+        background: rgba(35, 25, 16, 0.68) !important;
+        backdrop-filter: blur(4px);
+    }
+
+    #painel-sacola-modal.open {
+        display: block !important;
+    }
+
+    #painel-sacola-modal .sacola-overlay {
+        position: absolute;
+        inset: 0;
+    }
+
+    #painel-sacola-modal #conteudo-gaveta-sacola {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        display: flex !important;
+        width: min(92%, 470px) !important;
+        max-height: 86vh !important;
+        overflow: hidden;
+        transform: translate(-50%, -50%) !important;
+        border-radius: 24px !important;
+    }
+
+    @media (max-width: 768px) {
+        #painel-sacola-modal #conteudo-gaveta-sacola {
+            top: auto !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            max-height: 84vh !important;
+            transform: none !important;
+            border-radius: 24px 24px 0 0 !important;
+        }
     }
 
     .header-app {
