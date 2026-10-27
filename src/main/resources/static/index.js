@@ -177,31 +177,48 @@
         }
 
         function renderizarItensSacola() {
-            const containerLista = document.getElementById('lista-produtos-sacola');
-            containerLista.innerHTML = '';
-            const itens = Object.entries(carrinho);
+    const containerLista = document.getElementById('lista-produtos-sacola');
+    if (!containerLista) return;
+    
+    containerLista.innerHTML = '';
+    
+    // Obtém os dados atualizados diretamente do objeto de controle ou do LocalStorage
+    const carrinhoAtual = carrinho && Object.keys(carrinho).length > 0 
+        ? carrinho 
+        : JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
+        
+    const itens = Object.entries(carrinhoAtual);
 
-            if (itens.length === 0) {
-                containerLista.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">Sua sacola está vazia.</p>`;
-                return;
-            }
+    if (itens.length === 0) {
+        containerLista.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">Sua sacola está vazia.</p>`;
+        atualizarPrecosBarraFlutuante();
+        return;
+    }
 
-            itens.forEach(([id, item]) => {
-                containerLista.innerHTML += `
-                    <div class="item-sacola-linha">
-                        <div>
-                            <div style="font-weight: 600; font-size:15px;">${item.nome}</div>
-                            <div style="font-size: 13px; color: #777;">R$ ${(item.preco * item.quantidade).toFixed(2)}</div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <button onclick="mudarQuantidade('${id}', -1, '${item.nome}', ${item.preco}); renderizarItensSacola();" style="padding:4px 10px;">-</button>
-                            <span style="font-weight:bold;">${item.quantidade}</span>
-                            <button onclick="mudarQuantidade('${id}', 1, '${item.nome}', ${item.preco}); renderizarItensSacola();" style="padding:4px 10px;">+</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
+    itens.forEach(([chaveId, item]) => {
+        // Separa o ID estável original para os seletores visuais do cardápio
+        const idBaseOriginal = String(chaveId).split("-")[0];
+        const nomePratoExibir = item.nome || "Prato";
+        const precoItem = item.preco || 0;
+        const qtdItem = item.quantidade || 0;
+        
+        containerLista.innerHTML += `
+            <div class="item-sacola-linha" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
+                <div style="flex: 1; padding-right: 10px; text-align: left;">
+                    <div style="font-weight: 600; font-size:14px; color: #1e293b; line-height: 1.3;">${nomePratoExibir}</div>
+                    <div style="font-size: 13px; color: #27ae60; font-weight: 700; margin-top: 2px;">R$ ${(precoItem * qtdItem).toFixed(2).replace('.', ',')}</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button onclick="executarMudarQuantidadeReal('${chaveId}', -1, '${nomePratoExibir}', ${precoItem}, '${idBaseOriginal}');" style="padding:2px 8px; font-weight:bold; cursor:pointer;">-</button>
+                    <span style="font-weight:bold; min-width: 15px; text-align:center;">${qtdItem}</span>
+                    <button onclick="executarMudarQuantidadeReal('${chaveId}', 1, '${nomePratoExibir}', ${precoItem}, '${idBaseOriginal}');" style="padding:2px 8px; font-weight:bold; cursor:pointer;">+</button>
+                </div>
+            </div>
+        `;
+    });
+
+    atualizarPrecosBarraFlutuante();
+}
 
         function ejecutarBuscaRastreio() {
             const input = document.getElementById('input-rastreio-index');
@@ -411,40 +428,6 @@ function executarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
     localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
     atualizarPrecosBarraFlutuante();
     renderizarItensSacola();
-}
-
-function renderizarItensSacola() {
-    const containerLista = document.getElementById('lista-produtos-sacola');
-    if (!containerLista) return;
-    
-    containerLista.innerHTML = '';
-    const itens = Object.entries(carrinho);
-
-    if (itens.length === 0) {
-        containerLista.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">Sua sacola está vazia.</p>`;
-        atualizarPrecosBarraFlutuante();
-        return;
-    }
-
-    itens.forEach(([chaveId, item]) => {
-        const idBaseOriginal = String(chaveId).split("-")[0];
-        
-        containerLista.innerHTML += `
-            <div class="item-sacola-linha" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
-                <div style="flex: 1; padding-right: 10px;">
-                    <div style="font-weight: 600; font-size:14px; color: #1e293b;">${item.nome}</div>
-                    <div style="font-size: 13px; color: #27ae60; font-weight: 700;">R$ ${(item.preco * item.quantidade).toFixed(2).replace('.', ',')}</div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <button onclick="executarMudarQuantidadeReal('${chaveId}', -1, '${item.nome}', ${item.preco}, '${idBaseOriginal}');" style="padding:2px 8px; font-weight:bold; cursor:pointer;">-</button>
-                    <span style="font-weight:bold; min-width: 15px; text-align:center;">${item.quantidade}</span>
-                    <button onclick="executarMudarQuantidadeReal('${chaveId}', 1, '${item.nome}', ${item.preco}, '${idBaseOriginal}');" style="padding:2px 8px; font-weight:bold; cursor:pointer;">+</button>
-                </div>
-            </div>
-        `;
-    });
-
-    atualizarPrecosBarraFlutuante();
 }
 
 function atualizarPrecosBarraFlutuante() {
