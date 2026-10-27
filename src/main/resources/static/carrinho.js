@@ -272,11 +272,12 @@ function copiarChavePix() {
 // 🚀 ENVIAR PEDIDO E INTEGRAÇÃO BACKEND / WHATSAPP
 // ==========================================
 async function enviarPedido(e) {
+    // 1. Evita que a página mude ou resete antes da hora
     if (e && typeof e.preventDefault === "function") {
         e.preventDefault();
     }
 
-    // 1. Validação de Horário Comercial de Delivery
+    // 2. Validação de Horário Comercial de Delivery
     const agora = new Date();
     const diaSemana = agora.getDay();
     const minutosAtuais = (agora.getHours() * 60) + agora.getMinutes();
@@ -286,13 +287,13 @@ async function enviarPedido(e) {
 
     if (diaSemana === 0 || minutosAtuais < (11 * 60 + 30) || minutosAtuais > (15 * 60)) {
         if (!modoAdminSecreto) {
-            alert("Desculpe! O restaurante acabou de fechar o expediente de entregas. Não é possível enviar ou fechar novos pedidos agora.");
+            alert("Desculpe! O restaurante acabou de fechar o expediente de entregas. Não é possível fechar novos pedidos agora.");
             return;
         }
     }
 
-    // 2. Validação de Sacola Vazia localmente
-    const carrinhoObjeto = JSON.parse(localStorage.getItem("caborSaborCearense")) || JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
+    // 3. Resgata e valida a Sacola localmente
+    const carrinhoObjeto = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
     const itens = Object.values(carrinhoObjeto);
 
     if (itens.length === 0) {
@@ -300,7 +301,7 @@ async function enviarPedido(e) {
         return;
     }
 
-    // 3. Validação dos Campos de Cadastro
+    // 4. Validação dos Campos do Formulário
     const selectBairro = document.getElementById("bairro-entrega");
     if (!selectBairro || !selectBairro.value) { 
         alert("Por favor, selecione o bairro de entrega!"); 
@@ -320,15 +321,15 @@ async function enviarPedido(e) {
     const enderecoCompleto = `${enderecoRua}, Bairro: ${bairroTextoSelecionado}`;
     const totalComTaxaGeral = totalCalculado + taxaEntregaSelecionada;
 
-    // ==========================================
-    // PASSO CHAVE: Abre a aba imediatamente no clique para o navegador NÃO bloquear
-    // ==========================================
+    // ========================================================
+    // TÉCNICA DE REDIRECIONAMENTO SEGURO CONTRA BLOQUEIO DE POPUP
+    // ========================================================
     const abaWhatsapp = window.open("about:blank", "_blank");
     if (abaWhatsapp) {
         abaWhatsapp.document.write("<p style='font-family:sans-serif; text-align:center; margin-top:20%; color:#555;'>Processando seu pedido na cozinha do Sabor Cearense... Aguarde...</p>");
     }
 
-    // 4. Monta o Payload do Pedido para o seu Backend Java no Render
+    // 5. Envio dos Dados para o seu Backend Java no Render (Para o Painel Admin)
     const dadosPedido = {
         clienteNome: nome,
         endereco: enderecoCompleto + " (Tel: " + contatoTelefone + ") (Ref: " + ref + ")",
@@ -338,6 +339,7 @@ async function enviarPedido(e) {
 
     let pedidoIdGerado = "NOVO";
 
+    // Verifica se a variável de URL do backend existe e dispara a gravação no banco
     if (typeof URL_API_BACKEND !== "undefined" && URL_API_BACKEND) {
         try {
             const response = await fetch(URL_API_BACKEND + "/api/pedidos", {
@@ -348,15 +350,15 @@ async function enviarPedido(e) {
 
             if (response.ok) {
                 const pedidoSalvo = await response.json();
-                pedidoIdGerado = pedidoSalvo.id;
+                pedidoIdGerado = pedidoSalvo.id; // Pega o ID gerado pelo banco Java
                 localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
             }
         } catch (apiError) {
-            console.error("Falha ao salvar no backend, o pedido seguirá por contingência via WhatsApp:", apiError);
+            console.error("Falha ao salvar no painel admin:", apiError);
         }
     }
 
-    // 5. Montagem da Mensagem do WhatsApp do Estabelecimento
+    // 6. Montagem da Mensagem Textual do WhatsApp
     let mensagem = "🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n";
     if (pedidoIdGerado !== "NOVO") {
         mensagem += "🆔 *Pedido Nº:* #" + pedidoIdGerado + "\n";
@@ -381,24 +383,20 @@ async function enviarPedido(e) {
     const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : "5585999999999"; 
     const urlWhatsapp = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
     
-    // Limpa o carrinho localmente de forma segura antes do redirecionamento
+    // Limpa a sacola local
     localStorage.removeItem("carrinhoSaborCearense");
 
-    // ==========================================
-    // DIRECIONAMENTO SEGURO
-    // ==========================================
+    // Envia o link montado para a aba que já estava aberta
     if (abaWhatsapp) {
-        // Redireciona a aba que abrimos anteriormente para o link do WhatsApp gerado
         abaWhatsapp.location.href = urlWhatsapp;
     } else {
-        // Caso o navegador tenha uma trava extrema e impeça a aba inicial, tenta o redirecionamento direto por contingência
-        window.location.href = urlWhatsapp;
-        return;
+        window.open(urlWhatsapp, '_blank');
     }
     
-    // Redireciona a tela principal do app para a aba do acompanhamento/rastreio
+    // 7. Redireciona a tela do cliente de volta para o cardápio, direto na aba do rastreador
     window.location.href = "index.html?admin=1&aba=RASTREIO";
 }
+
 
 // Força o navegador a rodar a função e preencher a div assim que a página carregar
 document.addEventListener("DOMContentLoaded", carregarItensDaUrlNoCarrinho);
