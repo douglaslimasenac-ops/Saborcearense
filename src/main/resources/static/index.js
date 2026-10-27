@@ -261,13 +261,16 @@
             }
         }
         
-     function irParaCheckout() {
+    function irParaCheckout() {
     if (Object.keys(carrinho).length === 0) {
         alert("Adicione pelo menos um item à sacola!");
         return;
     }
+    // Codifica o carrinho atual e redireciona para a página de checkout
+    const dadosCarrinho = encodeURIComponent(JSON.stringify(carrinho));
+    window.location.href = `checkout.html?carrinho=${dadosCarrinho}`;
 }
-    
+
     // =========================================================================
 // 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS - SABOR CEARENSE (CORRIGIDO)
 // =========================================================================
@@ -283,22 +286,30 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.removeItem("carrinho");
         localStorage.removeItem("cart");
     }
-});
+});         
 
-// Esta é a função principal que gerencia o clique do botão "+" do cardápio
 // =========================================================================
-// 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS - SABOR CEARENSE (DEFINITIVO)
+// 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS E SACOLA - CORRIGIDO DEFINITIVO
 // =========================================================================
 
-// Esta é a função que gerencia o clique do botão "+" do cardápio
+// =========================================================================
+// 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS E SACOLA - PARTE FINAL COMPLETA
+// =========================================================================
+
+// =========================================================================
+// 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS E SACOLA - ALINHADO AO SEU HTML
+// =========================================================================
+
+// =========================================================================
+// 🌵 SISTEMA INTEGRADO DE ACOMPANHAMENTOS E SACOLA - ALINHADO AO SEU HTML
+// =========================================================================
+
 function mudarQuantidade(id, valor, nome, preco) {
-    // Se estiver diminuindo a quantidade (-1), executa direto sem abrir o modal
     if (valor < 0) {
         executarMudarQuantidadeReal(id, valor, nome, preco);
         return;
     }
 
-    // Validação automática: Pula acompanhamentos para bebidas e sobremesas
     const nomeMinusculo = nome.toLowerCase();
     const termosPular = ["coca", "suco", "guarana", "fanta", "agua", "bebida", "pudim", "doce", "sobremesa", "cerveja"];
     const devePular = termosPular.some(termo => nomeMinusculo.includes(termo));
@@ -308,7 +319,6 @@ function mudarQuantidade(id, valor, nome, preco) {
         return;
     }
 
-    // 1. Monta o HTML do Modal dinamicamente na tela
     const modal = document.createElement("div");
     modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 99999; font-family: sans-serif; padding: 15px; box-sizing: border-box;";
     
@@ -335,7 +345,6 @@ function mudarQuantidade(id, valor, nome, preco) {
     
     document.body.appendChild(modal);
 
-    // 2. Trava a seleção do cliente em no máximo 2 caixas marcadas
     const checkboxes = modal.querySelectorAll("#lista-opcoes-acomp input");
     checkboxes.forEach(cb => {
         cb.addEventListener("change", () => {
@@ -347,62 +356,126 @@ function mudarQuantidade(id, valor, nome, preco) {
         });
     });
 
-    // 3. Ação do Botão Cancelar
     modal.querySelector("#btn-cancelar-acomp").onclick = () => { modal.remove(); };
 
-    // 4. Ação do Botão Confirmar
     modal.querySelector("#btn-confirmar-acomp").onclick = () => {
         const marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
         const acompanhamentos = [];
         marcados.forEach(cb => acompanhamentos.push(cb.value));
 
-        // Formata o nome adicionando as escolhas
         let nomeItemComAcomp = nome;
         if (acompanhamentos.length > 0) {
             nomeItemComAcomp += " (" + acompanhamentos.join(", ") + ")";
         }
 
-        // Gera um ID único combinando as iniciais das escolhas para diferenciar pratos iguais com acompanhamentos distintos
-        const sufixoAcomp = acompanhamentos.map(a => a.substring(0,3)).join("-");
-        const idUnicoItem = sufixoAcomp ? `${id}-${sufixoAcomp.toLowerCase()}` : id;
+        const sufixo = acompanhamentos.map(a => a.substring(0,3).toLowerCase()).join("-");
+        const idCombinacao = sufixo ? `${id}-${sufixo}` : id;
 
         modal.remove();
-        
-        // Dispara a lógica de inserção estruturada
-        executarMudarQuantidadeReal(idUnicoItem, valor, nomeItemComAcomp, preco);
+        executarMudarQuantidadeReal(idCombinacao, valor, nomeItemComAcomp, preco, id);
     };
 }
 
-// Manipulação nativa unificada com o dicionário global por IDs do seu sistema
-function ejecutarMudarQuantidadeReal(id, valor, nome, preco) {
-    if (!carrinho[id]) {
+function executarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
+    const idContadorVisual = idOriginal || idChave;
+
+    if (!carrinho[idChave]) {
         if (valor <= 0) return;
-        carrinho[id] = {
+        carrinho[idChave] = {
+            id: idChave,
             nome: nome,
             preco: parseFloat(preco),
             quantidade: 0
         };
     }
 
-    carrinho[id].quantidade += valor;
+    carrinho[idChave].quantidade += valor;
 
-    if (carrinho[id].quantidade <= 0) {
-        delete carrinho[id];
+    if (carrinho[idChave].quantidade <= 0) {
+        delete carrinho[idChave];
     }
 
     dadosSacola = carrinho;
 
-    // Sincroniza o contador visual do prato (+ e -)
-    const elementoQtd = document.getElementById(`qtd-${id}`);
+    const elementoQtd = document.getElementById(`qtd-${idContadorVisual}`);
     if (elementoQtd) {
-        elementoQtd.innerText = carrinho[id] ? carrinho[id].quantidade : 0;
+        let totalAcumulado = 0;
+        Object.values(carrinho).forEach(item => {
+            if (item.id == idContadorVisual || String(item.id).startsWith(idContadorVisual + "-")) {
+                totalAcumulado += item.quantidade;
+            }
+        });
+        elementoQtd.innerText = totalAcumulado;
     }
 
-    // Salva na chave definitiva lida pelo checkout
     localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
+    atualizarPrecosBarraFlutuante();
+    renderizarItensSacola();
+}
 
-    // Atualiza a sacola flutuante na barra lateral
-    if (typeof renderizarItensSacola === "function") {
-        renderizarItensSacola();
+function renderizarItensSacola() {
+    const containerLista = document.getElementById('lista-produtos-sacola');
+    if (!containerLista) return;
+    
+    containerLista.innerHTML = '';
+    const itens = Object.entries(carrinho);
+
+    if (itens.length === 0) {
+        containerLista.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">Sua sacola está vazia.</p>`;
+        atualizarPrecosBarraFlutuante();
+        return;
     }
+
+    itens.forEach(([chaveId, item]) => {
+        const idBaseOriginal = String(chaveId).split("-")[0];
+        
+        containerLista.innerHTML += `
+            <div class="item-sacola-linha" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
+                <div style="flex: 1; padding-right: 10px;">
+                    <div style="font-weight: 600; font-size:14px; color: #1e293b;">${item.nome}</div>
+                    <div style="font-size: 13px; color: #27ae60; font-weight: 700;">R$ ${(item.preco * item.quantidade).toFixed(2).replace('.', ',')}</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button onclick="executarMudarQuantidadeReal('${chaveId}', -1, '${item.nome}', ${item.preco}, '${idBaseOriginal}');" style="padding:2px 8px; font-weight:bold; cursor:pointer;">-</button>
+                    <span style="font-weight:bold; min-width: 15px; text-align:center;">${item.quantidade}</span>
+                    <button onclick="executarMudarQuantidadeReal('${chaveId}', 1, '${item.nome}', ${item.preco}, '${idBaseOriginal}');" style="padding:2px 8px; font-weight:bold; cursor:pointer;">+</button>
+                </div>
+            </div>
+        `;
+    });
+
+    atualizarPrecosBarraFlutuante();
+}
+
+function atualizarPrecosBarraFlutuante() {
+    const listaItens = Object.values(carrinho);
+    let totalQtd = 0;
+    let totalDinheiro = 0;
+
+    listaItens.forEach(item => {
+        totalQtd += item.quantidade;
+        totalDinheiro += (item.preco * item.quantidade);
+    });
+
+    // Mapeamento exato com base no HTML que você enviou
+    const txtItens = document.getElementById("txt-qtd-itens");
+    if (txtItens) txtItens.innerText = `${totalQtd} itens`;
+
+    const txtPreco = document.getElementById("txt-valor-total");
+    if (txtPreco) txtPreco.innerText = `R$ ${totalDinheiro.toFixed(2).replace('.', ',')}`;
+
+    const txtModalSubtotal = document.getElementById("txt-modal-subtotal");
+    if (txtModalSubtotal) txtModalSubtotal.innerText = `R$ ${totalDinheiro.toFixed(2).replace('.', ',')}`;
+}
+
+function irParaCheckout() {
+    const totalItensAtuais = Object.keys(carrinho).length;
+    if (totalItensAtuais === 0) {
+        alert("Sua sacola está vazia! Adicione pelo menos um prato.");
+        return;
+    }
+
+    const listaItensEnvio = Object.values(carrinho);
+    const parametroUrlseguro = encodeURIComponent(JSON.stringify(listaItensEnvio));
+    window.location.href = `checkout.html?carrinho=${parametroUrlseguro}`;
 }

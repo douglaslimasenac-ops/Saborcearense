@@ -18,23 +18,22 @@ const WHATSAPP_NUMERO = "5521974720736";
 // ==========================================
 // 🌐 EVENTOS DE INICIALIZAÇÃO (DOM) - ATUALIZADO
 // ==========================================
-document.addEventListener("DOMContentLoaded", function() {
-    // 1. Limpa resíduos corrompidos de testes antigos
-    localStorage.removeItem("carrinho");
-    localStorage.removeItem("cart");
-    localStorage.removeItem("saborCearense_carrinho");
-
-    // 2. Carrega dados primários do carrinho
-    carregarDadosDoCarrinho();
-    carregarItensDaUrlNoCarrinho();
-    renderizarResumo();
-
-    // 3. Monitora o envio do formulário de checkout e validação
-    const formulario = document.getElementById("form-pedido");
-    if (formulario) {
-        formulario.addEventListener("submit", enviarPedido);
+document.addEventListener("DOMContentLoaded", () => {
+    // 🌵 Limpeza de segurança preventiva para evitar dados antigos e corrompidos de testes passados
+    if (!localStorage.getItem("SaborCearense_v2_Acomp")) {
+        localStorage.removeItem("carrinho");
+        localStorage.removeItem("cart");
+        localStorage.removeItem("carrinhoSaborCearense");
+        localStorage.removeItem("saborCearense_carrinho");
+        // Marca que o navegador já limpou o lixo das versões anteriores
+        localStorage.setItem("SaborCearense_v2_Acomp", "true");
+        console.log("🌵 Sabor Cearense: Memória de versões antigas limpa com sucesso!");
     }
+
+    carregarCardapio();
+    verificarHorarioFuncionamento();
 });
+
 
 
 // ==========================================
