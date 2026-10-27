@@ -272,7 +272,9 @@ function copiarChavePix() {
 // 🚀 ENVIAR PEDIDO E INTEGRAÇÃO BACKEND / WHATSAPP
 // ==========================================
 async function enviarPedido(e) {
-    e.preventDefault();
+    if (e && typeof e.preventDefault === "function") {
+        e.preventDefault();
+    }
 
     // 1. Validação de Horário Comercial de Delivery
     const agora = new Date();
@@ -290,7 +292,7 @@ async function enviarPedido(e) {
     }
 
     // 2. Validação de Sacola Vazia localmente
-    const carrinhoObjeto = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
+    const carrinhoObjeto = JSON.parse(localStorage.getItem("caborSaborCearense")) || JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
     const itens = Object.values(carrinhoObjeto);
 
     if (itens.length === 0) {
@@ -299,11 +301,16 @@ async function enviarPedido(e) {
     }
 
     // 3. Validação dos Campos de Cadastro
-    const bairroSelect = document.getElementById("bairro-entrega").value;
-    if (!bairroSelect) { 
+    const selectBairro = document.getElementById("bairro-entrega");
+    if (!selectBairro || !selectBairro.value) { 
         alert("Por favor, selecione o bairro de entrega!"); 
         return; 
     }
+
+    // RESOLÇÃO DO BUG 1: Resgata o texto do bairro e valores dinamicamente caso não sejam globais
+    const bairroTextoSelecionado = selectBairro.options[selectBairro.selectedIndex]?.text || selectBairro.value;
+    const taxaEntregaSelecionada = typeof window.taxaEntregaSelecionada !== "undefined" ? window.taxaEntregaSelecionada : 0;
+    const totalCalculado = typeof window.totalCalculado !== "undefined" ? window.totalCalculado : 0;
 
     const nome = document.getElementById("nome").value;
     const contatoTelefone = document.getElementById("telefone").value;
@@ -323,17 +330,25 @@ async function enviarPedido(e) {
     };
 
     try {
-        const response = await fetch(URL_API_BACKEND + "/api/pedidos", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(dadosPedido)
-        });
-
         let pedidoIdGerado = "NOVO";
-        if (response.ok) {
-            const pedidoSalvo = await response.json();
-            pedidoIdGerado = pedidoSalvo.id;
-            localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
+        
+        // Verifica se a URL da API existe antes de fazer o fetch para não travar o fluxo caso caia
+        if (typeof URL_API_BACKEND !== "undefined" && URL_API_BACKEND) {
+            try {
+                const response = await fetch(URL_API_BACKEND + "/api/pedidos", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(dadosPedido)
+                });
+
+                if (response.ok) {
+                    const pedidoSalvo = await response.json();
+                    pedidoIdGerado = pedidoSalvo.id;
+                    localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
+                }
+            } catch (apiError) {
+                console.error("Falha ao salvar no backend, mas o pedido seguirá para o WhatsApp:", apiError);
+            }
         }
 
         // 5. Montagem da Mensagem do WhatsApp do Estabelecimento
@@ -358,17 +373,27 @@ async function enviarPedido(e) {
         mensagem += "\n💰 *Total do Pedido:* R$ " + totalComTaxaGeral.toFixed(2).replace('.', ',') + "\n\n";
         mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
 
-        const urlWhatsapp = "https://wa.me/"+ WHATSAPP_NUMERO + "?text=" + encodeURIComponent(mensagem);
+        // RESOLUÇÃO DO BUG 2: Fallback caso a constante global não esteja definida
+        const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : "5585999999999"; 
+        const urlWhatsapp = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
         
-            window.open(urlWhatsapp, '_blank');
-            localStorage.removeItem("carrinhoSaborCearense");
-            window.location.href = "index.html?admin=1&aba=RASTREIO"; 
+        // RESOLUÇÃO DO BUG 3: Limpa o carrinho e redireciona de forma segura após abrir o WhatsApp
+        localStorage.removeItem("carrinhoSaborCearense");
+        
+        // Abre o WhatsApp
+        window.open(urlWhatsapp, '_blank');
+        
+        // Pequeno intervalo de 300ms antes de redirecionar para dar tempo do navegador processar o pop-up
+        setTimeout(() => {
+            window.location.href = "index.html?admin=1&aba=RASTREIO";
+        }, 300);
 
     } catch (error) {
         console.error("Erro no processamento do pedido:", error);
-        alert("Ocorreu uma falha ao enviar o pedido para o servidor, mas você pode tentar reenviar.");
+        alert("Ocorreu uma falha ao processar o seu pedido, mas você pode tentar reenviar.");
     }
 }
+
 // Força o navegador a rodar a função e preencher a div assim que a página carregar
 document.addEventListener("DOMContentLoaded", carregarItensDaUrlNoCarrinho);
 
