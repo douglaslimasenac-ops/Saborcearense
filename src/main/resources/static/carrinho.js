@@ -321,11 +321,6 @@ function controlarExibicaoPix(opcao) {
         boxPix.style.display = (opcao === "Pix") ? "block" : "none";
     }
 
-    function enviarComprovanteWhatsApp() {
-        const total = Number(totalCalculado || subtotalProdutos || 0) + Number(taxaEntregaSelecionada || valorTaxaEntrega || 0);
-        const mensagem = `Olá! Acabei de pagar o pedido pelo Pix no valor de R$ ${total.toFixed(2).replace(".", ",")}. Vou anexar o comprovante nesta conversa.`;
-        window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`, "_blank");
-    }
 }
 
 function copiarChavePix() {

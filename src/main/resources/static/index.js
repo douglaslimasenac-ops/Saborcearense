@@ -420,7 +420,7 @@ function mudarQuantidade(id, valor, nome, preco) {
 }
 
 // Persistência interna do carrinho de compras
-function ejecutarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
+function executarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
     const idContadorVisual = idOriginal || idChave;
 
     if (!carrinho[idChave]) {
