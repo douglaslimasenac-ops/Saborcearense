@@ -196,11 +196,11 @@
     // 1. Definição da URL oficial do seu backend no Render
     const URL_BACKEND = window.location.origin;
 
-    // 2. Captura o ID vindo da gaveta (URL) ou do localStorage anterior
+    // 2. Captura o número público vindo da URL ou do último pedido
     const urlParams = new URLSearchParams(window.location.search);
-    let idDaUrl = urlParams.get('id');
+    let numeroDaUrl = urlParams.get('numero') || urlParams.get('id');
 
-    let pedidoId = idDaUrl || localStorage.getItem("ultimoPedidoIdSaborCearense");
+    let pedidoId = numeroDaUrl || localStorage.getItem("ultimoPedidoIdSaborCearense");
     let timerAtualizacao = null;
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -261,7 +261,10 @@
         try {
             const idLimpo = pedidoId.toString().replace('#', '').trim();
             
-            const res = await fetch(`${URL_BACKEND}/api/pedidos/${idLimpo}`);
+            const caminhoBusca = urlParams.get('id') && !urlParams.get('numero')
+                ? `/api/pedidos/${idLimpo}`
+                : `/api/pedidos/numero/${idLimpo}`;
+            const res = await fetch(`${URL_BACKEND}${caminhoBusca}`);
             if (res.ok) {
                 const pedido = await res.json();
                 

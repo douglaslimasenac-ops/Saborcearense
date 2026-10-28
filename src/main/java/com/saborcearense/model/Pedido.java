@@ -15,6 +15,9 @@ public class Pedido {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "numero_pedido", unique = true)
+    private Long numeroPedido;
+
     @Column(nullable = false)
     private String status = "RECEBIDO"; // RECEBIDO, PREPARO, ENTREGA, ENTREGUE
 
@@ -40,6 +43,8 @@ public class Pedido {
     // --- GETTERS E SETTERS ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public Long getNumeroPedido() { return numeroPedido; }
+    public void setNumeroPedido(Long numeroPedido) { this.numeroPedido = numeroPedido; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getClienteNome() { return clienteNome; }

@@ -2,8 +2,10 @@ package com.saborcearense.controller;
 
 import java.util.List;
 import java.io.IOException;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.PostConstruct;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -37,6 +39,16 @@ public class PedidoController {
     @Autowired
     private PedidoRepository pedidoRepository;
 
+    @PostConstruct
+    void numerarPedidosLegados() {
+        pedidoRepository.findAll().stream()
+                .filter(pedido -> pedido.getNumeroPedido() == null)
+                .forEach(pedido -> {
+                    pedido.setNumeroPedido(gerarNumeroPedido());
+                    pedidoRepository.save(pedido);
+                });
+    }
+
         // 📡 LISTAR PEDIDOS ATIVOS: Alimenta o painel administrativo em tempo real
     // Retorna todos os pedidos que NÃO foram finalizados (Status diferente de 'ENTREGUE')
     @GetMapping("/ativos")
@@ -54,10 +66,18 @@ public class PedidoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+   @GetMapping("/numero/{numeroPedido}")
+   public ResponseEntity<Pedido> buscarPorNumeroPedido(@PathVariable Long numeroPedido) {
+       return pedidoRepository.findByNumeroPedido(numeroPedido)
+               .map(ResponseEntity::ok)
+               .orElse(ResponseEntity.notFound().build());
+   }
+
    @PostMapping
    public Pedido receberNovoPedido(@Valid @RequestBody Pedido novoPedido) {
        // Campos de controle pertencem ao servidor, não ao navegador do cliente.
        novoPedido.setId(null);
+       novoPedido.setNumeroPedido(gerarNumeroPedido());
        novoPedido.setDataCriacao(java.time.LocalDateTime.now());
        novoPedido.setStatus("RECEBIDO");
         
@@ -85,6 +105,14 @@ public class PedidoController {
         }
 
         return pedidoSalvo;
+    }
+
+    private Long gerarNumeroPedido() {
+        Long numero;
+        do {
+            numero = ThreadLocalRandom.current().nextLong(1000, 10000);
+        } while (pedidoRepository.existsByNumeroPedido(numero));
+        return numero;
     }
 
     // 🔄 ATUALIZAR STATUS DO PEDIDO: Gerencia o fluxo de entrega (Preparo, Despacho, Finalização)

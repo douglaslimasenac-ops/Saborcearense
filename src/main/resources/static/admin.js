@@ -744,6 +744,10 @@ function pedidoEDeRetirada(pedido) {
     return String(pedido?.endereco || "").trim().toUpperCase().startsWith("RETIRADA");
 }
 
+function numeroExibicaoPedido(pedido) {
+    return pedido.numeroPedido || pedido.id;
+}
+
 function obterLocalPedido(pedido) {
     return pedidoEDeRetirada(pedido)
         ? "🏪 RETIRADA NO ESTABELECIMENTO"
@@ -765,7 +769,7 @@ function atualizarResumoFinanceiro(pedidos, elementoId) {
 
 function serializarPedidos(pedidos) {
     return (pedidos || [])
-        .map(pedido => `${pedido.id}|${pedido.status}|${Number(pedido.valorTotal ?? pedido.total ?? 0).toFixed(2)}|${Array.isArray(pedido.itens) ? pedido.itens.map(item => `${item.nome || ""}:${item.quantidade || item.qtd || 1}:${Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0).toFixed(2)}`).join(";") : ""}`)
+        .map(pedido => `${numeroExibicaoPedido(pedido)}|${pedido.status}|${Number(pedido.valorTotal ?? pedido.total ?? 0).toFixed(2)}|${Array.isArray(pedido.itens) ? pedido.itens.map(item => `${item.nome || ""}:${item.quantidade || item.qtd || 1}:${Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0).toFixed(2)}`).join(";") : ""}`)
         .join("~");
 }
 
@@ -797,7 +801,7 @@ function atualizarListaPedidos(container, pedidos, tipo) {
                 card.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
-                            <h4 style="margin: 0 0 6px 0; color: #1e293b;">📋 Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
+                            <h4 style="margin: 0 0 6px 0; color: #1e293b;">📋 Pedido #${numeroExibicaoPedido(pedido)} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                             <small style="color: ${retirada ? "#92400e" : "var(--text-muted)"}; display: block; margin-bottom: 4px; font-size: 0.9rem; font-weight: ${retirada ? "800" : "400"};">${obterLocalPedido(pedido)}</small>
                             <small style="color: #0f766e; font-weight: 700; font-size: 0.9rem;">💳 Forma de Pagamento: ${pedido.formaPagamento}</small>
                             <small style="display: block; margin-top: 6px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
@@ -833,7 +837,7 @@ function atualizarListaPedidos(container, pedidos, tipo) {
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                     <div>
-                        <h4 style="margin: 0 0 6px 0; color: #1e293b;">${pedido.status === "CANCELADO" ? "✕" : "✅"} Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
+                        <h4 style="margin: 0 0 6px 0; color: #1e293b;">${pedido.status === "CANCELADO" ? "✕" : "✅"} Pedido #${numeroExibicaoPedido(pedido)} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                         <small style="color: ${retirada ? "#92400e" : "var(--text-muted)"}; display: block; margin-bottom: 4px; font-size: 0.9rem; font-weight: ${retirada ? "800" : "400"};">${obterLocalPedido(pedido)}</small>
                         <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento}</small>
                         <small style="display: block; margin-top: 4px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
@@ -991,7 +995,7 @@ function imprimirCupomIFood(pedido) {
         return;
     }
 
-    janelaImpressao.document.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>iFood Cupom #" + pedido.id + "</title></head><body></body></html>");
+    janelaImpressao.document.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>iFood Cupom #" + numeroExibicaoPedido(pedido) + "</title></head><body></body></html>");
     janelaImpressao.document.close();
 
     var elEstilo = janelaImpressao.document.createElement("style");
@@ -1038,7 +1042,7 @@ function imprimirCupomIFood(pedido) {
 
     var elCabecalho = janelaImpressao.document.createElement("div");
     elCabecalho.className = "text-center";
-    elCabecalho.innerHTML = "<div class='titulo-loja'>🌵 SABOR CEARENSE 🌵</div><div class='subtitulo-loja'>Comida Caseira Legítima</div><div class='divider-dashed'></div><div class='subtitulo-loja'>Não vale como nota fiscal</div><div class='id-pedido'>PEDIDO #" + pedido.id + "</div><div class='subtitulo-loja'>Data: " + dataFinal + " - Hora: " + horaFinal + "</div>";
+    elCabecalho.innerHTML = "<div class='titulo-loja'>🌵 SABOR CEARENSE 🌵</div><div class='subtitulo-loja'>Comida Caseira Legítima</div><div class='divider-dashed'></div><div class='subtitulo-loja'>Não vale como nota fiscal</div><div class='id-pedido'>PEDIDO #" + numeroExibicaoPedido(pedido) + "</div><div class='subtitulo-loja'>Data: " + dataFinal + " - Hora: " + horaFinal + "</div>";
     containerPrincipal.appendChild(elCabecalho);
     
     var divDivisora1 = janelaImpressao.document.createElement("div");

@@ -548,7 +548,7 @@ async function enviarPedido(e) {
 
             if (response.ok) {
                 const pedidoSalvo = await response.json();
-                pedidoIdGerado = pedidoSalvo.id; // Vincula o ID real gerado pelo banco Java
+                pedidoIdGerado = pedidoSalvo.numeroPedido || pedidoSalvo.id;
                 localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
                 pedidoSalvoComSucesso = true;
             } else {
@@ -620,5 +620,5 @@ async function enviarPedido(e) {
         window.open(urlWhatsapp, '_blank');
     }
     
-    window.location.href = `acompanhar.html?id=${encodeURIComponent(pedidoIdGerado)}`;
+    window.location.href = `acompanhar.html?numero=${encodeURIComponent(pedidoIdGerado)}`;
 }

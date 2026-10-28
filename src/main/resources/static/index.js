@@ -277,7 +277,7 @@
                 input.focus();
                 return;
             }
-            window.location.href = `acompanhar.html?id=${encodeURIComponent(pedidoId)}`;
+            window.location.href = `acompanhar.html?numero=${encodeURIComponent(pedidoId)}`;
         }
 
         function verificarHorarioFuncionamento() {
