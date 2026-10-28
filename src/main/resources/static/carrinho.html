@@ -339,6 +339,23 @@
         .checkout-etapa-conteudo.ativa {
             display: block;
         }
+        .aviso-inicio-entregas {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 0 0 18px;
+            padding: 13px 15px;
+            border: 1px solid #efd2a6;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #fff8e8, #fffaf2);
+            color: #7a4b16;
+            text-align: left;
+            line-height: 1.4;
+        }
+        .aviso-inicio-entregas strong {
+            display: block;
+            color: #6b4215;
+        }
         .btn-continuar-checkout,
         .btn-voltar-checkout {
             width: 100%;
@@ -480,6 +497,13 @@
             <div class="secao-card">
                 <h2>💳 Forma de pagamento</h2>
                 <p class="secao-intro">Escolha como deseja pagar e confira o total do pedido.</p>
+                <div id="aviso-inicio-entregas" class="aviso-inicio-entregas" hidden>
+                    <span aria-hidden="true">🕦</span>
+                    <div>
+                        <strong>Seu pedido pode ser feito agora.</strong>
+                        As entregas começam a partir das 11:30. Assim que o restaurante iniciar as entregas, seu pedido será preparado e despachado.
+                    </div>
+                </div>
                 <div class="form-grupo">
                     <label for="pagamento">Escolha como deseja pagar:</label>
                     <select id="pagamento" required onchange="controlarExibicaoPix(this.value)">

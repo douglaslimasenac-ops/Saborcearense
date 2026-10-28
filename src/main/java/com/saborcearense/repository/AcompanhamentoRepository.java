@@ -10,4 +10,5 @@ import com.saborcearense.model.Acompanhamento;
 public interface AcompanhamentoRepository extends JpaRepository<Acompanhamento, Long> {
     Optional<Acompanhamento> findByNomeIgnoreCase(String nome);
     List<Acompanhamento> findAllByOrderByIdAsc();
+    long deleteByNomeIgnoreCase(String nome);
 }

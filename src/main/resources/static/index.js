@@ -347,7 +347,7 @@ function mudarQuantidade(id, valor, nome, preco) {
             <div id="lista-opcoes-acomp" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Maionese" style="width: 18px; height: 18px;"> Maionese</label>
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Macarronese" style="width: 18px; height: 18px;"> Macarronese</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Salada de Legumes" style="width: 18px; height: 18px;"> Salada de Legumes</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Legumes" style="width: 18px; height: 18px;"> Legumes</label>
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Purê" style="width: 18px; height: 18px;"> Purê</label>
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Espaguete" style="width: 18px; height: 18px;"> Espaguete</label>
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Fritas" style="width: 18px; height: 18px;"> Fritas</label>

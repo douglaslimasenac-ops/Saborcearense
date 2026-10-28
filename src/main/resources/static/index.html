@@ -176,7 +176,6 @@
 var acompanhamentosDisponiveis = [
     { nome: "Maionese", icone: "🥗" },
     { nome: "Macarronese", icone: "🍝" },
-    { nome: "Salada de Legumes", icone: "🥕" },
     { nome: "Purê", icone: "🥔" },
     { nome: "Espaguete", icone: "🍝" },
     { nome: "Fritas", icone: "🍟" }
@@ -209,8 +208,9 @@ function renderizarOpcoesAcompanhamento() {
         var indicacao = acompanhamento.disponivel ? "<b>+</b>" : '<strong class="acompanhamento-status-esgotado">Esgotado</strong>';
         return '<label class="opcao-acompanhamento' + classe + '">' + estado +
             '<span class="opcao-acompanhamento-icone">' +
-            (acompanhamento.icone || "🍽️") + '</span><span>' +
-            acompanhamento.nome + '</span>' + indicacao + '</label>';
+            (acompanhamento.icone || "🍽️") + '</span><span class="acompanhamento-nome">' +
+            '<span class="acompanhamento-nome-text">' + acompanhamento.nome + '</span>' +
+            indicacao + '</span></label>';
     }).join("");
 }
 

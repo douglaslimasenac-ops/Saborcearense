@@ -28,12 +28,12 @@ public class AcompanhamentoController {
     void inicializarAcompanhamentos() {
         adicionarSeNaoExistir("Maionese", "🥗");
         adicionarSeNaoExistir("Macarronese", "🍝");
-        adicionarSeNaoExistir("Salada de Legumes", "🥕");
         adicionarSeNaoExistir("Salada Verde", "🥬");
         adicionarSeNaoExistir("Legumes", "🥦");
         adicionarSeNaoExistir("Purê", "🥔");
         adicionarSeNaoExistir("Espaguete", "🍝");
         adicionarSeNaoExistir("Fritas", "🍟");
+        repository.deleteByNomeIgnoreCase("Salada de Legumes");
     }
 
     private void adicionarSeNaoExistir(String nome, String icone) {

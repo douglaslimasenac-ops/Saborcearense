@@ -363,11 +363,22 @@ function irParaEtapaPagamento() {
         return;
     }
 
+    atualizarAvisoInicioEntregas();
     atualizarEtapaCheckout("pagamento");
 }
 
 function voltarParaEtapaDados() {
     atualizarEtapaCheckout("dados");
+}
+
+function atualizarAvisoInicioEntregas() {
+    const aviso = document.getElementById("aviso-inicio-entregas");
+    if (!aviso) return;
+
+    const agora = new Date();
+    const minutosAtuais = (agora.getHours() * 60) + agora.getMinutes();
+    const inicioEntregas = (11 * 60) + 30;
+    aviso.hidden = minutosAtuais >= inicioEntregas;
 }
 
 // ==========================================
@@ -385,7 +396,7 @@ async function enviarPedido(e) {
     
     const modoAdminSecreto = Boolean(localStorage.getItem("adminToken"));
 
-    if (diaSemana === 0 || minutosAtuais < (11 * 60 + 30) || minutosAtuais > (15 * 60)) {
+    if (diaSemana === 0 || minutosAtuais < (8 * 60) || minutosAtuais > (15 * 60)) {
         if (!modoAdminSecreto) {
             alert("Desculpe! O restaurante acabou de fechar o expediente de entregas. Não é possível fechar novos pedidos agora.");
             return;

@@ -321,6 +321,15 @@ body {
     font-size: 0.78rem;
     transition: border-color 0.2s, background 0.2s, transform 0.2s;
 }
+.acompanhamento-nome {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    overflow-wrap: anywhere;
+}
 .opcao-acompanhamento:hover {
     border-color: #d99024;
     transform: translateY(-1px);
@@ -359,11 +368,11 @@ body {
     border-color: #eadbc5;
     transform: none;
 }
-.opcao-acompanhamento.acompanhamento-esgotado span:not(.opcao-acompanhamento-icone) {
+.opcao-acompanhamento.acompanhamento-esgotado .acompanhamento-nome-text {
     text-decoration: line-through;
 }
 .acompanhamento-status-esgotado {
-    margin-left: auto;
+    display: block;
     color: #a44f35;
     font-size: 0.72rem;
     font-weight: 800;
