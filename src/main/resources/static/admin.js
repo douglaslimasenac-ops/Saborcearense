@@ -25,6 +25,8 @@ let idsPedidosConhecidos = new Set();
 let idsPedidosAlertados = new Set();
 let primeiraCargaPedidos = true;
 let termoBuscaProdutos = "";
+let ultimoSnapshotPedidosAtivos = "";
+let ultimoSnapshotPedidosHistorico = "";
 
 async function fetchAdmin(url, options = {}) {
     const token = localStorage.getItem("adminToken");
@@ -540,42 +542,34 @@ function atualizarResumoFinanceiro(pedidos, elementoId) {
     `;
 }
 
-async function carregarPedidosAtivos() {
-    if (carregandoPedidosAtivos) return;
-    carregandoPedidosAtivos = true;
+function serializarPedidos(pedidos) {
+    return (pedidos || [])
+        .map(pedido => `${pedido.id}|${pedido.status}|${Number(pedido.valorTotal ?? pedido.total ?? 0).toFixed(2)}|${Array.isArray(pedido.itens) ? pedido.itens.map(item => `${item.nome || ""}:${item.quantidade || item.qtd || 1}:${Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0).toFixed(2)}`).join(";") : ""}`)
+        .join("~");
+}
 
-    const containerAtivos = document.getElementById("lista-pedidos-ativos");
-    const containerHistorico = document.getElementById("lista-pedidos-finalizados");
-    
-    if (containerAtivos) containerAtivos.innerHTML = "";
-    if (containerHistorico) containerHistorico.innerHTML = "";
+function atualizarListaPedidos(container, pedidos, tipo) {
+    if (!container) return;
 
-    try {
-        const resAtivos = await fetchAdmin(URL_BACKEND + "/api/pedidos/ativos");
-        if (resAtivos.ok) {
-            const pedidosAtivos = await resAtivos.json();
-            atualizarResumoFinanceiro(pedidosAtivos, "resumo-financeiro");
-            let temAtivos = false;
+    const containerScroll = document.getElementById("conteudo-painel");
+    const scrollAnterior = containerScroll ? containerScroll.scrollTop : 0;
+    const snapshot = serializarPedidos(pedidos);
+    const ultimoSnapshot = tipo === "ativos" ? ultimoSnapshotPedidosAtivos : ultimoSnapshotPedidosHistorico;
 
-            const novosPedidos = primeiraCargaPedidos
-                ? []
-                : pedidosAtivos.filter(pedido =>
-                    pedido.status === "RECEBIDO" &&
-                    pedido.id &&
-                    !idsPedidosConhecidos.has(pedido.id) &&
-                    !idsPedidosAlertados.has(pedido.id)
-                );
-            novosPedidos.forEach(pedido => {
-                idsPedidosAlertados.add(pedido.id);
-                tocarAlertaSonoro();
-            });
-            pedidosAtivos.forEach(pedido => idsPedidosConhecidos.add(pedido.id));
-            primeiraCargaPedidos = false;
+    if (snapshot === ultimoSnapshot && container.children.length > 0) {
+        return;
+    }
 
-            pedidosAtivos.forEach(pedido => {
-                if (pedido.status === 'ENTREGUE' || pedido.status === 'CANCELADO') return;
-                temAtivos = true;
+    if (tipo === "ativos") {
+        ultimoSnapshotPedidosAtivos = snapshot;
+    } else {
+        ultimoSnapshotPedidosHistorico = snapshot;
+    }
 
+    const cards = pedidos
+        .filter(pedido => tipo === "ativos" ? pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO' : pedido.status === 'ENTREGUE' || pedido.status === 'CANCELADO')
+        .map(pedido => {
+            if (tipo === "ativos") {
                 const card = document.createElement("div");
                 card.className = "card-pedido";
                 card.innerHTML = `
@@ -599,7 +593,6 @@ async function carregarPedidosAtivos() {
                     </div>
                 `;
 
-                // Acoplagem cirúrgica e estável via DOM real para evitar vazamentos na tela de login
                 const btnImprimir = document.createElement("button");
                 btnImprimir.className = "btn-status-toggle ativo";
                 btnImprimir.style.cssText = "background: #fff5f5; color: #c53030; border-color: #feb2b2; font-weight: bold;";
@@ -607,15 +600,76 @@ async function carregarPedidosAtivos() {
                 btnImprimir.addEventListener("click", () => {
                     imprimirCupomIFood(pedido);
                 });
-
                 card.querySelector(".acoes-pedido-bloco").prepend(btnImprimir);
-
-                if (containerAtivos) containerAtivos.appendChild(card);
-            });
-
-            if (!temAtivos && containerAtivos) {
-                containerAtivos.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px; background: #f8fafc; border-radius: 10px; border: 2px dashed #e2e8f0; margin: 0;">Nenhum pedido em andamento.</p>`;
+                return card;
             }
+
+            const card = document.createElement("div");
+            card.className = "card-pedido";
+            card.style.borderLeft = pedido.status === "CANCELADO" ? "5px solid #e11d48" : "5px solid var(--success)";
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h4 style="margin: 0 0 6px 0; color: #1e293b;">${pedido.status === "CANCELADO" ? "✕" : "✅"} Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
+                        <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
+                        <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento}</small>
+                        <small style="display: block; margin-top: 4px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                        <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                        ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
+                    </div>
+                    <span class="badge-cat" style="background: ${pedido.status === "CANCELADO" ? "#fff1f2" : "#e6f4ea"}; color: ${pedido.status === "CANCELADO" ? "#be123c" : "#137333"}; border-color: ${pedido.status === "CANCELADO" ? "#fecdd3" : "#ceead6"};">Status: ${pedido.status}</span>
+                </div>
+                ${renderizarItensPedido(pedido)}
+            `;
+            return card;
+        });
+
+    container.innerHTML = "";
+    cards.forEach(card => container.appendChild(card));
+
+    if (tipo === "ativos" && !cards.length) {
+        container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px; background: #f8fafc; border-radius: 10px; border: 2px dashed #e2e8f0; margin: 0;">Nenhum pedido em andamento.</p>`;
+    }
+
+    if (tipo === "historico" && !cards.length) {
+        container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px; background: #f8fafc; border-radius: 10px; border: 2px dashed #e2e8f0; margin: 0;">Nenhum pedido finalizado no histórico.</p>`;
+    }
+
+    if (containerScroll) {
+        containerScroll.scrollTop = scrollAnterior;
+    }
+}
+
+async function carregarPedidosAtivos() {
+    if (carregandoPedidosAtivos) return;
+    carregandoPedidosAtivos = true;
+
+    const containerAtivos = document.getElementById("lista-pedidos-ativos");
+    const containerHistorico = document.getElementById("lista-pedidos-finalizados");
+
+    try {
+        const resAtivos = await fetchAdmin(URL_BACKEND + "/api/pedidos/ativos");
+        if (resAtivos.ok) {
+            const pedidosAtivos = await resAtivos.json();
+            atualizarResumoFinanceiro(pedidosAtivos, "resumo-financeiro");
+
+            const novosPedidos = primeiraCargaPedidos
+                ? []
+                : pedidosAtivos.filter(pedido =>
+                    pedido.status === "RECEBIDO" &&
+                    pedido.id &&
+                    !idsPedidosConhecidos.has(pedido.id) &&
+                    !idsPedidosAlertados.has(pedido.id)
+                );
+            novosPedidos.forEach(pedido => {
+                idsPedidosAlertados.add(pedido.id);
+                tocarAlertaSonoro();
+            });
+            pedidosAtivos.forEach(pedido => idsPedidosConhecidos.add(pedido.id));
+            primeiraCargaPedidos = false;
+
+            const pedidosVisiveis = pedidosAtivos.filter(pedido => pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO');
+            atualizarListaPedidos(containerAtivos, pedidosVisiveis, "ativos");
         }
     } catch (e) { console.log("Erro ao carregar pedidos ativos:", e); }
 
@@ -625,35 +679,8 @@ async function carregarPedidosAtivos() {
             const todosPedidos = await resTodos.json();
             atualizarResumoFinanceiro(todosPedidos, "resumo-financeiro");
             atualizarResumoFinanceiro(todosPedidos, "resumo-historico");
-            let temFinalizados = false;
-
-            todosPedidos.forEach(pedido => {
-                if (pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO') return;
-                temFinalizados = true;
-
-                const card = document.createElement("div");
-                card.className = "card-pedido";
-                card.style.borderLeft = pedido.status === "CANCELADO" ? "5px solid #e11d48" : "5px solid var(--success)";
-                card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div>
-                            <h4 style="margin: 0 0 6px 0; color: #1e293b;">${pedido.status === "CANCELADO" ? "✕" : "✅"} Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
-                            <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
-                            <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento}</small>
-                            <small style="display: block; margin-top: 4px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
-                            <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
-                            ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
-                        </div>
-                        <span class="badge-cat" style="background: ${pedido.status === "CANCELADO" ? "#fff1f2" : "#e6f4ea"}; color: ${pedido.status === "CANCELADO" ? "#be123c" : "#137333"}; border-color: ${pedido.status === "CANCELADO" ? "#fecdd3" : "#ceead6"};">Status: ${pedido.status}</span>
-                    </div>
-                    ${renderizarItensPedido(pedido)}
-                `;
-                if (containerHistorico) containerHistorico.appendChild(card);
-            });
-
-            if (!temFinalizados && containerHistorico) {
-                containerHistorico.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px; background: #f8fafc; border-radius: 10px; border: 2px dashed #e2e8f0; margin: 0;">Nenhum pedido finalizado no histórico.</p>`;
-            }
+            const pedidosFinalizados = todosPedidos.filter(pedido => pedido.status === 'ENTREGUE' || pedido.status === 'CANCELADO');
+            atualizarListaPedidos(containerHistorico, pedidosFinalizados, "historico");
         }
     } catch (e) { console.log("Erro ao carregar histórico de finalizados:", e); }
 
