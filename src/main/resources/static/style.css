@@ -350,6 +350,26 @@ body {
     color: #d99024;
     font-size: 1.1rem;
 }
+.opcao-acompanhamento.acompanhamento-esgotado {
+    cursor: not-allowed;
+    opacity: 0.58;
+    background: #f3eee6;
+}
+.opcao-acompanhamento.acompanhamento-esgotado:hover {
+    border-color: #eadbc5;
+    transform: none;
+}
+.opcao-acompanhamento.acompanhamento-esgotado span:not(.opcao-acompanhamento-icone) {
+    text-decoration: line-through;
+}
+.acompanhamento-status-esgotado {
+    margin-left: auto;
+    color: #a44f35;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
 .acompanhamentos-selecao-status {
     margin-top: 11px;
     color: #92704b;

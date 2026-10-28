@@ -483,7 +483,7 @@
                 <div class="form-grupo">
                     <label for="pagamento">Escolha como deseja pagar:</label>
                     <select id="pagamento" required onchange="controlarExibicaoPix(this.value)">
-                        <option value="Pix" selected>Pix (Copia e Cola Direto no Site)</option>
+                                <option value="Pix" selected>Pix (QR Code ou Copia e Cola)</option>
                         <option value="Dinheiro">Dinheiro (Pagar na Entrega)</option>
                         <option value="Cartão de Crédito">Cartão de Crédito (Na Entrega)</option>
                         <option value="Cartão de Débito">Cartão de Débito (Na Entrega)</option>
@@ -497,12 +497,16 @@
             </div>
 
             <div id="container-pix-dinamico" class="box-pix" style="display: block;">
-                <p style="margin: 0 0 8px 0; font-weight: bold; color: #166534; font-size: 0.95rem;">🔑 Chave CNPJ do Sabor Cearense:</p>
+                <p style="margin: 0 0 8px 0; font-weight: bold; color: #166534; font-size: 0.95rem;">📲 Escaneie para pagar o valor exato:</p>
+                <div id="pix-qrcode" style="display: flex; justify-content: center; margin: 12px 0;"></div>
+                <p id="pix-valor-gerado" style="margin: 0 0 10px; text-align: center; color: #166534; font-weight: 800;">Valor: R$ 0,00</p>
+                <p style="margin: 0 0 8px 0; font-weight: bold; color: #166534; font-size: 0.95rem;">🔑 Pix Copia e Cola (CNPJ):</p>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="chave-pix-texto" value="21974720736" readonly style="flex: 1; padding: 10px; border: 1px solid #bbf7d0; border-radius: 6px; font-weight: bold; text-align: center; background: #fff; color: #166534;">
+                    <input type="text" id="chave-pix-texto" readonly style="flex: 1; padding: 10px; border: 1px solid #bbf7d0; border-radius: 6px; font-weight: bold; text-align: center; background: #fff; color: #166534;">
                     <button type="button" onclick="copiarChavePix()" style="background: #22c55e; color: white; border: none; padding: 0 15px; font-weight: bold; border-radius: 6px; cursor: pointer;">Copiar</button>
                 </div>
-                <p style="margin: 8px 0 0 0; font-size: 0.8rem; color: #166534;">💡 Copie o número acima, faça a transferência no seu banco e clique no botão abaixo para nos enviar o comprovante!</p>
+                <p style="margin: 8px 0 0 0; font-size: 0.8rem; color: #166534;">💡 Depois do pagamento, envie o comprovante pelo WhatsApp.</p>
+                <button type="button" onclick="enviarComprovanteWhatsApp()" style="width: 100%; margin-top: 10px; padding: 11px; background: #25d366; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">📎 Enviar comprovante pelo WhatsApp</button>
             </div>
             
             <div style="margin-top: 25px;">
@@ -513,6 +517,7 @@
         </form>
     </div>
      <!-- Vincle o seu novo arquivo externo aqui de forma limpa -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="carrinho.js"></script>
 </body>
 </html>

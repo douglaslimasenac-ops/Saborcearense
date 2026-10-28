@@ -247,15 +247,84 @@ function atualizarResumoFinanceiroTela() {
     if (campoTaxa) campoTaxa.textContent = formatar(taxa);
     if (campoTotal) campoTotal.textContent = formatar(totalGeral);
     if (campoTotalPagar) campoTotalPagar.textContent = formatar(totalGeral);
+    atualizarPixDinamico(totalGeral);
 }
 
 // ==========================================
 // 💳 INTERAÇÃO E REGRAS PIX
 // ==========================================
+const PIX_CHAVE_CNPJ = "59361228000150";
+
+function crc16Pix(texto) {
+    let crc = 0xFFFF;
+    for (let i = 0; i < texto.length; i++) {
+        crc ^= texto.charCodeAt(i) << 8;
+        for (let bit = 0; bit < 8; bit++) {
+            crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+            crc &= 0xFFFF;
+        }
+    }
+    return crc.toString(16).toUpperCase().padStart(4, "0");
+}
+
+function campoPix(id, valor) {
+    const texto = String(valor);
+    return id + String(texto.length).padStart(2, "0") + texto;
+}
+
+function gerarCodigoPix(valor) {
+    const valorFormatado = Number(valor || 0).toFixed(2);
+    const merchantAccount = campoPix("00", "br.gov.bcb.pix") + campoPix("01", PIX_CHAVE_CNPJ);
+    const payloadSemCrc = [
+        campoPix("00", "01"),
+        campoPix("26", merchantAccount),
+        campoPix("52", "0000"),
+        campoPix("53", "986"),
+        campoPix("54", valorFormatado),
+        campoPix("58", "BR"),
+        campoPix("59", "SABOR CEARENSE"),
+        campoPix("60", "RIO DE JANEIRO"),
+        campoPix("62", campoPix("05", "***"))
+    ].join("") + "6304";
+    return payloadSemCrc + crc16Pix(payloadSemCrc);
+}
+
+function atualizarPixDinamico(valor) {
+    const campoPix = document.getElementById("chave-pix-texto");
+    const valorPix = document.getElementById("pix-valor-gerado");
+    const qrContainer = document.getElementById("pix-qrcode");
+    if (!campoPix || !qrContainer) return;
+
+    const valorNumerico = Number(valor || 0);
+    const payload = gerarCodigoPix(valorNumerico);
+    campoPix.value = payload;
+    if (valorPix) valorPix.textContent = `Valor: R$ ${valorNumerico.toFixed(2).replace(".", ",")}`;
+
+    qrContainer.innerHTML = "";
+    if (typeof QRCode === "undefined") {
+        qrContainer.textContent = "QR Code indisponível. Use o Pix Copia e Cola.";
+        return;
+    }
+    new QRCode(qrContainer, {
+        text: payload,
+        width: 190,
+        height: 190,
+        colorDark: "#29231d",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+    });
+}
+
 function controlarExibicaoPix(opcao) {
     const boxPix = document.getElementById("container-pix-dinamico");
     if (boxPix) {
         boxPix.style.display = (opcao === "Pix") ? "block" : "none";
+    }
+
+    function enviarComprovanteWhatsApp() {
+        const total = Number(totalCalculado || subtotalProdutos || 0) + Number(taxaEntregaSelecionada || valorTaxaEntrega || 0);
+        const mensagem = `Olá! Acabei de pagar o pedido pelo Pix no valor de R$ ${total.toFixed(2).replace(".", ",")}. Vou anexar o comprovante nesta conversa.`;
+        window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`, "_blank");
     }
 }
 
@@ -467,7 +536,7 @@ async function enviarPedido(e) {
     mensagem += "\n━━━━━━━━━━━━━━━━━━━━\n";
     mensagem += "Por favor, confirme o recebimento do pedido.";
 
-    const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : (window.WHATSAPP_NUMERO || "5585999999999"); 
+    const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : (window.WHATSAPP_NUMERO || "5521974720736");
     const urlWhatsapp = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
     
     // 8. ETAPA FINAL DE LIMPEZA DO CARRINHO E REDIRECIONAMENTOS

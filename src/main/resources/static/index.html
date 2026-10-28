@@ -42,7 +42,7 @@
 
     <!-- ABAS DE NAVEGAÇÃO -->
     <div class="abas-navegacao" style="display: flex; justify-content: space-between; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px;">
-        <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')">🍽️ do Dia</button>
+        <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')">🍽️ Pratos do Dia</button>
         <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')">📌 Principais</button>
         <button class="btn-aba" onclick="alternarAba('SOBREMESA')">🍪 Sobremesa</button>
         <button class="btn-aba" onclick="alternarAba('BEBIDA')">🥤 Bebida</button>
@@ -173,6 +173,49 @@
 <!-- INTERCEPTADOR EXCLUSIVO DE ACOMPANHAMENTOS - SABOR CEARENSE -->
 <!-- SISTEMA DEFINITIVO DE ACOMPANHAMENTOS E SACOLA - SABOR CEARENSE -->
 <script>
+var acompanhamentosDisponiveis = [
+    { nome: "Maionese", icone: "🥗" },
+    { nome: "Macarronese", icone: "🍝" },
+    { nome: "Salada de Legumes", icone: "🥕" },
+    { nome: "Purê", icone: "🥔" },
+    { nome: "Espaguete", icone: "🍝" },
+    { nome: "Fritas", icone: "🍟" }
+];
+
+function carregarAcompanhamentosDisponiveis() {
+    fetch("https://saborcearense-5.onrender.com/api/acompanhamentos")
+        .then(function(resposta) {
+            if (!resposta.ok) throw new Error("HTTP " + resposta.status);
+            return resposta.json();
+        })
+        .then(function(dados) {
+            if (Array.isArray(dados)) acompanhamentosDisponiveis = dados;
+        })
+        .catch(function(erro) {
+            console.error("Não foi possível carregar os acompanhamentos:", erro);
+        });
+}
+
+function renderizarOpcoesAcompanhamento() {
+    if (!acompanhamentosDisponiveis.length) {
+        return '<p style="padding: 12px; color: #766b5f; background: #fff8e8; border-radius: 10px;">No momento, os acompanhamentos estão esgotados.</p>';
+    }
+
+    return acompanhamentosDisponiveis.map(function(acompanhamento) {
+        var estado = acompanhamento.disponivel
+            ? '<input type="checkbox" value="' + acompanhamento.nome + '">'
+            : '<input type="checkbox" disabled aria-label="' + acompanhamento.nome + ' esgotado">';
+        var classe = acompanhamento.disponivel ? "" : " acompanhamento-esgotado";
+        var indicacao = acompanhamento.disponivel ? "<b>+</b>" : '<strong class="acompanhamento-status-esgotado">Esgotado</strong>';
+        return '<label class="opcao-acompanhamento' + classe + '">' + estado +
+            '<span class="opcao-acompanhamento-icone">' +
+            (acompanhamento.icone || "🍽️") + '</span><span>' +
+            acompanhamento.nome + '</span>' + indicacao + '</label>';
+    }).join("");
+}
+
+carregarAcompanhamentosDisponiveis();
+
 // Cria e garante a função global para os botões do seu cardápio
 window.mudarQuantidade = function(id, mudanca, nome, preco) {
     // 1. Se o cliente estiver diminuindo a quantidade (botão -), executa direto na sacola
@@ -215,12 +258,7 @@ window.mudarQuantidade = function(id, mudanca, nome, preco) {
             <p class="modal-acompanhamentos-instrucao">Escolha até <strong>2 acompanhamentos</strong> para deixar seu pedido do seu jeito.</p>
             
             <div id="lista-opcoes-acomp" class="lista-opcoes-acomp">
-                <label class="opcao-acompanhamento"><input type="checkbox" value="Maionese"><span class="opcao-acompanhamento-icone">🥗</span><span>Maionese</span><b>+</b></label>
-                <label class="opcao-acompanhamento"><input type="checkbox" value="Macarronese"><span class="opcao-acompanhamento-icone">🍝</span><span>Macarronese</span><b>+</b></label>
-                <label class="opcao-acompanhamento"><input type="checkbox" value="Salada de Legumes"><span class="opcao-acompanhamento-icone">🥕</span><span>Salada de Legumes</span><b>+</b></label>
-                <label class="opcao-acompanhamento"><input type="checkbox" value="Purê"><span class="opcao-acompanhamento-icone">🥔</span><span>Purê</span><b>+</b></label>
-                <label class="opcao-acompanhamento"><input type="checkbox" value="Espaguete"><span class="opcao-acompanhamento-icone">🍝</span><span>Espaguete</span><b>+</b></label>
-                <label class="opcao-acompanhamento"><input type="checkbox" value="Fritas"><span class="opcao-acompanhamento-icone">🍟</span><span>Fritas</span><b>+</b></label>
+                ${renderizarOpcoesAcompanhamento()}
             </div>
             <div class="acompanhamentos-selecao-status"><span id="contador-acomp">0</span>/2 selecionados</div>
             

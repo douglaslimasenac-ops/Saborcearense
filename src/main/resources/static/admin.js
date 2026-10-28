@@ -69,6 +69,58 @@ function alternarAbasAdmin(abaAlvo) {
     if (abaAlvo === 'ativos' || abaAlvo === 'historico') {
         carregarPedidosAtivos();
     }
+    if (abaAlvo === 'acompanhamentos') {
+        carregarAcompanhamentosAdmin();
+    }
+}
+
+async function carregarAcompanhamentosAdmin() {
+    const container = document.getElementById("lista-acompanhamentos-admin");
+    if (!container) return;
+
+    try {
+        const resposta = await fetchAdmin(URL_BACKEND + "/api/admin/acompanhamentos");
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const acompanhamentos = await resposta.json();
+        container.innerHTML = "";
+
+        acompanhamentos.forEach(acompanhamento => {
+            const card = document.createElement("div");
+            card.className = `card-produto ${acompanhamento.disponivel ? "disponivel-style" : "esgotado-style"}`;
+            card.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 1.8rem;" aria-hidden="true">${escaparHtml(acompanhamento.icone)}</span>
+                    <div class="info-prod">
+                        <h4>${escaparHtml(acompanhamento.nome)}</h4>
+                        <small style="color: var(--text-muted);">${acompanhamento.disponivel ? "Disponível para os clientes" : "Marcado como esgotado"}</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-status-toggle ${acompanhamento.disponivel ? "inativo" : "ativo"}"
+                        onclick="alternarDisponibilidadeAcompanhamento(${acompanhamento.id}, ${acompanhamento.disponivel})">
+                    ${acompanhamento.disponivel ? "Marcar esgotado" : "Reativar"}
+                </button>
+            `;
+            container.appendChild(card);
+        });
+    } catch (erro) {
+        console.error("Erro ao carregar acompanhamentos:", erro);
+        container.innerHTML = `<p style="color: var(--danger);">Não foi possível carregar os acompanhamentos.</p>`;
+    }
+}
+
+async function alternarDisponibilidadeAcompanhamento(id, disponibilidadeAtual) {
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/acompanhamentos/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ disponivel: !disponibilidadeAtual })
+        });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        await carregarAcompanhamentosAdmin();
+    } catch (erro) {
+        console.error("Erro ao atualizar acompanhamento:", erro);
+        alert("Não foi possível atualizar a disponibilidade do acompanhamento.");
+    }
 }
 
 function configurarFormularioCadastro() {
@@ -736,6 +788,7 @@ async function autenticarAdmin() {
         document.getElementById("painel-adm-wrapper").style.display = "flex";
         
         if (typeof carregarItensAdmin === "function") carregarItensAdmin();
+        if (typeof carregarAcompanhamentosAdmin === "function") carregarAcompanhamentosAdmin();
         if (typeof inicializarControlePedidos === "function") inicializarControlePedidos();
         if (typeof configurarFormularioCadastro === "function") configurarFormularioCadastro();
         if (typeof exibirBannerAtivacaoAudio === "function") exibirBannerAtivacaoAudio();
