@@ -55,16 +55,11 @@ public class PedidoController {
     }
 
    @PostMapping
-    public Pedido receberNovoPedido(@Valid @RequestBody Pedido novoPedido) {
-        // Define o status inicial padrão exigido pela linha do tempo
-        if (novoPedido.getStatus() == null || novoPedido.getStatus().isEmpty()) {
-            novoPedido.setStatus("RECEBIDO");
-        }
-        String statusNormalizado = novoPedido.getStatus().trim().toUpperCase();
-        if (!java.util.Set.of("RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE", "CANCELADO").contains(statusNormalizado)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status de pedido invalido");
-        }
-        novoPedido.setStatus(statusNormalizado);
+   public Pedido receberNovoPedido(@Valid @RequestBody Pedido novoPedido) {
+       // Campos de controle pertencem ao servidor, não ao navegador do cliente.
+       novoPedido.setId(null);
+       novoPedido.setDataCriacao(java.time.LocalDateTime.now());
+       novoPedido.setStatus("RECEBIDO");
         
         System.out.println("Sabor Cearense: Novo pedido recebido do cliente " + novoPedido.getClienteNome());
         

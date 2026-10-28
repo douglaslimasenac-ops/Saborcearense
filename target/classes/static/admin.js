@@ -1,9 +1,13 @@
 // ==========================================
 // 🌵 CONFIGURAÇÕES E ESTADOS GLOBAIS
 // ==========================================
-const URL_BACKEND = "https://saborcearense-5.onrender.com"
+const URL_BACKEND = window.location.origin
 const URL_API_ADMIN = URL_BACKEND + "/api/admin/pratos";
-const URL_BACKEND_WS = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host;
+const CLOUDINARY_CLOUD_NAME = "sn5pijok";
+const CLOUDINARY_UPLOAD_PRESET = "sabor_cearense_imagens";
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+const backendUrl = new URL(URL_BACKEND);
+const URL_BACKEND_WS = (backendUrl.protocol === "https:" ? "wss://" : "ws://") + backendUrl.host;
 
 const dicionarioCategorias = {
     "PRATOS_DO_DIA": "🌹 Prato do Dia",
@@ -18,7 +22,14 @@ let listaPratosLocal = [];
 let carregandoPedidosAtivos = false;
 let socketAdmin = null;
 let pingTimerAdmin = null;
+let pedidosTimerAdmin = null;
 let audioCtxCompartilhado = null;
+let idsPedidosConhecidos = new Set();
+let idsPedidosAlertados = new Set();
+let primeiraCargaPedidos = true;
+let termoBuscaProdutos = "";
+let ultimoSnapshotPedidosAtivos = "";
+let ultimoSnapshotPedidosHistorico = "";
 
 async function fetchAdmin(url, options = {}) {
     const token = localStorage.getItem("adminToken");
@@ -42,6 +53,15 @@ window.addEventListener('DOMContentLoaded', function() {
     if (botaoLogin) {
         botaoLogin.addEventListener('click', autenticarAdmin);
     }
+    const buscaProdutos = document.getElementById("busca-produtos-admin");
+    if (buscaProdutos) {
+        buscaProdutos.addEventListener("input", () => {
+            termoBuscaProdutos = buscaProdutos.value.trim().toLocaleLowerCase("pt-BR");
+            renderizarItensAdmin();
+        });
+    }
+    const formBairro = document.getElementById("form-bairro-entrega");
+    if (formBairro) formBairro.addEventListener("submit", salvarBairroAdmin);
 });
 
 function alternarAbasAdmin(abaAlvo) {
@@ -54,26 +74,233 @@ function alternarAbasAdmin(abaAlvo) {
     if (abaAlvo === 'ativos' || abaAlvo === 'historico') {
         carregarPedidosAtivos();
     }
+    if (abaAlvo === 'acompanhamentos') {
+        carregarAcompanhamentosAdmin();
+    }
+    if (abaAlvo === 'bairros') {
+        carregarBairrosAdmin();
+    }
+}
+
+async function carregarBairrosAdmin() {
+    const container = document.getElementById("lista-bairros-admin");
+    if (!container) return;
+
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/bairros`);
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const bairros = await resposta.json();
+        container.innerHTML = bairros.length ? "" : "<p>Nenhum bairro cadastrado.</p>";
+        bairros.forEach(bairro => {
+            const card = document.createElement("div");
+            card.className = "card-produto";
+            card.innerHTML = `
+                <div class="info-prod">
+                    <h4>${escaparHtml(bairro.nome)}</h4>
+                    <small style="color: var(--text-muted);">Taxa atual: R$ ${Number(bairro.taxa || 0).toFixed(2).replace(".", ",")}</small>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                    <button type="button" class="btn-status-toggle ativo" onclick="editarBairroAdmin(${bairro.id}, '${encodeURIComponent(bairro.nome)}', ${Number(bairro.taxa || 0)})">Alterar</button>
+                    <button type="button" class="btn-status-toggle inativo" onclick="excluirBairroAdmin(${bairro.id}, '${encodeURIComponent(bairro.nome)}')">Excluir</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    } catch (erro) {
+        console.error("Erro ao carregar bairros:", erro);
+        container.innerHTML = '<p style="color: var(--danger);">Não foi possível carregar os bairros.</p>';
+    }
+}
+
+async function salvarBairroAdmin(event) {
+    event.preventDefault();
+    const nome = document.getElementById("bairro-admin-nome").value.trim();
+    const taxa = Number(document.getElementById("bairro-admin-taxa").value);
+    if (!nome || !Number.isFinite(taxa) || taxa < 0) {
+        alert("Informe um nome e uma taxa válida.");
+        return;
+    }
+
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/bairros`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nome, taxa })
+        });
+        if (!resposta.ok) {
+            if (resposta.status === 409) throw new Error("Esse bairro já está cadastrado.");
+            throw new Error(`HTTP ${resposta.status}`);
+        }
+        event.target.reset();
+        await carregarBairrosAdmin();
+    } catch (erro) {
+        console.error("Erro ao adicionar bairro:", erro);
+        alert(erro.message || "Não foi possível adicionar o bairro.");
+    }
+}
+
+async function editarBairroAdmin(id, nomeCodificado, taxaAtual) {
+    const nome = prompt("Nome do bairro:", decodeURIComponent(nomeCodificado));
+    if (nome === null) return;
+    const taxaTexto = prompt("Taxa de entrega (R$):", Number(taxaAtual).toFixed(2));
+    if (taxaTexto === null) return;
+    const taxa = Number(taxaTexto.replace(",", "."));
+    if (!nome.trim() || !Number.isFinite(taxa) || taxa < 0) {
+        alert("Informe um nome e uma taxa válida.");
+        return;
+    }
+
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/bairros/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nome: nome.trim(), taxa })
+        });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        await carregarBairrosAdmin();
+    } catch (erro) {
+        console.error("Erro ao alterar bairro:", erro);
+        alert("Não foi possível alterar o bairro.");
+    }
+}
+
+async function excluirBairroAdmin(id, nomeCodificado) {
+    const nome = decodeURIComponent(nomeCodificado);
+    if (!confirm(`Excluir o bairro "${nome}"?`)) return;
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/bairros/${id}`, { method: "DELETE" });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        await carregarBairrosAdmin();
+    } catch (erro) {
+        console.error("Erro ao excluir bairro:", erro);
+        alert("Não foi possível excluir o bairro.");
+    }
+}
+
+async function carregarAcompanhamentosAdmin() {
+    const container = document.getElementById("lista-acompanhamentos-admin");
+    if (!container) return;
+
+    try {
+        const resposta = await fetchAdmin(URL_BACKEND + "/api/admin/acompanhamentos");
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const acompanhamentos = await resposta.json();
+        container.innerHTML = "";
+
+        acompanhamentos.forEach(acompanhamento => {
+            const card = document.createElement("div");
+            card.className = `card-produto ${acompanhamento.disponivel ? "disponivel-style" : "esgotado-style"}`;
+            card.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 1.8rem;" aria-hidden="true">${escaparHtml(acompanhamento.icone)}</span>
+                    <div class="info-prod">
+                        <h4>${escaparHtml(acompanhamento.nome)}</h4>
+                        <small style="color: var(--text-muted);">${acompanhamento.disponivel ? "Disponível para os clientes" : "Marcado como esgotado"}</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-status-toggle ${acompanhamento.disponivel ? "inativo" : "ativo"}"
+                        onclick="alternarDisponibilidadeAcompanhamento(${acompanhamento.id}, ${acompanhamento.disponivel})">
+                    ${acompanhamento.disponivel ? "Marcar esgotado" : "Reativar"}
+                </button>
+            `;
+            container.appendChild(card);
+        });
+    } catch (erro) {
+        console.error("Erro ao carregar acompanhamentos:", erro);
+        container.innerHTML = `<p style="color: var(--danger);">Não foi possível carregar os acompanhamentos.</p>`;
+    }
+}
+
+async function alternarDisponibilidadeAcompanhamento(id, disponibilidadeAtual) {
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/acompanhamentos/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ disponivel: !disponibilidadeAtual })
+        });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        await carregarAcompanhamentosAdmin();
+    } catch (erro) {
+        console.error("Erro ao atualizar acompanhamento:", erro);
+        alert("Não foi possível atualizar a disponibilidade do acompanhamento.");
+    }
 }
 
 function configurarFormularioCadastro() {
     const form = document.getElementById("form-novo-prato");
     if (!form) return;
+    const campoImagem = document.getElementById("imagem");
+    const previewImagem = document.getElementById("preview-imagem-prato");
+    const previewImagemEl = document.getElementById("preview-imagem-prato-img");
+
+    const atualizarPreviewImagem = () => {
+        const valor = campoImagem.value.trim();
+        if (!valor) {
+            previewImagem.hidden = true;
+            previewImagemEl.removeAttribute("src");
+            return;
+        }
+
+        try {
+            new URL(valor);
+            previewImagemEl.src = valor;
+            previewImagem.hidden = false;
+        } catch {
+            previewImagem.hidden = true;
+        }
+    };
+
+    campoImagem.addEventListener("input", atualizarPreviewImagem);
+    const seletorImagem = document.getElementById("imagem-arquivo");
+    if (seletorImagem) {
+        seletorImagem.addEventListener("change", async () => {
+            const arquivo = seletorImagem.files && seletorImagem.files[0];
+            if (!arquivo) return;
+            try {
+                campoImagem.value = await enviarImagemCloudinary(arquivo);
+                atualizarPreviewImagem();
+            } catch (erro) {
+                console.error("Erro ao enviar imagem do novo prato:", erro);
+                seletorImagem.value = "";
+                alert(erro.message || "Não foi possível enviar a imagem.");
+            }
+        });
+    }
+    previewImagemEl.addEventListener("error", () => {
+        previewImagem.hidden = true;
+        alert("Não foi possível carregar essa imagem. Use o endereço direto do arquivo.");
+    });
+
     form.onsubmit = async function(e) {
         e.preventDefault();
         const nome = document.getElementById("nome").value;
         const preco = parseFloat(document.getElementById("preco").value);
         const categoria = document.getElementById("categoria").value;
-        const imagemUrl = document.getElementById("imagem").value;
+        const diaSemana = document.getElementById("diaSemana").value;
+        const imagemUrl = campoImagem.value.trim();
+
+        if (imagemUrl) {
+            try {
+                const urlImagem = new URL(imagemUrl);
+                if (!["http:", "https:"].includes(urlImagem.protocol)) {
+                    throw new Error("Protocolo de imagem inválido");
+                }
+            } catch {
+                alert("Informe uma URL válida para a imagem, começando com https://.");
+                campoImagem.focus();
+                return;
+            }
+        }
 
         try {
             const res = await fetchAdmin(URL_BACKEND + "/api/admin/pratos", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nome, preco, categoria, imagemUrl, descricao: "Item profissional.", disponivel: true })
+                body: JSON.stringify({ nome, preco, categoria, diaSemana, imagemUrl, descricao: "Item profissional.", disponivel: true })
             });
             if(res.ok) {
                 form.reset();
+                atualizarPreviewImagem();
                 carregarItensAdmin();
             } else { alert("Erro ao criar novo produto."); }
         } catch(err) { alert("Erro de conexao ao salvar."); }
@@ -88,26 +315,52 @@ async function carregarItensAdmin() {
         const itens = await res.json();
         
         listaPratosLocal = itens;
-        container.innerHTML = "";
-        
-        itens.forEach(item => {
+        renderizarItensAdmin();
+    } catch(e) { container.innerHTML = `<p style="text-align: center; color: var(--danger);">Erro ao carregar o cardápio.</p>`; }
+}
+
+function renderizarItensAdmin() {
+    const container = document.getElementById("lista-itens-admin");
+    if (!container) return;
+    container.innerHTML = "";
+    const itensFiltrados = listaPratosLocal.filter(item => {
+        const texto = `${item.nome || ""} ${item.categoria || ""} ${item.diaSemana || ""}`.toLocaleLowerCase("pt-BR");
+        return texto.includes(termoBuscaProdutos);
+    });
+
+    if (!itensFiltrados.length) {
+        container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px;">Nenhum item encontrado.</p>`;
+        return;
+    }
+
+    itensFiltrados.forEach(item => {
             const div = document.createElement("div");
             const esgotado = !item.disponivel;
             div.className = `card-produto ${esgotado ? 'esgotado-style' : 'disponivel-style'}`;
             
             const nomeCategoria = dicionarioCategorias[item.categoria] || item.categoria || "Geral";
+            const diaLabel = item.diaSemana ? ` · ${item.diaSemana}` : "";
 
             div.innerHTML = `
                 <div style="display: flex; gap: 15px; align-items: center;">
                     <img src="${item.imagemUrl || 'https://unsplash.com'}" 
                          style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc;">
                     <div class="info-prod">
-                        <h4>${item.nome} <span class="badge-cat">${nomeCategoria}</span></h4>
+                        <h4>${item.nome} <span class="badge-cat">${nomeCategoria}${diaLabel}</span></h4>
                         <div style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; color: #4a5568;">
                             <span>Preço: R$</span>
                             <input type="number" step="0.01" value="${Number(item.preco || 0).toFixed(2)}" 
                                 class="input-preco-rapido" 
                                 onchange="atualizarPrecoRapido(${item.id}, this.value)">
+                        </div>
+                        <div class="imagem-produto-edicao">
+                            <input type="file" id="arquivo-produto-${item.id}" accept="image/*"
+                                onchange="enviarImagemProdutoExistente(${item.id}, this.files[0])"
+                                aria-label="Escolher imagem do computador">
+                            <input type="url" id="imagem-produto-${item.id}"
+                                value="${escaparHtml(item.imagemUrl || "")}"
+                                placeholder="Cole aqui a URL da imagem">
+                            <button type="button" onclick="atualizarImagemRapido(${item.id})">Salvar imagem</button>
                         </div>
                     </div>
                 </div>
@@ -120,8 +373,91 @@ async function carregarItensAdmin() {
                 </div>
             `;
             container.appendChild(div);
+    });
+}
+
+async function enviarImagemCloudinary(arquivo) {
+    if (!arquivo || !arquivo.type.startsWith("image/")) {
+        throw new Error("Escolha um arquivo de imagem válido.");
+    }
+    if (arquivo.size > 10 * 1024 * 1024) {
+        throw new Error("A imagem deve ter no máximo 10 MB.");
+    }
+
+    const dados = new FormData();
+    dados.append("file", arquivo);
+    dados.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+    const resposta = await fetch(CLOUDINARY_UPLOAD_URL, {
+        method: "POST",
+        body: dados
+    });
+    const resultado = await resposta.json();
+    if (!resposta.ok || !resultado.secure_url) {
+        throw new Error(resultado.error?.message || "O Cloudinary recusou a imagem.");
+    }
+    return resultado.secure_url;
+}
+
+async function enviarImagemProdutoExistente(id, arquivo) {
+    const campo = document.getElementById(`imagem-produto-${id}`);
+    const seletor = document.getElementById(`arquivo-produto-${id}`);
+    if (!arquivo) return;
+
+    try {
+        campo.value = await enviarImagemCloudinary(arquivo);
+        await atualizarImagemRapido(id);
+    } catch (erro) {
+        console.error("Erro ao enviar imagem do produto:", erro);
+        if (seletor) seletor.value = "";
+        alert(erro.message || "Não foi possível enviar a imagem.");
+    }
+}
+
+async function atualizarImagemRapido(id) {
+    const campo = document.getElementById(`imagem-produto-${id}`);
+    const imagemUrl = campo ? campo.value.trim() : "";
+    const pratoAntigo = listaPratosLocal.find(p => p.id === id);
+    if (!pratoAntigo) {
+        alert("Não foi possível localizar este prato.");
+        return;
+    }
+
+    if (imagemUrl) {
+        try {
+            const urlImagem = new URL(imagemUrl);
+            if (!["http:", "https:"].includes(urlImagem.protocol)) throw new Error();
+        } catch {
+            alert("Informe uma URL válida começando com https://.");
+            campo.focus();
+            return;
+        }
+    }
+
+    try {
+        const res = await fetchAdmin(`${URL_API_ADMIN}/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                id,
+                nome: pratoAntigo.nome || "",
+                descricao: pratoAntigo.descricao || "",
+                categoria: pratoAntigo.categoria || "",
+                diaSemana: pratoAntigo.diaSemana || "",
+                imagemUrl,
+                disponivel: pratoAntigo.disponivel !== undefined ? pratoAntigo.disponivel : true,
+                preco: pratoAntigo.preco || 0
+            })
         });
-    } catch(e) { container.innerHTML = `<p style="text-align: center; color: var(--danger);">Erro ao carregar o cardápio.</p>`; }
+        if (!res.ok) {
+            alert("Não foi possível salvar a imagem.");
+            return;
+        }
+        await carregarItensAdmin();
+    } catch (erro) {
+        console.error("Erro ao atualizar imagem do prato:", erro);
+        alert("Erro de conexão ao salvar a imagem.");
+    }
 }
 
 async function atualizarPrecoRapido(id, novoPreco) {
@@ -139,6 +475,7 @@ async function atualizarPrecoRapido(id, novoPreco) {
                 nome: pratoAntigo.nome || "",
                 descricao: pratoAntigo.descricao || "",
                 categoria: pratoAntigo.categoria || "",
+                diaSemana: pratoAntigo.diaSemana || "",
                 imagemUrl: pratoAntigo.imagemUrl || "",
                 disponivel: pratoAntigo.disponivel !== undefined ? pratoAntigo.disponivel : true,
                 preco: valorFormatado
@@ -167,6 +504,7 @@ async function alternarDisponibilidade(id, statusAtual) {
                 nome: pratoAntigo.nome || "",
                 descricao: pratoAntigo.descricao || "",
                 categoria: pratoAntigo.categoria || "",
+                diaSemana: pratoAntigo.diaSemana || "",
                 imagemUrl: pratoAntigo.imagemUrl || "",
                 preco: pratoAntigo.preco || 0,
                 disponivel: novoStatus
@@ -200,6 +538,10 @@ async function deletarItem(id) {
 function inicializarControlePedidos() {
     conectarWebSocketAdmin();
     carregarPedidosAtivos();
+    if (pedidosTimerAdmin) clearInterval(pedidosTimerAdmin);
+    pedidosTimerAdmin = setInterval(() => {
+        carregarPedidosAtivos();
+    }, 5000);
 }
 
 function conectarWebSocketAdmin() {
@@ -215,13 +557,20 @@ function conectarWebSocketAdmin() {
         };
 
         socketAdmin.onmessage = (event) => {
+            let dados;
             try {
-                const dados = JSON.parse(event.data);
-                if (dados.tipo === "PONG") return; 
-            } catch(e){}
+                dados = JSON.parse(event.data);
+                if (dados.tipo === "PING" || dados.tipo === "PONG") return;
+            } catch(e) {
+                console.error("Mensagem inválida recebida no WebSocket:", e);
+                return;
+            }
             
             carregarPedidosAtivos();
-            tocarAlertaSonoro();
+            if (dados.status === "RECEBIDO" && dados.clienteNome && dados.id) {
+                idsPedidosAlertados.add(dados.id);
+                tocarAlertaSonoro();
+            }
         };
         
         socketAdmin.onclose = () => { 
@@ -284,7 +633,14 @@ function exibirBannerAtivacaoAudio() {
 function inicializarAudioContext() {
     try {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) {
+            console.error("Este navegador não oferece suporte a notificações sonoras.");
+            return;
+        }
         audioCtxCompartilhado = new AudioContextClass();
+        audioCtxCompartilhado.resume().catch((erro) => {
+            console.error("Não foi possível ativar o áudio:", erro);
+        });
         console.log("Contexto de áudio inicializado via clique administrativo.");
     } catch (e) {
         console.error("Falha ao inicializar o AudioContext:", e);
@@ -295,7 +651,9 @@ function tocarAlertaSonoro() {
     if (!audioCtxCompartilhado) return;
     
     if (audioCtxCompartilhado.state === "suspended") {
-        audioCtxCompartilhado.resume();
+        audioCtxCompartilhado.resume().catch((erro) => {
+            console.error("Não foi possível reativar o áudio:", erro);
+        });
     }
 
     const osc = audioCtxCompartilhado.createOscillator();
@@ -321,45 +679,142 @@ function iniciarTurnoAdmin() {
 // ==========================================
 // 📋 RENDERIZAÇÃO DA VISÃO DE PEDIDOS
 // ==========================================
-async function carregarPedidosAtivos() {
-    if (carregandoPedidosAtivos) return;
-    carregandoPedidosAtivos = true;
+function escaparHtml(valor) {
+    return String(valor ?? "").replace(/[&<>"']/g, caractere => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+    }[caractere]));
+}
 
-    const containerAtivos = document.getElementById("lista-pedidos-ativos");
-    const containerHistorico = document.getElementById("lista-pedidos-finalizados");
-    
-    if (containerAtivos) containerAtivos.innerHTML = "";
-    if (containerHistorico) containerHistorico.innerHTML = "";
-
+function obterItensPedido(pedido) {
+    if (!pedido.itens) return [];
     try {
-        const resAtivos = await fetchAdmin(URL_BACKEND + "/api/pedidos/ativos");
-        if (resAtivos.ok) {
-            const pedidosAtivos = await resAtivos.json();
-            let temAtivos = false;
+        const itens = typeof pedido.itens === "string" ? JSON.parse(pedido.itens) : pedido.itens;
+        if (Array.isArray(itens)) return itens;
+        if (itens && typeof itens === "object") return Object.values(itens);
+    } catch (erro) {
+        console.error(`Itens inválidos no pedido #${pedido.id}:`, erro);
+    }
+    return [];
+}
 
-            pedidosAtivos.forEach(pedido => {
-                if (pedido.status === 'ENTREGUE') return;
-                temAtivos = true;
+function obterPrecoItem(item) {
+    return Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0);
+}
 
+function renderizarItensPedido(pedido) {
+    const itens = obterItensPedido(pedido);
+    if (!itens.length) {
+        return `<div class="itens-pedido"><strong>Itens:</strong><span>Não informado</span></div>`;
+    }
+
+    return `
+        <div class="itens-pedido">
+            <strong>Itens do pedido</strong>
+            ${itens.map(item => {
+                const quantidade = Number(item.quantidade || 1);
+                const preco = obterPrecoItem(item);
+                const subtotal = quantidade * preco;
+                return `<div class="item-pedido-linha">
+                    <span><b>${quantidade}x</b> ${escaparHtml(item.nome || "Item")}</span>
+                    <strong>R$ ${subtotal.toFixed(2).replace(".", ",")}</strong>
+                </div>`;
+            }).join("")}
+        </div>
+    `;
+}
+
+function obterTaxaEntregaPedido(pedido) {
+    const subtotal = calcularTotalItensPedido(pedido);
+    const total = obterTotalPedido(pedido);
+    return Math.max(0, total - subtotal);
+}
+
+function calcularTotalItensPedido(pedido) {
+    return obterItensPedido(pedido).reduce((total, item) => {
+        return total + (Number(item.quantidade || item.qtd || 1) * obterPrecoItem(item));
+    }, 0);
+}
+
+function obterTotalPedido(pedido) {
+    const totalRegistrado = Number(pedido.valorTotal ?? pedido.total ?? 0);
+    return totalRegistrado > 0 ? totalRegistrado : calcularTotalItensPedido(pedido);
+}
+
+function pedidoEDeRetirada(pedido) {
+    return String(pedido?.endereco || "").trim().toUpperCase().startsWith("RETIRADA");
+}
+
+function obterLocalPedido(pedido) {
+    return pedidoEDeRetirada(pedido)
+        ? "🏪 RETIRADA NO ESTABELECIMENTO"
+        : `📍 Endereço: ${escaparHtml(pedido.endereco || "Não informado")}`;
+}
+
+function atualizarResumoFinanceiro(pedidos, elementoId) {
+    const elemento = document.getElementById(elementoId);
+    if (!elemento) return;
+    const validos = pedidos.filter(pedido => pedido.status !== "CANCELADO");
+    const total = validos.reduce((soma, pedido) => soma + obterTotalPedido(pedido), 0);
+    const ticketMedio = validos.length ? total / validos.length : 0;
+    elemento.innerHTML = `
+        <div class="resumo-card"><span>Pedidos</span><strong>${validos.length}</strong></div>
+        <div class="resumo-card"><span>Saldo geral</span><strong>R$ ${total.toFixed(2).replace(".", ",")}</strong></div>
+        <div class="resumo-card"><span>Ticket médio</span><strong>R$ ${ticketMedio.toFixed(2).replace(".", ",")}</strong></div>
+    `;
+}
+
+function serializarPedidos(pedidos) {
+    return (pedidos || [])
+        .map(pedido => `${pedido.id}|${pedido.status}|${Number(pedido.valorTotal ?? pedido.total ?? 0).toFixed(2)}|${Array.isArray(pedido.itens) ? pedido.itens.map(item => `${item.nome || ""}:${item.quantidade || item.qtd || 1}:${Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0).toFixed(2)}`).join(";") : ""}`)
+        .join("~");
+}
+
+function atualizarListaPedidos(container, pedidos, tipo) {
+    if (!container) return;
+
+    const containerScroll = document.getElementById("conteudo-painel");
+    const scrollAnterior = containerScroll ? containerScroll.scrollTop : 0;
+    const snapshot = serializarPedidos(pedidos);
+    const ultimoSnapshot = tipo === "ativos" ? ultimoSnapshotPedidosAtivos : ultimoSnapshotPedidosHistorico;
+
+    if (snapshot === ultimoSnapshot && container.children.length > 0) {
+        return;
+    }
+
+    if (tipo === "ativos") {
+        ultimoSnapshotPedidosAtivos = snapshot;
+    } else {
+        ultimoSnapshotPedidosHistorico = snapshot;
+    }
+
+    const cards = pedidos
+        .filter(pedido => tipo === "ativos" ? pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO' : pedido.status === 'ENTREGUE' || pedido.status === 'CANCELADO')
+        .map(pedido => {
+            if (tipo === "ativos") {
+                const retirada = pedidoEDeRetirada(pedido);
                 const card = document.createElement("div");
                 card.className = "card-pedido";
                 card.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
                             <h4 style="margin: 0 0 6px 0; color: #1e293b;">📋 Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
-                            <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
+                            <small style="color: ${retirada ? "#92400e" : "var(--text-muted)"}; display: block; margin-bottom: 4px; font-size: 0.9rem; font-weight: ${retirada ? "800" : "400"};">${obterLocalPedido(pedido)}</small>
                             <small style="color: #0f766e; font-weight: 700; font-size: 0.9rem;">💳 Forma de Pagamento: ${pedido.formaPagamento}</small>
+                            <small style="display: block; margin-top: 6px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                            <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                            ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                         </div>
                         <span class="badge-cat" style="background: #fffbeb; color: #b45309; border-color: #fde68a;">Status: ${pedido.status}</span>
                     </div>
+                    ${renderizarItensPedido(pedido)}
                     <div class="acoes-pedido-bloco" style="border-top: 1px solid #f1f5f9; padding-top: 14px; display: flex; gap: 10px; justify-content: flex-end;">
                         <button class="btn-status-toggle ativo" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;" onclick="mudarStatusPedido(${pedido.id}, 'PREPARO')">👨‍🍳 Preparar</button>
-                        <button class="btn-status-toggle ativo" style="background: #f0fdf4; color: #166534; border-color: #bbf7d0;" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGA')">🛵 Despachar</button>
-                        <button class="btn-status-toggle inativo" style="background: #f8fafc; color: #1e293b; border-color: #cbd5e1;" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGUE')">✅ Finalizar</button>
+                        <button class="btn-status-toggle ativo" style="background: ${retirada ? "#fff7ed" : "#f0fdf4"}; color: ${retirada ? "#9a3412" : "#166534"}; border-color: ${retirada ? "#fed7aa" : "#bbf7d0"};" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGA')">${retirada ? "📦 Disponibilizar retirada" : "🛵 Despachar"}</button>
+                        <button class="btn-status-toggle inativo" style="background: #f8fafc; color: #1e293b; border-color: #cbd5e1;" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGUE')">${retirada ? "✅ Confirmar retirada" : "✅ Finalizar"}</button>
+                        <button class="btn-status-toggle inativo" style="background: #fff1f2; color: #be123c; border-color: #fecdd3;" onclick="cancelarPedido(${pedido.id})">✕ Cancelar</button>
                     </div>
                 `;
 
-                // Acoplagem cirúrgica e estável via DOM real para evitar vazamentos na tela de login
                 const btnImprimir = document.createElement("button");
                 btnImprimir.className = "btn-status-toggle ativo";
                 btnImprimir.style.cssText = "background: #fff5f5; color: #c53030; border-color: #feb2b2; font-weight: bold;";
@@ -367,15 +822,77 @@ async function carregarPedidosAtivos() {
                 btnImprimir.addEventListener("click", () => {
                     imprimirCupomIFood(pedido);
                 });
-
                 card.querySelector(".acoes-pedido-bloco").prepend(btnImprimir);
-
-                if (containerAtivos) containerAtivos.appendChild(card);
-            });
-
-            if (!temAtivos && containerAtivos) {
-                containerAtivos.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px; background: #f8fafc; border-radius: 10px; border: 2px dashed #e2e8f0; margin: 0;">Nenhum pedido em andamento.</p>`;
+                return card;
             }
+
+            const card = document.createElement("div");
+            const retirada = pedidoEDeRetirada(pedido);
+            card.className = "card-pedido";
+            card.style.borderLeft = pedido.status === "CANCELADO" ? "5px solid #e11d48" : "5px solid var(--success)";
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h4 style="margin: 0 0 6px 0; color: #1e293b;">${pedido.status === "CANCELADO" ? "✕" : "✅"} Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
+                        <small style="color: ${retirada ? "#92400e" : "var(--text-muted)"}; display: block; margin-bottom: 4px; font-size: 0.9rem; font-weight: ${retirada ? "800" : "400"};">${obterLocalPedido(pedido)}</small>
+                        <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento}</small>
+                        <small style="display: block; margin-top: 4px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                        <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                        ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
+                    </div>
+                    <span class="badge-cat" style="background: ${pedido.status === "CANCELADO" ? "#fff1f2" : "#e6f4ea"}; color: ${pedido.status === "CANCELADO" ? "#be123c" : "#137333"}; border-color: ${pedido.status === "CANCELADO" ? "#fecdd3" : "#ceead6"};">Status: ${pedido.status}</span>
+                </div>
+                ${renderizarItensPedido(pedido)}
+            `;
+            return card;
+        });
+
+    container.innerHTML = "";
+    cards.forEach(card => container.appendChild(card));
+
+    if (tipo === "ativos" && !cards.length) {
+        container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px; background: #f8fafc; border-radius: 10px; border: 2px dashed #e2e8f0; margin: 0;">Nenhum pedido em andamento.</p>`;
+    }
+
+    if (tipo === "historico" && !cards.length) {
+        container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px; background: #f8fafc; border-radius: 10px; border: 2px dashed #e2e8f0; margin: 0;">Nenhum pedido finalizado no histórico.</p>`;
+    }
+
+    if (containerScroll) {
+        containerScroll.scrollTop = scrollAnterior;
+    }
+}
+
+async function carregarPedidosAtivos() {
+    if (carregandoPedidosAtivos) return;
+    carregandoPedidosAtivos = true;
+
+    const containerAtivos = document.getElementById("lista-pedidos-ativos");
+    const containerHistorico = document.getElementById("lista-pedidos-finalizados");
+
+    try {
+        const resAtivos = await fetchAdmin(URL_BACKEND + "/api/pedidos/ativos");
+        if (resAtivos.ok) {
+            const pedidosAtivos = await resAtivos.json();
+            atualizarResumoFinanceiro(pedidosAtivos, "resumo-financeiro");
+
+            const novosPedidos = primeiraCargaPedidos
+                ? []
+                : pedidosAtivos.filter(pedido =>
+                    pedido.status === "RECEBIDO" &&
+                    pedido.id &&
+                    !idsPedidosConhecidos.has(pedido.id) &&
+                    !idsPedidosAlertados.has(pedido.id)
+                );
+            novosPedidos.forEach(pedido => {
+                idsPedidosAlertados.add(pedido.id);
+                tocarAlertaSonoro();
+            });
+            pedidosAtivos.forEach(pedido => idsPedidosConhecidos.add(pedido.id));
+            primeiraCargaPedidos = false;
+
+            const pedidosVisiveis = pedidosAtivos.filter(pedido => pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO');
+            atualizarListaPedidos(containerAtivos, pedidosVisiveis, "ativos");
         }
     } catch (e) { console.log("Erro ao carregar pedidos ativos:", e); }
 
@@ -383,31 +900,10 @@ async function carregarPedidosAtivos() {
         const resTodos = await fetchAdmin(URL_BACKEND + "/api/pedidos");
         if (resTodos.ok) {
             const todosPedidos = await resTodos.json();
-            let temFinalizados = false;
-
-            todosPedidos.forEach(pedido => {
-                if (pedido.status !== 'ENTREGUE') return;
-                temFinalizados = true;
-
-                const card = document.createElement("div");
-                card.className = "card-pedido";
-                card.style.borderLeft = "5px solid var(--success)";
-                card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div>
-                            <h4 style="margin: 0 0 6px 0; color: #1e293b;">✅ Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
-                            <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
-                            <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento}</small>
-                        </div>
-                        <span class="badge-cat" style="background: #e6f4ea; color: #137333; border-color: #ceead6;">Status: ENTREGUE</span>
-                    </div>
-                `;
-                if (containerHistorico) containerHistorico.appendChild(card);
-            });
-
-            if (!temFinalizados && containerHistorico) {
-                containerHistorico.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px; background: #f8fafc; border-radius: 10px; border: 2px dashed #e2e8f0; margin: 0;">Nenhum pedido finalizado no histórico.</p>`;
-            }
+            atualizarResumoFinanceiro(todosPedidos, "resumo-financeiro");
+            atualizarResumoFinanceiro(todosPedidos, "resumo-historico");
+            const pedidosFinalizados = todosPedidos.filter(pedido => pedido.status === 'ENTREGUE' || pedido.status === 'CANCELADO');
+            atualizarListaPedidos(containerHistorico, pedidosFinalizados, "historico");
         }
     } catch (e) { console.log("Erro ao carregar histórico de finalizados:", e); }
 
@@ -429,6 +925,12 @@ async function mudarStatusPedido(id, novoStatus) {
         console.error("Erro ao mudar status do pedido:", e);
     }
 }
+
+async function cancelarPedido(id) {
+    if (!confirm(`Cancelar o pedido #${id}? Essa ação ficará registrada no histórico.`)) return;
+    await mudarStatusPedido(id, "CANCELADO");
+}
+
 async function autenticarAdmin() {
     const campoUsuario = document.getElementById("usuario-login");
     const campoSenha = document.getElementById("senha-login");
@@ -457,6 +959,7 @@ async function autenticarAdmin() {
         document.getElementById("painel-adm-wrapper").style.display = "flex";
         
         if (typeof carregarItensAdmin === "function") carregarItensAdmin();
+        if (typeof carregarAcompanhamentosAdmin === "function") carregarAcompanhamentosAdmin();
         if (typeof inicializarControlePedidos === "function") inicializarControlePedidos();
         if (typeof configurarFormularioCadastro === "function") configurarFormularioCadastro();
         if (typeof exibirBannerAtivacaoAudio === "function") exibirBannerAtivacaoAudio();
@@ -492,19 +995,21 @@ function imprimirCupomIFood(pedido) {
     janelaImpressao.document.close();
 
     var elEstilo = janelaImpressao.document.createElement("style");
-    var regrasCSS = "body { font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.4; margin: 0; padding: 4px; color: #000; background: #fff; } .text-center { text-align: center; } .text-right { text-align: right; } .negrito { font-weight: bold; } .divider-dashed { border-top: 1px dashed #000; margin: 6px 0; } .divider-double { border-top: 3px double #000; margin: 8px 0; } .tag-tipo-entrega { font-size: 22px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 4px; margin-bottom: 8px; letter-spacing: 1px; } .titulo-loja { font-size: 15px; margin: 0; font-weight: bold; text-transform: uppercase; } .subtitulo-loja { font-size: 11px; margin: 2px 0; } .id-pedido { font-size: 18px; font-weight: bold; margin: 4px 0; } .secao-titulo { font-size: 13px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; } .bloco-conteudo { margin-bottom: 6px; } .tabela-itens { width: 100%; border-collapse: collapse; margin: 5px 0; } .tabela-itens td { vertical-align: top; padding: 2px 0; } .col-qtd { width: 12%; font-weight: bold; } .col-nome { width: 63%; } .col-preco { width: 25%; text-align: right; } .linha-financeiro { display: flex; justify-content: space-between; margin: 2px 0; } .linha-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; margin-top: 5px; padding-top: 4px; border-top: 1px dashed #000; } .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 5px 0; white-space: pre-wrap; font-size: 12px; font-weight: bold; } @media print { @page { size: 80mm auto; margin: 0; } body { padding: 5mm 4mm; } }";
+    var regrasCSS = "body { width: 72mm; max-width: 72mm; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; font-size: 14px; line-height: 1.45; margin: 0 auto; padding: 3mm 2mm; color: #000; background: #fff; overflow-wrap: anywhere; } .text-center { text-align: center; } .text-right { text-align: right; } .negrito { font-weight: bold; } .divider-dashed { border-top: 1px dashed #000; margin: 7px 0; } .divider-double { border-top: 3px double #000; margin: 9px 0; } .tag-tipo-entrega { font-size: 22px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 5px 4px; margin-bottom: 9px; letter-spacing: 1px; } .titulo-loja { font-size: 18px; margin: 0; font-weight: bold; text-transform: uppercase; } .subtitulo-loja { font-size: 12px; margin: 3px 0; } .id-pedido { font-size: 21px; font-weight: bold; margin: 5px 0; } .secao-titulo { font-size: 14px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; } .bloco-conteudo { margin-bottom: 8px; } .tabela-itens { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 6px 0; } .tabela-itens th { border-bottom: 1px solid #000; font-size: 12px; padding: 3px 0; text-align: left; } .tabela-itens td { vertical-align: top; padding: 5px 0; border-bottom: 1px dotted #999; overflow-wrap: anywhere; } .col-qtd { width: 13%; font-weight: bold; } .col-nome { width: 60%; } .col-preco { width: 27%; text-align: right !important; white-space: nowrap; } .linha-financeiro { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; } .linha-total { display: flex; justify-content: space-between; gap: 8px; font-size: 19px; font-weight: bold; margin-top: 7px; padding-top: 5px; border-top: 1px dashed #000; } .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 6px 0; white-space: pre-wrap; font-size: 14px; font-weight: bold; } @media print { @page { size: 80mm auto; margin: 0; } body { width: 72mm; max-width: 72mm; padding: 4mm 2mm; } }";
     
     elEstilo.textContent = regrasCSS;
     janelaImpressao.document.head.appendChild(elEstilo);
 
     var nomeClienteFinal = (pedido.clienteNome || pedido.nomeCliente || "Não informado").toUpperCase();
     var enderecoBruto = pedido.endereco || "RETIRADA NO ESTABELECIMENTO";
-    var telefoneFinal = "Não informado";
+    var telefoneFinal = (pedido.telefone || pedido.telefoneContato || "").toString().trim() || "Não informado";
     var referenciaFinal = "Não informada";
     
     var matchTel = enderecoBruto.match(/\(Tel:\s*([^)]+)\)/);
-    if (matchTel) {
+    if (matchTel && telefoneFinal === "Não informado") {
         telefoneFinal = matchTel[1].trim();
+    }
+    if (matchTel) {
         enderecoBruto = enderecoBruto.replace(matchTel[0], ""); 
     }
 
@@ -516,9 +1021,9 @@ function imprimirCupomIFood(pedido) {
 
     enderecoBruto = enderecoBruto.replace(/,\s*$/, "").replace(/\s+/g, " ").trim();
 
-    var tipoServico = pedido.endereco ? "ENTREGA" : "RETIRADA";
+    var enderecoPedido = (pedido.endereco || "").toString().trim().toUpperCase();
+    var tipoServico = enderecoPedido.startsWith("RETIRADA") ? "RETIRADA" : "ENTREGA";
     var pagamentoFinal = (pedido.formaPagamento || "Não informado").toUpperCase();
-    var observacaoFinal = pedido.observacao || "";
     
     var dataAgora = new Date();
     var dataFinal = dataAgora.toLocaleDateString("pt-BR");
@@ -551,14 +1056,14 @@ function imprimirCupomIFood(pedido) {
 
     var elEnderecoBloco = janelaImpressao.document.createElement("div");
     elEnderecoBloco.className = "bloco-conteudo";
-    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>Endereço de Entrega</div><div style='white-space: pre-wrap; font-size: 13px;'>" + enderecoBruto + "</div><div style='margin-top: 4px;'><span class='negrito'>Referência:</span> " + referenciaFinal + "</div>";
+    var tituloEndereco = tipoServico === "RETIRADA" ? "Local de Retirada" : "Endereço de Entrega";
+    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>" + tituloEndereco + "</div><div style='white-space: pre-wrap; font-size: 15px; font-weight: bold;'>" + enderecoBruto + "</div>" + (tipoServico === "RETIRADA" ? "" : "<div style='margin-top: 4px;'><span class='negrito'>Referência:</span> " + referenciaFinal + "</div>");
     containerPrincipal.appendChild(elEnderecoBloco);
     
     var divDivisora3 = janelaImpressao.document.createElement("div");
     divDivisora3.className = "divider-double";
     containerPrincipal.appendChild(divDivisora3);
-    // 5. Itens do Pedido (Lendo diretamente da árvore DOM da sua interface)
-        // 5. Itens do Pedido (Lendo direto dos dados da URL/LocalStorage)
+    // 5. Itens do Pedido
     var elItensTitulo = janelaImpressao.document.createElement("div");
     elItensTitulo.className = "secao-titulo";
     elItensTitulo.textContent = "Itens do Pedido";
@@ -566,18 +1071,18 @@ function imprimirCupomIFood(pedido) {
 
     var tabelaItens = janelaImpressao.document.createElement("table");
     tabelaItens.className = "tabela-itens";
+    tabelaItens.innerHTML = "<thead><tr><th class='col-qtd'>QTD</th><th class='col-nome'>ITEM</th><th class='col-preco'>VALOR</th></tr></thead><tbody></tbody>";
+    var corpoTabelaItens = tabelaItens.querySelector("tbody");
     
     var totalProdutosCalculado = 0;
     var listaItensImpressao = [];
 
-    // Captura os dados brutos da URL ou do LocalStorage para garantir leitura imediata
-    var urlParamsImp = new URLSearchParams(window.location.search);
-    var paramUrlImp = urlParamsImp.get("carrinho");
-    var dadosRawImp = paramUrlImp ? decodeURIComponent(paramUrlImp) : localStorage.getItem("carrinhoSaborCearense") || localStorage.getItem("saborCearense_carrinho");
-
-    if (dadosRawImp) {
+    // Os itens ficam persistidos no pedido; o localStorage pertence ao navegador do cliente.
+    if (pedido.itens) {
         try {
-            var itensDecodificados = JSON.parse(dadosRawImp);
+            var itensDecodificados = typeof pedido.itens === "string"
+                ? JSON.parse(pedido.itens)
+                : pedido.itens;
             if (Array.isArray(itensDecodificados)) {
                 listaItensImpressao = itensDecodificados;
             } else if (itensDecodificados && typeof itensDecodificados === 'object' && 'nome' in itensDecodificados) {
@@ -594,15 +1099,15 @@ function imprimirCupomIFood(pedido) {
         listaItensImpressao.forEach(function(item) {
             var tr = janelaImpressao.document.createElement("tr");
             
-            var nomeTexto = item.nome ? decodeURIComponent(item.nome).toUpperCase() : "PRATO";
+            var nomeTexto = item.nome ? item.nome.toString().toUpperCase() : "PRATO";
             var qtdTexto = item.quantidade || item.qtd || 1;
-            var precoItem = item.preco || 0;
+            var precoItem = obterPrecoItem(item);
             var subtotalItem = qtdTexto * precoItem;
             
             totalProdutosCalculado += subtotalItem;
 
             tr.innerHTML = "<td class='col-qtd'>" + qtdTexto + "x</td><td class='col-nome'>" + nomeTexto + "</td><td class='col-preco'>R$ " + subtotalItem.toFixed(2).replace(".", ",") + "</td>";
-            tabelaItens.appendChild(tr);
+            corpoTabelaItens.appendChild(tr);
         });
         containerPrincipal.appendChild(tabelaItens);
     } else {
@@ -613,12 +1118,20 @@ function imprimirCupomIFood(pedido) {
         containerPrincipal.appendChild(elFallback);
     }
 
+    if (pedido.observacao && pedido.observacao.trim()) {
+        var elObservacao = janelaImpressao.document.createElement("div");
+        elObservacao.className = "bloco-obs";
+        elObservacao.textContent = "OBSERVAÇÃO DO PEDIDO: " + pedido.observacao.trim();
+        containerPrincipal.appendChild(elObservacao);
+    }
+
     var divDivisora4 = janelaImpressao.document.createElement("div");
     divDivisora4.className = "divider-dashed";
     containerPrincipal.appendChild(divDivisora4);
 
     // 6. Fechamento Financeiro
-    var subtotalExibir = totalProdutosCalculado > 0 ? totalProdutosCalculado : Number(pedido.total || pedido.valorTotal || 0);
+    var valorPedido = Number(pedido.valorTotal ?? pedido.total ?? 0);
+    var subtotalExibir = totalProdutosCalculado > 0 ? totalProdutosCalculado : valorPedido;
     
     // Captura dinamicamente o valor da taxa do bairro selecionado no formulário
     var selectBairro = document.getElementById("bairro-entrega");
@@ -629,7 +1142,11 @@ function imprimirCupomIFood(pedido) {
             taxaEntrega = parseFloat(partesBairro[1]) || 0;
         }
     }
-    var totalGeralExibir = subtotalExibir + taxaEntrega;
+    var totalPedido = Number(pedido.valorTotal);
+    var totalGeralExibir = totalPedido > 0 ? totalPedido : subtotalExibir + taxaEntrega;
+    if (totalGeralExibir >= subtotalExibir) {
+        taxaEntrega = totalGeralExibir - subtotalExibir;
+    }
 
     var elFinanceiro = janelaImpressao.document.createElement("div");
     elFinanceiro.className = "bloco-conteudo";
@@ -640,14 +1157,6 @@ function imprimirCupomIFood(pedido) {
         <div class='linha-total'><span>TOTAL</span><span>R$ ${totalGeralExibir.toFixed(2).replace(".", ",")}</span></div>
     `;
     containerPrincipal.appendChild(elFinanceiro);
-
-    // 7. Observações
-    if (observacaoFinal.trim() !== "") {
-        var elObs = janelaImpressao.document.createElement("div");
-        elObs.className = "bloco-obs";
-        elObs.textContent = "OBS: " + observacaoFinal;
-        containerPrincipal.appendChild(elObs);
-    }
 
     var divDivisora5 = janelaImpressao.document.createElement("div");
     divDivisora5.className = "divider-dashed";

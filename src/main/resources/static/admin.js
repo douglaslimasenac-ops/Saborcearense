@@ -1,7 +1,7 @@
 // ==========================================
 // 🌵 CONFIGURAÇÕES E ESTADOS GLOBAIS
 // ==========================================
-const URL_BACKEND = "https://saborcearense-5.onrender.com"
+const URL_BACKEND = window.location.origin
 const URL_API_ADMIN = URL_BACKEND + "/api/admin/pratos";
 const CLOUDINARY_CLOUD_NAME = "sn5pijok";
 const CLOUDINARY_UPLOAD_PRESET = "sabor_cearense_imagens";

@@ -190,7 +190,7 @@ var acompanhamentosDisponiveis = [
 ];
 
 function carregarAcompanhamentosDisponiveis() {
-    fetch("https://saborcearense-5.onrender.com/api/acompanhamentos")
+    fetch("/api/acompanhamentos")
         .then(function(resposta) {
             if (!resposta.ok) throw new Error("HTTP " + resposta.status);
             return resposta.json();

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acompanhar Pedido - Sabor Cearense</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cloudflare.com">
     <style>
         body { background-color: #fffcf5; color: #111111; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px 20px; margin: 0; }
         .container-status { max-width: 550px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; text-align: center; }
@@ -42,11 +41,28 @@
 
         .pedido-id { background: #edf2f7; display: inline-block; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; margin-bottom: 30px; }
         .status-atual { font-size: 1.4rem; font-weight: 800; margin: 20px 0; color: #2d3748; }
+        .status-subtitulo { color: #806b51; font-size: 0.9rem; margin: -10px 0 18px; }
+        .barra-progresso { height: 7px; background: #f0e5d6; border-radius: 999px; overflow: hidden; margin: 10px 0 24px; }
+        .barra-progresso span { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #d99024, #237a4b); transition: width 0.6s ease; }
+        .painel-pedido { display: none; margin: 22px 0 8px; padding: 18px; text-align: left; background: #fffaf2; border: 1px solid #f1dfc4; border-radius: 16px; }
+        .painel-pedido.visivel { display: block; animation: surgirPainel 0.4s ease both; }
+        .painel-pedido h3 { margin: 0 0 12px; color: #6b461e; font-size: 1rem; }
+        .item-acompanhamento { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px dashed #eadbc5; color: #4a3a29; }
+        .total-acompanhamento { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 2px solid #eadbc5; color: #8a5316; font-size: 1.1rem; font-weight: 800; }
+        .linha-financeira-acompanhamento { display: flex; justify-content: space-between; padding-top: 8px; color: #806b51; font-size: 0.88rem; }
+        .meta-acompanhamento { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; color: #806b51; font-size: 0.78rem; }
+        .acoes-rapidas { display: flex; gap: 8px; margin-top: 14px; }
+        .btn-secundario { flex: 1; padding: 10px; border: 1px solid #eadbc5; border-radius: 999px; background: #fff; color: #8a5316; cursor: pointer; font-weight: 700; }
+        .btn-secundario:hover { background: #f7e7c7; }
+        .estado-conexao { display: inline-flex; align-items: center; gap: 6px; color: #237a4b; font-size: 0.78rem; font-weight: 700; }
+        .estado-conexao::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+        .estado-conexao.offline { color: #b45309; }
+        @keyframes surgirPainel { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .linha-tempo { display: flex; justify-content: space-between; position: relative; margin: 40px 0; padding: 0 10px; }
         .linha-tempo::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 4px; background: #e2e8f0; z-index: 1; }
         .passo { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; width: 60px; }
         .circulo { width: 34px; height: 34px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #718096; border: 3px solid #ffffff; transition: all 0.3s; }
-        .legenda { font-size: 0.75rem; font-weight: bold; color: #a0aec0; margin-top: 8px; white-space: nowrap; }
+        .legenda { max-width: 92px; font-size: 0.75rem; font-weight: bold; color: #a0aec0; margin-top: 8px; line-height: 1.15; text-align: center; }
         
         .passo.concluido .circulo { background: #27ae60; color: white; }
         .passo.concluido .legenda { color: #27ae60; }
@@ -55,6 +71,68 @@
         
         .btn-atualizar { background-color: #f5a623; color: #111111; border: none; padding: 14px 24px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px; width: 100%; transition: background 0.2s; font-size: 1rem; }
         .btn-atualizar:hover { background-color: #e0941f; }
+
+        body {
+            background: radial-gradient(circle at 8% 0%, rgba(217, 144, 36, 0.12), transparent 25rem), #f8f3ea;
+            color: #2f2922;
+            padding: 28px 16px;
+        }
+        .container-status {
+            max-width: 590px;
+            padding: 34px 30px;
+            border: 1px solid #eadbc5;
+            border-radius: 24px;
+            box-shadow: 0 14px 34px rgba(79, 52, 23, 0.1);
+        }
+        .container-status h2 {
+            color: #a85e16;
+            font-size: 1.65rem;
+        }
+        .box-busca {
+            padding: 10px;
+            border: 1px solid #eadbc5;
+            border-radius: 14px;
+            background: #fffaf2;
+        }
+        .box-busca input {
+            border-color: #eadbc5;
+            border-radius: 10px;
+            background: #fff;
+        }
+        .box-busca button,
+        .btn-atualizar {
+            border-radius: 999px;
+            background: linear-gradient(135deg, #d99024, #e8ad4c);
+            box-shadow: 0 7px 16px rgba(168, 94, 22, 0.2);
+        }
+        .pedido-id {
+            color: #a85e16;
+            background: #f7e7c7;
+            border: 1px solid #efd2a6;
+        }
+        .linha-tempo::before {
+            background: #eadbc5;
+        }
+        .circulo {
+            background: #f4eadb;
+            color: #766b5f;
+            border-color: #fff;
+        }
+        .passo.concluido .circulo { background: #237a4b; }
+        .passo.concluido .legenda { color: #237a4b; }
+        .passo.atual .circulo {
+            background: #d99024;
+            box-shadow: 0 0 0 5px rgba(217, 144, 36, 0.2);
+        }
+        .passo.atual .legenda { color: #a85e16; }
+        @media (max-width: 520px) {
+            .container-status { padding: 26px 18px; }
+            .linha-tempo { margin-right: -6px; margin-left: -6px; }
+            .legenda { font-size: 0.68rem; }
+            .box-busca { flex-direction: column; }
+            .box-busca button { width: 100%; }
+            .status-atual { font-size: 1.2rem; }
+        }
     </style>
 </head>
 <body>
@@ -90,21 +168,40 @@
         </div>
 
         <div class="status-atual" id="txt-status-nome">Insira o número do pedido acima...</div>
-        <p style="color: #718096; font-size: 0.9rem; margin-bottom: 25px;">Acompanhe o status real das suas entregas do Sabor Cearense.</p>
+        <div class="status-subtitulo" id="txt-status-detalhe">Aguardando o número do pedido.</div>
+        <div class="barra-progresso" aria-label="Progresso do pedido"><span id="barra-progresso"></span></div>
+        <p style="color: #718096; font-size: 0.9rem; margin-bottom: 25px;">Acompanhe o status real do seu pedido no Sabor Cearense.</p>
+        <div class="painel-pedido" id="painel-pedido">
+            <h3>🧾 Resumo do pedido</h3>
+            <div id="itens-acompanhamento"></div>
+            <div class="linha-financeira-acompanhamento"><span>Subtotal dos itens</span><strong id="subtotal-acompanhamento">R$ 0,00</strong></div>
+            <div class="linha-financeira-acompanhamento"><span>Taxa de entrega</span><strong id="taxa-acompanhamento">R$ 0,00</strong></div>
+            <div class="total-acompanhamento"><span>Total</span><span id="total-acompanhamento">R$ 0,00</span></div>
+            <div class="meta-acompanhamento">
+                <span id="pagamento-acompanhamento"></span>
+                <span>Atualizado: <span id="txt-ultima-att">--:--:--</span></span>
+            </div>
+            <div class="acoes-rapidas">
+                <button class="btn-secundario" onclick="copiarNumeroPedido()">📋 Copiar número</button>
+                <button class="btn-secundario" onclick="falarComRestaurante()">💬 Falar conosco</button>
+            </div>
+        </div>
         
-        <button class="btn-atualizar" onclick="consultarStatus()"><i class="fas fa-rotate"></i> Atualizar Status</button>
+        <div class="estado-conexao" id="estado-conexao">Monitoramento automático ativo</div>
+        <button class="btn-atualizar" id="btn-atualizar" onclick="consultarStatus(true)">🔄 Atualizar Status</button>
         <br><br>
-        <a href="index.html?admin=1" style="color: #f5a623; font-weight: bold; text-decoration: none; font-size: 0.9rem;">Ir para o Cardápio</a>
+        <a href="index.html" style="color: #f5a623; font-weight: bold; text-decoration: none; font-size: 0.9rem;">Ir para o Cardápio</a>
     </div>
     <script>
     // 1. Definição da URL oficial do seu backend no Render
-    const URL_BACKEND = "https://saborcearense-5.onrender.com";
+    const URL_BACKEND = window.location.origin;
 
     // 2. Captura o ID vindo da gaveta (URL) ou do localStorage anterior
     const urlParams = new URLSearchParams(window.location.search);
     let idDaUrl = urlParams.get('id');
 
     let pedidoId = idDaUrl || localStorage.getItem("ultimoPedidoIdSaborCearense");
+    let timerAtualizacao = null;
 
     document.addEventListener("DOMContentLoaded", () => {
         if (pedidoId) {
@@ -122,7 +219,7 @@
             consultarStatus();
             
             // Configura a ATUALIZAÇÃO EM TEMPO REAL (Polling) a cada 7 segundos
-            setInterval(consultarStatus, 7000);
+            timerAtualizacao = setInterval(() => consultarStatus(false), 7000);
         } else {
             const elementoStatus = document.getElementById("txt-status-nome") || document.getElementById("txt-index-status");
             if (elementoStatus) {
@@ -149,12 +246,18 @@
             document.getElementById("txt-pedido-id").innerText = `#${pedidoId}`;
         }
         
-        consultarStatus();
+        consultarStatus(true);
     }
 
     // AQUI ESTÁ O ASYNC QUE EVITA O ERRO DO AWAIT:
-    async function consultarStatus() {
+    async function consultarStatus(mostrarCarregando = false) {
         if (!pedidoId) return;
+        const botao = document.getElementById("btn-atualizar");
+        const estadoConexao = document.getElementById("estado-conexao");
+        if (mostrarCarregando && botao) {
+            botao.disabled = true;
+            botao.textContent = "⏳ Atualizando...";
+        }
         try {
             const idLimpo = pedidoId.toString().replace('#', '').trim();
             
@@ -166,8 +269,10 @@
                     document.getElementById("txt-pedido-id").innerText = `#${idLimpo}`;
                 }
 
-                // Atualiza a interface visual da linha do tempo
-                atualizarInterfaceLinhaTempo(pedido.status);
+                // Atualiza a interface visual conforme entrega ou retirada
+                atualizarInterfaceLinhaTempo(pedido.status, String(pedido.endereco || "").toUpperCase().startsWith("RETIRADA"));
+                renderizarResumoPedido(pedido);
+                atualizarEstadoConexao(true);
                 
                 // Atualiza o horário do último recebimento de sinal (Tempo Real)
                 const txtAtt = document.getElementById("txt-ultima-att");
@@ -182,10 +287,76 @@
                     elementoStatus.innerText = "Pedido não localizado no sistema.";
                 }
                 limparLinhaTempo();
+                atualizarEstadoConexao(false);
             }
         } catch (e) { 
             console.error("Erro ao buscar status:", e); 
+            atualizarEstadoConexao(false);
+        } finally {
+            if (mostrarCarregando && botao) {
+                botao.disabled = false;
+                botao.textContent = "🔄 Atualizar Status";
+            }
         }
+    }
+
+    function atualizarEstadoConexao(online) {
+        const estado = document.getElementById("estado-conexao");
+        if (!estado) return;
+        estado.classList.toggle("offline", !online);
+        estado.textContent = online ? "Monitoramento automático ativo" : "Sem conexão — tentando novamente";
+    }
+
+    function renderizarResumoPedido(pedido) {
+        const painel = document.getElementById("painel-pedido");
+        const itensEl = document.getElementById("itens-acompanhamento");
+        if (!painel || !itensEl) return;
+        let itens = [];
+        try {
+            const dados = typeof pedido.itens === "string" ? JSON.parse(pedido.itens) : pedido.itens;
+            itens = Array.isArray(dados) ? dados : Object.values(dados || {});
+        } catch (erro) {
+            console.error("Não foi possível ler os itens do pedido:", erro);
+        }
+        const totalItens = itens.reduce((total, item) => {
+            const quantidade = Number(item.quantidade || item.qtd || 1);
+            const preco = Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0);
+            return total + (quantidade * preco);
+        }, 0);
+        const totalRegistrado = Number(pedido.valorTotal ?? pedido.total ?? 0);
+        const totalPedido = totalRegistrado > 0 ? totalRegistrado : totalItens;
+        const taxaEntrega = Math.max(0, totalPedido - totalItens);
+        const formatarMoeda = valor => `R$ ${valor.toFixed(2).replace(".", ",")}`;
+
+        itensEl.innerHTML = itens.length
+            ? itens.map(item => {
+                const quantidade = Number(item.quantidade || 1);
+                const preco = Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0);
+                const subtotal = quantidade * preco;
+                return `<div class="item-acompanhamento"><span><b>${quantidade}x</b> ${escaparTexto(item.nome || "Item")}</span><strong>R$ ${subtotal.toFixed(2).replace(".", ",")}</strong></div>`;
+            }).join("")
+            : "<div class='item-acompanhamento'>Itens do pedido não disponíveis.</div>";
+        document.getElementById("subtotal-acompanhamento").textContent = formatarMoeda(totalItens);
+        document.getElementById("taxa-acompanhamento").textContent = formatarMoeda(taxaEntrega);
+        document.getElementById("total-acompanhamento").textContent = formatarMoeda(totalPedido);
+        document.getElementById("pagamento-acompanhamento").textContent = `💳 ${pedido.formaPagamento || "Pagamento não informado"}`;
+        painel.classList.add("visivel");
+    }
+
+    function escaparTexto(valor) {
+        return String(valor).replace(/[&<>"']/g, caractere => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+        }[caractere]));
+    }
+
+    function copiarNumeroPedido() {
+        if (!pedidoId || !navigator.clipboard) return;
+        navigator.clipboard.writeText(`#${pedidoId}`).then(() => alert("Número do pedido copiado!"));
+    }
+
+    function falarComRestaurante() {
+        const numeroWhats = "5521974720736";
+        window.open("https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(`Olá! Gostaria de informações sobre o pedido #${pedidoId}.`), "_blank");
     }
     // Injeta dinamicamente os estilos de animações profissionais para garantir o funcionamento
 // Injeta os estilos profissionais milimetricamente calibrados para a sua linha do tempo horizontal
@@ -262,15 +433,24 @@
     document.head.appendChild(style);
 })();
 
-function atualizarInterfaceLinhaTempo(statusOriginal) {
+function atualizarInterfaceLinhaTempo(statusOriginal, ehRetirada) {
     const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+    const passoEntrega = document.querySelector("#passo-ENTREGA .legenda");
+    const passoFinal = document.querySelector("#passo-ENTREGUE .legenda");
+    if (passoEntrega) passoEntrega.textContent = ehRetirada ? "Pronto para retirada" : "A caminho";
+    if (passoFinal) passoFinal.textContent = ehRetirada ? "Retirado" : "Entregue";
     
     const dicionarioNomes = {
         "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
         "PREPARO": "👨‍🍳 O chef já está preparando o seu prato!",
         "ENTREGA": "🛵 O motoboy pegou o rumo e já está a caminho!",
-        "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece."
+        "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece.",
+        "CANCELADO": "❌ Este pedido foi cancelado."
     };
+    if (ehRetirada) {
+        dicionarioNomes.ENTREGA = "🏪 Seu pedido está pronto para retirada!";
+        dicionarioNomes.ENTREGUE = "✅ Pedido retirado! O Sabor Cearense agradece.";
+    }
 
     let statusDoBanco = statusOriginal ? statusOriginal.toUpperCase() : "RECEBIDO";
     if (statusDoBanco === "PREPARANDO") statusDoBanco = "PREPARO";
@@ -280,8 +460,24 @@ function atualizarInterfaceLinhaTempo(statusOriginal) {
     if (txtStatus) {
         txtStatus.innerText = dicionarioNomes[statusDoBanco] || statusDoBanco;
     }
+    const detalhesStatus = document.getElementById("txt-status-detalhe");
+    if (detalhesStatus) {
+        detalhesStatus.innerText = statusDoBanco === "ENTREGUE"
+            ? (ehRetirada ? "Tudo certo! Obrigado por retirar seu pedido." : "Tudo certo! Esperamos que você aproveite sua refeição.")
+            : "Acompanhe por aqui enquanto preparamos tudo com carinho.";
+    }
+    const barraProgresso = document.getElementById("barra-progresso");
+    if (barraProgresso) {
+        barraProgresso.style.width = `${Math.max(0, (ordens.indexOf(statusDoBanco) + 1) * 25)}%`;
+    }
 
     const indexAtual = ordens.indexOf(statusDoBanco);
+    if (statusDoBanco === "CANCELADO") {
+        const barra = document.getElementById("barra-progresso");
+        if (barra) barra.style.width = "0%";
+        const detalhes = document.getElementById("txt-status-detalhe");
+        if (detalhes) detalhes.innerText = "Entre em contato com o restaurante se precisar de ajuda.";
+    }
 
     // 1. Injeta a animação profissional de pulso (Glow) na página se ela não existir
     if (!document.getElementById("animacao-sabor-cearense")) {
@@ -388,6 +584,10 @@ function limparLinhaTempo() {
             }
         }
     });
+    const barra = document.getElementById("barra-progresso");
+    if (barra) barra.style.width = "0%";
+    const painel = document.getElementById("painel-pedido");
+    if (painel) painel.classList.remove("visivel");
 }
 
 

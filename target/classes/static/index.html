@@ -13,6 +13,14 @@
     
     <!-- CABEÇALHO COM BOTÃO DE ADMIN -->
     <header class="header-app" style="position: relative;">
+        <button type="button" class="botao-compartilhar-site" onclick="compartilharSite()" aria-label="Compartilhar endereço do site" title="Compartilhar site">
+            <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+                <circle cx="18" cy="5" r="2.3"></circle>
+                <circle cx="6" cy="12" r="2.3"></circle>
+                <circle cx="18" cy="19" r="2.3"></circle>
+                <path d="m8.1 11 7.8-4.5M8.1 13l7.8 4.5"></path>
+            </svg>
+        </button>
         <a href="admin.html" title="Acessar Painel do Administrador" style="position: absolute; top: -10px; right: 10px; text-decoration: none; font-size: 1.4rem; color: #a0aec0; transition: color 0.2s;">⚙️</a>
         <h1>🌵 Sabor Cearense 🌵</h1>
         <p style="font-weight: 500; font-size: 1.1rem; margin-top: -5px;">Comida Caseira Legítima</p>
@@ -22,22 +30,27 @@
     <!-- STATUS DE FUNCIONAMENTO -->
     <div id="status-loja" class="status-barra">Carregando funcionamento...</div>
 
-    <!-- HORÁRIOS DE ENTREGA -->
-    <div class="horario-container">
-        <p class="horario-dias">📅 Segunda a Sábado</p>
-        <p class="horario-entregas">🛵 Entregas: 11:30 às 15:00</p>
-    </div>
-
-    <!-- BOTÃO CENTRAL DE RASTREIO -->
-    <div style="text-align: center; margin: -10px auto 20px auto; max-width: 650px; padding: 0 10px;">
-        <button type="button" id="open-tracking-btn" onclick="abrirAbaRastreioOculta()" style="background: #e6f0fa; border: 1.5px solid #4a90e2; padding: 10px 20px; font-weight: bold; border-radius: 30px; cursor: pointer; color: #2a64a6; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-            🔍 Já fez um pedido? Clique aqui para rastrear
+    <section class="info-operacional" aria-label="Informações de atendimento">
+        <div class="info-operacional-grid">
+            <div class="info-operacional-item">
+                <span class="info-operacional-icone">🕒</span>
+                <span><strong>Pedidos até 15h</strong><small>Segunda a sábado</small></span>
+            </div>
+            <div class="info-operacional-item">
+                <span class="info-operacional-icone">🛵</span>
+                <span><strong>Entrega em 40–50 min</strong><small>Prazo estimado</small></span>
+            </div>
+        </div>
+        <button type="button" id="open-tracking-btn" class="botao-rastreio" onclick="abrirAbaRastreioOculta()">
+            <span class="botao-rastreio-icone">🔍</span>
+            <span><strong>Já fez um pedido?</strong><small>Acompanhe sua entrega em tempo real</small></span>
+            <span class="botao-rastreio-seta" aria-hidden="true">→</span>
         </button>
-    </div>
+    </section>
 
     <!-- ABAS DE NAVEGAÇÃO -->
     <div class="abas-navegacao" style="display: flex; justify-content: space-between; gap: 8px; margin: 15px 0; overflow-x: auto; padding-bottom: 5px;">
-        <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')">🍽️ do Dia</button>
+        <button class="btn-aba ativo" onclick="alternarAba('PRATOS_DO_DIA')">🍽️ Pratos do Dia</button>
         <button class="btn-aba" onclick="alternarAba('PRINCIPAIS')">📌 Principais</button>
         <button class="btn-aba" onclick="alternarAba('SOBREMESA')">🍪 Sobremesa</button>
         <button class="btn-aba" onclick="alternarAba('BEBIDA')">🥤 Bebida</button>
@@ -78,9 +91,9 @@
         <section id="aba-RASTREIO" class="menu-section" style="display: none; background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 4px 10px rgba(0,0,0,0.01); margin-top: 25px;">
             <h2 style="background: var(--dark); color: var(--primary); padding: 10px 14px; border-radius: 6px; font-size: 1.25rem; margin-top: 0; margin-bottom: 20px;">🔍 Acompanhar Meu Pedido</h2>
             
-            <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 25px; display: flex; gap: 10px;">
-                <input type="number" id="input-rastreio-index" placeholder="Digite o Nº do seu Pedido" style="flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: bold; text-align: center; font-size: 1rem;">
-                <button onclick="executarBuscaRastreio()" style="background: var(--primary); border: none; padding: 12px 20px; font-weight: bold; border-radius: 6px; cursor: pointer;">Consultar</button>
+            <div class="rastreio-busca">
+                <input type="text" inputmode="numeric" id="input-rastreio-index" placeholder="Digite o número do pedido" aria-label="Número do pedido">
+                <button onclick="executarBuscaRastreio()">Consultar pedido</button>
             </div>
 
             <div id="wrapper-linha-tempo" style="display: none;">
@@ -108,17 +121,17 @@
     <div id="barra-flutuante" class="cart-bar">
         
         <!-- Valores e totalizadores (Agrupados à esquerda) -->
-        <div style="text-align: left; cursor: pointer;" onclick="abrirSacola()">
-            <span id="txt-qtd-itens" style="font-size: 0.8rem; color: #64748b; display: block; font-weight: 500;">0 itens</span>
-            <div id="txt-valor-total" style="font-weight: 800; color: #27ae60; font-size: 1.15rem;">R$ 0,00</div>
+        <div class="cart-bar-resumo" onclick="abrirSacola()">
+            <span id="txt-qtd-itens">0 itens</span>
+            <div id="txt-valor-total">R$ 0,00</div>
         </div>
 
         <!-- Botões de navegação (Agrupados à direita) -->
-        <div style="display: flex; gap: 8px; align-items: center;">
-            <button onclick="abrirSacola()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 12px; font-weight: bold; border-radius: 8px; cursor: pointer; color: #475569; font-size: 0.85rem;">
+        <div class="cart-bar-acoes">
+            <button class="cart-bar-ver" onclick="abrirSacola()">
                 🛒 Ver Sacola
             </button>
-            <button onclick="irParaCheckout()" style="background: #22c55e; color: white; border: none; padding: 10px 16px; font-size: 0.95rem; font-weight: bold; border-radius: 8px; cursor: pointer;">
+            <button class="cart-bar-avancar" onclick="irParaCheckout()">
                 Avançar ➔
             </button>
         </div>
@@ -129,31 +142,31 @@
 
 
 <!-- 🌵 GAVETA MODAL DA SACOLA (RESTRUTURADA EM CAMADA ÚNICA) -->
-<div id="painel-sacola-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 99999; display: none; font-family: sans-serif;">
+<div id="painel-sacola-modal">
     <!-- Fundo escuro clicável para fechar -->
-    <div onclick="fecharSacola()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    <div class="sacola-overlay" onclick="fecharSacola()"></div>
     
     <!-- Caixa interna com as propriedades responsivas móveis aplicadas via JavaScript -->
-    <div id="conteudo-gaveta-sacola" style="position: fixed; background: #ffffff; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.24); transition: all 0.3s ease-in-out; border-radius: 16px; width: 90%; max-width: 450px; top: 50%; left: 50%; transform: translate(-50%, -50%); max-height: 85vh; box-sizing: border-box;">
+    <div id="conteudo-gaveta-sacola">
         
         <!-- Cabeçalho -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f0f0f0;">
-            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; color: #1e293b;">Sua Sacola</h3>
-            <button onclick="fecharSacola()" style="background: #f5f5f5; border: none; width: 32px; height: 32px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+        <div class="sacola-cabecalho">
+            <div><span class="sacola-kicker">SEU PEDIDO</span><h3>Sua Sacola</h3><small>Confira seus itens antes de continuar</small></div>
+            <button class="sacola-fechar" onclick="fecharSacola()" aria-label="Fechar sacola">✕</button>
         </div>
         
         <!-- Lista de Produtos Rolável -->
-        <div id="lista-produtos-sacola" style="padding: 20px; overflow-y: auto; flex: 1; min-height: 150px; max-height: 50vh; box-sizing: border-box;">
+        <div id="lista-produtos-sacola">
             <!-- Injetado dinamicamente via JS -->
         </div>
 
         <!-- Rodapé do Modal -->
-        <div style="padding: 20px; border-top: 1px solid #f0f0f0; background: #fafafa; border-radius: 0 0 16px 16px;">
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; margin-bottom: 15px; color: #1e293b;">
+        <div class="sacola-rodape">
+            <div class="sacola-total">
                 <span>Subtotal:</span>
                 <span id="txt-modal-subtotal">R$ 0,00</span>
             </div>
-            <button onclick="irParaCheckout()" style="width: 100%; padding: 14px; background: #22c55e; color: #ffffff; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: background 0.2s;">
+            <button class="sacola-finalizar" onclick="irParaCheckout()">
                 Confirmar e Ir para o Pagamento ➔
             </button>
         </div>
@@ -168,11 +181,73 @@
 <!-- INTERCEPTADOR EXCLUSIVO DE ACOMPANHAMENTOS - SABOR CEARENSE -->
 <!-- SISTEMA DEFINITIVO DE ACOMPANHAMENTOS E SACOLA - SABOR CEARENSE -->
 <script>
+var acompanhamentosDisponiveis = [
+    { nome: "Maionese", icone: "🥗" },
+    { nome: "Macarronese", icone: "🍝" },
+    { nome: "Purê", icone: "🥔" },
+    { nome: "Espaguete", icone: "🍝" },
+    { nome: "Fritas", icone: "🍟" }
+];
+
+function carregarAcompanhamentosDisponiveis() {
+    fetch("/api/acompanhamentos")
+        .then(function(resposta) {
+            if (!resposta.ok) throw new Error("HTTP " + resposta.status);
+            return resposta.json();
+        })
+        .then(function(dados) {
+            if (Array.isArray(dados)) acompanhamentosDisponiveis = dados;
+        })
+        .catch(function(erro) {
+            console.error("Não foi possível carregar os acompanhamentos:", erro);
+        });
+}
+
+function renderizarOpcoesAcompanhamento() {
+    if (!acompanhamentosDisponiveis.length) {
+        return '<p style="padding: 12px; color: #766b5f; background: #fff8e8; border-radius: 10px;">No momento, os acompanhamentos estão esgotados.</p>';
+    }
+
+    return acompanhamentosDisponiveis.map(function(acompanhamento) {
+        var estado = acompanhamento.disponivel
+            ? '<input type="checkbox" value="' + acompanhamento.nome + '">'
+            : '<input type="checkbox" disabled aria-label="' + acompanhamento.nome + ' esgotado">';
+        var classe = acompanhamento.disponivel ? "" : " acompanhamento-esgotado";
+        var indicacao = acompanhamento.disponivel ? "<b>+</b>" : '<strong class="acompanhamento-status-esgotado">Esgotado</strong>';
+        return '<label class="opcao-acompanhamento' + classe + '">' + estado +
+            '<span class="opcao-acompanhamento-icone">' +
+            (acompanhamento.icone || "🍽️") + '</span><span class="acompanhamento-nome">' +
+            '<span class="acompanhamento-nome-text">' + acompanhamento.nome + '</span>' +
+            indicacao + '</span></label>';
+    }).join("");
+}
+
+carregarAcompanhamentosDisponiveis();
+
 // Cria e garante a função global para os botões do seu cardápio
 window.mudarQuantidade = function(id, mudanca, nome, preco) {
+    abrirModalAcompanhamentos(id, mudanca, nome, preco, null);
+};
+
+window.editarAcompanhamentos = function(chaveCodificada, nomeCodificado, preco, quantidade) {
+    var chaveId = decodeURIComponent(chaveCodificada);
+    var nomeAtual = decodeURIComponent(nomeCodificado);
+    var partesNome = nomeAtual.match(/^(.*?) \((.*)\)$/);
+    var nomeBase = partesNome ? partesNome[1] : nomeAtual;
+    var selecionados = partesNome ? partesNome[2].split(", ") : [];
+    var idOriginal = String(chaveId).split("-")[0];
+
+    abrirModalAcompanhamentos(idOriginal, quantidade, nomeBase, preco, {
+        chaveId: chaveId,
+        selecionados: selecionados,
+        quantidade: quantidade
+    });
+};
+
+function abrirModalAcompanhamentos(id, mudanca, nome, preco, edicao) {
     // 1. Se o cliente estiver diminuindo a quantidade (botão -), executa direto na sacola
     if (mudanca < 0) {
-        atualizarArmazenamentoSacola(id, mudanca, nome, preco);
+        window.executarMudarQuantidadeReal(id, mudanca, nome, preco, id);
         return;
     }
 
@@ -183,31 +258,40 @@ window.mudarQuantidade = function(id, mudanca, nome, preco) {
 
     // Se o prato já tiver os parênteses de acompanhamento no nome, adiciona direto
     if (devePular || (nome.includes("(") && nome.includes(")")) ) {
-        atualizarArmazenamentoSacola(id, mudanca, nome, preco);
+        window.executarMudarQuantidadeReal(id, mudanca, nome, preco, id);
         return;
     }
 
     // 3. Monta o HTML do Modal de Acompanhamentos na tela
     var modal = document.createElement("div");
-    modal.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 999999; font-family: sans-serif; padding: 15px; box-sizing: border-box;";
+    modal.className = "modal-acompanhamentos";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-label", "Escolha de acompanhamentos");
     
     modal.innerHTML = `
-        <div style="background: #fff; padding: 20px; border-radius: 12px; max-width: 360px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-            <h3 style="margin-top: 0; color: #141414; font-size: 1.1rem; border-bottom: 2px solid #e76f51; padding-bottom: 8px; font-weight: bold;">🌵 Acompanhamentos do Prato</h3>
-            <p style="font-size: 0.9rem; color: #555; margin-bottom: 15px;">Escolha até 2 opções para o seu <strong>${nome}</strong>:</p>
-            
-            <div id="lista-opcoes-acomp" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Maionese" style="width: 18px; height: 18px;"> Maionese</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Macarronese" style="width: 18px; height: 18px;"> Macarronese</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Salada de Legumes" style="width: 18px; height: 18px;"> Salada de Legumes</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Purê" style="width: 18px; height: 18px;"> Purê</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Espaguete" style="width: 18px; height: 18px;"> Espaguete</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; font-size: 0.95rem;"><input type="checkbox" value="Fritas" style="width: 18px; height: 18px;"> Fritas</label>
+        <div class="modal-acompanhamentos-conteudo">
+            <div class="modal-acompanhamentos-cabecalho">
+                <div>
+                    <span class="modal-acompanhamentos-kicker">PERSONALIZE SEU PRATO</span>
+                    <h3>🌵 Acompanhamentos</h3>
+                </div>
+                <button type="button" class="modal-acompanhamentos-fechar" aria-label="Fechar">✕</button>
             </div>
+            <div class="modal-acompanhamentos-prato">
+                <span class="modal-acompanhamentos-prato-icone">🍽️</span>
+                <div><small>Você está escolhendo para</small><strong>${nome}</strong></div>
+            </div>
+            <p class="modal-acompanhamentos-instrucao">Escolha até <strong>2 acompanhamentos</strong> para deixar seu pedido do seu jeito.</p>
             
-            <div style="display: flex; gap: 10px;">
-                <button id="btn-cancelar-acomp" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; font-weight: bold; cursor: pointer; color: #475569;">Cancelar</button>
-                <button id="btn-confirmar-acomp" style="flex: 1; padding: 10px; border: none; background: #22c55e; color: #fff; border-radius: 6px; font-weight: bold; cursor: pointer;">Confirmar</button>
+            <div id="lista-opcoes-acomp" class="lista-opcoes-acomp">
+                ${renderizarOpcoesAcompanhamento()}
+            </div>
+            <div class="acompanhamentos-selecao-status"><span id="contador-acomp">0</span>/2 selecionados</div>
+            
+            <div class="modal-acompanhamentos-acoes">
+                <button type="button" id="btn-cancelar-acomp" class="btn-acomp-cancelar">Agora não</button>
+                <button type="button" id="btn-confirmar-acomp" class="btn-acomp-confirmar">${edicao ? "Salvar alterações" : "Adicionar ao pedido"} <span>→</span></button>
             </div>
         </div>
     `;
@@ -217,17 +301,34 @@ window.mudarQuantidade = function(id, mudanca, nome, preco) {
     // Trava a seleção em no máximo 2 opções marcadas
     var checkboxes = modal.querySelectorAll("#lista-opcoes-acomp input");
     checkboxes.forEach(function(cb) {
+        if (edicao && edicao.selecionados.indexOf(cb.value) !== -1 && !cb.disabled) {
+            cb.checked = true;
+        }
         cb.addEventListener("change", function() {
             var marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
+            modal.querySelector("#contador-acomp").textContent = marcados.length;
             if (marcados.length > 2) {
                 cb.checked = false;
+                modal.querySelector("#contador-acomp").textContent = 2;
                 alert("⚠️ Você pode escolher no máximo 2 acompanhamentos!");
             }
         });
     });
+    modal.querySelector("#contador-acomp").textContent =
+        modal.querySelectorAll("#lista-opcoes-acomp input:checked").length;
 
     // Ação do Botão Cancelar
     modal.querySelector("#btn-cancelar-acomp").onclick = function() { modal.remove(); };
+    modal.querySelector(".modal-acompanhamentos-fechar").onclick = function() { modal.remove(); };
+    modal.addEventListener("click", function(event) {
+        if (event.target === modal) modal.remove();
+    });
+    document.addEventListener("keydown", function fecharComEscape(event) {
+        if (event.key === "Escape" && document.body.contains(modal)) {
+            modal.remove();
+            document.removeEventListener("keydown", fecharComEscape);
+        }
+    });
 
     // Ação do Botão Confirmar
     modal.querySelector("#btn-confirmar-acomp").onclick = function() {
@@ -240,10 +341,22 @@ window.mudarQuantidade = function(id, mudanca, nome, preco) {
             nomeItemComAcomp += " (" + acompanhamentos.join(", ") + ")";
         }
 
+        if (edicao) {
+            delete carrinho[edicao.chaveId];
+            localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
+        }
         modal.remove();
-        atualizarArmazenamentoSacola(id, mudanca, nomeItemComAcomp, preco);
+        window.executarMudarQuantidadeReal(
+            acompanhamentos.length > 0
+                ? id + "-" + acompanhamentos.map(function(item) { return item.substring(0, 3).toLowerCase(); }).join("-")
+                : id,
+            edicao ? edicao.quantidade : mudanca,
+            nomeItemComAcomp,
+            preco,
+            id
+        );
     };
-};
+}
 // FUNÇÃO INTERNA DA SACOLA: Salva os dados e atualiza as IDs reais do seu HTML
 function atualizarArmazenamentoSacola(idItem, qtdMudanca, nomeFinal, precoFinal) {
     var carrinho = [];
@@ -298,16 +411,16 @@ function atualizarArmazenamentoSacola(idItem, qtdMudanca, nomeFinal, precoFinal)
         } else {
             carrinho.forEach(function(item) {
                 var itemDivHTML = document.createElement("div");
-                itemDivHTML.style = "display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #edf2f7; gap:10px;";
+                itemDivHTML.className = "item-sacola-linha";
                 itemDivHTML.innerHTML = `
-                    <div style="flex:1;">
-                        <div style="font-weight:700 !important; color:#141414 !important; font-size:15px !important; line-height:1.3 !important; display:block !important; visibility:visible !important;">${item.nome}</div>
-                        <div style="color:#e76f51; font-weight:700; font-size:0.9rem; margin-top:3px;">R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</div>
+                    <div class="item-sacola-info">
+                        <div class="item-sacola-nome">${item.nome}</div>
+                        <div class="item-sacola-preco">R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</div>
                     </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <button onclick="mudarQuantidade(${item.id}, -1, '${item.nome}', ${item.preco})" style="width:28px; height:28px; background:#f1f5f9; border:1px solid #cbd5e1; font-weight:bold; border-radius:4px; cursor:pointer; color:#475569;">-</button>
-                        <span style="font-weight:bold; min-width:15px; text-align:center; color:#1a202c;">${item.quantidade}</span>
-                        <button onclick="mudarQuantidade(${item.id}, 1, '${item.nome}', ${item.preco})" style="width:28px; height:28px; background:#f1f5f9; border:1px solid #cbd5e1; font-weight:bold; border-radius:4px; cursor:pointer; color:#475569;">+</button>
+                    <div class="item-sacola-controles">
+                        <button onclick="mudarQuantidade(${item.id}, -1, '${item.nome}', ${item.preco})" aria-label="Diminuir quantidade">−</button>
+                        <span>${item.quantidade}</span>
+                        <button onclick="mudarQuantidade(${item.id}, 1, '${item.nome}', ${item.preco})" aria-label="Aumentar quantidade">+</button>
                     </div>
                 `;
                 containerSacolaCorpo.appendChild(itemDivHTML);
@@ -320,10 +433,10 @@ function atualizarArmazenamentoSacola(idItem, qtdMudanca, nomeFinal, precoFinal)
     var gavetaModalHTML = document.getElementById("painel-sacola-modal");
     
     window.abrirSacola = function() {
-        if (gavetaModalHTML) gavetaModalHTML.style.display = "block";
+        if (gavetaModalHTML) gavetaModalHTML.classList.add("open");
     };
     window.fecharSacola = function() {
-        if (gavetaModalHTML) gavetaModalHTML.style.display = "none";
+        if (gavetaModalHTML) gavetaModalHTML.classList.remove("open");
     };
     
     // Se o cliente acabou de adicionar um prato (+), força a abertura da gaveta para exibir o prato
@@ -334,7 +447,8 @@ function atualizarArmazenamentoSacola(idItem, qtdMudanca, nomeFinal, precoFinal)
 
 // Inicializa os textos e pratos salvos assim que carregar o cardápio
 document.addEventListener("DOMContentLoaded", function() {
-    atualizarArmazenamentoSacola(0, 0, "", 0);
+    atualizarValoresBarraFixo();
+    renderizarItensSacola();
 });
 
 // Vincula a ação de redirecionamento para o seu botão "Avançar para o Pagamento"
@@ -363,7 +477,7 @@ window.irParaCheckout = function() {
             top: 50% !important;
             left: 50% !important;
             transform: translate(-50%, -50%) !important;
-            width: 450px !important;
+            width: min(calc(100vw - 32px), 760px) !important;
             height: auto !important;
             max-height: 85vh !important;
             border-radius: 16px !important;
@@ -393,6 +507,259 @@ window.irParaCheckout = function() {
         align-items: center !important;
         padding: 12px 0 !important;
         border-bottom: 1px solid #f1f5f9 !important;
+    }
+
+    /* Camada final da sacola: fechado = totalmente invisível. */
+    #painel-sacola-modal {
+        display: none !important;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 99999 !important;
+        background: rgba(35, 25, 16, 0.68) !important;
+        backdrop-filter: blur(4px);
+    }
+
+    #painel-sacola-modal.open {
+        display: block !important;
+    }
+
+    #painel-sacola-modal .sacola-overlay {
+        position: absolute !important;
+        inset: 0 !important;
+    }
+
+    #painel-sacola-modal #conteudo-gaveta-sacola {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: min(92vw, 470px) !important;
+        max-height: 86vh !important;
+        overflow: hidden !important;
+        transform: translate(-50%, -50%) !important;
+        border: 1px solid #eadbc5 !important;
+        border-radius: 24px !important;
+        background: #fffaf2 !important;
+        box-shadow: 0 24px 70px rgba(25, 16, 8, 0.3) !important;
+    }
+
+    #painel-sacola-modal .sacola-cabecalho {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        align-items: flex-start !important;
+        justify-content: space-between !important;
+        gap: 16px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 20px !important;
+        border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+        background: linear-gradient(135deg, #33291f, #171411) !important;
+        color: #fffaf1 !important;
+    }
+
+    #painel-sacola-modal .sacola-cabecalho > div {
+        min-width: 0 !important;
+    }
+
+    #painel-sacola-modal .sacola-kicker {
+        display: block !important;
+        color: #e8ad4c !important;
+        font-size: 0.65rem !important;
+        font-weight: 800 !important;
+        letter-spacing: 1px !important;
+    }
+
+    #painel-sacola-modal .sacola-cabecalho h3 {
+        margin: 4px 0 3px !important;
+        color: #fffaf1 !important;
+        font-size: 1.35rem !important;
+        line-height: 1.2 !important;
+    }
+
+    #painel-sacola-modal .sacola-cabecalho small {
+        color: rgba(255, 250, 241, 0.72) !important;
+        font-size: 0.75rem !important;
+    }
+
+    #painel-sacola-modal .sacola-fechar {
+        flex: 0 0 34px !important;
+        width: 34px !important;
+        height: 34px !important;
+        padding: 0 !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        border-radius: 50% !important;
+        background: rgba(255,255,255,0.1) !important;
+        color: #fff !important;
+        cursor: pointer !important;
+    }
+
+    #painel-sacola-modal #lista-produtos-sacola {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        min-height: 110px !important;
+        max-height: 50vh !important;
+        box-sizing: border-box !important;
+        padding: 10px 20px !important;
+        overflow-y: auto !important;
+        background: #fffaf2 !important;
+    }
+
+    #painel-sacola-modal .item-sacola-linha {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 15px 0 !important;
+        border-bottom: 1px dashed #eadbc5 !important;
+    }
+
+    #painel-sacola-modal .item-sacola-info {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+    }
+
+    #painel-sacola-modal .item-sacola-nome {
+        color: #33291f !important;
+        font-size: 0.9rem !important;
+        font-weight: 800 !important;
+        line-height: 1.35 !important;
+        overflow-wrap: anywhere !important;
+    }
+
+    #painel-sacola-modal .item-sacola-preco {
+        margin-top: 4px !important;
+        color: #9a5b16 !important;
+        font-size: 0.8rem !important;
+        font-weight: 800 !important;
+    }
+
+    #painel-sacola-modal .item-sacola-controles {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    #painel-sacola-modal .item-sacola-controles button {
+        width: 29px !important;
+        height: 29px !important;
+        padding: 0 !important;
+        border: 1px solid #efd2a6 !important;
+        border-radius: 50% !important;
+        background: #fff !important;
+        color: #9a5b16 !important;
+        cursor: pointer !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+    }
+
+    #painel-sacola-modal .item-sacola-controles span {
+        min-width: 18px !important;
+        color: #33291f !important;
+        text-align: center !important;
+        font-weight: 800 !important;
+    }
+
+    #painel-sacola-modal .sacola-rodape {
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 16px 20px 20px !important;
+        border-top: 1px solid #eadbc5 !important;
+        background: #fff5e6 !important;
+    }
+
+    #painel-sacola-modal .sacola-total {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        margin-bottom: 13px !important;
+        color: #33291f !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+    }
+
+    #painel-sacola-modal .sacola-total span:last-child {
+        color: #9a5b16 !important;
+    }
+
+    #painel-sacola-modal .sacola-finalizar {
+        display: block !important;
+        width: 100% !important;
+        min-height: 47px !important;
+        padding: 0 16px !important;
+        border: 0 !important;
+        border-radius: 999px !important;
+        background: linear-gradient(135deg, #d99024, #e8ad4c) !important;
+        color: #29231d !important;
+        cursor: pointer !important;
+        font-family: inherit !important;
+        font-size: 0.92rem !important;
+        font-weight: 850 !important;
+        box-shadow: 0 7px 16px rgba(168, 94, 22, 0.2) !important;
+    }
+
+    #barra-flutuante .cart-bar-acoes {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    #barra-flutuante .cart-bar-ver,
+    #barra-flutuante .cart-bar-avancar {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 42px !important;
+        padding: 0 15px !important;
+        border-radius: 999px !important;
+        cursor: pointer !important;
+        font-family: inherit !important;
+        font-size: 0.82rem !important;
+        font-weight: 800 !important;
+        white-space: nowrap !important;
+    }
+
+    #barra-flutuante .cart-bar-ver {
+        border: 1px solid #eadbc5 !important;
+        background: #fffaf2 !important;
+        color: #5a321d !important;
+    }
+
+    #barra-flutuante .cart-bar-avancar {
+        border: 0 !important;
+        background: linear-gradient(135deg, #d99024, #e8ad4c) !important;
+        color: #29231d !important;
+        box-shadow: 0 6px 15px rgba(168, 94, 22, 0.22) !important;
+    }
+
+    @media (max-width: 768px) {
+        #painel-sacola-modal #conteudo-gaveta-sacola {
+            top: auto !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            max-height: 84vh !important;
+            transform: none !important;
+            border-radius: 24px 24px 0 0 !important;
+        }
+    }
+
+    @media (max-width: 520px) {
+        #barra-flutuante .cart-bar-ver,
+        #barra-flutuante .cart-bar-avancar {
+            padding: 0 10px !important;
+            font-size: 0.74rem !important;
+        }
+    }
+
+    @media (min-width: 769px) {
+        #painel-sacola-modal #conteudo-gaveta-sacola {
+            width: min(calc(100vw - 32px), 760px) !important;
+        }
     }
 </style>
 

@@ -7,10 +7,11 @@ let listaPratosGlobal = [];
 let totalCalculado = 0;
 let taxaEntregaSelecionada = 0;
 let bairroTextoSelecionado = "";
+let tipoRecebimentoSelecionado = "ENTREGA";
 let carrinho = {};
 
-const URL_API_BACKEND = ""; 
-const WHATSAPP_NUMERO = "/5521974720736"; 
+const URL_API_BACKEND = window.location.origin;
+const WHATSAPP_NUMERO = "5521974720736";
 
 // ==========================================
 // 🌐 EVENTOS DE INICIALIZAÇÃO (DOM)
@@ -39,9 +40,47 @@ document.addEventListener("DOMContentLoaded", () => {
     if (typeof verificarHorarioFuncionamento === "function") {
         verificarHorarioFuncionamento();
     }
+    carregarBairrosEntrega();
 
-    // ... restante do código ...
+    if (document.getElementById("lista-itens-carrinho")) {
+        carregarItensDaUrlNoCarrinho();
+    }
+    const campoObservacao = document.getElementById("observacao");
+    if (campoObservacao) {
+        const contador = document.getElementById("contador-observacao");
+        const atualizarContador = () => {
+            if (contador) contador.textContent = campoObservacao.value.length;
+        };
+        campoObservacao.addEventListener("input", atualizarContador);
+        atualizarContador();
+    }
 });
+
+async function carregarBairrosEntrega() {
+    const select = document.getElementById("bairro-entrega");
+    if (!select) return;
+
+    try {
+        const resposta = await fetch(`${URL_API_BACKEND}/api/bairros`);
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const bairros = await resposta.json();
+        select.innerHTML = '<option value="" disabled selected>Escolha o seu bairro...</option>';
+        bairros.forEach(bairro => {
+            const taxa = Number(bairro.taxa || 0);
+            const opcao = document.createElement("option");
+            opcao.value = `${bairro.nome}|${taxa.toFixed(2)}`;
+            opcao.textContent = `${bairro.nome} - R$ ${taxa.toFixed(2).replace(".", ",")}`;
+            select.appendChild(opcao);
+        });
+        if (!bairros.length) {
+            select.innerHTML = '<option value="" disabled selected>Nenhum bairro disponível</option>';
+        }
+    } catch (erro) {
+        console.error("Não foi possível carregar os bairros:", erro);
+        select.innerHTML = '<option value="" disabled selected>Não foi possível carregar os bairros</option>';
+        alert("Não foi possível carregar as opções de entrega. Atualize a página e tente novamente.");
+    }
+}
 
 // ==========================================
 // 📦 GERENCIAMENTO E RENDERIZAÇÃO DE DADOS
@@ -167,16 +206,7 @@ function carregarItensDaUrlNoCarrinho() {
             if (typeof subtotalProdutos !== "undefined") subtotalProdutos = subtotalCalculadoUrl;
 
             // 2. Atualiza a exibição do preço na caixa superior do resumo
-            const campoTotal = document.getElementById("valor-total");
-            if (campoTotal) {
-                campoTotal.innerHTML = `<strong>R$ ${subtotalCalculadoUrl.toFixed(2).replace('.', ',')}</strong>`;
-            }
-            
-            // 3. Atualiza o preço final localizado lá no Passo 2 do Pagamento
-            const campoTotalPagar = document.getElementById("pagamento-valor-total");
-            if (campoTotalPagar) {
-                campoTotalPagar.innerText = `R$ ${subtotalCalculadoUrl.toFixed(2).replace('.', ',')}`;
-            }
+            atualizarResumoFinanceiroTela();
         }
     } catch (erro) {
         console.error("Erro ao renderizar itens da URL do Sabor Cearense:", erro);
@@ -207,7 +237,7 @@ function renderizarResumo() {
 
     totalCalculado = subtotal; 
 
-    totalTxt.innerHTML = `Valor Total: <strong>R$ ${totalCalculado.toFixed(2).replace('.', ',')}</strong>`;
+    atualizarResumoFinanceiroTela();
     const pagTotal = document.getElementById("pagamento-valor-total");
     if (pagTotal) pagTotal.innerText = `R$ ${totalCalculado.toFixed(2).replace('.', ',')}`;
 }
@@ -223,36 +253,131 @@ function atualizarTaxaEntrega(valorSelect) {
     
     const totalComTaxa = totalCalculado + taxaEntregaSelecionada;
     
-    const totalTxt = document.getElementById("valor-total");
-    if (totalTxt) {
-        totalTxt.innerHTML = `Valor Total: <strong>R$ ${totalComTaxa.toFixed(2).replace('.', ',')}</strong> (com R$ ${taxaEntregaSelecionada.toFixed(2).replace('.', ',')} de entrega)`;
-    }
+    atualizarResumoFinanceiroTela();
+}
 
-    const pagamentoTotalTxt = document.getElementById("pagamento-valor-total");
-    if (pagamentoTotalTxt) {
-        pagamentoTotalTxt.innerText = `R$ ${totalComTaxa.toFixed(2).replace('.', ',')}`;
+function alterarTipoRecebimento(tipo) {
+    tipoRecebimentoSelecionado = tipo === "RETIRADA" ? "RETIRADA" : "ENTREGA";
+    const camposEntrega = document.getElementById("campos-entrega");
+    const avisoRetirada = document.getElementById("aviso-retirada");
+    const bairro = document.getElementById("bairro-entrega");
+    const endereco = document.getElementById("endereco");
+    const referencia = document.getElementById("ponto-referencia");
+    const entrega = tipoRecebimentoSelecionado === "ENTREGA";
+
+    if (camposEntrega) camposEntrega.hidden = !entrega;
+    if (avisoRetirada) avisoRetirada.hidden = entrega;
+    [bairro, endereco, referencia].forEach(campo => {
+        if (campo) campo.disabled = !entrega;
+    });
+    if (bairro) bairro.required = entrega;
+    if (endereco) endereco.required = entrega;
+    if (!entrega) {
+        taxaEntregaSelecionada = 0;
+        bairroTextoSelecionado = "";
+    } else if (bairro && bairro.value) {
+        atualizarTaxaEntrega(bairro.value);
     }
+    atualizarResumoFinanceiroTela();
+    document.querySelectorAll(".opcao-recebimento").forEach(opcao => {
+        const radio = opcao.querySelector("input");
+        opcao.classList.toggle("selecionada", Boolean(radio && radio.checked));
+    });
 }
 
 function atualizarValoresTela() {
+    totalCalculado = subtotalProdutos;
+    atualizarResumoFinanceiroTela();
+}
+
+function atualizarResumoFinanceiroTela() {
+    const subtotal = Number(totalCalculado || subtotalProdutos || 0);
+    const taxa = Number(taxaEntregaSelecionada || valorTaxaEntrega || 0);
+    const totalGeral = subtotal + taxa;
+    const formatar = valor => `R$ ${valor.toFixed(2).replace(".", ",")}`;
+    const campoSubtotal = document.getElementById("subtotal-produtos");
+    const campoTaxa = document.getElementById("taxa-entrega");
     const campoTotal = document.getElementById("valor-total");
     const campoTotalPagar = document.getElementById("pagamento-valor-total");
-    const totalGeral = subtotalProdutos + valorTaxaEntrega;
 
-    const valorFormatado = "R$ " + totalGeral.toFixed(2).replace(".", ",");
-    
-    if (campoTotal) campoTotal.textContent = valorFormatado;
-    if (campoTotalPagar) campoTotalPagar.textContent = valorFormatado;
+    if (campoSubtotal) campoSubtotal.textContent = formatar(subtotal);
+    if (campoTaxa) campoTaxa.textContent = formatar(taxa);
+    if (campoTotal) campoTotal.textContent = formatar(totalGeral);
+    if (campoTotalPagar) campoTotalPagar.textContent = formatar(totalGeral);
+    atualizarPixDinamico(totalGeral);
 }
 
 // ==========================================
 // 💳 INTERAÇÃO E REGRAS PIX
 // ==========================================
+const PIX_CHAVE_CNPJ = "59361228000150";
+
+function crc16Pix(texto) {
+    let crc = 0xFFFF;
+    for (let i = 0; i < texto.length; i++) {
+        crc ^= texto.charCodeAt(i) << 8;
+        for (let bit = 0; bit < 8; bit++) {
+            crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
+            crc &= 0xFFFF;
+        }
+    }
+    return crc.toString(16).toUpperCase().padStart(4, "0");
+}
+
+function campoPix(id, valor) {
+    const texto = String(valor);
+    return id + String(texto.length).padStart(2, "0") + texto;
+}
+
+function gerarCodigoPix(valor) {
+    const valorFormatado = Number(valor || 0).toFixed(2);
+    const merchantAccount = campoPix("00", "br.gov.bcb.pix") + campoPix("01", PIX_CHAVE_CNPJ);
+    const payloadSemCrc = [
+        campoPix("00", "01"),
+        campoPix("26", merchantAccount),
+        campoPix("52", "0000"),
+        campoPix("53", "986"),
+        campoPix("54", valorFormatado),
+        campoPix("58", "BR"),
+        campoPix("59", "SABOR CEARENSE"),
+        campoPix("60", "RIO DE JANEIRO"),
+        campoPix("62", campoPix("05", "***"))
+    ].join("") + "6304";
+    return payloadSemCrc + crc16Pix(payloadSemCrc);
+}
+
+function atualizarPixDinamico(valor) {
+    const campoPix = document.getElementById("chave-pix-texto");
+    const valorPix = document.getElementById("pix-valor-gerado");
+    const qrContainer = document.getElementById("pix-qrcode");
+    if (!campoPix || !qrContainer) return;
+
+    const valorNumerico = Number(valor || 0);
+    const payload = gerarCodigoPix(valorNumerico);
+    campoPix.value = payload;
+    if (valorPix) valorPix.textContent = `Valor: R$ ${valorNumerico.toFixed(2).replace(".", ",")}`;
+
+    qrContainer.innerHTML = "";
+    if (typeof QRCode === "undefined") {
+        qrContainer.textContent = "QR Code indisponível. Use o Pix Copia e Cola.";
+        return;
+    }
+    new QRCode(qrContainer, {
+        text: payload,
+        width: 190,
+        height: 190,
+        colorDark: "#29231d",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+    });
+}
+
 function controlarExibicaoPix(opcao) {
     const boxPix = document.getElementById("container-pix-dinamico");
     if (boxPix) {
         boxPix.style.display = (opcao === "Pix") ? "block" : "none";
     }
+
 }
 
 function copiarChavePix() {
@@ -263,6 +388,56 @@ function copiarChavePix() {
         navigator.clipboard.writeText(campoTexto.value);
         alert("🔑 Chave CNPJ copiada com sucesso!");
     }
+}
+
+function atualizarEtapaCheckout(etapaAtual) {
+    document.querySelectorAll(".checkout-etapa-conteudo").forEach(etapa => {
+        const ativa = etapa.dataset.etapa === etapaAtual;
+        etapa.classList.toggle("ativa", ativa);
+        etapa.hidden = !ativa;
+    });
+
+    document.querySelectorAll("[data-etapa-indicador]").forEach(indicador => {
+        indicador.classList.toggle("ativo", indicador.dataset.etapaIndicador === etapaAtual);
+    });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function irParaEtapaPagamento() {
+    const camposObrigatorios = ["nome", "telefone"];
+    if (tipoRecebimentoSelecionado === "ENTREGA") {
+        camposObrigatorios.push("bairro-entrega", "endereco");
+    }
+    const camposInvalidos = camposObrigatorios
+        .map(id => document.getElementById(id))
+        .filter(campo => campo && !campo.checkValidity());
+
+    if (camposInvalidos.length > 0) {
+        camposInvalidos[0].reportValidity();
+        return;
+    }
+
+    atualizarAvisoInicioEntregas();
+    atualizarEtapaCheckout("pagamento");
+}
+
+function voltarParaEtapaDados() {
+    atualizarEtapaCheckout("dados");
+}
+
+function atualizarAvisoInicioEntregas() {
+    const aviso = document.getElementById("aviso-inicio-entregas");
+    if (!aviso) return;
+    if (tipoRecebimentoSelecionado === "RETIRADA") {
+        aviso.hidden = true;
+        return;
+    }
+
+    const agora = new Date();
+    const minutosAtuais = (agora.getHours() * 60) + agora.getMinutes();
+    const inicioEntregas = (11 * 60) + 30;
+    aviso.hidden = minutosAtuais >= inicioEntregas;
 }
 
 // ==========================================
@@ -280,7 +455,7 @@ async function enviarPedido(e) {
     
     const modoAdminSecreto = Boolean(localStorage.getItem("adminToken"));
 
-    if (diaSemana === 0 || minutosAtuais < (11 * 60 + 30) || minutosAtuais > (15 * 60)) {
+    if (diaSemana === 0 || minutosAtuais < (8 * 60) || minutosAtuais > (15 * 60)) {
         if (!modoAdminSecreto) {
             alert("Desculpe! O restaurante acabou de fechar o expediente de entregas. Não é possível fechar novos pedidos agora.");
             return;
@@ -301,24 +476,28 @@ async function enviarPedido(e) {
 
     // 3. Validação dos Campos do Formulário
     const selectBairro = document.getElementById("bairro-entrega");
-    if (!selectBairro || !selectBairro.value) { 
-        alert("Por favor, selecione o bairro de entrega!"); 
-        return; 
-    }
-
-    const bairroTextoSelecionado = selectBairro.options[selectBairro.selectedIndex]?.text || selectBairro.value;
-    const taxaEntregaSelecionada = typeof window.taxaEntregaSelecionada !== "undefined" ? window.taxaEntregaSelecionada : 0;
-    const totalCalculado = typeof window.totalCalculado !== "undefined" ? window.totalCalculado : 0;
+    const isRetirada = tipoRecebimentoSelecionado === "RETIRADA";
+    const bairroTextoPedido = isRetirada
+        ? "Retirada no estabelecimento"
+        : (selectBairro.options[selectBairro.selectedIndex]?.text || selectBairro.value);
+    const subtotalDoPedido = itens.reduce((soma, item) => {
+        const preco = Number(item.preco || item.valor || 0);
+        const quantidade = Number(item.quantidade || item.qtd || 1);
+        return soma + (preco * quantidade);
+    }, 0);
+    const taxaDoPedido = Number(taxaEntregaSelecionada || 0);
+    const totalComTaxaGeral = subtotalDoPedido + taxaDoPedido;
 
     const nome = document.getElementById("nome").value;
     const contatoTelefone = document.getElementById("telefone").value.toString().trim(); // Garante formato de String limpa para o Java
-    const enderecoRua = document.getElementById("endereco").value;
-    const ref = document.getElementById("ponto-referencia").value || "Não informado";
+    const enderecoRua = isRetirada ? "RETIRADA NO ESTABELECIMENTO" : document.getElementById("endereco").value;
+    const ref = isRetirada ? "Não se aplica" : (document.getElementById("ponto-referencia").value || "Não informado");
+    const observacao = document.getElementById("observacao").value.trim();
     const pagamento = document.getElementById("pagamento").value;
 
-    const enderecoCompleto = `${enderecoRua}, Bairro: ${bairroTextoSelecionado} (Ref: ${ref})`;
-    const totalComTaxaGeral = totalCalculado + taxaEntregaSelecionada;
-
+    const enderecoCompleto = isRetirada
+        ? "RETIRADA NO ESTABELECIMENTO"
+        : `${enderecoRua}, Bairro: ${bairroTextoPedido} (Ref: ${ref})`;
     // 4. PREPARAÇÃO DA ABA DO WHATSAPP (Burlar bloqueadores de pop-up nativos)
     const abaWhatsapp = window.open("about:blank", "_blank");
     if (abaWhatsapp) {
@@ -332,6 +511,12 @@ async function enviarPedido(e) {
         endereco: enderecoCompleto,
         formaPagamento: pagamento,
         valorTotal: Number(totalComTaxaGeral.toFixed(2)),
+        itens: JSON.stringify(itens.map(item => ({
+            ...item,
+            preco: Number(item.preco || item.valor || 0),
+            quantidade: Number(item.quantidade || item.qtd || 1)
+        }))),
+        observacao,
         status: "RECEBIDO" // Já manda o status padrão esperado pelo @PostMapping
     };
 
@@ -340,7 +525,8 @@ async function enviarPedido(e) {
         // 6. BUSCA INTELIGENTE E CORREÇÃO DA URL DA API (Evita Erro 404)
     let urlBase = typeof URL_API_BACKEND !== "undefined" ? URL_API_BACKEND : (window.URL_API_BACKEND || "");
     
-    if (urlBase) {
+    let pedidoSalvoComSucesso = false;
+    if (urlBase && urlBase !== "null") {
         try {
             // Remove barras extras do final e garante que o caminho termine exatamente em /api/pedidos
             let urlLimpa = urlBase.replace(/\/$/, ""); 
@@ -364,6 +550,7 @@ async function enviarPedido(e) {
                 const pedidoSalvo = await response.json();
                 pedidoIdGerado = pedidoSalvo.id; // Vincula o ID real gerado pelo banco Java
                 localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
+                pedidoSalvoComSucesso = true;
             } else {
                 console.error("O backend recusou os dados. Status do erro:", response.status);
             }
@@ -374,30 +561,54 @@ async function enviarPedido(e) {
         console.error("A variável global URL_API_BACKEND não foi localizada.");
     }
 
-
-    // 7. Montagem da Mensagem Textual do WhatsApp
-    let mensagem = "🌵 *NOVO PEDIDO - SABOR CEARENSE* 🌵\n\n";
-    if (pedidoIdGerado !== "NOVO") {
-        mensagem += "🆔 *Pedido Nº:* #" + pedidoIdGerado + "\n";
+    if (!pedidoSalvoComSucesso) {
+        if (abaWhatsapp) abaWhatsapp.close();
+        alert("Não foi possível registrar o pedido no sistema. Tente novamente.");
+        return;
     }
-    mensagem += "👤 *Cliente:* " + nome + "\n";
-    mensagem += "📞 *Contato:* " + contatoTelefone + "\n";
-    mensagem += "📍 *Bairro:* " + bairroTextoSelecionado + "\n";
-    mensagem += "🏠 *Endereço:* " + enderecoRua + "\n";
-    mensagem += "🔍 *Referência:* " + ref + "\n";
-    mensagem += "💳 *Pagamento:* " + pagamento + "\n\n";
-    mensagem += "🛒 *Itens do Pedido:*\n";
+
+
+    // 7. Montagem da mensagem organizada para o WhatsApp
+    const formatarMoedaWhatsApp = valor => `R$ ${Number(valor || 0).toFixed(2).replace(".", ",")}`;
+    let mensagem = "🌵 *SABOR CEARENSE* 🌵\n";
+    mensagem += "━━━━━━━━━━━━━━━━━━━━\n";
+    mensagem += "✅ *NOVO PEDIDO RECEBIDO*\n";
+    if (pedidoIdGerado !== "NOVO") {
+        mensagem += "🆔 *Pedido:* #" + pedidoIdGerado + "\n";
+    }
+
+    mensagem += "\n👤 *DADOS DO CLIENTE*\n";
+    mensagem += "Nome: " + nome + "\n";
+    mensagem += "WhatsApp: " + contatoTelefone + "\n";
+
+    mensagem += isRetirada ? "\n🏪 *RETIRADA NO ESTABELECIMENTO*\n" : "\n📍 *ENDEREÇO DE ENTREGA*\n";
+    if (!isRetirada) {
+        mensagem += "Bairro: " + bairroTextoPedido + "\n";
+        mensagem += "Endereço: " + enderecoRua + "\n";
+        mensagem += "Referência: " + ref + "\n";
+    }
+
+    mensagem += "\n🛒 *ITENS DO PEDIDO*\n";
 
     itens.forEach(item => {
-        const subtotal = (item.preco * item.quantidade).toFixed(2).replace('.', ',');
-        mensagem += "• " + item.quantidade + "x _" + item.nome + "_ - R$ " + subtotal + "\n";
+        const subtotal = Number(item.preco || 0) * Number(item.quantidade || 1);
+        mensagem += "• " + item.quantidade + "x _" + item.nome + "_ — " + formatarMoedaWhatsApp(subtotal) + "\n";
     });
 
-    mensagem += "\n🛵 *Taxa de Entrega:* R$ " + taxaEntregaSelecionada.toFixed(2).replace('.', ',');
-    mensagem += "\n💰 *Total do Pedido:* R$ " + totalComTaxaGeral.toFixed(2).replace('.', ',') + "\n\n";
-    mensagem += "_Por favor, confirme o recebimento do meu pedido!_";
+    if (observacao) {
+        mensagem += "\n📝 *OBSERVAÇÃO DO PEDIDO*\n" + observacao + "\n";
+    }
 
-    const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : (window.WHATSAPP_NUMERO || "5585999999999"); 
+    mensagem += "\n💳 *PAGAMENTO*\n";
+    mensagem += "Forma: " + pagamento + "\n";
+    mensagem += "\n🧾 *RESUMO DO PEDIDO*\n";
+    mensagem += "Subtotal: " + formatarMoedaWhatsApp(subtotalDoPedido) + "\n";
+    mensagem += "Taxa de entrega: " + formatarMoedaWhatsApp(taxaDoPedido) + "\n";
+    mensagem += "💰 *TOTAL: " + formatarMoedaWhatsApp(totalComTaxaGeral) + "*\n";
+    mensagem += "\n━━━━━━━━━━━━━━━━━━━━\n";
+    mensagem += "Por favor, confirme o recebimento do pedido.";
+
+    const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : (window.WHATSAPP_NUMERO || "5521974720736");
     const urlWhatsapp = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
     
     // 8. ETAPA FINAL DE LIMPEZA DO CARRINHO E REDIRECIONAMENTOS
@@ -409,5 +620,5 @@ async function enviarPedido(e) {
         window.open(urlWhatsapp, '_blank');
     }
     
-    window.location.href = "index.html?admin=1&aba=RASTREIO";
+    window.location.href = `acompanhar.html?id=${encodeURIComponent(pedidoIdGerado)}`;
 }

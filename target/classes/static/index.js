@@ -1,13 +1,47 @@
- const URL_BACKEND = "https://saborcearense-5.onrender.com";
+ const URL_BACKEND = window.location.origin;
         let carrinho = {}
         let dadosSacola = carrinho; 
         let estabelecimentoAberto = true;
         let rastreioTimerAutomatizado = null;
 
+        async function compartilharSite() {
+            const urlSite = window.location.origin + window.location.pathname;
+            const dadosCompartilhamento = {
+                title: "Sabor Cearense",
+                text: "Confira o cardápio do Sabor Cearense!",
+                url: urlSite
+            };
+
+            if (navigator.share) {
+                try {
+                    await navigator.share(dadosCompartilhamento);
+                } catch (erro) {
+                    if (erro.name !== "AbortError") {
+                        console.error("Não foi possível compartilhar o site:", erro);
+                        alert("Não foi possível abrir o compartilhamento. Tente novamente.");
+                    }
+                }
+                return;
+            }
+
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(urlSite);
+                    alert("Endereço do site copiado. Agora é só compartilhar!");
+                    return;
+                } catch (erro) {
+                    console.error("Não foi possível copiar o endereço do site:", erro);
+                }
+            }
+
+            window.prompt("Copie o endereço do site para compartilhar:", urlSite);
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             carregarCardapio();
             verificarHorarioFuncionamento();
         });
+        const DIAS_SEMANA = ["DOMINGO", "SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO"];
         async function carregarCardapio() {
             try {
                 const res = await fetch(URL_BACKEND + "/api/cardapio");
@@ -39,7 +73,12 @@
                     "PRATOS_DO_DIA": "", "FRANGO": "", "CARNE": "", "OUTROS": "", "SOBREMESA": "", "BEBIDA": ""
                 };
 
-                itens.forEach(item => {
+                const diaAtual = DIAS_SEMANA[new Date().getDay()];
+                itens
+                .filter(item => item.categoria?.toUpperCase() !== "PRATOS_DO_DIA"
+                    || !item.diaSemana
+                    || item.diaSemana.toUpperCase() === diaAtual)
+                .forEach(item => {
                     const esgotado = !item.disponivel;
                     
                     const nomeNormalizado = item.nome
@@ -120,7 +159,9 @@
             document.querySelectorAll('.btn-aba').forEach(btn => {
                 btn.classList.remove('ativo');
             });
-            if(event && event.currentTarget) event.currentTarget.classList.add('ativo');
+            if (typeof event !== "undefined" && event.currentTarget) {
+                event.currentTarget.classList.add('ativo');
+            }
 
             const barraFlutuante = document.getElementById("barra-flutuante");
             if(barraFlutuante) {
@@ -130,6 +171,10 @@
 
         function abrirAbaRastreioOculta() {
             alternarAba('RASTREIO');
+            const input = document.getElementById("input-rastreio-index");
+            if (input) {
+                window.setTimeout(() => input.focus(), 100);
+            }
             const btnRastreio = document.getElementById("btn-rodape-rastreio");
             if (btnRastreio) {
                 btnRastreio.innerHTML = "📋 Voltar ao Cardápio";
@@ -220,15 +265,20 @@
     atualizarPrecosBarraFlutuante();
 }
 
-        function ejecutarBuscaRastreio() {
+        function executarBuscaRastreio() {
             const input = document.getElementById('input-rastreio-index');
             if (!input) return;
-            const pedidoId = input.value.trim().replace('#', '');
+            const pedidoId = input.value.trim().replace(/^#/, '');
             if (!pedidoId) {
                 alert('Por favor, digite o número do pedido.');
                 return;
             }
-            window.location.href = `acompanhar.html?id=${pedidoId}`;
+            if (!/^\d+$/.test(pedidoId)) {
+                alert('Digite apenas o número do pedido.');
+                input.focus();
+                return;
+            }
+            window.location.href = `acompanhar.html?id=${encodeURIComponent(pedidoId)}`;
         }
 
         function verificarHorarioFuncionamento() {
@@ -282,7 +332,7 @@
     }
     // Codifica o carrinho atual e redireciona para a página de checkout
     const dadosCarrinho = encodeURIComponent(JSON.stringify(carrinho));
-    window.location.href = `checkout.html?carrinho=${dadosCarrinho}`;
+    window.location.href = `carrinho.html?carrinho=${dadosCarrinho}`;
 }
 
     // =========================================================================
@@ -304,7 +354,14 @@ document.addEventListener("DOMContentLoaded", () => {
 });         
 
 /// Substitua o bloco de código a partir da linha 311 por isto:
-carrinho = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
+const carrinhoSalvo = JSON.parse(localStorage.getItem("carrinhoSaborCearense") || "{}");
+carrinho = Array.isArray(carrinhoSalvo)
+    ? carrinhoSalvo.reduce((acumulado, item, indice) => {
+        const chave = String(item.id ?? indice);
+        acumulado[chave] = item;
+        return acumulado;
+    }, {})
+    : (carrinhoSalvo && typeof carrinhoSalvo === "object" ? carrinhoSalvo : {});
 
 // Função disparada pelos botões (+) do cardápio principal
 function mudarQuantidade(id, valor, nome, preco) {
@@ -332,7 +389,7 @@ function mudarQuantidade(id, valor, nome, preco) {
             <div id="lista-opcoes-acomp" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Maionese" style="width: 18px; height: 18px;"> Maionese</label>
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Macarronese" style="width: 18px; height: 18px;"> Macarronese</label>
-                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Salada de Legumes" style="width: 18px; height: 18px;"> Salada de Legumes</label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Legumes" style="width: 18px; height: 18px;"> Legumes</label>
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Purê" style="width: 18px; height: 18px;"> Purê</label>
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Espaguete" style="width: 18px; height: 18px;"> Espaguete</label>
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="checkbox" value="Fritas" style="width: 18px; height: 18px;"> Fritas</label>
@@ -372,7 +429,7 @@ function mudarQuantidade(id, valor, nome, preco) {
 }
 
 // Persistência interna do carrinho de compras
-function ejecutarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
+function executarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
     const idContadorVisual = idOriginal || idChave;
 
     if (!carrinho[idChave]) {
@@ -399,6 +456,8 @@ function ejecutarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
     atualizarValoresBarraFixo();
     renderizarItensSacola();
 }
+
+window.executarMudarQuantidadeReal = executarMudarQuantidadeReal;
 // =========================================================================
 // 🌵 SISTEMA GERAL DE CONTROLE DE SACOLA - PARTE 2 (FINAL)
 // =========================================================================
@@ -423,6 +482,7 @@ function renderizarItensSacola() {
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
                 <div style="flex: 1; padding-right: 12px; text-align: left;">
                     <div style="font-weight: 600; font-size: 14px; color: #1e293b; line-height: 1.3;">${item.nome}</div>
+                    ${String(item.nome).includes(" (") ? `<button type="button" class="botao-editar-acomp" onclick="editarAcompanhamentos('${encodeURIComponent(chaveId)}', '${encodeURIComponent(item.nome)}', ${item.preco}, ${item.quantidade})">Editar acompanhamentos</button>` : ""}
                     <div style="font-size: 13px; color: #27ae60; font-weight: 700; margin-top: 2px;">R$ ${(item.preco * item.quantidade).toFixed(2).replace('.', ',')}</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -462,15 +522,7 @@ function abrirSacola() {
     const gaveta = document.getElementById('conteudo-gaveta-sacola');
     if (!modal || !gaveta) return;
 
-    // Exibe o fundo escuro e traz a sacola para a frente
-    modal.style.display = "block";
-    modal.style.position = "fixed";
-    modal.style.top = "0";
-    modal.style.left = "0";
-    modal.style.width = "100vw";
-    modal.style.height = "100vh";
-    modal.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-    modal.style.zIndex = "99999";
+    modal.classList.add("open");
 
     renderizarItensSacola();
 
@@ -502,7 +554,7 @@ function abrirSacola() {
 
 function fecharSacola() {
     const modal = document.getElementById('painel-sacola-modal');
-    if (modal) modal.style.display = "none";
+    if (modal) modal.classList.remove("open");
 }
 
 function irParaCheckout() {
@@ -511,10 +563,9 @@ function irParaCheckout() {
         alert("Sua sacola está vazia! Escolha um prato do cardápio.");
         return;
     }
-    window.location.href = `checkout.html?carrinho=${encodeURIComponent(JSON.stringify(listaItens))}`;
+    window.location.href = `carrinho.html?carrinho=${encodeURIComponent(JSON.stringify(listaItens))}`;
 }
 
-// Garante carregamento dos valores salvos ao abrir o app
 document.addEventListener("DOMContentLoaded", () => {
     atualizarValoresBarraFixo();
 });

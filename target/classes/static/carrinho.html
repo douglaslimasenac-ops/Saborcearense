@@ -123,6 +123,43 @@
             font-size: 1.4rem;
             color: var(--success);
         }
+        .secao-card .secao-intro {
+            margin: -10px 0 20px;
+            color: #806b51;
+            font-size: 0.9rem;
+        }
+        .form-grupo small {
+            margin-top: 5px;
+            color: #927d65;
+            font-size: 0.78rem;
+        }
+        .resumo-taxa {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            color: #806b51;
+            font-size: 0.9rem;
+        }
+        .resumo-taxa + .total-container {
+            margin-top: 8px;
+        }
+        .aviso-entrega {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 16px;
+            padding: 13px 15px;
+            border: 1px solid #efd2a6;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #fff8e8, #fffaf2);
+            color: #7a4b16;
+            font-size: 0.88rem;
+            line-height: 1.4;
+        }
+        .aviso-entrega strong {
+            display: block;
+            color: #6b4215;
+        }
 
         .form-grupo {
             margin-bottom: 18px;
@@ -181,6 +218,233 @@
             margin-top: 10px;
             display: none;
         }
+
+        /* Acabamento artesanal premium do checkout */
+        body {
+            background: radial-gradient(circle at 8% 0%, rgba(217, 144, 36, 0.12), transparent 25rem), #f8f3ea;
+            color: #2f2922;
+        }
+        .container-checkout {
+            max-width: 680px;
+        }
+        .btn-voltar {
+            color: #a85e16;
+            padding: 8px 0;
+        }
+        .secao-card {
+            padding: 26px;
+            border: 1px solid #eadbc5;
+            border-radius: 20px;
+            box-shadow: 0 10px 28px rgba(79, 52, 23, 0.08);
+        }
+        .secao-card h2 {
+            color: #29231d;
+            border-bottom-color: #f4eadb;
+        }
+        .item-resumo {
+            padding: 14px 0;
+            border-bottom-color: #f0e5d6;
+        }
+        .item-qtd-tag {
+            color: #a85e16;
+            background: #f7e7c7;
+            border-radius: 999px;
+        }
+        .item-preco-sub {
+            color: #a85e16;
+        }
+        .total-container {
+            background: #fffaf2;
+            border-color: #d99024;
+            border-radius: 14px;
+        }
+        .total-preco {
+            color: #237a4b;
+        }
+        .form-grupo label {
+            color: #5f5448;
+        }
+        .form-grupo input,
+        .form-grupo select,
+        .form-grupo textarea {
+            padding: 13px 14px;
+            border: 1px solid #eadbc5;
+            border-radius: 11px;
+            color: #2f2922;
+            background: #fffdf9;
+        }
+        .form-grupo textarea {
+            resize: vertical;
+            min-height: 84px;
+            font-family: inherit;
+        }
+        .form-grupo input:focus,
+        .form-grupo select:focus,
+        .form-grupo textarea:focus {
+            border-color: #d99024;
+            box-shadow: 0 0 0 4px rgba(217, 144, 36, 0.14);
+        }
+        .btn-enviar {
+            border-radius: 999px;
+            background: linear-gradient(135deg, #d99024, #e8ad4c);
+            box-shadow: 0 8px 18px rgba(168, 94, 22, 0.24);
+        }
+        .btn-enviar:hover {
+            background: linear-gradient(135deg, #c47b17, #d99024);
+        }
+        .box-pix {
+            border-radius: 14px;
+            border-color: #a7d9b8;
+        }
+        .checkout-etapas {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 4px 0 18px;
+            padding: 0 4px;
+        }
+        .checkout-etapa-indicador {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #9a8b7b;
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+        .checkout-etapa-indicador span {
+            display: grid;
+            width: 30px;
+            height: 30px;
+            place-items: center;
+            border-radius: 50%;
+            background: #eadbc5;
+            color: #806b51;
+            font-weight: 800;
+        }
+        .checkout-etapa-indicador.ativo {
+            color: #5a321d;
+        }
+        .checkout-etapa-indicador.ativo span {
+            background: #d99024;
+            color: #29231d;
+        }
+        .checkout-etapa-linha {
+            flex: 1;
+            height: 1px;
+            background: #eadbc5;
+        }
+        .checkout-etapa-conteudo {
+            display: none;
+        }
+        .checkout-etapa-conteudo.ativa {
+            display: block;
+        }
+        .aviso-inicio-entregas {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 0 0 18px;
+            padding: 13px 15px;
+            border: 1px solid #efd2a6;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #fff8e8, #fffaf2);
+            color: #7a4b16;
+            text-align: left;
+            line-height: 1.4;
+        }
+        .aviso-inicio-entregas strong {
+            display: block;
+            color: #6b4215;
+        }
+        .opcoes-recebimento {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .opcao-recebimento {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            padding: 12px;
+            border: 1px solid #eadbc5;
+            border-radius: 12px;
+            background: #fffaf1;
+            color: #4a3a29;
+            cursor: pointer;
+        }
+        .opcao-recebimento:has(input:checked) {
+            border-color: #d99024;
+            background: #fff4dc;
+            box-shadow: 0 0 0 2px rgba(217, 144, 36, 0.12);
+        }
+        .opcao-recebimento input {
+            margin-top: 3px;
+            accent-color: #d99024;
+        }
+        .opcao-recebimento strong,
+        .opcao-recebimento small {
+            display: block;
+        }
+        .opcao-recebimento small {
+            margin-top: 3px;
+            color: #766b5f;
+            font-size: 0.75rem;
+        }
+        .aviso-retirada {
+            margin: 0;
+            padding: 12px;
+            border-radius: 12px;
+            background: #fff8e8;
+            color: #7a4b16;
+            font-weight: 600;
+        }
+        @media (max-width: 430px) {
+            .opcoes-recebimento {
+                grid-template-columns: 1fr;
+            }
+        }
+        .btn-continuar-checkout,
+        .btn-voltar-checkout {
+            width: 100%;
+            min-height: 48px;
+            border: 0;
+            border-radius: 999px;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 800;
+        }
+        .btn-continuar-checkout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 2px 0 20px;
+            background: linear-gradient(135deg, #d99024, #e8ad4c);
+            color: #29231d;
+            box-shadow: 0 8px 18px rgba(168, 94, 22, 0.2);
+        }
+        .btn-continuar-checkout span {
+            font-size: 1.25rem;
+        }
+        .btn-voltar-checkout {
+            margin-bottom: 10px;
+            border: 1px solid #eadbc5;
+            background: #fffaf2;
+            color: #6b513d;
+        }
+        @media (max-width: 520px) {
+            body { padding: 18px 12px; }
+            .secao-card { padding: 20px 16px; }
+            .container-checkout { width: 100%; }
+            .total-container { gap: 12px; font-size: 1rem; }
+            .total-preco { font-size: 1.2rem; }
+            .item-resumo { gap: 10px; }
+            .item-nome { overflow-wrap: anywhere; }
+            .item-preco-sub { white-space: nowrap; }
+            .checkout-etapa-indicador strong { display: none; }
+            .checkout-etapa-indicador span { width: 28px; height: 28px; }
+        }
     </style>
 </head>
 <body>
@@ -191,6 +455,14 @@
             <h2>🛒 Itens Selecionados</h2>
             <div id="lista-itens-carrinho"></div>
             
+            <div class="resumo-taxa">
+                <span>Subtotal dos itens</span>
+                <span id="subtotal-produtos">R$ 0,00</span>
+            </div>
+            <div class="resumo-taxa">
+                <span>Taxa de entrega</span>
+                <span id="taxa-entrega">R$ 0,00</span>
+            </div>
             <div class="total-container">
                 <span>Valor Total:</span>
                 <span id="valor-total" class="total-preco">R$ 0,00</span>
@@ -198,8 +470,22 @@
         </div>
 
         <form id="form-pedido">
+            <div class="checkout-etapas" aria-label="Etapas do pedido">
+                <div class="checkout-etapa-indicador ativo" data-etapa-indicador="dados">
+                    <span>1</span>
+                    <strong>Entrega</strong>
+                </div>
+                <div class="checkout-etapa-linha"></div>
+                <div class="checkout-etapa-indicador" data-etapa-indicador="pagamento">
+                    <span>2</span>
+                    <strong>Pagamento</strong>
+                </div>
+            </div>
+
+            <section class="checkout-etapa-conteudo ativa" data-etapa="dados">
             <div class="secao-card">
-                <h2>👤 Passo 1: Seus Dados de Entrega</h2>
+                <h2>👤 Seus dados</h2>
+                <p class="secao-intro">Informe como podemos identificar e contatar você.</p>
                 <div class="form-grupo">
                     <label for="nome">Nome Completo</label>
                     <input type="text" id="nome" required placeholder="Digite o nome de quem vai receber">
@@ -210,36 +496,74 @@
                     <input type="tel" id="telefone" required placeholder="Ex: (21) 99999-9999">
                 </div>
 
+            </div>
+
+            <div class="secao-card">
+                <h2>🛵 Como deseja receber?</h2>
+                <p class="secao-intro">Escolha entre receber em casa ou retirar no estabelecimento.</p>
+                <div class="opcoes-recebimento" role="radiogroup" aria-label="Forma de recebimento">
+                    <label class="opcao-recebimento selecionada">
+                        <input type="radio" name="tipo-recebimento" value="ENTREGA" checked onchange="alterarTipoRecebimento(this.value)">
+                        <span>🛵 <strong>Entrega</strong><small>Receba no endereço informado</small></span>
+                    </label>
+                    <label class="opcao-recebimento">
+                        <input type="radio" name="tipo-recebimento" value="RETIRADA" onchange="alterarTipoRecebimento(this.value)">
+                        <span>🏪 <strong>Retirada</strong><small>Retire no estabelecimento</small></span>
+                    </label>
+                </div>
+                <div id="campos-entrega">
+                <h3>📍 Endereço de entrega</h3>
                 <div class="form-grupo">
                     <label for="bairro-entrega">Selecione o Bairro de Entrega</label>
                     <select id="bairro-entrega" required onchange="atualizarTaxaEntrega(this.value)">
-                        <option value="" disabled selected>Escolha o seu bairro...</option>
-                        <option value="Engenho Novo|0.00">Engenho Novo - R$ 0,00</option>
-                        <option value="Méier|3.00">Fátima - R$ 3,00</option>
-                        <option value="Grajaú|5.00">Grajaú - R$ 5,00</option>
-                        <option value="Andaraí|6.00">Andaraí - R$ 6,00</option>
-                        <option value="Tijuca|7.00">Tijuca - R$ 7,00</option>
-                        <option value="Cachambi|5.00">Cachambi - R$ 5,00</option>   
+                        <option value="" disabled selected>Carregando bairros...</option>
                     </select>
                 </div>
 
                 <div class="form-grupo">
                     <label for="endereco">Rua, Número, Bloco ou Apto</label>
                     <input type="text" id="endereco" required placeholder="Ex: Rua São Paulo, 123 - Bloco B Apto 202">
+                    <small>Inclua número, bloco, apartamento ou complemento.</small>
                 </div>
 
                 <div class="form-grupo">
                     <label for="ponto-referencia">Ponto de Referência (Opcional)</label>
                     <input type="text" id="ponto-referencia" placeholder="Ex: Próximo ao mercadinho ou praça">
                 </div>
+                </div>
+                <p id="aviso-retirada" class="aviso-retirada" hidden>🏪 Seu pedido ficará disponível para retirada no estabelecimento.</p>
             </div>
 
             <div class="secao-card">
-                <h2>💳 Passo 2: Forma de Pagamento</h2>
+                <h2>📝 Observação do pedido</h2>
+                <p class="secao-intro">Algum detalhe especial para preparar ou entregar seu pedido?</p>
+                <div class="form-grupo">
+                    <label for="observacao">Observação do Pedido (Opcional)</label>
+                    <textarea id="observacao" maxlength="500" rows="3" placeholder="Ex: Tirar cebola, enviar talheres ou tocar o interfone"></textarea>
+                    <small><span id="contador-observacao">0</span>/500 caracteres</small>
+                </div>
+            </div>
+
+            <button type="button" class="btn-continuar-checkout" onclick="irParaEtapaPagamento()">
+                Continuar para pagamento <span>→</span>
+            </button>
+            </section>
+
+            <section class="checkout-etapa-conteudo" data-etapa="pagamento" hidden>
+            <div class="secao-card">
+                <h2>💳 Forma de pagamento</h2>
+                <p class="secao-intro">Escolha como deseja pagar e confira o total do pedido.</p>
+                <div id="aviso-inicio-entregas" class="aviso-inicio-entregas" hidden>
+                    <span aria-hidden="true">🕦</span>
+                    <div>
+                        <strong>Seu pedido pode ser feito agora.</strong>
+                        As entregas começam a partir das 11:30. Assim que o restaurante iniciar as entregas, seu pedido será preparado e despachado.
+                    </div>
+                </div>
                 <div class="form-grupo">
                     <label for="pagamento">Escolha como deseja pagar:</label>
                     <select id="pagamento" required onchange="controlarExibicaoPix(this.value)">
-                        <option value="Pix" selected>Pix (Copia e Cola Direto no Site)</option>
+                                <option value="Pix" selected>Pix (QR Code ou Copia e Cola)</option>
                         <option value="Dinheiro">Dinheiro (Pagar na Entrega)</option>
                         <option value="Cartão de Crédito">Cartão de Crédito (Na Entrega)</option>
                         <option value="Cartão de Débito">Cartão de Débito (Na Entrega)</option>
@@ -253,20 +577,26 @@
             </div>
 
             <div id="container-pix-dinamico" class="box-pix" style="display: block;">
-                <p style="margin: 0 0 8px 0; font-weight: bold; color: #166534; font-size: 0.95rem;">🔑 Chave CNPJ do Sabor Cearense:</p>
+                <p style="margin: 0 0 8px 0; font-weight: bold; color: #166534; font-size: 0.95rem;">📲 Escaneie para pagar o valor exato:</p>
+                <div id="pix-qrcode" style="display: flex; justify-content: center; margin: 12px 0;"></div>
+                <p id="pix-valor-gerado" style="margin: 0 0 10px; text-align: center; color: #166534; font-weight: 800;">Valor: R$ 0,00</p>
+                <p style="margin: 0 0 8px 0; font-weight: bold; color: #166534; font-size: 0.95rem;">🔑 Pix Copia e Cola (CNPJ):</p>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="chave-pix-texto" value="21974720736" readonly style="flex: 1; padding: 10px; border: 1px solid #bbf7d0; border-radius: 6px; font-weight: bold; text-align: center; background: #fff; color: #166534;">
+                    <input type="text" id="chave-pix-texto" readonly style="flex: 1; padding: 10px; border: 1px solid #bbf7d0; border-radius: 6px; font-weight: bold; text-align: center; background: #fff; color: #166534;">
                     <button type="button" onclick="copiarChavePix()" style="background: #22c55e; color: white; border: none; padding: 0 15px; font-weight: bold; border-radius: 6px; cursor: pointer;">Copiar</button>
                 </div>
-                <p style="margin: 8px 0 0 0; font-size: 0.8rem; color: #166534;">💡 Copie o número acima, faça a transferência no seu banco e clique no botão abaixo para nos enviar o comprovante!</p>
+                <p style="margin: 8px 0 0 0; font-size: 0.8rem; color: #166534;">💡 Depois do pagamento, finalize o pedido abaixo e envie o comprovante diretamente na conversa do WhatsApp.</p>
             </div>
             
             <div style="margin-top: 25px;">
+                <button type="button" class="btn-voltar-checkout" onclick="voltarParaEtapaDados()">← Voltar para entrega</button>
                 <button type="button" class="btn-enviar" onclick="enviarPedido(event)">Finalizar e Enviar para o WhatsApp 🌵</button>
             </div>
+            </section>
         </form>
     </div>
      <!-- Vincle o seu novo arquivo externo aqui de forma limpa -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="carrinho.js"></script>
 </body>
 </html>

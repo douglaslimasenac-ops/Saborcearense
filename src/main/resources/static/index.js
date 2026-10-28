@@ -1,4 +1,4 @@
- const URL_BACKEND = "https://saborcearense-5.onrender.com";
+ const URL_BACKEND = window.location.origin;
         let carrinho = {}
         let dadosSacola = carrinho; 
         let estabelecimentoAberto = true;
@@ -75,7 +75,9 @@
 
                 const diaAtual = DIAS_SEMANA[new Date().getDay()];
                 itens
-                .filter(item => item.categoria?.toUpperCase() !== "PRATOS_DO_DIA" || item.diaSemana === diaAtual)
+                .filter(item => item.categoria?.toUpperCase() !== "PRATOS_DO_DIA"
+                    || !item.diaSemana
+                    || item.diaSemana.toUpperCase() === diaAtual)
                 .forEach(item => {
                     const esgotado = !item.disponivel;
                     
