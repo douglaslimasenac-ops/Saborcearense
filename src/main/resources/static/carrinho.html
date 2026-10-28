@@ -356,6 +356,54 @@
             display: block;
             color: #6b4215;
         }
+        .opcoes-recebimento {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .opcao-recebimento {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            padding: 12px;
+            border: 1px solid #eadbc5;
+            border-radius: 12px;
+            background: #fffaf1;
+            color: #4a3a29;
+            cursor: pointer;
+        }
+        .opcao-recebimento:has(input:checked) {
+            border-color: #d99024;
+            background: #fff4dc;
+            box-shadow: 0 0 0 2px rgba(217, 144, 36, 0.12);
+        }
+        .opcao-recebimento input {
+            margin-top: 3px;
+            accent-color: #d99024;
+        }
+        .opcao-recebimento strong,
+        .opcao-recebimento small {
+            display: block;
+        }
+        .opcao-recebimento small {
+            margin-top: 3px;
+            color: #766b5f;
+            font-size: 0.75rem;
+        }
+        .aviso-retirada {
+            margin: 0;
+            padding: 12px;
+            border-radius: 12px;
+            background: #fff8e8;
+            color: #7a4b16;
+            font-weight: 600;
+        }
+        @media (max-width: 430px) {
+            .opcoes-recebimento {
+                grid-template-columns: 1fr;
+            }
+        }
         .btn-continuar-checkout,
         .btn-voltar-checkout {
             width: 100%;
@@ -451,8 +499,20 @@
             </div>
 
             <div class="secao-card">
-                <h2>📍 Endereço de entrega</h2>
-                <p class="secao-intro">Preencha o local onde deseja receber o pedido.</p>
+                <h2>🛵 Como deseja receber?</h2>
+                <p class="secao-intro">Escolha entre receber em casa ou retirar no estabelecimento.</p>
+                <div class="opcoes-recebimento" role="radiogroup" aria-label="Forma de recebimento">
+                    <label class="opcao-recebimento selecionada">
+                        <input type="radio" name="tipo-recebimento" value="ENTREGA" checked onchange="alterarTipoRecebimento(this.value)">
+                        <span>🛵 <strong>Entrega</strong><small>Receba no endereço informado</small></span>
+                    </label>
+                    <label class="opcao-recebimento">
+                        <input type="radio" name="tipo-recebimento" value="RETIRADA" onchange="alterarTipoRecebimento(this.value)">
+                        <span>🏪 <strong>Retirada</strong><small>Retire no estabelecimento</small></span>
+                    </label>
+                </div>
+                <div id="campos-entrega">
+                <h3>📍 Endereço de entrega</h3>
                 <div class="form-grupo">
                     <label for="bairro-entrega">Selecione o Bairro de Entrega</label>
                     <select id="bairro-entrega" required onchange="atualizarTaxaEntrega(this.value)">
@@ -476,6 +536,8 @@
                     <label for="ponto-referencia">Ponto de Referência (Opcional)</label>
                     <input type="text" id="ponto-referencia" placeholder="Ex: Próximo ao mercadinho ou praça">
                 </div>
+                </div>
+                <p id="aviso-retirada" class="aviso-retirada" hidden>🏪 Seu pedido ficará disponível para retirada no estabelecimento.</p>
             </div>
 
             <div class="secao-card">

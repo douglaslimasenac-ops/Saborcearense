@@ -7,6 +7,7 @@ let listaPratosGlobal = [];
 let totalCalculado = 0;
 let taxaEntregaSelecionada = 0;
 let bairroTextoSelecionado = "";
+let tipoRecebimentoSelecionado = "ENTREGA";
 let carrinho = {};
 
 const URL_API_BACKEND = window.location.origin;
@@ -228,6 +229,35 @@ function atualizarTaxaEntrega(valorSelect) {
     atualizarResumoFinanceiroTela();
 }
 
+function alterarTipoRecebimento(tipo) {
+    tipoRecebimentoSelecionado = tipo === "RETIRADA" ? "RETIRADA" : "ENTREGA";
+    const camposEntrega = document.getElementById("campos-entrega");
+    const avisoRetirada = document.getElementById("aviso-retirada");
+    const bairro = document.getElementById("bairro-entrega");
+    const endereco = document.getElementById("endereco");
+    const referencia = document.getElementById("ponto-referencia");
+    const entrega = tipoRecebimentoSelecionado === "ENTREGA";
+
+    if (camposEntrega) camposEntrega.hidden = !entrega;
+    if (avisoRetirada) avisoRetirada.hidden = entrega;
+    [bairro, endereco, referencia].forEach(campo => {
+        if (campo) campo.disabled = !entrega;
+    });
+    if (bairro) bairro.required = entrega;
+    if (endereco) endereco.required = entrega;
+    if (!entrega) {
+        taxaEntregaSelecionada = 0;
+        bairroTextoSelecionado = "";
+    } else if (bairro && bairro.value) {
+        atualizarTaxaEntrega(bairro.value);
+    }
+    atualizarResumoFinanceiroTela();
+    document.querySelectorAll(".opcao-recebimento").forEach(opcao => {
+        const radio = opcao.querySelector("input");
+        opcao.classList.toggle("selecionada", Boolean(radio && radio.checked));
+    });
+}
+
 function atualizarValoresTela() {
     totalCalculado = subtotalProdutos;
     atualizarResumoFinanceiroTela();
@@ -348,7 +378,10 @@ function atualizarEtapaCheckout(etapaAtual) {
 }
 
 function irParaEtapaPagamento() {
-    const camposObrigatorios = ["nome", "telefone", "bairro-entrega", "endereco"];
+    const camposObrigatorios = ["nome", "telefone"];
+    if (tipoRecebimentoSelecionado === "ENTREGA") {
+        camposObrigatorios.push("bairro-entrega", "endereco");
+    }
     const camposInvalidos = camposObrigatorios
         .map(id => document.getElementById(id))
         .filter(campo => campo && !campo.checkValidity());
@@ -369,6 +402,10 @@ function voltarParaEtapaDados() {
 function atualizarAvisoInicioEntregas() {
     const aviso = document.getElementById("aviso-inicio-entregas");
     if (!aviso) return;
+    if (tipoRecebimentoSelecionado === "RETIRADA") {
+        aviso.hidden = true;
+        return;
+    }
 
     const agora = new Date();
     const minutosAtuais = (agora.getHours() * 60) + agora.getMinutes();
@@ -412,12 +449,10 @@ async function enviarPedido(e) {
 
     // 3. Validação dos Campos do Formulário
     const selectBairro = document.getElementById("bairro-entrega");
-    if (!selectBairro || !selectBairro.value) { 
-        alert("Por favor, selecione o bairro de entrega!"); 
-        return; 
-    }
-
-    const bairroTextoSelecionado = selectBairro.options[selectBairro.selectedIndex]?.text || selectBairro.value;
+    const isRetirada = tipoRecebimentoSelecionado === "RETIRADA";
+    const bairroTextoPedido = isRetirada
+        ? "Retirada no estabelecimento"
+        : (selectBairro.options[selectBairro.selectedIndex]?.text || selectBairro.value);
     const subtotalDoPedido = itens.reduce((soma, item) => {
         const preco = Number(item.preco || item.valor || 0);
         const quantidade = Number(item.quantidade || item.qtd || 1);
@@ -428,12 +463,14 @@ async function enviarPedido(e) {
 
     const nome = document.getElementById("nome").value;
     const contatoTelefone = document.getElementById("telefone").value.toString().trim(); // Garante formato de String limpa para o Java
-    const enderecoRua = document.getElementById("endereco").value;
-    const ref = document.getElementById("ponto-referencia").value || "Não informado";
+    const enderecoRua = isRetirada ? "RETIRADA NO ESTABELECIMENTO" : document.getElementById("endereco").value;
+    const ref = isRetirada ? "Não se aplica" : (document.getElementById("ponto-referencia").value || "Não informado");
     const observacao = document.getElementById("observacao").value.trim();
     const pagamento = document.getElementById("pagamento").value;
 
-    const enderecoCompleto = `${enderecoRua}, Bairro: ${bairroTextoSelecionado} (Ref: ${ref})`;
+    const enderecoCompleto = isRetirada
+        ? "RETIRADA NO ESTABELECIMENTO"
+        : `${enderecoRua}, Bairro: ${bairroTextoPedido} (Ref: ${ref})`;
     // 4. PREPARAÇÃO DA ABA DO WHATSAPP (Burlar bloqueadores de pop-up nativos)
     const abaWhatsapp = window.open("about:blank", "_blank");
     if (abaWhatsapp) {
@@ -517,10 +554,12 @@ async function enviarPedido(e) {
     mensagem += "Nome: " + nome + "\n";
     mensagem += "WhatsApp: " + contatoTelefone + "\n";
 
-    mensagem += "\n📍 *ENDEREÇO DE ENTREGA*\n";
-    mensagem += "Bairro: " + bairroTextoSelecionado + "\n";
-    mensagem += "Endereço: " + enderecoRua + "\n";
-    mensagem += "Referência: " + ref + "\n";
+    mensagem += isRetirada ? "\n🏪 *RETIRADA NO ESTABELECIMENTO*\n" : "\n📍 *ENDEREÇO DE ENTREGA*\n";
+    if (!isRetirada) {
+        mensagem += "Bairro: " + bairroTextoPedido + "\n";
+        mensagem += "Endereço: " + enderecoRua + "\n";
+        mensagem += "Referência: " + ref + "\n";
+    }
 
     mensagem += "\n🛒 *ITENS DO PEDIDO*\n";
 

@@ -62,7 +62,7 @@
         .linha-tempo::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 4px; background: #e2e8f0; z-index: 1; }
         .passo { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; width: 60px; }
         .circulo { width: 34px; height: 34px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #718096; border: 3px solid #ffffff; transition: all 0.3s; }
-        .legenda { font-size: 0.75rem; font-weight: bold; color: #a0aec0; margin-top: 8px; white-space: nowrap; }
+        .legenda { max-width: 92px; font-size: 0.75rem; font-weight: bold; color: #a0aec0; margin-top: 8px; line-height: 1.15; text-align: center; }
         
         .passo.concluido .circulo { background: #27ae60; color: white; }
         .passo.concluido .legenda { color: #27ae60; }
@@ -170,7 +170,7 @@
         <div class="status-atual" id="txt-status-nome">Insira o número do pedido acima...</div>
         <div class="status-subtitulo" id="txt-status-detalhe">Aguardando o número do pedido.</div>
         <div class="barra-progresso" aria-label="Progresso do pedido"><span id="barra-progresso"></span></div>
-        <p style="color: #718096; font-size: 0.9rem; margin-bottom: 25px;">Acompanhe o status real das suas entregas do Sabor Cearense.</p>
+        <p style="color: #718096; font-size: 0.9rem; margin-bottom: 25px;">Acompanhe o status real do seu pedido no Sabor Cearense.</p>
         <div class="painel-pedido" id="painel-pedido">
             <h3>🧾 Resumo do pedido</h3>
             <div id="itens-acompanhamento"></div>
@@ -269,8 +269,8 @@
                     document.getElementById("txt-pedido-id").innerText = `#${idLimpo}`;
                 }
 
-                // Atualiza a interface visual da linha do tempo
-                atualizarInterfaceLinhaTempo(pedido.status);
+                // Atualiza a interface visual conforme entrega ou retirada
+                atualizarInterfaceLinhaTempo(pedido.status, String(pedido.endereco || "").toUpperCase().startsWith("RETIRADA"));
                 renderizarResumoPedido(pedido);
                 atualizarEstadoConexao(true);
                 
@@ -433,8 +433,12 @@
     document.head.appendChild(style);
 })();
 
-function atualizarInterfaceLinhaTempo(statusOriginal) {
+function atualizarInterfaceLinhaTempo(statusOriginal, ehRetirada) {
     const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
+    const passoEntrega = document.querySelector("#passo-ENTREGA .legenda");
+    const passoFinal = document.querySelector("#passo-ENTREGUE .legenda");
+    if (passoEntrega) passoEntrega.textContent = ehRetirada ? "Pronto para retirada" : "A caminho";
+    if (passoFinal) passoFinal.textContent = ehRetirada ? "Retirado" : "Entregue";
     
     const dicionarioNomes = {
         "RECEBIDO": "👍 Seu pedido foi recebido com sucesso!",
@@ -443,6 +447,10 @@ function atualizarInterfaceLinhaTempo(statusOriginal) {
         "ENTREGUE": "✅ Pedido entregue! O Sabor Cearense agradece.",
         "CANCELADO": "❌ Este pedido foi cancelado."
     };
+    if (ehRetirada) {
+        dicionarioNomes.ENTREGA = "🏪 Seu pedido está pronto para retirada!";
+        dicionarioNomes.ENTREGUE = "✅ Pedido retirado! O Sabor Cearense agradece.";
+    }
 
     let statusDoBanco = statusOriginal ? statusOriginal.toUpperCase() : "RECEBIDO";
     if (statusDoBanco === "PREPARANDO") statusDoBanco = "PREPARO";
@@ -455,7 +463,7 @@ function atualizarInterfaceLinhaTempo(statusOriginal) {
     const detalhesStatus = document.getElementById("txt-status-detalhe");
     if (detalhesStatus) {
         detalhesStatus.innerText = statusDoBanco === "ENTREGUE"
-            ? "Tudo certo! Esperamos que você aproveite sua refeição."
+            ? (ehRetirada ? "Tudo certo! Obrigado por retirar seu pedido." : "Tudo certo! Esperamos que você aproveite sua refeição.")
             : "Acompanhe por aqui enquanto preparamos tudo com carinho.";
     }
     const barraProgresso = document.getElementById("barra-progresso");

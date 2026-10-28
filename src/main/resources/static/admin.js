@@ -640,6 +640,16 @@ function obterTotalPedido(pedido) {
     return totalRegistrado > 0 ? totalRegistrado : calcularTotalItensPedido(pedido);
 }
 
+function pedidoEDeRetirada(pedido) {
+    return String(pedido?.endereco || "").trim().toUpperCase().startsWith("RETIRADA");
+}
+
+function obterLocalPedido(pedido) {
+    return pedidoEDeRetirada(pedido)
+        ? "🏪 RETIRADA NO ESTABELECIMENTO"
+        : `📍 Endereço: ${escaparHtml(pedido.endereco || "Não informado")}`;
+}
+
 function atualizarResumoFinanceiro(pedidos, elementoId) {
     const elemento = document.getElementById(elementoId);
     if (!elemento) return;
@@ -681,13 +691,14 @@ function atualizarListaPedidos(container, pedidos, tipo) {
         .filter(pedido => tipo === "ativos" ? pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO' : pedido.status === 'ENTREGUE' || pedido.status === 'CANCELADO')
         .map(pedido => {
             if (tipo === "ativos") {
+                const retirada = pedidoEDeRetirada(pedido);
                 const card = document.createElement("div");
                 card.className = "card-pedido";
                 card.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div>
                             <h4 style="margin: 0 0 6px 0; color: #1e293b;">📋 Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
-                            <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
+                            <small style="color: ${retirada ? "#92400e" : "var(--text-muted)"}; display: block; margin-bottom: 4px; font-size: 0.9rem; font-weight: ${retirada ? "800" : "400"};">${obterLocalPedido(pedido)}</small>
                             <small style="color: #0f766e; font-weight: 700; font-size: 0.9rem;">💳 Forma de Pagamento: ${pedido.formaPagamento}</small>
                             <small style="display: block; margin-top: 6px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
                             <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
@@ -698,8 +709,8 @@ function atualizarListaPedidos(container, pedidos, tipo) {
                     ${renderizarItensPedido(pedido)}
                     <div class="acoes-pedido-bloco" style="border-top: 1px solid #f1f5f9; padding-top: 14px; display: flex; gap: 10px; justify-content: flex-end;">
                         <button class="btn-status-toggle ativo" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;" onclick="mudarStatusPedido(${pedido.id}, 'PREPARO')">👨‍🍳 Preparar</button>
-                        <button class="btn-status-toggle ativo" style="background: #f0fdf4; color: #166534; border-color: #bbf7d0;" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGA')">🛵 Despachar</button>
-                        <button class="btn-status-toggle inativo" style="background: #f8fafc; color: #1e293b; border-color: #cbd5e1;" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGUE')">✅ Finalizar</button>
+                        <button class="btn-status-toggle ativo" style="background: ${retirada ? "#fff7ed" : "#f0fdf4"}; color: ${retirada ? "#9a3412" : "#166534"}; border-color: ${retirada ? "#fed7aa" : "#bbf7d0"};" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGA')">${retirada ? "📦 Disponibilizar retirada" : "🛵 Despachar"}</button>
+                        <button class="btn-status-toggle inativo" style="background: #f8fafc; color: #1e293b; border-color: #cbd5e1;" onclick="mudarStatusPedido(${pedido.id}, 'ENTREGUE')">${retirada ? "✅ Confirmar retirada" : "✅ Finalizar"}</button>
                         <button class="btn-status-toggle inativo" style="background: #fff1f2; color: #be123c; border-color: #fecdd3;" onclick="cancelarPedido(${pedido.id})">✕ Cancelar</button>
                     </div>
                 `;
@@ -716,13 +727,14 @@ function atualizarListaPedidos(container, pedidos, tipo) {
             }
 
             const card = document.createElement("div");
+            const retirada = pedidoEDeRetirada(pedido);
             card.className = "card-pedido";
             card.style.borderLeft = pedido.status === "CANCELADO" ? "5px solid #e11d48" : "5px solid var(--success)";
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                     <div>
                         <h4 style="margin: 0 0 6px 0; color: #1e293b;">${pedido.status === "CANCELADO" ? "✕" : "✅"} Pedido #${pedido.id} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
-                        <small style="color: var(--text-muted); display: block; margin-bottom: 4px; font-size: 0.9rem;">📍 Endereço: ${pedido.endereco}</small>
+                        <small style="color: ${retirada ? "#92400e" : "var(--text-muted)"}; display: block; margin-bottom: 4px; font-size: 0.9rem; font-weight: ${retirada ? "800" : "400"};">${obterLocalPedido(pedido)}</small>
                         <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento}</small>
                         <small style="display: block; margin-top: 4px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
                         <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
@@ -883,7 +895,7 @@ function imprimirCupomIFood(pedido) {
     janelaImpressao.document.close();
 
     var elEstilo = janelaImpressao.document.createElement("style");
-    var regrasCSS = "body { width: 72mm; max-width: 72mm; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.35; margin: 0 auto; padding: 3mm 2mm; color: #000; background: #fff; overflow-wrap: anywhere; } .text-center { text-align: center; } .text-right { text-align: right; } .negrito { font-weight: bold; } .divider-dashed { border-top: 1px dashed #000; margin: 6px 0; } .divider-double { border-top: 3px double #000; margin: 8px 0; } .tag-tipo-entrega { font-size: 20px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 4px; margin-bottom: 8px; letter-spacing: 1px; } .titulo-loja { font-size: 15px; margin: 0; font-weight: bold; text-transform: uppercase; } .subtitulo-loja { font-size: 10px; margin: 2px 0; } .id-pedido { font-size: 17px; font-weight: bold; margin: 4px 0; } .secao-titulo { font-size: 12px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; } .bloco-conteudo { margin-bottom: 6px; } .tabela-itens { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 5px 0; } .tabela-itens th { border-bottom: 1px solid #000; font-size: 10px; padding: 2px 0; text-align: left; } .tabela-itens td { vertical-align: top; padding: 4px 0; border-bottom: 1px dotted #999; overflow-wrap: anywhere; } .col-qtd { width: 12%; font-weight: bold; } .col-nome { width: 63%; } .col-preco { width: 25%; text-align: right !important; white-space: nowrap; } .linha-financeiro { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0; } .linha-total { display: flex; justify-content: space-between; gap: 8px; font-size: 16px; font-weight: bold; margin-top: 5px; padding-top: 4px; border-top: 1px dashed #000; } .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 5px 0; white-space: pre-wrap; font-size: 12px; font-weight: bold; } @media print { @page { size: 80mm auto; margin: 0; } body { width: 72mm; max-width: 72mm; padding: 4mm 2mm; } }";
+    var regrasCSS = "body { width: 72mm; max-width: 72mm; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; font-size: 14px; line-height: 1.45; margin: 0 auto; padding: 3mm 2mm; color: #000; background: #fff; overflow-wrap: anywhere; } .text-center { text-align: center; } .text-right { text-align: right; } .negrito { font-weight: bold; } .divider-dashed { border-top: 1px dashed #000; margin: 7px 0; } .divider-double { border-top: 3px double #000; margin: 9px 0; } .tag-tipo-entrega { font-size: 22px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 5px 4px; margin-bottom: 9px; letter-spacing: 1px; } .titulo-loja { font-size: 18px; margin: 0; font-weight: bold; text-transform: uppercase; } .subtitulo-loja { font-size: 12px; margin: 3px 0; } .id-pedido { font-size: 21px; font-weight: bold; margin: 5px 0; } .secao-titulo { font-size: 14px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; } .bloco-conteudo { margin-bottom: 8px; } .tabela-itens { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 6px 0; } .tabela-itens th { border-bottom: 1px solid #000; font-size: 12px; padding: 3px 0; text-align: left; } .tabela-itens td { vertical-align: top; padding: 5px 0; border-bottom: 1px dotted #999; overflow-wrap: anywhere; } .col-qtd { width: 13%; font-weight: bold; } .col-nome { width: 60%; } .col-preco { width: 27%; text-align: right !important; white-space: nowrap; } .linha-financeiro { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; } .linha-total { display: flex; justify-content: space-between; gap: 8px; font-size: 19px; font-weight: bold; margin-top: 7px; padding-top: 5px; border-top: 1px dashed #000; } .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 6px 0; white-space: pre-wrap; font-size: 14px; font-weight: bold; } @media print { @page { size: 80mm auto; margin: 0; } body { width: 72mm; max-width: 72mm; padding: 4mm 2mm; } }";
     
     elEstilo.textContent = regrasCSS;
     janelaImpressao.document.head.appendChild(elEstilo);
@@ -909,7 +921,8 @@ function imprimirCupomIFood(pedido) {
 
     enderecoBruto = enderecoBruto.replace(/,\s*$/, "").replace(/\s+/g, " ").trim();
 
-    var tipoServico = pedido.endereco ? "ENTREGA" : "RETIRADA";
+    var enderecoPedido = (pedido.endereco || "").toString().trim().toUpperCase();
+    var tipoServico = enderecoPedido.startsWith("RETIRADA") ? "RETIRADA" : "ENTREGA";
     var pagamentoFinal = (pedido.formaPagamento || "Não informado").toUpperCase();
     
     var dataAgora = new Date();
@@ -943,7 +956,8 @@ function imprimirCupomIFood(pedido) {
 
     var elEnderecoBloco = janelaImpressao.document.createElement("div");
     elEnderecoBloco.className = "bloco-conteudo";
-    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>Endereço de Entrega</div><div style='white-space: pre-wrap; font-size: 13px;'>" + enderecoBruto + "</div><div style='margin-top: 4px;'><span class='negrito'>Referência:</span> " + referenciaFinal + "</div>";
+    var tituloEndereco = tipoServico === "RETIRADA" ? "Local de Retirada" : "Endereço de Entrega";
+    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>" + tituloEndereco + "</div><div style='white-space: pre-wrap; font-size: 15px; font-weight: bold;'>" + enderecoBruto + "</div>" + (tipoServico === "RETIRADA" ? "" : "<div style='margin-top: 4px;'><span class='negrito'>Referência:</span> " + referenciaFinal + "</div>");
     containerPrincipal.appendChild(elEnderecoBloco);
     
     var divDivisora3 = janelaImpressao.document.createElement("div");
