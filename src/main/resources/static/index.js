@@ -4,6 +4,39 @@
         let estabelecimentoAberto = true;
         let rastreioTimerAutomatizado = null;
 
+        async function compartilharSite() {
+            const urlSite = window.location.origin + window.location.pathname;
+            const dadosCompartilhamento = {
+                title: "Sabor Cearense",
+                text: "Confira o cardápio do Sabor Cearense!",
+                url: urlSite
+            };
+
+            if (navigator.share) {
+                try {
+                    await navigator.share(dadosCompartilhamento);
+                } catch (erro) {
+                    if (erro.name !== "AbortError") {
+                        console.error("Não foi possível compartilhar o site:", erro);
+                        alert("Não foi possível abrir o compartilhamento. Tente novamente.");
+                    }
+                }
+                return;
+            }
+
+            if (navigator.clipboard && window.isSecureContext) {
+                try {
+                    await navigator.clipboard.writeText(urlSite);
+                    alert("Endereço do site copiado. Agora é só compartilhar!");
+                    return;
+                } catch (erro) {
+                    console.error("Não foi possível copiar o endereço do site:", erro);
+                }
+            }
+
+            window.prompt("Copie o endereço do site para compartilhar:", urlSite);
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             carregarCardapio();
             verificarHorarioFuncionamento();
