@@ -40,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (typeof verificarHorarioFuncionamento === "function") {
         verificarHorarioFuncionamento();
     }
+    carregarBairrosEntrega();
 
     if (document.getElementById("lista-itens-carrinho")) {
         carregarItensDaUrlNoCarrinho();
@@ -54,6 +55,32 @@ document.addEventListener("DOMContentLoaded", () => {
         atualizarContador();
     }
 });
+
+async function carregarBairrosEntrega() {
+    const select = document.getElementById("bairro-entrega");
+    if (!select) return;
+
+    try {
+        const resposta = await fetch(`${URL_API_BACKEND}/api/bairros`);
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const bairros = await resposta.json();
+        select.innerHTML = '<option value="" disabled selected>Escolha o seu bairro...</option>';
+        bairros.forEach(bairro => {
+            const taxa = Number(bairro.taxa || 0);
+            const opcao = document.createElement("option");
+            opcao.value = `${bairro.nome}|${taxa.toFixed(2)}`;
+            opcao.textContent = `${bairro.nome} - R$ ${taxa.toFixed(2).replace(".", ",")}`;
+            select.appendChild(opcao);
+        });
+        if (!bairros.length) {
+            select.innerHTML = '<option value="" disabled selected>Nenhum bairro disponível</option>';
+        }
+    } catch (erro) {
+        console.error("Não foi possível carregar os bairros:", erro);
+        select.innerHTML = '<option value="" disabled selected>Não foi possível carregar os bairros</option>';
+        alert("Não foi possível carregar as opções de entrega. Atualize a página e tente novamente.");
+    }
+}
 
 // ==========================================
 // 📦 GERENCIAMENTO E RENDERIZAÇÃO DE DADOS

@@ -470,6 +470,7 @@
             <div class="nav-link" id="tab-historico" onclick="alternarAbasAdmin('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico / Finalizados</div>
             <div class="nav-link" id="tab-cardapio" onclick="alternarAbasAdmin('cardapio')"><i class="fas fa-utensils"></i> Alteração do Cardápio</div>
             <div class="nav-link" id="tab-acompanhamentos" onclick="alternarAbasAdmin('acompanhamentos')"><i class="fas fa-carrot"></i> Acompanhamentos</div>
+            <div class="nav-link" id="tab-bairros" onclick="alternarAbasAdmin('bairros')"><i class="fas fa-map-marker-alt"></i> Bairros e Taxas</div>
             
             <!-- Bloco fixado na base com linha divisória corporativa -->
             <div style="position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px 15px; background: var(--dark); border-top: 1px solid rgba(255,255,255,0.1); box-sizing: border-box;">
@@ -576,6 +577,27 @@
                     Desative um acompanhamento quando ele estiver esgotado. A alteração aparece para os clientes imediatamente.
                 </p>
                 <div id="lista-acompanhamentos-admin" class="grid-produtos"></div>
+            </section>
+
+            <section id="sec-bairros" class="section-view">
+                <div class="admin-header">
+                    <h2>📍 Bairros e Taxas de Entrega</h2>
+                </div>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">
+                    Acrescente, altere ou exclua bairros. As mudanças aparecem no checkout dos clientes.
+                </p>
+                <form id="form-bairro-entrega" class="form-grid" style="grid-template-columns: 2fr 1fr auto;">
+                    <div class="form-grupo">
+                        <label for="bairro-admin-nome">Nome do bairro</label>
+                        <input type="text" id="bairro-admin-nome" required placeholder="Ex: Vila Isabel">
+                    </div>
+                    <div class="form-grupo">
+                        <label for="bairro-admin-taxa">Taxa (R$)</label>
+                        <input type="number" id="bairro-admin-taxa" min="0" step="0.01" required placeholder="0,00">
+                    </div>
+                    <button type="submit" class="btn-acao">Adicionar bairro</button>
+                </form>
+                <div id="lista-bairros-admin" class="grid-produtos"></div>
             </section>
         </main>
     </div>

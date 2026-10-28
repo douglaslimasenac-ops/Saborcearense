@@ -60,6 +60,8 @@ window.addEventListener('DOMContentLoaded', function() {
             renderizarItensAdmin();
         });
     }
+    const formBairro = document.getElementById("form-bairro-entrega");
+    if (formBairro) formBairro.addEventListener("submit", salvarBairroAdmin);
 });
 
 function alternarAbasAdmin(abaAlvo) {
@@ -74,6 +76,104 @@ function alternarAbasAdmin(abaAlvo) {
     }
     if (abaAlvo === 'acompanhamentos') {
         carregarAcompanhamentosAdmin();
+    }
+    if (abaAlvo === 'bairros') {
+        carregarBairrosAdmin();
+    }
+}
+
+async function carregarBairrosAdmin() {
+    const container = document.getElementById("lista-bairros-admin");
+    if (!container) return;
+
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/bairros`);
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const bairros = await resposta.json();
+        container.innerHTML = bairros.length ? "" : "<p>Nenhum bairro cadastrado.</p>";
+        bairros.forEach(bairro => {
+            const card = document.createElement("div");
+            card.className = "card-produto";
+            card.innerHTML = `
+                <div class="info-prod">
+                    <h4>${escaparHtml(bairro.nome)}</h4>
+                    <small style="color: var(--text-muted);">Taxa atual: R$ ${Number(bairro.taxa || 0).toFixed(2).replace(".", ",")}</small>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                    <button type="button" class="btn-status-toggle ativo" onclick="editarBairroAdmin(${bairro.id}, '${encodeURIComponent(bairro.nome)}', ${Number(bairro.taxa || 0)})">Alterar</button>
+                    <button type="button" class="btn-status-toggle inativo" onclick="excluirBairroAdmin(${bairro.id}, '${encodeURIComponent(bairro.nome)}')">Excluir</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    } catch (erro) {
+        console.error("Erro ao carregar bairros:", erro);
+        container.innerHTML = '<p style="color: var(--danger);">Não foi possível carregar os bairros.</p>';
+    }
+}
+
+async function salvarBairroAdmin(event) {
+    event.preventDefault();
+    const nome = document.getElementById("bairro-admin-nome").value.trim();
+    const taxa = Number(document.getElementById("bairro-admin-taxa").value);
+    if (!nome || !Number.isFinite(taxa) || taxa < 0) {
+        alert("Informe um nome e uma taxa válida.");
+        return;
+    }
+
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/bairros`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nome, taxa })
+        });
+        if (!resposta.ok) {
+            if (resposta.status === 409) throw new Error("Esse bairro já está cadastrado.");
+            throw new Error(`HTTP ${resposta.status}`);
+        }
+        event.target.reset();
+        await carregarBairrosAdmin();
+    } catch (erro) {
+        console.error("Erro ao adicionar bairro:", erro);
+        alert(erro.message || "Não foi possível adicionar o bairro.");
+    }
+}
+
+async function editarBairroAdmin(id, nomeCodificado, taxaAtual) {
+    const nome = prompt("Nome do bairro:", decodeURIComponent(nomeCodificado));
+    if (nome === null) return;
+    const taxaTexto = prompt("Taxa de entrega (R$):", Number(taxaAtual).toFixed(2));
+    if (taxaTexto === null) return;
+    const taxa = Number(taxaTexto.replace(",", "."));
+    if (!nome.trim() || !Number.isFinite(taxa) || taxa < 0) {
+        alert("Informe um nome e uma taxa válida.");
+        return;
+    }
+
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/bairros/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nome: nome.trim(), taxa })
+        });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        await carregarBairrosAdmin();
+    } catch (erro) {
+        console.error("Erro ao alterar bairro:", erro);
+        alert("Não foi possível alterar o bairro.");
+    }
+}
+
+async function excluirBairroAdmin(id, nomeCodificado) {
+    const nome = decodeURIComponent(nomeCodificado);
+    if (!confirm(`Excluir o bairro "${nome}"?`)) return;
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/bairros/${id}`, { method: "DELETE" });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        await carregarBairrosAdmin();
+    } catch (erro) {
+        console.error("Erro ao excluir bairro:", erro);
+        alert("Não foi possível excluir o bairro.");
     }
 }
 
