@@ -1387,17 +1387,36 @@ button {
 
 @media (min-width: 769px) {
     .container {
-        max-width: 680px;
+        max-width: 796px;
+    }
+
+    .aviso-prazo-cardapio {
+        max-width: none;
+    }
+
+    .info-operacional {
+        width: 100%;
+    }
+
+    #barra-flutuante,
+    .cart-bar {
+        width: min(calc(100% - 32px), 760px) !important;
+        max-width: 760px !important;
     }
 
     .menu-items {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1fr);
         gap: 12px;
     }
 
     .menu-item {
         margin-bottom: 0;
+    }
+
+    .abas-navegacao .btn-aba {
+        flex: 1 1 0;
+        justify-content: center;
     }
 }
 

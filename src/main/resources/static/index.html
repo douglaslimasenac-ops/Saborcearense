@@ -394,7 +394,7 @@ window.irParaCheckout = function() {
             top: 50% !important;
             left: 50% !important;
             transform: translate(-50%, -50%) !important;
-            width: 450px !important;
+            width: min(calc(100vw - 32px), 760px) !important;
             height: auto !important;
             max-height: 85vh !important;
             border-radius: 16px !important;
@@ -670,6 +670,12 @@ window.irParaCheckout = function() {
         #barra-flutuante .cart-bar-avancar {
             padding: 0 10px !important;
             font-size: 0.74rem !important;
+        }
+    }
+
+    @media (min-width: 769px) {
+        #painel-sacola-modal #conteudo-gaveta-sacola {
+            width: min(calc(100vw - 32px), 760px) !important;
         }
     }
 </style>
