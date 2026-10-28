@@ -352,7 +352,14 @@ document.addEventListener("DOMContentLoaded", () => {
 });         
 
 /// Substitua o bloco de código a partir da linha 311 por isto:
-carrinho = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
+const carrinhoSalvo = JSON.parse(localStorage.getItem("carrinhoSaborCearense") || "{}");
+carrinho = Array.isArray(carrinhoSalvo)
+    ? carrinhoSalvo.reduce((acumulado, item, indice) => {
+        const chave = String(item.id ?? indice);
+        acumulado[chave] = item;
+        return acumulado;
+    }, {})
+    : (carrinhoSalvo && typeof carrinhoSalvo === "object" ? carrinhoSalvo : {});
 
 // Função disparada pelos botões (+) do cardápio principal
 function mudarQuantidade(id, valor, nome, preco) {
@@ -447,6 +454,8 @@ function executarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
     atualizarValoresBarraFixo();
     renderizarItensSacola();
 }
+
+window.executarMudarQuantidadeReal = executarMudarQuantidadeReal;
 // =========================================================================
 // 🌵 SISTEMA GERAL DE CONTROLE DE SACOLA - PARTE 2 (FINAL)
 // =========================================================================

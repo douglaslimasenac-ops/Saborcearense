@@ -247,7 +247,7 @@ window.editarAcompanhamentos = function(chaveCodificada, nomeCodificado, preco, 
 function abrirModalAcompanhamentos(id, mudanca, nome, preco, edicao) {
     // 1. Se o cliente estiver diminuindo a quantidade (botão -), executa direto na sacola
     if (mudanca < 0) {
-        atualizarArmazenamentoSacola(id, mudanca, nome, preco);
+        window.executarMudarQuantidadeReal(id, mudanca, nome, preco, id);
         return;
     }
 
@@ -258,7 +258,7 @@ function abrirModalAcompanhamentos(id, mudanca, nome, preco, edicao) {
 
     // Se o prato já tiver os parênteses de acompanhamento no nome, adiciona direto
     if (devePular || (nome.includes("(") && nome.includes(")")) ) {
-        atualizarArmazenamentoSacola(id, mudanca, nome, preco);
+        window.executarMudarQuantidadeReal(id, mudanca, nome, preco, id);
         return;
     }
 
@@ -346,7 +346,7 @@ function abrirModalAcompanhamentos(id, mudanca, nome, preco, edicao) {
             localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
         }
         modal.remove();
-        executarMudarQuantidadeReal(
+        window.executarMudarQuantidadeReal(
             acompanhamentos.length > 0
                 ? id + "-" + acompanhamentos.map(function(item) { return item.substring(0, 3).toLowerCase(); }).join("-")
                 : id,
@@ -447,7 +447,8 @@ function atualizarArmazenamentoSacola(idItem, qtdMudanca, nomeFinal, precoFinal)
 
 // Inicializa os textos e pratos salvos assim que carregar o cardápio
 document.addEventListener("DOMContentLoaded", function() {
-    atualizarArmazenamentoSacola(0, 0, "", 0);
+    atualizarValoresBarraFixo();
+    renderizarItensSacola();
 });
 
 // Vincula a ação de redirecionamento para o seu botão "Avançar para o Pagamento"
