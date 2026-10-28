@@ -14,7 +14,12 @@
     <!-- CABEÇALHO COM BOTÃO DE ADMIN -->
     <header class="header-app" style="position: relative;">
         <button type="button" class="botao-compartilhar-site" onclick="compartilharSite()" aria-label="Compartilhar endereço do site" title="Compartilhar site">
-            <span aria-hidden="true">↗</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+                <circle cx="18" cy="5" r="2.3"></circle>
+                <circle cx="6" cy="12" r="2.3"></circle>
+                <circle cx="18" cy="19" r="2.3"></circle>
+                <path d="m8.1 11 7.8-4.5M8.1 13l7.8 4.5"></path>
+            </svg>
         </button>
         <a href="admin.html" title="Acessar Painel do Administrador" style="position: absolute; top: -10px; right: 10px; text-decoration: none; font-size: 1.4rem; color: #a0aec0; transition: color 0.2s;">⚙️</a>
         <h1>🌵 Sabor Cearense 🌵</h1>
@@ -221,6 +226,25 @@ carregarAcompanhamentosDisponiveis();
 
 // Cria e garante a função global para os botões do seu cardápio
 window.mudarQuantidade = function(id, mudanca, nome, preco) {
+    abrirModalAcompanhamentos(id, mudanca, nome, preco, null);
+};
+
+window.editarAcompanhamentos = function(chaveCodificada, nomeCodificado, preco, quantidade) {
+    var chaveId = decodeURIComponent(chaveCodificada);
+    var nomeAtual = decodeURIComponent(nomeCodificado);
+    var partesNome = nomeAtual.match(/^(.*?) \((.*)\)$/);
+    var nomeBase = partesNome ? partesNome[1] : nomeAtual;
+    var selecionados = partesNome ? partesNome[2].split(", ") : [];
+    var idOriginal = String(chaveId).split("-")[0];
+
+    abrirModalAcompanhamentos(idOriginal, quantidade, nomeBase, preco, {
+        chaveId: chaveId,
+        selecionados: selecionados,
+        quantidade: quantidade
+    });
+};
+
+function abrirModalAcompanhamentos(id, mudanca, nome, preco, edicao) {
     // 1. Se o cliente estiver diminuindo a quantidade (botão -), executa direto na sacola
     if (mudanca < 0) {
         atualizarArmazenamentoSacola(id, mudanca, nome, preco);
@@ -267,7 +291,7 @@ window.mudarQuantidade = function(id, mudanca, nome, preco) {
             
             <div class="modal-acompanhamentos-acoes">
                 <button type="button" id="btn-cancelar-acomp" class="btn-acomp-cancelar">Agora não</button>
-                <button type="button" id="btn-confirmar-acomp" class="btn-acomp-confirmar">Adicionar ao pedido <span>→</span></button>
+                <button type="button" id="btn-confirmar-acomp" class="btn-acomp-confirmar">${edicao ? "Salvar alterações" : "Adicionar ao pedido"} <span>→</span></button>
             </div>
         </div>
     `;
@@ -277,6 +301,9 @@ window.mudarQuantidade = function(id, mudanca, nome, preco) {
     // Trava a seleção em no máximo 2 opções marcadas
     var checkboxes = modal.querySelectorAll("#lista-opcoes-acomp input");
     checkboxes.forEach(function(cb) {
+        if (edicao && edicao.selecionados.indexOf(cb.value) !== -1 && !cb.disabled) {
+            cb.checked = true;
+        }
         cb.addEventListener("change", function() {
             var marcados = modal.querySelectorAll("#lista-opcoes-acomp input:checked");
             modal.querySelector("#contador-acomp").textContent = marcados.length;
@@ -287,6 +314,8 @@ window.mudarQuantidade = function(id, mudanca, nome, preco) {
             }
         });
     });
+    modal.querySelector("#contador-acomp").textContent =
+        modal.querySelectorAll("#lista-opcoes-acomp input:checked").length;
 
     // Ação do Botão Cancelar
     modal.querySelector("#btn-cancelar-acomp").onclick = function() { modal.remove(); };
@@ -312,10 +341,22 @@ window.mudarQuantidade = function(id, mudanca, nome, preco) {
             nomeItemComAcomp += " (" + acompanhamentos.join(", ") + ")";
         }
 
+        if (edicao) {
+            delete carrinho[edicao.chaveId];
+            localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
+        }
         modal.remove();
-        atualizarArmazenamentoSacola(id, mudanca, nomeItemComAcomp, preco);
+        executarMudarQuantidadeReal(
+            acompanhamentos.length > 0
+                ? id + "-" + acompanhamentos.map(function(item) { return item.substring(0, 3).toLowerCase(); }).join("-")
+                : id,
+            edicao ? edicao.quantidade : mudanca,
+            nomeItemComAcomp,
+            preco,
+            id
+        );
     };
-};
+}
 // FUNÇÃO INTERNA DA SACOLA: Salva os dados e atualiza as IDs reais do seu HTML
 function atualizarArmazenamentoSacola(idItem, qtdMudanca, nomeFinal, precoFinal) {
     var carrinho = [];

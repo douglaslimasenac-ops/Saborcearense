@@ -254,13 +254,13 @@ function renderizarItensAdmin() {
                                 onchange="atualizarPrecoRapido(${item.id}, this.value)">
                         </div>
                         <div class="imagem-produto-edicao">
+                            <input type="file" id="arquivo-produto-${item.id}" accept="image/*"
+                                onchange="enviarImagemProdutoExistente(${item.id}, this.files[0])"
+                                aria-label="Escolher imagem do computador">
                             <input type="url" id="imagem-produto-${item.id}"
                                 value="${escaparHtml(item.imagemUrl || "")}"
                                 placeholder="Cole aqui a URL da imagem">
                             <button type="button" onclick="atualizarImagemRapido(${item.id})">Salvar imagem</button>
-                            <input type="file" id="arquivo-produto-${item.id}" accept="image/*"
-                                onchange="enviarImagemProdutoExistente(${item.id}, this.files[0])"
-                                aria-label="Escolher imagem do computador">
                         </div>
                     </div>
                 </div>

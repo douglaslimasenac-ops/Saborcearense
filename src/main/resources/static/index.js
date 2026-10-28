@@ -471,6 +471,7 @@ function renderizarItensSacola() {
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
                 <div style="flex: 1; padding-right: 12px; text-align: left;">
                     <div style="font-weight: 600; font-size: 14px; color: #1e293b; line-height: 1.3;">${item.nome}</div>
+                    ${String(item.nome).includes(" (") ? `<button type="button" class="botao-editar-acomp" onclick="editarAcompanhamentos('${encodeURIComponent(chaveId)}', '${encodeURIComponent(item.nome)}', ${item.preco}, ${item.quantidade})">Editar acompanhamentos</button>` : ""}
                     <div style="font-size: 13px; color: #27ae60; font-weight: 700; margin-top: 2px;">R$ ${(item.preco * item.quantidade).toFixed(2).replace('.', ',')}</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">

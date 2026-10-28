@@ -327,8 +327,20 @@ body {
     flex: 1;
     flex-direction: column;
     justify-content: center;
+    align-items: flex-start;
     gap: 2px;
     overflow-wrap: anywhere;
+}
+.acompanhamento-nome-text {
+    display: block;
+    color: #4a3a29;
+    font-size: 0.84rem;
+    font-weight: 800;
+    line-height: 1.15;
+}
+.acompanhamento-nome > b {
+    align-self: flex-end;
+    margin-top: -22px;
 }
 .opcao-acompanhamento:hover {
     border-color: #d99024;
@@ -373,11 +385,25 @@ body {
 }
 .acompanhamento-status-esgotado {
     display: block;
+    align-self: flex-start;
     color: #a44f35;
     font-size: 0.72rem;
     font-weight: 800;
+    line-height: 1.1;
     text-transform: uppercase;
     white-space: nowrap;
+}
+.botao-editar-acomp {
+    display: block;
+    margin-top: 4px;
+    padding: 0;
+    border: 0;
+    color: #a45b18;
+    background: transparent;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+    text-decoration: underline;
 }
 .acompanhamentos-selecao-status {
     margin-top: 11px;
@@ -915,10 +941,19 @@ body {
     border-radius: 50%;
     color: #fffaf1;
     background: rgba(255, 250, 241, 0.1);
-    font-size: 1.35rem;
     line-height: 1;
     cursor: pointer;
     transition: background 0.2s, transform 0.2s;
+}
+
+.botao-compartilhar-site svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.9;
 }
 
 .botao-compartilhar-site:hover {

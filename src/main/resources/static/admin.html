@@ -115,6 +115,21 @@
             margin-bottom: 35px;
         }
 
+        #form-novo-prato .grupo-imagem {
+            grid-column: 1 / -1;
+            grid-row: 2;
+        }
+
+        #form-novo-prato .grupo-categoria {
+            grid-column: 3;
+            grid-row: 1;
+        }
+
+        #form-novo-prato .grupo-dia {
+            grid-column: 4;
+            grid-row: 1;
+        }
+
         /* Centralizador para a caixa de login */
         .login-wrapper {
             display: flex;
@@ -137,6 +152,12 @@
 
         @media (max-width: 900px) {
             .form-grid { grid-template-columns: 1fr; }
+            #form-novo-prato .grupo-imagem,
+            #form-novo-prato .grupo-categoria,
+            #form-novo-prato .grupo-dia {
+                grid-column: auto;
+                grid-row: auto;
+            }
         }
 
         .form-grupo { display: flex; flex-direction: column; }
@@ -499,8 +520,7 @@
                         <label for="preco">Preço de Venda (R$)</label>
                         <input type="number" step="0.01" id="preco" required placeholder="0.00">
                     </div>
-                    <div class="form-grupo">
-                        <label for="imagem">URL da Imagem</label>
+                    <div class="form-grupo grupo-imagem">
                         <label for="imagem-arquivo">Escolher imagem do computador</label>
                         <input type="file" id="imagem-arquivo" accept="image/*">
                         <label for="imagem" style="margin-top: 8px;">Ou cole a URL da imagem</label>
@@ -511,7 +531,7 @@
                             <span>Prévia da imagem</span>
                         </div>
                     </div>
-                    <div class="form-grupo">
+                    <div class="form-grupo grupo-categoria">
                         <label for="categoria">Definir Categoria</label>
                         <select id="categoria" required>
                             <option value="PRATOS_DO_DIA">🌹 Pratos do Dia</option>
@@ -522,7 +542,7 @@
                             <option value="BEBIDA">🥤 Bebidas Geladas</option>
                         </select>
                     </div>
-                    <div class="form-grupo">
+                    <div class="form-grupo grupo-dia">
                         <label for="diaSemana">Dia do Prato do Dia</label>
                         <select id="diaSemana">
                             <option value="">Não se aplica</option>
