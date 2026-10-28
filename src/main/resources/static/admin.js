@@ -3,6 +3,9 @@
 // ==========================================
 const URL_BACKEND = "https://saborcearense-5.onrender.com"
 const URL_API_ADMIN = URL_BACKEND + "/api/admin/pratos";
+const CLOUDINARY_CLOUD_NAME = "sn5pijok";
+const CLOUDINARY_UPLOAD_PRESET = "sabor_cearense_imagens";
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 const backendUrl = new URL(URL_BACKEND);
 const URL_BACKEND_WS = (backendUrl.protocol === "https:" ? "wss://" : "ws://") + backendUrl.host;
 
@@ -148,6 +151,21 @@ function configurarFormularioCadastro() {
     };
 
     campoImagem.addEventListener("input", atualizarPreviewImagem);
+    const seletorImagem = document.getElementById("imagem-arquivo");
+    if (seletorImagem) {
+        seletorImagem.addEventListener("change", async () => {
+            const arquivo = seletorImagem.files && seletorImagem.files[0];
+            if (!arquivo) return;
+            try {
+                campoImagem.value = await enviarImagemCloudinary(arquivo);
+                atualizarPreviewImagem();
+            } catch (erro) {
+                console.error("Erro ao enviar imagem do novo prato:", erro);
+                seletorImagem.value = "";
+                alert(erro.message || "Não foi possível enviar a imagem.");
+            }
+        });
+    }
     previewImagemEl.addEventListener("error", () => {
         previewImagem.hidden = true;
         alert("Não foi possível carregar essa imagem. Use o endereço direto do arquivo.");
@@ -240,6 +258,9 @@ function renderizarItensAdmin() {
                                 value="${escaparHtml(item.imagemUrl || "")}"
                                 placeholder="Cole aqui a URL da imagem">
                             <button type="button" onclick="atualizarImagemRapido(${item.id})">Salvar imagem</button>
+                            <input type="file" id="arquivo-produto-${item.id}" accept="image/*"
+                                onchange="enviarImagemProdutoExistente(${item.id}, this.files[0])"
+                                aria-label="Escolher imagem do computador">
                         </div>
                     </div>
                 </div>
@@ -253,6 +274,44 @@ function renderizarItensAdmin() {
             `;
             container.appendChild(div);
     });
+}
+
+async function enviarImagemCloudinary(arquivo) {
+    if (!arquivo || !arquivo.type.startsWith("image/")) {
+        throw new Error("Escolha um arquivo de imagem válido.");
+    }
+    if (arquivo.size > 10 * 1024 * 1024) {
+        throw new Error("A imagem deve ter no máximo 10 MB.");
+    }
+
+    const dados = new FormData();
+    dados.append("file", arquivo);
+    dados.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+    const resposta = await fetch(CLOUDINARY_UPLOAD_URL, {
+        method: "POST",
+        body: dados
+    });
+    const resultado = await resposta.json();
+    if (!resposta.ok || !resultado.secure_url) {
+        throw new Error(resultado.error?.message || "O Cloudinary recusou a imagem.");
+    }
+    return resultado.secure_url;
+}
+
+async function enviarImagemProdutoExistente(id, arquivo) {
+    const campo = document.getElementById(`imagem-produto-${id}`);
+    const seletor = document.getElementById(`arquivo-produto-${id}`);
+    if (!arquivo) return;
+
+    try {
+        campo.value = await enviarImagemCloudinary(arquivo);
+        await atualizarImagemRapido(id);
+    } catch (erro) {
+        console.error("Erro ao enviar imagem do produto:", erro);
+        if (seletor) seletor.value = "";
+        alert(erro.message || "Não foi possível enviar a imagem.");
+    }
 }
 
 async function atualizarImagemRapido(id) {
