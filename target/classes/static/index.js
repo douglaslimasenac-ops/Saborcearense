@@ -287,7 +287,7 @@
             const minuto = agora.getMinutes();
             
             const minutosAtuais = (hora * 60) + minuto;
-            const aberturaMinutos = (11 * 60) + 30; 
+            const aberturaMinutos = 8 * 60;
             const fechamentoMinutos = (15 * 60) + 0;  
 
             const statusLoja = document.getElementById("status-loja");

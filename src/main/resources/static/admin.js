@@ -31,8 +31,11 @@ let termoBuscaProdutos = "";
 let ultimoSnapshotPedidosAtivos = "";
 let ultimoSnapshotPedidosHistorico = "";
 let pedidosHistoricoLocal = [];
+let pedidosAtivosLocal = [];
 let paginaHistorico = 1;
 const pedidosPorPaginaHistorico = 10;
+let itensPedidoBalcao = [];
+let produtosBalcao = [];
 
 async function fetchAdmin(url, options = {}) {
     const token = localStorage.getItem("adminToken");
@@ -70,6 +73,7 @@ window.addEventListener('DOMContentLoaded', function() {
             paginaHistorico = 1;
             renderizarHistoricoFiltrado();
         }));
+    document.getElementById("filtro-ativos-busca")?.addEventListener("input", renderizarAtivosFiltrados);
 });
 
 function alternarAbasAdmin(abaAlvo) {
@@ -81,6 +85,9 @@ function alternarAbasAdmin(abaAlvo) {
     
     if (abaAlvo === 'ativos' || abaAlvo === 'historico') {
         carregarPedidosAtivos();
+    }
+    if (abaAlvo === 'balcao') {
+        carregarProdutosBalcao();
     }
     if (abaAlvo === 'acompanhamentos') {
         carregarAcompanhamentosAdmin();
@@ -856,6 +863,12 @@ function atualizarListaPedidos(container, pedidos, tipo) {
                 </div>
                 ${renderizarItensPedido(pedido)}
             `;
+            const btnImprimirHistorico = document.createElement("button");
+            btnImprimirHistorico.className = "btn-status-toggle ativo";
+            btnImprimirHistorico.style.cssText = "margin-top: 12px; background: #fff5f5; color: #c53030; border-color: #feb2b2; font-weight: bold;";
+            btnImprimirHistorico.textContent = "🖨️ Imprimir Cupom";
+            btnImprimirHistorico.addEventListener("click", () => imprimirCupomIFood(pedido));
+            card.appendChild(btnImprimirHistorico);
             return card;
         });
 
@@ -907,9 +920,170 @@ function renderizarHistoricoFiltrado() {
     }
 }
 
+function limparFiltrosHistorico() {
+    ["filtro-historico-busca", "filtro-historico-status", "filtro-historico-inicio", "filtro-historico-fim"]
+        .forEach(id => {
+            const campo = document.getElementById(id);
+            if (campo) campo.value = "";
+        });
+    paginaHistorico = 1;
+    renderizarHistoricoFiltrado();
+}
+
+function renderizarAtivosFiltrados() {
+    const busca = (document.getElementById("filtro-ativos-busca")?.value || "").trim().toLocaleLowerCase("pt-BR");
+    const filtrados = pedidosAtivosLocal.filter(pedido => {
+        const texto = `${numeroExibicaoPedido(pedido)} ${pedido.clienteNome || ""} ${pedido.telefone || ""}`.toLocaleLowerCase("pt-BR");
+        return !busca || texto.includes(busca);
+    });
+    ultimoSnapshotPedidosAtivos = "";
+    atualizarListaPedidos(document.getElementById("lista-pedidos-ativos"), filtrados, "ativos");
+}
+
 function mudarPaginaHistorico(direcao) {
     paginaHistorico += direcao;
     renderizarHistoricoFiltrado();
+}
+
+async function carregarProdutosBalcao() {
+    const busca = document.getElementById("balcao-busca");
+    if (!busca) return;
+    try {
+        const [resProdutos, resAcompanhamentos] = await Promise.all([
+            fetch(URL_BACKEND + "/api/cardapio"),
+            fetch(URL_BACKEND + "/api/acompanhamentos")
+        ]);
+        if (!resProdutos.ok) throw new Error(`Produtos: HTTP ${resProdutos.status}`);
+        produtosBalcao = await resProdutos.json();
+        const acompanhamentos = resAcompanhamentos.ok ? await resAcompanhamentos.json() : [];
+        const seletorAcompanhamentos = document.getElementById("balcao-acompanhamentos");
+        if (seletorAcompanhamentos) {
+            seletorAcompanhamentos.innerHTML = acompanhamentos
+                .filter(item => item.disponivel)
+                .map(item => `<option value="${escaparHtml(item.nome)}">${escaparHtml(item.nome)}</option>`)
+                .join("");
+        }
+        busca.oninput = renderizarResultadosBuscaBalcao;
+        renderizarResultadosBuscaBalcao();
+    } catch (erro) {
+        console.error("Erro ao carregar produtos do balcão:", erro);
+        busca.placeholder = "Não foi possível carregar o cardápio";
+    }
+}
+
+function renderizarResultadosBuscaBalcao() {
+    const busca = document.getElementById("balcao-busca");
+    const resultados = document.getElementById("resultados-busca-balcao");
+    if (!busca || !resultados) return;
+    const termo = busca.value.trim().toLocaleLowerCase("pt-BR");
+    const itens = produtosBalcao
+        .filter(item => item.disponivel !== false)
+        .filter(item => !termo || String(item.nome).toLocaleLowerCase("pt-BR").includes(termo))
+        .slice(0, 8);
+    resultados.innerHTML = itens.length
+        ? itens.map(item => `
+            <button type="button" class="btn-status-toggle ativo"
+                    onclick="adicionarItemBalcao(${item.id})"
+                    style="display: flex; justify-content: space-between; width: 100%; text-align: left;">
+                <span>${escaparHtml(item.nome)}</span>
+                <strong>R$ ${Number(item.preco || 0).toFixed(2).replace(".", ",")}</strong>
+            </button>`).join("")
+        : `<small style="color: var(--text-muted);">Nenhum item encontrado.</small>`;
+}
+
+function adicionarItemBalcao(idSelecionado) {
+    const id = Number(idSelecionado);
+    const quantidade = Math.max(1, Number(document.getElementById("balcao-quantidade")?.value || 1));
+    const produto = produtosBalcao.find(item => item.id === id);
+    if (!produto) {
+        return;
+    }
+    const existente = itensPedidoBalcao.find(item => item.id === id);
+    if (existente) existente.quantidade += quantidade;
+    else itensPedidoBalcao.push({ id: produto.id, nome: produto.nome, preco: Number(produto.preco || 0), quantidade });
+    const busca = document.getElementById("balcao-busca");
+    if (busca) {
+        busca.value = "";
+        renderizarResultadosBuscaBalcao();
+        busca.focus();
+    }
+    renderizarPedidoBalcao();
+}
+
+function removerItemBalcao(indice) {
+    itensPedidoBalcao.splice(indice, 1);
+    renderizarPedidoBalcao();
+}
+
+function limparPedidoBalcao() {
+    itensPedidoBalcao = [];
+    const busca = document.getElementById("balcao-busca");
+    const acompanhamentos = document.getElementById("balcao-acompanhamentos");
+    const observacao = document.getElementById("balcao-observacao");
+    if (busca) {
+        busca.value = "";
+        renderizarResultadosBuscaBalcao();
+    }
+    if (acompanhamentos) {
+        Array.from(acompanhamentos.options).forEach(option => {
+            option.selected = false;
+        });
+    }
+    if (observacao) observacao.value = "";
+    renderizarPedidoBalcao();
+}
+
+function renderizarPedidoBalcao() {
+    const lista = document.getElementById("lista-itens-balcao");
+    const total = itensPedidoBalcao.reduce((soma, item) => soma + item.preco * item.quantidade, 0);
+    if (lista) {
+        lista.innerHTML = itensPedidoBalcao.length
+            ? itensPedidoBalcao.map((item, indice) => `
+                <div class="item-pedido-linha">
+                    <span><b>${item.quantidade}x</b> ${escaparHtml(item.nome)}</span>
+                    <span>R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}
+                        <button type="button" onclick="removerItemBalcao(${indice})">Remover</button>
+                    </span>
+                </div>`).join("")
+            : "<p style='margin: 0; color: var(--text-muted);'>Nenhum item adicionado.</p>";
+    }
+    const totalEl = document.getElementById("total-pedido-balcao");
+    if (totalEl) totalEl.textContent = `Total: R$ ${total.toFixed(2).replace(".", ",")}`;
+}
+
+function imprimirPedidoBalcao() {
+    if (!itensPedidoBalcao.length) {
+        alert("Adicione pelo menos um item antes de imprimir.");
+        return;
+    }
+    const seletorAcompanhamentos = document.getElementById("balcao-acompanhamentos");
+    const acompanhamentos = Array.from(seletorAcompanhamentos.selectedOptions).map(option => option.value).join(", ");
+    const observacao = document.getElementById("balcao-observacao").value.trim();
+    const pagamento = document.getElementById("balcao-pagamento").value;
+    const total = itensPedidoBalcao.reduce((soma, item) => soma + item.preco * item.quantidade, 0);
+    const janela = window.open("", "_blank", "width=360,height=650");
+    if (!janela) {
+        alert("Libere pop-ups para imprimir a comanda.");
+        return;
+    }
+    const linhas = itensPedidoBalcao.map(item =>
+        `<div class="item"><span>${item.quantidade}x ${escaparHtml(item.nome)}</span><b>R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</b></div>`
+    ).join("");
+    janela.document.write(`<!doctype html><html><head><meta charset="UTF-8"><title>Comanda balcão</title>
+        <style>
+        @page{size:80mm auto;margin:0}body{width:72mm;margin:0 auto;padding:4mm 2mm;font:700 15px Arial,sans-serif;color:#000}
+        h1{text-align:center;font-size:20px;margin:0 0 4px}h2{text-align:center;font-size:18px;border:2px solid #000;padding:5px;margin:8px 0}
+        .linha{border-top:1px dashed #000;margin:8px 0}.item{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dotted #777}
+        .obs{border-left:4px solid #000;padding-left:7px;margin-top:10px;font-size:14px}.total{display:flex;justify-content:space-between;font-size:20px;margin-top:10px}
+        </style></head><body><h1>SABOR CEARENSE</h1><h2>RETIRADA / BALCÃO</h2><div class="linha"></div>${linhas}
+        ${acompanhamentos ? `<p><b>ACOMPANHAMENTOS:</b> ${escaparHtml(acompanhamentos)}</p>` : ""}
+        ${observacao ? `<div class="obs">OBSERVAÇÃO: ${escaparHtml(observacao)}</div>` : ""}
+        <div class="linha"></div><p>PAGAMENTO: ${escaparHtml(pagamento)}</p><div class="total"><span>TOTAL</span><span>R$ ${total.toFixed(2).replace(".", ",")}</span></div>
+        <p style="text-align:center;margin-top:18px">Pedido de balcão</p></body></html>`);
+    janela.document.close();
+    janela.focus();
+    janela.print();
+    limparPedidoBalcao();
 }
 
 async function carregarPedidosAtivos() {
@@ -941,7 +1115,8 @@ async function carregarPedidosAtivos() {
             primeiraCargaPedidos = false;
 
             const pedidosVisiveis = pedidosAtivos.filter(pedido => pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO');
-            atualizarListaPedidos(containerAtivos, pedidosVisiveis, "ativos");
+            pedidosAtivosLocal = pedidosVisiveis;
+            renderizarAtivosFiltrados();
         }
     } catch (e) { console.log("Erro ao carregar pedidos ativos:", e); }
 
@@ -1071,7 +1246,7 @@ function imprimirCupomIFood(pedido) {
     janelaImpressao.document.close();
 
     var elEstilo = janelaImpressao.document.createElement("style");
-    var regrasCSS = "body { width: 72mm; max-width: 72mm; box-sizing: border-box; font-family: 'Courier New', Courier, monospace; font-size: 14px; line-height: 1.45; margin: 0 auto; padding: 3mm 2mm; color: #000; background: #fff; overflow-wrap: anywhere; } .text-center { text-align: center; } .text-right { text-align: right; } .negrito { font-weight: bold; } .divider-dashed { border-top: 1px dashed #000; margin: 7px 0; } .divider-double { border-top: 3px double #000; margin: 9px 0; } .tag-tipo-entrega { font-size: 22px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 5px 4px; margin-bottom: 9px; letter-spacing: 1px; } .titulo-loja { font-size: 18px; margin: 0; font-weight: bold; text-transform: uppercase; } .subtitulo-loja { font-size: 12px; margin: 3px 0; } .id-pedido { font-size: 21px; font-weight: bold; margin: 5px 0; } .secao-titulo { font-size: 14px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; } .bloco-conteudo { margin-bottom: 8px; } .tabela-itens { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 6px 0; } .tabela-itens th { border-bottom: 1px solid #000; font-size: 12px; padding: 3px 0; text-align: left; } .tabela-itens td { vertical-align: top; padding: 5px 0; border-bottom: 1px dotted #999; overflow-wrap: anywhere; } .col-qtd { width: 13%; font-weight: bold; } .col-nome { width: 60%; } .col-preco { width: 27%; text-align: right !important; white-space: nowrap; } .linha-financeiro { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; } .linha-total { display: flex; justify-content: space-between; gap: 8px; font-size: 19px; font-weight: bold; margin-top: 7px; padding-top: 5px; border-top: 1px dashed #000; } .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 6px 0; white-space: pre-wrap; font-size: 14px; font-weight: bold; } @media print { @page { size: 80mm auto; margin: 0; } body { width: 72mm; max-width: 72mm; padding: 4mm 2mm; } }";
+    var regrasCSS = "body { width: 72mm; max-width: 72mm; box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: 700; line-height: 1.4; margin: 0 auto; padding: 3mm 2mm; color: #000 !important; background: #fff; overflow-wrap: anywhere; -webkit-print-color-adjust: exact; print-color-adjust: exact; -webkit-font-smoothing: none; } * { color: #000 !important; font-weight: 700; text-shadow: 0 0 0 #000; } .tabela-itens td, .tabela-itens th { font-size: 15px; } .text-center { text-align: center; } .text-right { text-align: right; } .negrito { font-weight: bold; } .divider-dashed { border-top: 1px dashed #000; margin: 7px 0; } .divider-double { border-top: 3px double #000; margin: 9px 0; } .tag-tipo-entrega { font-size: 22px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 5px 4px; margin-bottom: 9px; letter-spacing: 1px; } .titulo-loja { font-size: 20px; margin: 0; font-weight: 900; text-transform: uppercase; } .subtitulo-loja { font-size: 13px; margin: 3px 0; } .id-pedido { font-size: 26px; font-weight: 900; font-weight: bold; margin: 5px 0; } .secao-titulo { font-size: 14px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; } .bloco-conteudo { margin-bottom: 8px; } .tabela-itens { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 6px 0; } .tabela-itens th { border-bottom: 1px solid #000; font-size: 12px; padding: 3px 0; text-align: left; } .tabela-itens td { vertical-align: top; padding: 5px 0; border-bottom: 1px dotted #999; overflow-wrap: anywhere; } .col-qtd { width: 13%; font-weight: bold; }     .col-nome { width: 60%; font-style: italic; } .col-preco { width: 27%; text-align: right !important; white-space: nowrap; } .linha-financeiro { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; } .linha-total { display: flex; justify-content: space-between; gap: 8px; font-size: 19px; font-weight: bold; margin-top: 7px; padding-top: 5px; border-top: 1px dashed #000; } .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 6px 0; white-space: pre-wrap; font-size: 14px; font-weight: bold; } @media print { @page { size: 80mm auto; margin: 0; } body { width: 72mm; max-width: 72mm; padding: 4mm 2mm; } }";
     
     elEstilo.textContent = regrasCSS;
     janelaImpressao.document.head.appendChild(elEstilo);
@@ -1099,6 +1274,12 @@ function imprimirCupomIFood(pedido) {
 
     var enderecoPedido = (pedido.endereco || "").toString().trim().toUpperCase();
     var tipoServico = enderecoPedido.startsWith("RETIRADA") ? "RETIRADA" : "ENTREGA";
+    if (tipoServico === "ENTREGA") {
+        var matchBairro = enderecoBruto.match(/Bairro:\s*([^,(]+?)(?:\s*\(|$)/i);
+        if (matchBairro) {
+            enderecoBruto = "Bairro: " + matchBairro[1].trim();
+        }
+    }
     var pagamentoFinal = (pedido.formaPagamento || "Não informado").toUpperCase();
     
     var dataAgora = new Date();

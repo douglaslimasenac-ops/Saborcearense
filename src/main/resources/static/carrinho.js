@@ -495,6 +495,17 @@ async function enviarPedido(e) {
     const observacao = document.getElementById("observacao").value.trim();
     const pagamento = document.getElementById("pagamento").value;
 
+    if (pagamento === "Pix") {
+        const confirmouFinalizacao = confirm(
+            "⚠️ Atenção: o pagamento Pix não finaliza o pedido sozinho.\n\n" +
+            "Depois de pagar pelo QR Code, você precisa confirmar agora para registrar o pedido e enviá-lo pelo WhatsApp.\n\n" +
+            "Deseja continuar e finalizar o pedido?"
+        );
+        if (!confirmouFinalizacao) {
+            return;
+        }
+    }
+
     const enderecoCompleto = isRetirada
         ? "RETIRADA NO ESTABELECIMENTO"
         : `${enderecoRua}, Bairro: ${bairroTextoPedido} (Ref: ${ref})`;

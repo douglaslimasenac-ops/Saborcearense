@@ -5,6 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestão Executiva - Sabor Cearense</title>
     <style>
+        .filtros-historico {
+            display: grid;
+            grid-template-columns: minmax(230px, 1.7fr) repeat(3, minmax(145px, 1fr)) auto;
+            gap: 12px;
+            align-items: end;
+            margin-bottom: 20px;
+            padding: 16px;
+            border: 1px solid #eadbc5;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #fffaf1, #fff);
+            box-shadow: 0 7px 18px rgba(79, 52, 23, 0.06);
+        }
+        .filtro-historico-campo {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .filtro-historico-campo label {
+            color: #806b51;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .filtro-historico-campo input,
+        .filtro-historico-campo select {
+            width: 100%;
+            min-height: 42px;
+            box-sizing: border-box;
+            border: 1px solid #eadbc5;
+            border-radius: 10px;
+            background: #fffdf9;
+            color: #4a3a29;
+            font: inherit;
+            padding: 9px 11px;
+        }
+        .filtro-historico-campo input:focus,
+        .filtro-historico-campo select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(217, 144, 36, 0.14);
+            outline: none;
+        }
+        .btn-limpar-filtros {
+            min-height: 42px;
+            padding: 9px 14px;
+            border: 1px solid #d8c3a6;
+            border-radius: 10px;
+            background: #fff;
+            color: #806b51;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        .btn-limpar-filtros:hover {
+            background: #fff7e8;
+            border-color: var(--primary);
+            color: #8a5316;
+        }
+        @media (max-width: 1050px) {
+            .filtros-historico {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .filtro-historico-busca {
+                grid-column: span 2;
+            }
+        }
+        @media (max-width: 560px) {
+            .filtros-historico {
+                grid-template-columns: 1fr;
+                padding: 12px;
+            }
+            .filtro-historico-busca {
+                grid-column: auto;
+            }
+            .btn-limpar-filtros {
+                width: 100%;
+            }
+        }
         :root {
             --primary: #f5a623;
             --primary-hover: #e0941f;
@@ -467,6 +546,7 @@
         <aside id="menu-lateral">
             <h2>Sabor Cearense</h2>
             <div class="nav-link active" id="tab-ativos" onclick="alternarAbasAdmin('ativos')"><i class="fas fa-motorcycle"></i> Em Andamento</div>
+            <div class="nav-link" id="tab-balcao" onclick="alternarAbasAdmin('balcao')"><i class="fas fa-cash-register"></i> Pedido no Balcão</div>
             <div class="nav-link" id="tab-historico" onclick="alternarAbasAdmin('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico / Finalizados</div>
             <div class="nav-link" id="tab-cardapio" onclick="alternarAbasAdmin('cardapio')"><i class="fas fa-utensils"></i> Alteração do Cardápio</div>
             <div class="nav-link" id="tab-acompanhamentos" onclick="alternarAbasAdmin('acompanhamentos')"><i class="fas fa-carrot"></i> Acompanhamentos</div>
@@ -487,6 +567,8 @@
                     <h2>🛵 Pedidos em Andamento (Tempo Real)</h2>
                 </div>
                 <div id="resumo-financeiro" class="resumo-financeiro" aria-live="polite"></div>
+                <input id="filtro-ativos-busca" type="search" placeholder="Buscar número, cliente ou telefone"
+                       style="width: 100%; box-sizing: border-box; margin-bottom: 16px;">
                 
                 <!-- CONTAINER INTEGRADO PARA CARDS DO WEBSOCKET -->
                 <div id="container-novos-pedidos" style="margin-bottom: 20px; display: none;">
@@ -496,7 +578,50 @@
                 <div id="lista-pedidos-ativos" style="display: flex; flex-direction: column; gap: 15px;"></div>
             </section>
 
-            <!-- ABA 2: HISTÓRICO DE FINALIZADOS -->
+            <!-- ABA 2: PEDIDO RÁPIDO NO BALCÃO -->
+            <section id="sec-balcao" class="section-view">
+                <div class="admin-header">
+                    <h2>🧾 Pedido rápido no balcão</h2>
+                    <button class="btn-acao" type="button" onclick="limparPedidoBalcao()">Limpar pedido</button>
+                </div>
+                <p style="color: var(--text-muted); margin-top: 0;">Pedido somente para retirada. Não é salvo no sistema nem aparece no histórico.</p>
+                <div class="form-grid" style="margin-bottom: 18px;">
+                    <div class="form-grupo">
+                        <label for="balcao-busca">Buscar produto</label>
+                        <input id="balcao-busca" type="search" placeholder="Digite o nome do item..." autocomplete="off">
+                        <div id="resultados-busca-balcao" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
+                    </div>
+                    <div class="form-grupo">
+                        <label for="balcao-quantidade">Quantidade</label>
+                        <input id="balcao-quantidade" type="number" min="1" value="1">
+                    </div>
+                </div>
+                <div id="lista-itens-balcao" class="itens-pedido" style="margin-top: 0;">
+                    <p style="margin: 0; color: var(--text-muted);">Nenhum item adicionado.</p>
+                </div>
+                <div class="form-grid" style="margin-top: 18px;">
+                    <div class="form-grupo">
+                        <label for="balcao-acompanhamentos">Acompanhamentos</label>
+                        <select id="balcao-acompanhamentos" multiple size="4"></select>
+                    </div>
+                    <div class="form-grupo">
+                        <label for="balcao-observacao">Observação</label>
+                        <input id="balcao-observacao" type="text" placeholder="Ex.: sem cebola">
+                    </div>
+                    <div class="form-grupo">
+                        <label for="balcao-pagamento">Forma de pagamento</label>
+                        <select id="balcao-pagamento">
+                            <option>Dinheiro</option>
+                            <option>Cartão</option>
+                            <option>Pix</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="total-pedido-balcao" style="font-size: 1.2rem; font-weight: 800; text-align: right; margin: 18px 0;">Total: R$ 0,00</div>
+                <button class="btn-acao" type="button" onclick="imprimirPedidoBalcao()">🖨️ Imprimir comanda do balcão</button>
+            </section>
+
+            <!-- ABA 3: HISTÓRICO DE FINALIZADOS -->
             <section id="sec-historico" class="section-view">
                 <div class="admin-header">
                     <h2>✅ Histórico de Pedidos Finalizados</h2>
@@ -505,15 +630,30 @@
                     </button>
                 </div>
                 <div id="resumo-historico" class="resumo-financeiro" aria-live="polite"></div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 16px;">
-                    <input id="filtro-historico-busca" type="search" placeholder="Buscar número, cliente ou telefone">
-                    <select id="filtro-historico-status">
-                        <option value="">Todos os status</option>
-                        <option value="ENTREGUE">Entregues</option>
-                        <option value="CANCELADO">Cancelados</option>
-                    </select>
-                    <input id="filtro-historico-inicio" type="date" title="Data inicial">
-                    <input id="filtro-historico-fim" type="date" title="Data final">
+                <div class="filtros-historico">
+                    <div class="filtro-historico-campo filtro-historico-busca">
+                        <label for="filtro-historico-busca">Pesquisar pedido</label>
+                        <input id="filtro-historico-busca" type="search" placeholder="Número, cliente ou telefone">
+                    </div>
+                    <div class="filtro-historico-campo">
+                        <label for="filtro-historico-status">Status</label>
+                        <select id="filtro-historico-status">
+                            <option value="">Todos os status</option>
+                            <option value="ENTREGUE">Entregues</option>
+                            <option value="CANCELADO">Cancelados</option>
+                        </select>
+                    </div>
+                    <div class="filtro-historico-campo">
+                        <label for="filtro-historico-inicio">A partir de</label>
+                        <input id="filtro-historico-inicio" type="date">
+                    </div>
+                    <div class="filtro-historico-campo">
+                        <label for="filtro-historico-fim">Até</label>
+                        <input id="filtro-historico-fim" type="date">
+                    </div>
+                    <button class="btn-limpar-filtros" type="button" onclick="limparFiltrosHistorico()">
+                        Limpar filtros
+                    </button>
                 </div>
                 <div id="lista-pedidos-finalizados" style="display: flex; flex-direction: column; gap: 15px;"></div>
                 <div id="paginacao-historico" style="display: flex; justify-content: center; gap: 10px; align-items: center; margin-top: 18px;"></div>
