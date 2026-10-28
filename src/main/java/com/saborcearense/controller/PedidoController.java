@@ -3,6 +3,7 @@ package com.saborcearense.controller;
 import java.util.List;
 import java.io.IOException;
 import java.util.concurrent.ThreadLocalRandom;
+import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.annotation.PostConstruct;
@@ -71,6 +72,16 @@ public class PedidoController {
        return pedidoRepository.findByNumeroPedido(numeroPedido)
                .map(ResponseEntity::ok)
                .orElse(ResponseEntity.notFound().build());
+   }
+
+   @org.springframework.web.bind.annotation.DeleteMapping("/historico-antigo")
+   public ResponseEntity<java.util.Map<String, Object>> apagarHistoricoAntigo() {
+       LocalDateTime limite = LocalDateTime.now().minusDays(2);
+       int quantidade = pedidoRepository.deleteByStatusInAndDataCriacaoBefore(
+               java.util.List.of("ENTREGUE", "CANCELADO"), limite);
+       return ResponseEntity.ok(java.util.Map.of(
+               "apagados", quantidade,
+               "limite", limite));
    }
 
    @PostMapping

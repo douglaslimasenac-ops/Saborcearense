@@ -30,6 +30,9 @@ let primeiraCargaPedidos = true;
 let termoBuscaProdutos = "";
 let ultimoSnapshotPedidosAtivos = "";
 let ultimoSnapshotPedidosHistorico = "";
+let pedidosHistoricoLocal = [];
+let paginaHistorico = 1;
+const pedidosPorPaginaHistorico = 10;
 
 async function fetchAdmin(url, options = {}) {
     const token = localStorage.getItem("adminToken");
@@ -62,6 +65,11 @@ window.addEventListener('DOMContentLoaded', function() {
     }
     const formBairro = document.getElementById("form-bairro-entrega");
     if (formBairro) formBairro.addEventListener("submit", salvarBairroAdmin);
+    ["filtro-historico-busca", "filtro-historico-status", "filtro-historico-inicio", "filtro-historico-fim"]
+        .forEach(id => document.getElementById(id)?.addEventListener("input", () => {
+            paginaHistorico = 1;
+            renderizarHistoricoFiltrado();
+        }));
 });
 
 function alternarAbasAdmin(abaAlvo) {
@@ -867,6 +875,43 @@ function atualizarListaPedidos(container, pedidos, tipo) {
     }
 }
 
+function renderizarHistoricoFiltrado() {
+    const busca = (document.getElementById("filtro-historico-busca")?.value || "").trim().toLocaleLowerCase("pt-BR");
+    const status = document.getElementById("filtro-historico-status")?.value || "";
+    const inicio = document.getElementById("filtro-historico-inicio")?.value || "";
+    const fim = document.getElementById("filtro-historico-fim")?.value || "";
+    const filtrados = pedidosHistoricoLocal.filter(pedido => {
+        const texto = `${numeroExibicaoPedido(pedido)} ${pedido.clienteNome || ""} ${pedido.telefone || ""}`.toLocaleLowerCase("pt-BR");
+        const data = String(pedido.dataCriacao || "").slice(0, 10);
+        return (!busca || texto.includes(busca))
+            && (!status || pedido.status === status)
+            && (!inicio || data >= inicio)
+            && (!fim || data <= fim);
+    });
+    const totalPaginas = Math.max(1, Math.ceil(filtrados.length / pedidosPorPaginaHistorico));
+    paginaHistorico = Math.min(paginaHistorico, totalPaginas);
+    const inicioPagina = (paginaHistorico - 1) * pedidosPorPaginaHistorico;
+    ultimoSnapshotPedidosHistorico = "";
+    atualizarListaPedidos(
+        document.getElementById("lista-pedidos-finalizados"),
+        filtrados.slice(inicioPagina, inicioPagina + pedidosPorPaginaHistorico),
+        "historico"
+    );
+    const paginacao = document.getElementById("paginacao-historico");
+    if (paginacao) {
+        paginacao.innerHTML = `
+            <button class="btn-acao" type="button" ${paginaHistorico === 1 ? "disabled" : ""} onclick="mudarPaginaHistorico(-1)">Anterior</button>
+            <span>Página ${paginaHistorico} de ${totalPaginas} (${filtrados.length} pedidos)</span>
+            <button class="btn-acao" type="button" ${paginaHistorico === totalPaginas ? "disabled" : ""} onclick="mudarPaginaHistorico(1)">Próxima</button>
+        `;
+    }
+}
+
+function mudarPaginaHistorico(direcao) {
+    paginaHistorico += direcao;
+    renderizarHistoricoFiltrado();
+}
+
 async function carregarPedidosAtivos() {
     if (carregandoPedidosAtivos) return;
     carregandoPedidosAtivos = true;
@@ -907,11 +952,38 @@ async function carregarPedidosAtivos() {
             atualizarResumoFinanceiro(todosPedidos, "resumo-financeiro");
             atualizarResumoFinanceiro(todosPedidos, "resumo-historico");
             const pedidosFinalizados = todosPedidos.filter(pedido => pedido.status === 'ENTREGUE' || pedido.status === 'CANCELADO');
-            atualizarListaPedidos(containerHistorico, pedidosFinalizados, "historico");
+            pedidosHistoricoLocal = pedidosFinalizados;
+            renderizarHistoricoFiltrado();
         }
     } catch (e) { console.log("Erro ao carregar histórico de finalizados:", e); }
 
     carregandoPedidosAtivos = false;
+}
+
+async function apagarHistoricoAntigo() {
+    const confirmou = confirm(
+        "Deseja realmente apagar os pedidos ENTREGUES ou CANCELADOS com mais de 2 dias?\n\n" +
+        "Essa ação é permanente e não pode ser desfeita."
+    );
+    if (!confirmou) return;
+
+    try {
+        const res = await fetchAdmin(`${URL_BACKEND}/api/pedidos/historico-antigo`, {
+            method: "DELETE"
+        });
+        if (!res.ok) {
+            alert("Não foi possível apagar o histórico antigo.");
+            return;
+        }
+
+        const resultado = await res.json();
+        alert(`${resultado.apagados || 0} pedido(s) antigo(s) foram apagados.`);
+        ultimoSnapshotPedidosHistorico = "";
+        await carregarPedidosAtivos();
+    } catch (erro) {
+        console.error("Erro ao apagar histórico antigo:", erro);
+        alert("Não foi possível conectar ao servidor para apagar o histórico.");
+    }
 }
 
 async function mudarStatusPedido(id, novoStatus) {
@@ -1100,7 +1172,24 @@ function imprimirCupomIFood(pedido) {
     }
 
     if (listaItensImpressao && listaItensImpressao.length > 0) {
-        listaItensImpressao.forEach(function(item) {
+        var ordemImpressao = function(item) {
+            var categoria = String(item.categoria || "").trim().toUpperCase();
+            if (categoria === "BEBIDA" || categoria === "BEBIDAS") return 1;
+            if (categoria === "SOBREMESA" || categoria === "SOBREMESAS") return 2;
+            return 0;
+        };
+        var itensOrdenadosParaImpressao = listaItensImpressao
+            .map(function(item, indice) {
+                return { item: item, indice: indice, ordem: ordemImpressao(item) };
+            })
+            .sort(function(a, b) {
+                return a.ordem - b.ordem || a.indice - b.indice;
+            })
+            .map(function(entrada) {
+                return entrada.item;
+            });
+
+        itensOrdenadosParaImpressao.forEach(function(item) {
             var tr = janelaImpressao.document.createElement("tr");
             
             var nomeTexto = item.nome ? item.nome.toString().toUpperCase() : "PRATO";

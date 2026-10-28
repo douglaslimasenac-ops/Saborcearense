@@ -500,9 +500,23 @@
             <section id="sec-historico" class="section-view">
                 <div class="admin-header">
                     <h2>✅ Histórico de Pedidos Finalizados</h2>
+                    <button class="btn-acao" type="button" onclick="apagarHistoricoAntigo()">
+                        🗑️ Apagar finalizados com mais de 2 dias
+                    </button>
                 </div>
                 <div id="resumo-historico" class="resumo-financeiro" aria-live="polite"></div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 16px;">
+                    <input id="filtro-historico-busca" type="search" placeholder="Buscar número, cliente ou telefone">
+                    <select id="filtro-historico-status">
+                        <option value="">Todos os status</option>
+                        <option value="ENTREGUE">Entregues</option>
+                        <option value="CANCELADO">Cancelados</option>
+                    </select>
+                    <input id="filtro-historico-inicio" type="date" title="Data inicial">
+                    <input id="filtro-historico-fim" type="date" title="Data final">
+                </div>
                 <div id="lista-pedidos-finalizados" style="display: flex; flex-direction: column; gap: 15px;"></div>
+                <div id="paginacao-historico" style="display: flex; justify-content: center; gap: 10px; align-items: center; margin-top: 18px;"></div>
             </section>
 
             <!-- ABA 3: ALTERAÇÃO DO CARDÁPIO -->
