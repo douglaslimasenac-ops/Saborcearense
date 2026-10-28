@@ -3,7 +3,9 @@ package com.saborcearense.controller;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.saborcearense.model.Produto;
 import com.saborcearense.repository.ItemCardapioRepository;
@@ -23,11 +25,13 @@ public class AdminPratoController {
 
     @PostMapping
     public ResponseEntity<Produto> adicionar(@Valid @RequestBody Produto novoPrato) {
+        validarPrato(novoPrato);
         return ResponseEntity.ok(itemCardapioRepository.save(novoPrato));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Produto> atualizar(@PathVariable Long id, @Valid @RequestBody Produto pratoAtualizado) {
+        validarPrato(pratoAtualizado);
         return itemCardapioRepository.findById(id)
             .map(prato -> {
                 prato.setNome(pratoAtualizado.getNome());
@@ -49,5 +53,14 @@ public class AdminPratoController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    private void validarPrato(Produto prato) {
+        if ("PRATOS_DO_DIA".equalsIgnoreCase(prato.getCategoria())
+                && (prato.getDiaSemana() == null || prato.getDiaSemana().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Informe o dia da semana para um prato do dia");
+        }
     }
 }

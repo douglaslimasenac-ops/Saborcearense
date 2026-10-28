@@ -98,16 +98,6 @@ public class CardapioController {
             System.out.println("Sabor Cearense: Banco já populado. Verificando itens complementares.");
         }
 
-        adicionarProdutoSeNaoExistir("Carne Assada", "PRATOS_DO_DIA", 28.00, "Carne assada macia com tempero caseiro.");
-        adicionarProdutoSeNaoExistir("Frango Assado", "PRATOS_DO_DIA", 24.00, "Frango assado dourado e temperado da casa.");
-        adicionarProdutoSeNaoExistir("Pernil Assado", "PRATOS_DO_DIA", 22.00, "Pernil assado macio e bem temperado.");
-        adicionarProdutoSeNaoExistir("Jardineira", "PRATOS_DO_DIA", 25.00, "Jardineira caseira com legumes e carne.");
-        adicionarProdutoSeNaoExistir("Strogonoff", "PRATOS_DO_DIA", 24.00, "Strogonoff cremoso preparado na casa.");
-        adicionarProdutoSeNaoExistir("Língua com Batata", "PRATOS_DO_DIA", 22.00, "Língua cozida com batatas macias.");
-        adicionarProdutoSeNaoExistir("Mocotó", "PRATOS_DO_DIA", 24.00, "Mocotó tradicional bem temperado.");
-        adicionarProdutoSeNaoExistir("Almôndega", "PRATOS_DO_DIA", 25.00, "Almôndegas caseiras ao molho.");
-        adicionarProdutoSeNaoExistir("Peixe ao Molho", "PRATOS_DO_DIA", 30.00, "Filé de peixe ao molho da casa.");
-        adicionarProdutoSeNaoExistir("Carré à Mineira", "PRATOS_DO_DIA", 24.00, "Carré suíno preparado à mineira.");
     }
 
     private void adicionarProdutoSeNaoExistir(String nome, String categoria, double preco, String descricao) {

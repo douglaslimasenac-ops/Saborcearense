@@ -76,8 +76,7 @@
                 const diaAtual = DIAS_SEMANA[new Date().getDay()];
                 itens
                 .filter(item => item.categoria?.toUpperCase() !== "PRATOS_DO_DIA"
-                    || !item.diaSemana
-                    || item.diaSemana.toUpperCase() === diaAtual)
+                    || item.diaSemana?.toUpperCase() === diaAtual)
                 .forEach(item => {
                     const esgotado = !item.disponivel;
                     
