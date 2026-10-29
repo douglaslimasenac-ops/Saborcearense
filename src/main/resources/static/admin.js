@@ -24,6 +24,7 @@ let socketAdmin = null;
 let pingTimerAdmin = null;
 let pedidosTimerAdmin = null;
 let audioCtxCompartilhado = null;
+let somNovoPedido = null;
 let idsPedidosConhecidos = new Set();
 let idsPedidosAlertados = new Set();
 let primeiraCargaPedidos = true;
@@ -58,27 +59,6 @@ async function fetchAdmin(url, options = {}) {
         window.location.reload();
     }
     return response;
-}
-
-async function verificarArmazenamento() {
-    const aviso = document.getElementById("aviso-armazenamento");
-    try {
-        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/armazenamento`);
-        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
-        const dados = await resposta.json();
-        if (dados.tipo === "postgresql") {
-            aviso.hidden = true;
-            return;
-        }
-        aviso.textContent = dados.tipo === "temporario"
-            ? "Atenção: o banco é temporário. Pedidos e cadastros podem desaparecer ao reiniciar. Configure o banco persistente no Render."
-            : "Atenção: não foi possível confirmar que este banco preserva dados após o deploy. Verifique a configuração no Render.";
-        aviso.hidden = false;
-    } catch (erro) {
-        console.error("Erro ao verificar armazenamento:", erro);
-        aviso.textContent = "Não foi possível verificar o banco de dados. Confirme a configuração no Render.";
-        aviso.hidden = false;
-    }
 }
 
 // ==========================================
@@ -624,7 +604,7 @@ function conectarWebSocketAdmin() {
             }
             if (dados.status === "RECEBIDO" && dados.clienteNome && dados.id) {
                 idsPedidosAlertados.add(dados.id);
-                tocarAlertaSonoro();
+                tocarSomNovoPedido();
             }
 
         };
@@ -766,6 +746,7 @@ function exibirBannerAtivacaoAudio() {
 
     banner.addEventListener("click", () => {
         inicializarAudioContext();
+        if (audioCtxCompartilhado) somNovoPedido = carregarSomNovoPedido(audioCtxCompartilhado);
         banner.remove();
         if (typeof iniciarTurnoAdmin === "function") iniciarTurnoAdmin();
     });
@@ -787,6 +768,38 @@ function inicializarAudioContext() {
         console.log("Contexto de áudio inicializado via clique administrativo.");
     } catch (e) {
         console.error("Falha ao inicializar o AudioContext:", e);
+    }
+}
+
+async function carregarSomNovoPedido(contexto) {
+    try {
+        const resposta = await fetch("som-novo-pedido.mp3");
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        return await contexto.decodeAudioData(await resposta.arrayBuffer());
+    } catch (erro) {
+        console.error("Não foi possível carregar o som de novos pedidos:", erro);
+        alert("Não foi possível carregar o novo som de pedidos. O alerta sonoro original será usado.");
+        return null;
+    }
+}
+
+async function tocarSomNovoPedido() {
+    const contexto = audioCtxCompartilhado;
+    if (!contexto || !somNovoPedido) return;
+    const som = await somNovoPedido;
+    if (!som) {
+        tocarAlertaSonoro();
+        return;
+    }
+    try {
+        if (contexto.state === "suspended") await contexto.resume();
+        const fonte = contexto.createBufferSource();
+        fonte.buffer = som;
+        fonte.connect(contexto.destination);
+        fonte.start();
+    } catch (erro) {
+        console.error("Não foi possível reproduzir o som de novo pedido:", erro);
+        alert("Não foi possível reproduzir o som de novo pedido. Verifique o áudio do navegador.");
     }
 }
 
@@ -891,6 +904,19 @@ function numeroExibicaoPedido(pedido) {
     return pedido.numeroPedido || pedido.id;
 }
 
+function textoStatusPedido(pedido) {
+    const status = {
+        RECEBIDO: "Recebido",
+        PREPARO: "Preparando",
+        PREPARANDO: "Preparando",
+        ENTREGA: pedidoEDeRetirada(pedido) ? "Pronto para retirada" : "Saiu para entrega",
+        SAIU_ENTREGA: "Saiu para entrega",
+        ENTREGUE: pedidoEDeRetirada(pedido) ? "Retirado" : "Entregue",
+        CANCELADO: "Cancelado"
+    };
+    return status[pedido.status] || pedido.status || "Não informado";
+}
+
 function obterLocalPedido(pedido) {
     return pedidoEDeRetirada(pedido)
         ? "🏪 RETIRADA NO ESTABELECIMENTO"
@@ -969,7 +995,7 @@ function organizarCardPedido(card, pedido, tipo) {
     titulo.textContent = `Pedido #${numeroExibicaoPedido(pedido)} - ${pedido.clienteNome || pedido.nomeCliente || "Não informado"}`;
     const info = document.createElement("span");
     info.className = "resumo-pedido-info";
-    info.textContent = `${pedidoEDeRetirada(pedido) ? "Retirada" : "Entrega"} · ${pedido.status} · R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}`;
+    info.textContent = `${pedidoEDeRetirada(pedido) ? "Retirada" : "Entrega"} · ${textoStatusPedido(pedido)} · R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}`;
     const acao = document.createElement("span");
     acao.className = "resumo-pedido-acao";
     acao.textContent = detalhes.open ? "Minimizar ▲" : "Ver detalhes ▼";
@@ -977,7 +1003,7 @@ function organizarCardPedido(card, pedido, tipo) {
 
     const cabecalho = card.firstElementChild;
     cabecalho.querySelector("h4").remove();
-    cabecalho.querySelector(".badge-cat").remove();
+    cabecalho.querySelector(".badge-cat").textContent = `Status: ${textoStatusPedido(pedido)}`;
     detalhes.appendChild(resumo);
     while (card.firstChild) detalhes.appendChild(card.firstChild);
     card.appendChild(detalhes);
@@ -1375,7 +1401,7 @@ async function carregarPedidosAtivos() {
                 );
             novosPedidos.forEach(pedido => {
                 idsPedidosAlertados.add(pedido.id);
-                tocarAlertaSonoro();
+                tocarSomNovoPedido();
             });
             pedidosAtivos.forEach(pedido => idsPedidosConhecidos.add(pedido.id));
             primeiraCargaPedidos = false;
@@ -1496,7 +1522,6 @@ async function autenticarAdmin() {
         localStorage.setItem("adminToken", dados.token);
         document.getElementById("container-login-view").style.display = "none";
         document.getElementById("painel-adm-wrapper").style.display = "flex";
-        verificarArmazenamento();
         
         if (typeof carregarItensAdmin === "function") carregarItensAdmin();
         if (typeof carregarAcompanhamentosAdmin === "function") carregarAcompanhamentosAdmin();
@@ -1512,6 +1537,18 @@ function criarDivDivisora(janela, dupla) {
     var div = janela.document.createElement("div");
     div.className = dupla ? "divider-double" : "divider-dashed";
     return div;
+}
+
+function formatarPrevisaoEntrega(pedido) {
+    const padrao = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2})/;
+    const inicio = String(pedido.previsaoEntregaInicio || "").match(padrao);
+    const fim = String(pedido.previsaoEntregaFim || "").match(padrao);
+    if (!inicio || !fim) return "Não disponível";
+    const dataInicio = `${inicio[3]}/${inicio[2]}/${inicio[1]}`;
+    const dataFim = `${fim[3]}/${fim[2]}/${fim[1]}`;
+    return dataInicio === dataFim
+        ? `${dataInicio}, ${inicio[4]} às ${fim[4]}`
+        : `${dataInicio} ${inicio[4]} às ${dataFim} ${fim[4]}`;
 }
 
 function imprimirCupomIFood(pedido) {
@@ -1559,7 +1596,7 @@ function imprimirCupomIFood(pedido) {
         enderecoBruto = enderecoBruto.replace(matchRef[0], ""); 
     }
 
-    enderecoBruto = enderecoBruto.replace(/,\s*$/, "").replace(/\s+/g, " ").trim();
+    enderecoBruto = enderecoBruto.replace(/,\s*$/, "").replace(/[ \t]+/g, " ").trim();
 
     var enderecoPedido = (pedido.endereco || "").toString().trim().toUpperCase();
     var tipoServico = enderecoPedido.startsWith("RETIRADA") ? "RETIRADA" : "ENTREGA";
@@ -1587,6 +1624,13 @@ function imprimirCupomIFood(pedido) {
     elCabecalho.className = "text-center";
     elCabecalho.innerHTML = "<div class='titulo-loja'>🌵 SABOR CEARENSE 🌵</div><div class='subtitulo-loja'>Comida Caseira Legítima</div><div class='divider-dashed'></div><div class='subtitulo-loja'>Não vale como nota fiscal</div><div class='id-pedido'>PEDIDO #" + numeroExibicaoPedido(pedido) + "</div><div class='subtitulo-loja'>Data: " + dataFinal + " - Hora: " + horaFinal + "</div>";
     containerPrincipal.appendChild(elCabecalho);
+
+    if (tipoServico === "ENTREGA") {
+        var elPrevisao = janelaImpressao.document.createElement("div");
+        elPrevisao.className = "text-center bloco-conteudo";
+        elPrevisao.textContent = "Previsão de entrega: " + formatarPrevisaoEntrega(pedido);
+        containerPrincipal.appendChild(elPrevisao);
+    }
     
     var divDivisora1 = janelaImpressao.document.createElement("div");
     divDivisora1.className = "divider-double";
@@ -1604,7 +1648,8 @@ function imprimirCupomIFood(pedido) {
     var elEnderecoBloco = janelaImpressao.document.createElement("div");
     elEnderecoBloco.className = "bloco-conteudo";
     var tituloEndereco = tipoServico === "RETIRADA" ? "Local de Retirada" : "Endereço de Entrega";
-    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>" + tituloEndereco + "</div><div style='white-space: pre-wrap; font-size: 15px; font-weight: bold;'>" + escaparHtml(enderecoBruto) + "</div>" + (tipoServico === "RETIRADA" ? "" : "<div style='margin-top: 4px;'><span class='negrito'>Referência:</span> " + escaparHtml(referenciaFinal) + "</div>");
+    var linhasEndereco = tipoServico === "RETIRADA" ? [enderecoBruto] : enderecoBruto.split(/,|\r?\n/).map(linha => linha.trim()).filter(Boolean);
+    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>" + tituloEndereco + "</div>" + linhasEndereco.map(linha => "<div>" + escaparHtml(linha) + "</div>").join("") + (tipoServico === "RETIRADA" ? "" : "<div style='margin-top: 4px;'><span class='negrito'>Referência:</span> " + escaparHtml(referenciaFinal) + "</div>");
     containerPrincipal.appendChild(elEnderecoBloco);
     
     var divDivisora3 = janelaImpressao.document.createElement("div");

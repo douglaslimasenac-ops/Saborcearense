@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -13,10 +14,12 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 import com.saborcearense.DeliveryApplication;
 import com.saborcearense.model.BairroEntrega;
+import com.saborcearense.model.Pedido;
 import com.saborcearense.model.Produto;
 import com.saborcearense.repository.AcompanhamentoRepository;
 import com.saborcearense.repository.BairroEntregaRepository;
 import com.saborcearense.repository.ItemCardapioRepository;
+import com.saborcearense.repository.PedidoRepository;
 
 class PersistenciaReinicioTest {
     @TempDir Path diretorio;
@@ -25,6 +28,7 @@ class PersistenciaReinicioTest {
     void cadastrosEAlteracoesPersistemAposReiniciarComBancoEmDisco() {
         String url = "jdbc:h2:file:" + diretorio.resolve("teste").toAbsolutePath() + ";MODE=PostgreSQL";
         long pratoId;
+        long pedidoId;
         try (ConfigurableApplicationContext contexto = iniciar(url)) {
             BairroEntregaRepository bairros = contexto.getBean(BairroEntregaRepository.class);
             bairros.save(new BairroEntrega("Bairro persistente", new BigDecimal("8.50")));
@@ -39,6 +43,15 @@ class PersistenciaReinicioTest {
             var acompanhamento = acompanhamentos.findByNomeIgnoreCase("Maionese").orElseThrow();
             acompanhamento.setDisponivel(false);
             acompanhamentos.save(acompanhamento);
+            Pedido pedido = new Pedido();
+            pedido.setClienteNome("Cliente");
+            pedido.setTelefone("000");
+            pedido.setEndereco("Rua Teste, 123");
+            pedido.setFormaPagamento("Pix");
+            pedido.setValorTotal(new BigDecimal("25.00"));
+            pedido.setPrevisaoEntregaInicio(LocalDateTime.of(2026, 10, 29, 12, 10));
+            pedido.setPrevisaoEntregaFim(LocalDateTime.of(2026, 10, 29, 12, 20));
+            pedidoId = contexto.getBean(PedidoRepository.class).save(pedido).getId();
         }
         try (ConfigurableApplicationContext contexto = iniciar(url)) {
             var bairro = contexto.getBean(BairroEntregaRepository.class)
@@ -50,6 +63,9 @@ class PersistenciaReinicioTest {
             assertEquals(0, prato.getPreco().compareTo(new BigDecimal("42.00")));
             assertFalse(contexto.getBean(AcompanhamentoRepository.class)
                     .findByNomeIgnoreCase("Maionese").orElseThrow().isDisponivel());
+            Pedido pedido = contexto.getBean(PedidoRepository.class).findById(pedidoId).orElseThrow();
+            assertEquals(LocalDateTime.of(2026, 10, 29, 12, 10), pedido.getPrevisaoEntregaInicio());
+            assertEquals(LocalDateTime.of(2026, 10, 29, 12, 20), pedido.getPrevisaoEntregaFim());
         }
     }
 

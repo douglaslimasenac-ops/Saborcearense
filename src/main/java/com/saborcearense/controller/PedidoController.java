@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.concurrent.ThreadLocalRandom;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.annotation.PostConstruct;
@@ -113,6 +115,14 @@ public class PedidoController {
       novoPedido.setNumeroPedido(gerarNumeroPedido());
        novoPedido.setDataCriacao(java.time.LocalDateTime.now());
        novoPedido.setStatus("RECEBIDO");
+       if (novoPedido.getEndereco().trim().regionMatches(true, 0, "RETIRADA", 0, "RETIRADA".length())) {
+           novoPedido.setPrevisaoEntregaInicio(null);
+           novoPedido.setPrevisaoEntregaFim(null);
+       } else {
+           LocalDateTime inicio = calcularInicioPrevisao(LocalDateTime.now(ZoneId.of("America/Sao_Paulo")));
+           novoPedido.setPrevisaoEntregaInicio(inicio);
+           novoPedido.setPrevisaoEntregaFim(inicio.plusMinutes(10));
+       }
         
         System.out.println("Sabor Cearense: Novo pedido recebido do cliente " + novoPedido.getClienteNome());
         
@@ -138,6 +148,15 @@ public class PedidoController {
         }
 
         return pedidoSalvo;
+    }
+
+    static LocalDateTime calcularInicioPrevisao(LocalDateTime recebido) {
+        LocalDateTime inicioEntregas = recebido.toLocalDate().atTime(LocalTime.of(11, 30));
+        LocalDateTime inicio = recebido.isBefore(inicioEntregas) ? inicioEntregas : recebido;
+        if (inicio.getSecond() != 0 || inicio.getNano() != 0) {
+            inicio = inicio.plusMinutes(1).withSecond(0).withNano(0);
+        }
+        return inicio.plusMinutes(40);
     }
 
     @GetMapping("/{id}/comprovante")

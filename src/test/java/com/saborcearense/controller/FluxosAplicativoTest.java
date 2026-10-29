@@ -2,6 +2,8 @@ package com.saborcearense.controller;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -12,6 +14,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -52,6 +56,42 @@ class FluxosAplicativoTest {
     private MockMultipartFile dadosPedido() {
         return new MockMultipartFile("pedido", "", "application/json",
                 PEDIDO.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void previsaoConsideraHorarioDeInicioDasEntregas() {
+        assertEquals(LocalDateTime.of(2026, 10, 29, 12, 10),
+                PedidoController.calcularInicioPrevisao(LocalDateTime.of(2026, 10, 29, 9, 0)));
+        assertEquals(LocalDateTime.of(2026, 10, 29, 12, 10),
+                PedidoController.calcularInicioPrevisao(LocalDateTime.of(2026, 10, 29, 11, 30)));
+        assertEquals(LocalDateTime.of(2026, 10, 29, 13, 1),
+                PedidoController.calcularInicioPrevisao(LocalDateTime.of(2026, 10, 29, 12, 20, 1)));
+    }
+
+    @Test
+    void previsaoDeEntregaEhCalculadaNoServidorEPersistida() throws Exception {
+        LocalDateTime antes = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+        String dados = PEDIDO.replace("\"endereco\":\"RETIRADA\"", "\"endereco\":\"Rua Teste, 123, Bairro: Tijuca\"")
+                .replace("\"valorTotal\":25", "\"valorTotal\":25,\"previsaoEntregaInicio\":\"2000-01-01T00:00:00\"");
+        String resposta = mvc.perform(post("/api/pedidos").contentType(MediaType.APPLICATION_JSON).content(dados))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        LocalDateTime depois = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+        JsonNode pedido = mapper.readTree(resposta);
+        LocalDateTime inicio = LocalDateTime.parse(pedido.get("previsaoEntregaInicio").asText());
+        LocalDateTime fim = LocalDateTime.parse(pedido.get("previsaoEntregaFim").asText());
+        assertFalse(inicio.isBefore(PedidoController.calcularInicioPrevisao(antes)));
+        assertFalse(inicio.isAfter(PedidoController.calcularInicioPrevisao(depois)));
+        assertEquals(inicio.plusMinutes(10), fim);
+        mvc.perform(get("/api/pedidos/{id}", pedido.get("id").asLong()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.previsaoEntregaInicio").value(pedido.get("previsaoEntregaInicio").asText()))
+                .andExpect(jsonPath("$.previsaoEntregaFim").value(pedido.get("previsaoEntregaFim").asText()));
+
+        mvc.perform(post("/api/pedidos").contentType(MediaType.APPLICATION_JSON)
+                .content(PEDIDO.replace("\"valorTotal\":25", "\"valorTotal\":25,\"previsaoEntregaInicio\":\"2000-01-01T00:00:00\"")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.previsaoEntregaInicio").doesNotExist())
+                .andExpect(jsonPath("$.previsaoEntregaFim").doesNotExist());
     }
 
     @Test
