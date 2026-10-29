@@ -58,6 +58,7 @@
         .estado-conexao::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
         .estado-conexao.offline { color: #b45309; }
         #chat-pedido {
+            display: none;
             position: fixed;
             right: 20px;
             bottom: 20px;
@@ -68,6 +69,8 @@
             border: 0;
             box-shadow: none;
         }
+        #chat-pedido.visivel { display: block; }
+        body.chat-visivel { padding-bottom: 110px; }
         .botao-chat-flutuante {
             border: 0;
             border-radius: 999px;
@@ -79,8 +82,11 @@
             cursor: pointer;
         }
         .janela-chat-pedido {
+            box-sizing: border-box;
             display: none;
             width: min(360px, calc(100vw - 32px));
+            max-height: calc(100vh - 85px);
+            overflow-y: auto;
             margin-bottom: 10px;
             padding: 14px;
             background: #fff;
@@ -237,23 +243,24 @@
                 <button class="btn-secundario" onclick="copiarNumeroPedido()">📋 Copiar número</button>
                 <button class="btn-secundario" onclick="falarComRestaurante()">💬 Falar conosco</button>
             </div>
-            <div id="chat-pedido">
-                <div class="janela-chat-pedido">
-                    <div class="cabecalho-chat-pedido">
-                        <span>💬 Falar com o restaurante</span>
-                        <button class="fechar-chat-pedido" type="button" onclick="alternarChatPedido(false)" aria-label="Fechar chat">×</button>
-                    </div>
-                    <small style="display:block; color:#806b51; margin:6px 0 10px;">Conversa sobre o pedido <span id="chat-numero-pedido"></span></small>
-                    <div id="lista-chat-pedido" style="height: 210px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px;">
-                        <small style="color: #806b51;">Carregando conversa...</small>
-                    </div>
-                    <div style="display: flex; gap: 8px; margin-top: 12px;">
-                        <input id="mensagem-chat-pedido" type="text" maxlength="1000" placeholder="Digite sua mensagem..." style="min-width:0; flex: 1; padding: 10px; border: 1px solid #eadbc5; border-radius: 10px;">
-                        <button class="btn-secundario" type="button" onclick="enviarMensagemChat()">Enviar</button>
-                    </div>
+        </div>
+
+        <div id="chat-pedido">
+            <div class="janela-chat-pedido">
+                <div class="cabecalho-chat-pedido">
+                    <span>💬 Falar com o restaurante</span>
+                    <button class="fechar-chat-pedido" type="button" onclick="alternarChatPedido(false)" aria-label="Fechar chat">×</button>
                 </div>
-                <button class="botao-chat-flutuante" type="button" onclick="alternarChatPedido()" aria-label="Abrir conversa com o restaurante">💬 Chat</button>
+                <small style="display:block; color:#806b51; margin:6px 0 10px;">Conversa sobre o pedido <span id="chat-numero-pedido"></span></small>
+                <div id="lista-chat-pedido" style="height: 210px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px;">
+                    <small style="color: #806b51;">Carregando conversa...</small>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <input id="mensagem-chat-pedido" type="text" maxlength="1000" placeholder="Digite sua mensagem..." style="min-width:0; flex: 1; padding: 10px; border: 1px solid #eadbc5; border-radius: 10px;">
+                    <button class="btn-secundario" type="button" onclick="enviarMensagemChat()">Enviar</button>
+                </div>
             </div>
+            <button class="botao-chat-flutuante" type="button" onclick="alternarChatPedido()" aria-label="Abrir conversa com o restaurante">💬 Chat</button>
         </div>
         
         <div class="estado-conexao" id="estado-conexao">Monitoramento automático ativo</div>
@@ -289,14 +296,17 @@
             
             // Configura a ATUALIZAÇÃO EM TEMPO REAL (Polling) a cada 7 segundos
             timerAtualizacao = setInterval(() => consultarStatus(false), 7000);
-            setInterval(carregarChatPedido, 5000);
-            carregarChatPedido();
         } else {
             const elementoStatus = document.getElementById("txt-status-nome") || document.getElementById("txt-index-status");
             if (elementoStatus) {
                 elementoStatus.innerText = "Insira o número do pedido acima para rastrear.";
             }
         }
+        setInterval(() => {
+            if (document.getElementById("chat-pedido").classList.contains("aberto")) {
+                carregarChatPedido();
+            }
+        }, 5000);
     });
 
     function buscarNovoPedido() {
@@ -310,7 +320,12 @@
         }
         
         // Salva a nova pesquisa
-        pedidoId = inputVal.replace('#', '').trim();
+        const novoPedidoId = inputVal.replace('#', '').trim();
+        if (novoPedidoId !== String(pedidoId)) {
+            alternarChatPedido(false);
+            document.getElementById("mensagem-chat-pedido").value = "";
+        }
+        pedidoId = novoPedidoId;
         localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoId);
         
         if (document.getElementById("txt-pedido-id")) {
@@ -415,6 +430,8 @@
         document.getElementById("total-acompanhamento").textContent = formatarMoeda(totalPedido);
         document.getElementById("pagamento-acompanhamento").textContent = `💳 ${pedido.formaPagamento || "Pagamento não informado"}`;
         painel.classList.add("visivel");
+        document.getElementById("chat-pedido").classList.add("visivel");
+        document.body.classList.add("chat-visivel");
     }
 
     function escaparTexto(valor) {
@@ -459,7 +476,12 @@
     function alternarChatPedido(aberto) {
         const chat = document.getElementById("chat-pedido");
         if (!chat) return;
-        chat.classList.toggle("aberto", aberto === undefined ? !chat.classList.contains("aberto") : aberto);
+        const abrir = aberto === undefined ? !chat.classList.contains("aberto") : aberto;
+        chat.classList.toggle("aberto", abrir);
+        if (abrir && pedidoId) {
+            localStorage.setItem("pedidoChatIniciadoSaborCearense", String(pedidoId));
+            carregarChatPedido();
+        }
     }
 
     async function enviarMensagemChat() {
@@ -715,6 +737,8 @@ function limparLinhaTempo() {
     if (barra) barra.style.width = "0%";
     const painel = document.getElementById("painel-pedido");
     if (painel) painel.classList.remove("visivel");
+    document.getElementById("chat-pedido").classList.remove("visivel", "aberto");
+    document.body.classList.remove("chat-visivel");
 }
 
 

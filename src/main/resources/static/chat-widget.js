@@ -1,7 +1,9 @@
 (() => {
     const pedidoKey = "ultimoPedidoIdSaborCearense";
+    const chatAtivadoKey = "pedidoChatIniciadoSaborCearense";
     const urlBackend = window.location.origin;
     let numeroPedido;
+    let chatAtivado;
     let aberto = false;
 
     function escapar(texto) {
@@ -14,8 +16,9 @@
         if (document.getElementById("chat-widget-site")) return;
         const estilo = document.createElement("style");
         estilo.textContent = `
-            #chat-widget-site{position:fixed;right:20px;bottom:20px;z-index:1000;font-family:inherit}
-            #chat-widget-site .chat-widget-janela{box-sizing:border-box;display:none;width:min(360px,calc(100vw - 32px));margin-bottom:10px;padding:14px;background:#fff;border:1px solid #eadbc5;border-radius:18px;box-shadow:0 18px 45px rgba(47,41,34,.2)}
+            #chat-widget-site{position:fixed;right:12px;bottom:calc(var(--chat-distancia-barra, 0px) + 12px);z-index:1000;font-family:inherit}
+            body.chat-widget-visivel::after{content:"";display:block;height:80px}
+            #chat-widget-site .chat-widget-janela{box-sizing:border-box;display:none;width:min(360px,calc(100vw - 32px));max-height:calc(100vh - var(--chat-distancia-barra, 0px) - 85px);overflow-y:auto;margin-bottom:10px;padding:14px;background:#fff;border:1px solid #eadbc5;border-radius:18px;box-shadow:0 18px 45px rgba(47,41,34,.2)}
             #chat-widget-site.aberto .chat-widget-janela{display:block}
             #chat-widget-site .chat-widget-botao{border:0;border-radius:999px;padding:13px 18px;background:linear-gradient(135deg,#237a4b,#2f9a62);color:#fff;font-weight:800;box-shadow:0 10px 24px rgba(35,122,75,.28);cursor:pointer}
             #chat-widget-site.aberto .chat-widget-botao{background:#8a5316}
@@ -25,7 +28,7 @@
             #chat-widget-site .chat-widget-form{display:flex;gap:8px;margin-top:12px}
             #chat-widget-site .chat-widget-form input{min-width:0;flex:1;padding:10px;border:1px solid #eadbc5;border-radius:10px}
             #chat-widget-site .chat-widget-form button{border:0;border-radius:999px;padding:0 14px;background:#d99024;color:#fff;font-weight:800;cursor:pointer}
-            @media(max-width:520px){#chat-widget-site{right:12px;bottom:12px}#chat-widget-site .chat-widget-janela{width:calc(100vw - 24px)}}
+            @media(max-width:520px){#chat-widget-site .chat-widget-janela{width:calc(100vw - 24px)}}
         `;
         document.head.appendChild(estilo);
         const widget = document.createElement("div");
@@ -40,6 +43,19 @@
             <button class="chat-widget-botao" type="button">💬 Chat</button>
         `;
         document.body.appendChild(widget);
+        const barraSacola = document.getElementById("barra-flutuante");
+        if (barraSacola) {
+            const ajustarPosicao = () => {
+                const barra = barraSacola.getBoundingClientRect();
+                const visivel = barra.width > 0 && barra.height > 0
+                    && getComputedStyle(barraSacola).visibility !== "hidden";
+                widget.style.setProperty("--chat-distancia-barra",
+                    `${visivel ? Math.max(0, window.innerHeight - barra.top) : 0}px`);
+            };
+            window.addEventListener("resize", ajustarPosicao);
+            if (typeof ResizeObserver !== "undefined") new ResizeObserver(ajustarPosicao).observe(barraSacola);
+            ajustarPosicao();
+        }
         widget.querySelector(".chat-widget-botao").addEventListener("click", () => {
             aberto = !aberto;
             widget.classList.toggle("aberto", aberto);
@@ -97,9 +113,19 @@
 
     function atualizarVisibilidade(widget) {
         const novoNumero = localStorage.getItem(pedidoKey);
-        if (novoNumero === numeroPedido) return;
+        const novoChatAtivado = Boolean(novoNumero)
+            && localStorage.getItem(chatAtivadoKey) === novoNumero;
+        if (novoNumero === numeroPedido && novoChatAtivado === chatAtivado) return;
+        if (novoNumero !== numeroPedido || !novoChatAtivado) {
+            aberto = false;
+            widget.classList.remove("aberto");
+            widget.querySelector(".chat-widget-form input").value = "";
+            widget.querySelector(".chat-widget-mensagens").textContent = "Carregando conversa...";
+        }
         numeroPedido = novoNumero;
-        widget.style.display = numeroPedido ? "block" : "none";
+        chatAtivado = novoChatAtivado;
+        widget.style.display = chatAtivado ? "block" : "none";
+        document.body.classList.toggle("chat-widget-visivel", chatAtivado);
         const numero = widget.querySelector(".chat-widget-numero");
         if (numero) numero.textContent = numeroPedido ? `#${numeroPedido}` : "";
     }
