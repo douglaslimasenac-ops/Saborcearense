@@ -262,6 +262,9 @@ function configurarFormularioCadastro() {
     const campoImagem = document.getElementById("imagem");
     const previewImagem = document.getElementById("preview-imagem-prato");
     const previewImagemEl = document.getElementById("preview-imagem-prato-img");
+    const statusImagem = document.getElementById("status-imagem-prato");
+    const botaoSalvar = form.querySelector('button[type="submit"]');
+    let enviandoImagem = false;
 
     const atualizarPreviewImagem = () => {
         const valor = campoImagem.value.trim();
@@ -286,6 +289,11 @@ function configurarFormularioCadastro() {
         seletorImagem.addEventListener("change", async () => {
             const arquivo = seletorImagem.files && seletorImagem.files[0];
             if (!arquivo) return;
+            enviandoImagem = true;
+            seletorImagem.disabled = true;
+            campoImagem.disabled = true;
+            botaoSalvar.disabled = true;
+            statusImagem.textContent = "Enviando imagem...";
             try {
                 campoImagem.value = await enviarImagemCloudinary(arquivo);
                 atualizarPreviewImagem();
@@ -293,6 +301,12 @@ function configurarFormularioCadastro() {
                 console.error("Erro ao enviar imagem do novo prato:", erro);
                 seletorImagem.value = "";
                 alert(erro.message || "Não foi possível enviar a imagem.");
+            } finally {
+                enviandoImagem = false;
+                seletorImagem.disabled = false;
+                campoImagem.disabled = false;
+                botaoSalvar.disabled = false;
+                statusImagem.textContent = "";
             }
         });
     }
@@ -303,6 +317,10 @@ function configurarFormularioCadastro() {
 
     form.onsubmit = async function(e) {
         e.preventDefault();
+        if (enviandoImagem) {
+            alert("Aguarde o envio da imagem antes de salvar o produto.");
+            return;
+        }
         const nome = document.getElementById("nome").value;
         const preco = parseFloat(document.getElementById("preco").value);
         const categoria = document.getElementById("categoria").value;
@@ -392,7 +410,8 @@ function renderizarItensAdmin() {
                             <input type="url" id="imagem-produto-${item.id}"
                                 value="${escaparHtml(item.imagemUrl || "")}"
                                 placeholder="Cole aqui a URL da imagem">
-                            <button type="button" onclick="atualizarImagemRapido(${item.id})">Salvar imagem</button>
+                            <button type="button" id="salvar-imagem-produto-${item.id}" onclick="atualizarImagemRapido(${item.id})">Salvar imagem</button>
+                            <span id="status-imagem-produto-${item.id}" role="status" aria-live="polite"></span>
                         </div>
                     </div>
                 </div>
@@ -434,8 +453,14 @@ async function enviarImagemCloudinary(arquivo) {
 async function enviarImagemProdutoExistente(id, arquivo) {
     const campo = document.getElementById(`imagem-produto-${id}`);
     const seletor = document.getElementById(`arquivo-produto-${id}`);
+    const botaoSalvar = document.getElementById(`salvar-imagem-produto-${id}`);
+    const statusImagem = document.getElementById(`status-imagem-produto-${id}`);
     if (!arquivo) return;
 
+    seletor.disabled = true;
+    campo.disabled = true;
+    botaoSalvar.disabled = true;
+    statusImagem.textContent = "Enviando imagem...";
     try {
         campo.value = await enviarImagemCloudinary(arquivo);
         await atualizarImagemRapido(id);
@@ -443,6 +468,11 @@ async function enviarImagemProdutoExistente(id, arquivo) {
         console.error("Erro ao enviar imagem do produto:", erro);
         if (seletor) seletor.value = "";
         alert(erro.message || "Não foi possível enviar a imagem.");
+    } finally {
+        seletor.disabled = false;
+        campo.disabled = false;
+        botaoSalvar.disabled = false;
+        statusImagem.textContent = "";
     }
 }
 
@@ -1563,11 +1593,7 @@ function formatarPrevisaoEntrega(pedido) {
     const inicio = String(pedido.previsaoEntregaInicio || "").match(padrao);
     const fim = String(pedido.previsaoEntregaFim || "").match(padrao);
     if (!inicio || !fim) return "Não disponível";
-    const dataInicio = `${inicio[3]}/${inicio[2]}/${inicio[1]}`;
-    const dataFim = `${fim[3]}/${fim[2]}/${fim[1]}`;
-    return dataInicio === dataFim
-        ? `${dataInicio}, ${inicio[4]} às ${fim[4]}`
-        : `${dataInicio} ${inicio[4]} às ${dataFim} ${fim[4]}`;
+    return `${inicio[4]} às ${fim[4]}`;
 }
 
 function imprimirCupomIFood(pedido) {
@@ -1647,7 +1673,12 @@ function imprimirCupomIFood(pedido) {
     if (tipoServico === "ENTREGA") {
         var elPrevisao = janelaImpressao.document.createElement("div");
         elPrevisao.className = "text-center bloco-conteudo";
-        elPrevisao.textContent = "Previsão de entrega: " + formatarPrevisaoEntrega(pedido);
+        var elTituloPrevisao = janelaImpressao.document.createElement("div");
+        elTituloPrevisao.textContent = "Previsão de entrega";
+        var elHorarioPrevisao = janelaImpressao.document.createElement("div");
+        elHorarioPrevisao.textContent = formatarPrevisaoEntrega(pedido);
+        elPrevisao.appendChild(elTituloPrevisao);
+        elPrevisao.appendChild(elHorarioPrevisao);
         containerPrincipal.appendChild(elPrevisao);
     }
     

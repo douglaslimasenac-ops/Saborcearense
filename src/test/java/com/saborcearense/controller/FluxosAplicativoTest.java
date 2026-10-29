@@ -146,6 +146,28 @@ class FluxosAplicativoTest {
     }
 
     @Test
+    void imagemDoProdutoEhSalvaAtualizadaEExibidaNoCardapio() throws Exception {
+        String token = login();
+        String prato = mvc.perform(post("/api/admin/pratos").header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nome\":\"Produto com imagem\",\"categoria\":\"CARNE\",\"preco\":25,"
+                        + "\"disponivel\":true,\"imagemUrl\":\"https://example.com/inicial.png\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imagemUrl").value("https://example.com/inicial.png"))
+                .andReturn().getResponse().getContentAsString();
+        long pratoId = mapper.readTree(prato).get("id").asLong();
+
+        mvc.perform(put("/api/admin/pratos/{id}", pratoId).header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nome\":\"Produto com imagem\",\"categoria\":\"CARNE\",\"preco\":25,"
+                        + "\"disponivel\":true,\"imagemUrl\":\"https://example.com/atualizada.png\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imagemUrl").value("https://example.com/atualizada.png"));
+        mvc.perform(get("/api/cardapio")).andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == " + pratoId + " && @.imagemUrl == 'https://example.com/atualizada.png')]", hasSize(1)));
+    }
+
+    @Test
     void pedidoSemComprovantePodeSerAcompanhadoEConversar() throws Exception {
         String token = login();
         String resposta = mvc.perform(multipart("/api/pedidos").file(dadosPedido()))
