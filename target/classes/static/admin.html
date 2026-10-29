@@ -64,6 +64,110 @@
             border-color: var(--primary);
             color: #8a5316;
         }
+        .filtro-ativos-bloco {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            padding: 5px 8px 5px 14px;
+            border: 1px solid #eadbc5;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #fffaf1, #fff);
+            box-shadow: 0 6px 16px rgba(79, 52, 23, 0.06);
+        }
+        .filtro-ativos-icone {
+            color: #a66a1f;
+            font-size: 1.05rem;
+        }
+        #filtro-ativos-busca {
+            width: 100%;
+            min-height: 36px;
+            box-sizing: border-box;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: #4a3a29;
+            font: inherit;
+        }
+        #filtro-ativos-busca::placeholder {
+            color: #9a856c;
+        }
+        .btn-limpar-busca-ativos {
+            width: 30px;
+            height: 30px;
+            flex: 0 0 30px;
+            border: 0;
+            border-radius: 50%;
+            background: #f7ead6;
+            color: #8a5316;
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+        .btn-limpar-busca-ativos:hover {
+            background: #f1d5ad;
+        }
+        .titulo-acompanhamentos-balcao {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .titulo-acompanhamentos-balcao label {
+            margin: 0;
+        }
+        #contador-acompanhamentos-balcao {
+            color: #8a5316;
+            font-size: 0.78rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        .opcoes-acompanhamentos-balcao {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+            gap: 8px;
+        }
+        .opcao-acompanhamento-balcao {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 8px 10px;
+            border: 1px solid #eadbc5;
+            border-radius: 10px;
+            background: #fffdf9;
+            color: #4a3a29;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 700;
+            transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+        }
+        .opcao-acompanhamento-balcao:hover {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+        .opcao-acompanhamento-balcao.selecionado {
+            border-color: #d99024;
+            background: #fff3d9;
+            box-shadow: 0 0 0 2px rgba(217, 144, 36, 0.12);
+        }
+        .opcao-acompanhamento-balcao.bloqueado {
+            cursor: not-allowed;
+            opacity: 0.48;
+        }
+        .opcao-acompanhamento-balcao input {
+            accent-color: #d99024;
+            width: 17px;
+            height: 17px;
+            margin: 0;
+        }
+        .ajuda-acompanhamentos-balcao {
+            display: block;
+            margin-top: 7px;
+            color: #806b51;
+            font-size: 0.78rem;
+        }
         @media (max-width: 1050px) {
             .filtros-historico {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -567,8 +671,12 @@
                     <h2>🛵 Pedidos em Andamento (Tempo Real)</h2>
                 </div>
                 <div id="resumo-financeiro" class="resumo-financeiro" aria-live="polite"></div>
-                <input id="filtro-ativos-busca" type="search" placeholder="Buscar número, cliente ou telefone"
-                       style="width: 100%; box-sizing: border-box; margin-bottom: 16px;">
+                <div class="filtro-ativos-bloco">
+                    <span class="filtro-ativos-icone" aria-hidden="true">🔎</span>
+                    <input id="filtro-ativos-busca" type="search" placeholder="Buscar por número, cliente ou telefone"
+                           aria-label="Buscar pedidos em andamento">
+                    <button type="button" class="btn-limpar-busca-ativos" onclick="limparBuscaAtivos()" aria-label="Limpar busca">×</button>
+                </div>
                 
                 <!-- CONTAINER INTEGRADO PARA CARDS DO WEBSOCKET -->
                 <div id="container-novos-pedidos" style="margin-bottom: 20px; display: none;">
@@ -601,8 +709,14 @@
                 </div>
                 <div class="form-grid" style="margin-top: 18px;">
                     <div class="form-grupo">
-                        <label for="balcao-acompanhamentos">Acompanhamentos</label>
-                        <select id="balcao-acompanhamentos" multiple size="4"></select>
+                        <div class="titulo-acompanhamentos-balcao">
+                            <label>Acompanhamentos</label>
+                            <span id="contador-acompanhamentos-balcao">0/2 escolhidos</span>
+                        </div>
+                        <div id="opcoes-acompanhamentos-balcao" class="opcoes-acompanhamentos-balcao">
+                            <small style="color: var(--text-muted);">Carregando acompanhamentos...</small>
+                        </div>
+                        <small class="ajuda-acompanhamentos-balcao">Escolha até 2 acompanhamentos para este pedido.</small>
                     </div>
                     <div class="form-grupo">
                         <label for="balcao-observacao">Observação</label>

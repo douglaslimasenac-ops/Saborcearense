@@ -11,7 +11,6 @@ let tipoRecebimentoSelecionado = "ENTREGA";
 let carrinho = {};
 
 const URL_API_BACKEND = window.location.origin;
-const WHATSAPP_NUMERO = "5521974720736";
 
 // ==========================================
 // 🌐 EVENTOS DE INICIALIZAÇÃO (DOM)
@@ -441,7 +440,7 @@ function atualizarAvisoInicioEntregas() {
 }
 
 // ==========================================
-// 🚀 ENVIAR PEDIDO E INTEGRAÇÃO BACKEND / WHATSAPP
+// 🚀 ENVIAR PEDIDO AO BACKEND
 // ==========================================
 async function enviarPedido(e) {
     if (e && typeof e.preventDefault === "function") {
@@ -498,7 +497,7 @@ async function enviarPedido(e) {
     if (pagamento === "Pix") {
         const confirmouFinalizacao = confirm(
             "⚠️ Atenção: o pagamento Pix não finaliza o pedido sozinho.\n\n" +
-            "Depois de pagar pelo QR Code, você precisa confirmar agora para registrar o pedido e enviá-lo pelo WhatsApp.\n\n" +
+            "Depois de pagar pelo QR Code, você precisa confirmar agora para registrar o pedido e acompanhar o preparo.\n\n" +
             "Deseja continuar e finalizar o pedido?"
         );
         if (!confirmouFinalizacao) {
@@ -509,13 +508,7 @@ async function enviarPedido(e) {
     const enderecoCompleto = isRetirada
         ? "RETIRADA NO ESTABELECIMENTO"
         : `${enderecoRua}, Bairro: ${bairroTextoPedido} (Ref: ${ref})`;
-    // 4. PREPARAÇÃO DA ABA DO WHATSAPP (Burlar bloqueadores de pop-up nativos)
-    const abaWhatsapp = window.open("about:blank", "_blank");
-    if (abaWhatsapp) {
-        abaWhatsapp.document.write("<p style='font-family:sans-serif; text-align:center; margin-top:20%; color:#555;'>Salvando seu pedido no Sabor Cearense... Aguarde...</p>");
-    }
-
-    // 5. Payload mapeado cirurgicamente com a Entity Java e os Getters/Setters do Controller
+    // 4. Payload enviado ao backend
     const dadosPedido = {
         clienteNome: nome,
         telefone: contatoTelefone,
@@ -573,63 +566,11 @@ async function enviarPedido(e) {
     }
 
     if (!pedidoSalvoComSucesso) {
-        if (abaWhatsapp) abaWhatsapp.close();
         alert("Não foi possível registrar o pedido no sistema. Tente novamente.");
         return;
     }
 
-
-    // 7. Montagem da mensagem organizada para o WhatsApp
-    const formatarMoedaWhatsApp = valor => `R$ ${Number(valor || 0).toFixed(2).replace(".", ",")}`;
-    let mensagem = "🌵 *SABOR CEARENSE* 🌵\n";
-    mensagem += "━━━━━━━━━━━━━━━━━━━━\n";
-    mensagem += "✅ *NOVO PEDIDO RECEBIDO*\n";
-    if (pedidoIdGerado !== "NOVO") {
-        mensagem += "🆔 *Pedido:* #" + pedidoIdGerado + "\n";
-    }
-
-    mensagem += "\n👤 *DADOS DO CLIENTE*\n";
-    mensagem += "Nome: " + nome + "\n";
-    mensagem += "WhatsApp: " + contatoTelefone + "\n";
-
-    mensagem += isRetirada ? "\n🏪 *RETIRADA NO ESTABELECIMENTO*\n" : "\n📍 *ENDEREÇO DE ENTREGA*\n";
-    if (!isRetirada) {
-        mensagem += "Bairro: " + bairroTextoPedido + "\n";
-        mensagem += "Endereço: " + enderecoRua + "\n";
-        mensagem += "Referência: " + ref + "\n";
-    }
-
-    mensagem += "\n🛒 *ITENS DO PEDIDO*\n";
-
-    itens.forEach(item => {
-        const subtotal = Number(item.preco || 0) * Number(item.quantidade || 1);
-        mensagem += "• " + item.quantidade + "x _" + item.nome + "_ — " + formatarMoedaWhatsApp(subtotal) + "\n";
-    });
-
-    if (observacao) {
-        mensagem += "\n📝 *OBSERVAÇÃO DO PEDIDO*\n" + observacao + "\n";
-    }
-
-    mensagem += "\n💳 *PAGAMENTO*\n";
-    mensagem += "Forma: " + pagamento + "\n";
-    mensagem += "\n🧾 *RESUMO DO PEDIDO*\n";
-    mensagem += "Subtotal: " + formatarMoedaWhatsApp(subtotalDoPedido) + "\n";
-    mensagem += "Taxa de entrega: " + formatarMoedaWhatsApp(taxaDoPedido) + "\n";
-    mensagem += "💰 *TOTAL: " + formatarMoedaWhatsApp(totalComTaxaGeral) + "*\n";
-    mensagem += "\n━━━━━━━━━━━━━━━━━━━━\n";
-    mensagem += "Por favor, confirme o recebimento do pedido.";
-
-    const numeroWhats = typeof WHATSAPP_NUMERO !== "undefined" ? WHATSAPP_NUMERO : (window.WHATSAPP_NUMERO || "5521974720736");
-    const urlWhatsapp = "https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem);
-    
-    // 8. ETAPA FINAL DE LIMPEZA DO CARRINHO E REDIRECIONAMENTOS
+    // 5. Limpa o carrinho e abre o acompanhamento
     localStorage.removeItem("carrinhoSaborCearense");
-
-    if (abaWhatsapp) {
-        abaWhatsapp.location.href = urlWhatsapp; 
-    } else {
-        window.open(urlWhatsapp, '_blank');
-    }
-    
     window.location.href = `acompanhar.html?numero=${encodeURIComponent(pedidoIdGerado)}`;
 }

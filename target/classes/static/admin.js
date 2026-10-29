@@ -940,6 +940,12 @@ function renderizarAtivosFiltrados() {
     atualizarListaPedidos(document.getElementById("lista-pedidos-ativos"), filtrados, "ativos");
 }
 
+function limparBuscaAtivos() {
+    const busca = document.getElementById("filtro-ativos-busca");
+    if (busca) busca.value = "";
+    renderizarAtivosFiltrados();
+}
+
 function mudarPaginaHistorico(direcao) {
     paginaHistorico += direcao;
     renderizarHistoricoFiltrado();
@@ -956,11 +962,16 @@ async function carregarProdutosBalcao() {
         if (!resProdutos.ok) throw new Error(`Produtos: HTTP ${resProdutos.status}`);
         produtosBalcao = await resProdutos.json();
         const acompanhamentos = resAcompanhamentos.ok ? await resAcompanhamentos.json() : [];
-        const seletorAcompanhamentos = document.getElementById("balcao-acompanhamentos");
-        if (seletorAcompanhamentos) {
-            seletorAcompanhamentos.innerHTML = acompanhamentos
+        const opcoesAcompanhamentos = document.getElementById("opcoes-acompanhamentos-balcao");
+        if (opcoesAcompanhamentos) {
+            opcoesAcompanhamentos.innerHTML = acompanhamentos
                 .filter(item => item.disponivel)
-                .map(item => `<option value="${escaparHtml(item.nome)}">${escaparHtml(item.nome)}</option>`)
+                .map(item => `
+                    <label class="opcao-acompanhamento-balcao">
+                        <input type="checkbox" value="${escaparHtml(item.nome)}"
+                               onchange="atualizarAcompanhamentosBalcao(this)">
+                        <span>${escaparHtml(item.nome)}</span>
+                    </label>`)
                 .join("");
         }
         busca.oninput = renderizarResultadosBuscaBalcao;
@@ -1018,19 +1029,41 @@ function removerItemBalcao(indice) {
 function limparPedidoBalcao() {
     itensPedidoBalcao = [];
     const busca = document.getElementById("balcao-busca");
-    const acompanhamentos = document.getElementById("balcao-acompanhamentos");
+    const acompanhamentos = document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']");
     const observacao = document.getElementById("balcao-observacao");
     if (busca) {
         busca.value = "";
         renderizarResultadosBuscaBalcao();
     }
-    if (acompanhamentos) {
-        Array.from(acompanhamentos.options).forEach(option => {
-            option.selected = false;
-        });
-    }
+    acompanhamentos.forEach(option => {
+        option.checked = false;
+        option.closest(".opcao-acompanhamento-balcao")?.classList.remove("selecionado", "bloqueado");
+    });
+    atualizarContadorAcompanhamentosBalcao();
     if (observacao) observacao.value = "";
     renderizarPedidoBalcao();
+}
+
+function atualizarAcompanhamentosBalcao(checkbox) {
+    const selecionados = document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']:checked");
+    if (selecionados.length > 2) {
+        checkbox.checked = false;
+        alert("Você pode escolher no máximo 2 acompanhamentos.");
+    }
+    atualizarContadorAcompanhamentosBalcao();
+}
+
+function atualizarContadorAcompanhamentosBalcao() {
+    const opcoes = document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']");
+    const selecionados = document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']:checked");
+    const contador = document.getElementById("contador-acompanhamentos-balcao");
+    if (contador) contador.textContent = `${selecionados.length}/2 escolhidos`;
+    opcoes.forEach(opcao => {
+        const cartao = opcao.closest(".opcao-acompanhamento-balcao");
+        if (!cartao) return;
+        cartao.classList.toggle("selecionado", opcao.checked);
+        cartao.classList.toggle("bloqueado", !opcao.checked && selecionados.length >= 2);
+    });
 }
 
 function renderizarPedidoBalcao() {
@@ -1056,8 +1089,9 @@ function imprimirPedidoBalcao() {
         alert("Adicione pelo menos um item antes de imprimir.");
         return;
     }
-    const seletorAcompanhamentos = document.getElementById("balcao-acompanhamentos");
-    const acompanhamentos = Array.from(seletorAcompanhamentos.selectedOptions).map(option => option.value).join(", ");
+    const acompanhamentos = Array.from(
+        document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']:checked")
+    ).map(option => option.value).join(", ");
     const observacao = document.getElementById("balcao-observacao").value.trim();
     const pagamento = document.getElementById("balcao-pagamento").value;
     const total = itensPedidoBalcao.reduce((soma, item) => soma + item.preco * item.quantidade, 0);
@@ -1165,7 +1199,13 @@ async function mudarStatusPedido(id, novoStatus) {
     try {
         const res = await fetchAdmin(`${URL_BACKEND}/api/pedidos/${id}/status?status=${encodeURIComponent(novoStatus)}`, { method: "PUT" });
         if (res.ok) {
-            carregarPedidosAtivos();
+            const pedidoAtualizado = await res.json();
+            pedidosAtivosLocal = pedidosAtivosLocal
+                .map(pedido => pedido.id === id ? { ...pedido, ...pedidoAtualizado } : pedido)
+                .filter(pedido => pedido.status !== "ENTREGUE" && pedido.status !== "CANCELADO");
+            ultimoSnapshotPedidosAtivos = "";
+            renderizarAtivosFiltrados();
+            await carregarPedidosAtivos();
             if (socketAdmin && socketAdmin.readyState === WebSocket.OPEN) {
                 socketAdmin.send(JSON.stringify({ id, status: novoStatus }));
             }
