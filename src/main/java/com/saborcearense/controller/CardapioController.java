@@ -6,7 +6,9 @@ import org.springframework.web.bind.annotation.RequestMapping; // Certifique-se 
 import org.springframework.web.bind.annotation.RestController;
 
 import com.saborcearense.model.Produto;
+import com.saborcearense.model.InicializacaoDados;
 import com.saborcearense.repository.ItemCardapioRepository;
+import com.saborcearense.repository.InicializacaoDadosRepository;
 
 import jakarta.annotation.PostConstruct;
 
@@ -16,10 +18,12 @@ public class CardapioController {
 
     @Autowired
     private ItemCardapioRepository repository;
+    @Autowired
+    private InicializacaoDadosRepository inicializacoes;
 
     @PostConstruct
     public void inicializarCardapio() {
-        if (repository.count() == 0) {
+        if (!inicializacoes.existsById("cardapio") && repository.count() == 0) {
             System.out.println("Sabor Cearense: Populando base de dados com o cardápio oficial...");
             
             // --- PRATOS DO DIA ---
@@ -94,8 +98,9 @@ public class CardapioController {
             repository.save(criarProdutoInicial("Pudim de Leite", "SOBREMESA", 8.00, "Fatia do delicioso pudim de leite caseiro."));
 
             System.out.println("Sabor Cearense: Carga inicial oficial configurada com sucesso!");
-        } else {
-            System.out.println("Sabor Cearense: Banco já populado. Verificando itens complementares.");
+        }
+        if (!inicializacoes.existsById("cardapio")) {
+            inicializacoes.save(new InicializacaoDados("cardapio"));
         }
 
     }

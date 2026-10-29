@@ -243,10 +243,6 @@
                 <button class="btn-secundario" onclick="copiarNumeroPedido()">📋 Copiar número</button>
                 <button class="btn-secundario" onclick="falarComRestaurante()">💬 Falar conosco</button>
             </div>
-            <div id="comprovante-whatsapp" hidden>
-                <p>Prefere enviar o comprovante Pix pelo WhatsApp? Abra a conversa e anexe a imagem ou o PDF por lá.</p>
-                <button class="btn-secundario" type="button" onclick="falarComRestaurante(true)">📎 Enviar comprovante pelo WhatsApp</button>
-            </div>
         </div>
 
         <div id="chat-pedido">
@@ -440,7 +436,8 @@
         document.getElementById("taxa-acompanhamento").textContent = formatarMoeda(taxaEntrega);
         document.getElementById("total-acompanhamento").textContent = formatarMoeda(totalPedido);
         document.getElementById("pagamento-acompanhamento").textContent = `💳 ${pedido.formaPagamento || "Pagamento não informado"}`;
-        document.getElementById("comprovante-whatsapp").hidden = pedido.formaPagamento !== "Pix";
+        const troco = pedido.trocoPara == null ? "" : ` · Troco para ${formatarMoeda(Number(pedido.trocoPara))}`;
+        document.getElementById("pagamento-acompanhamento").textContent += troco;
         painel.classList.add("visivel");
         if (pedido.status === "ENTREGUE" || pedido.status === "CANCELADO") {
             encerrarChatPedido();
@@ -461,11 +458,9 @@
         navigator.clipboard.writeText(`#${pedidoId}`).then(() => alert("Número do pedido copiado!"));
     }
 
-    function falarComRestaurante(comprovante = false) {
+    function falarComRestaurante() {
         const numeroWhats = "5521974720736";
-        const mensagem = comprovante
-            ? `Olá! Vou enviar o comprovante Pix do pedido #${pedidoId}.`
-            : `Olá! Gostaria de informações sobre o pedido #${pedidoId}.`;
+        const mensagem = `Olá! Gostaria de informações sobre o pedido #${pedidoId}.`;
         window.open("https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem), "_blank");
     }
 

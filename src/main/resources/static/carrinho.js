@@ -277,6 +277,9 @@ function alterarTipoRecebimento(tipo) {
     } else if (bairro && bairro.value) {
         atualizarTaxaEntrega(bairro.value);
     }
+    document.getElementById("informacao-pix").textContent = entrega
+        ? "Pagamento via Pix na entrega."
+        : "Pagamento via Pix na retirada.";
     atualizarResumoFinanceiroTela();
     document.querySelectorAll(".opcao-recebimento").forEach(opcao => {
         const radio = opcao.querySelector("input");
@@ -303,90 +306,22 @@ function atualizarResumoFinanceiroTela() {
     if (campoTaxa) campoTaxa.textContent = formatar(taxa);
     if (campoTotal) campoTotal.textContent = formatar(totalGeral);
     if (campoTotalPagar) campoTotalPagar.textContent = formatar(totalGeral);
-    atualizarPixDinamico(totalGeral);
 }
 
 // ==========================================
-// 💳 INTERAÇÃO E REGRAS PIX
+// 💳 INTERAÇÃO DE PAGAMENTO
 // ==========================================
-const PIX_CHAVE_CNPJ = "59361228000150";
-
-function crc16Pix(texto) {
-    let crc = 0xFFFF;
-    for (let i = 0; i < texto.length; i++) {
-        crc ^= texto.charCodeAt(i) << 8;
-        for (let bit = 0; bit < 8; bit++) {
-            crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
-            crc &= 0xFFFF;
-        }
-    }
-    return crc.toString(16).toUpperCase().padStart(4, "0");
+function controlarExibicaoPagamento(opcao) {
+    document.getElementById("container-pix-dinamico").style.display = opcao === "Pix" ? "block" : "none";
+    document.getElementById("container-troco").hidden = opcao !== "Dinheiro";
+    atualizarCampoTroco();
 }
 
-function campoPix(id, valor) {
-    const texto = String(valor);
-    return id + String(texto.length).padStart(2, "0") + texto;
-}
-
-function gerarCodigoPix(valor) {
-    const valorFormatado = Number(valor || 0).toFixed(2);
-    const merchantAccount = campoPix("00", "br.gov.bcb.pix") + campoPix("01", PIX_CHAVE_CNPJ);
-    const payloadSemCrc = [
-        campoPix("00", "01"),
-        campoPix("26", merchantAccount),
-        campoPix("52", "0000"),
-        campoPix("53", "986"),
-        campoPix("54", valorFormatado),
-        campoPix("58", "BR"),
-        campoPix("59", "SABOR CEARENSE"),
-        campoPix("60", "RIO DE JANEIRO"),
-        campoPix("62", campoPix("05", "***"))
-    ].join("") + "6304";
-    return payloadSemCrc + crc16Pix(payloadSemCrc);
-}
-
-function atualizarPixDinamico(valor) {
-    const campoPix = document.getElementById("chave-pix-texto");
-    const valorPix = document.getElementById("pix-valor-gerado");
-    const qrContainer = document.getElementById("pix-qrcode");
-    if (!campoPix || !qrContainer) return;
-
-    const valorNumerico = Number(valor || 0);
-    const payload = gerarCodigoPix(valorNumerico);
-    campoPix.value = payload;
-    if (valorPix) valorPix.textContent = `Valor: R$ ${valorNumerico.toFixed(2).replace(".", ",")}`;
-
-    qrContainer.innerHTML = "";
-    if (typeof QRCode === "undefined") {
-        qrContainer.textContent = "QR Code indisponível. Use o Pix Copia e Cola.";
-        return;
-    }
-    new QRCode(qrContainer, {
-        text: payload,
-        width: 190,
-        height: 190,
-        colorDark: "#29231d",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
-    });
-}
-
-function controlarExibicaoPix(opcao) {
-    const boxPix = document.getElementById("container-pix-dinamico");
-    if (boxPix) {
-        boxPix.style.display = (opcao === "Pix") ? "block" : "none";
-    }
-
-}
-
-function copiarChavePix() {
-    const campoTexto = document.getElementById("chave-pix-texto");
-    if (campoTexto) {
-        campoTexto.select();
-        campoTexto.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(campoTexto.value);
-        alert("🔑 Chave CNPJ copiada com sucesso!");
-    }
+function atualizarCampoTroco() {
+    const ativo = document.getElementById("pagamento").value === "Dinheiro"
+        && document.getElementById("precisa-troco").checked;
+    document.getElementById("campos-troco").hidden = !ativo;
+    document.getElementById("troco-para").required = ativo;
 }
 
 function atualizarEtapaCheckout(etapaAtual) {
@@ -478,7 +413,7 @@ async function enviarPedido(e) {
     const isRetirada = tipoRecebimentoSelecionado === "RETIRADA";
     const bairroTextoPedido = isRetirada
         ? "Retirada no estabelecimento"
-        : (selectBairro.options[selectBairro.selectedIndex]?.text || selectBairro.value);
+        : selectBairro.value.split("|")[0];
     const subtotalDoPedido = itens.reduce((soma, item) => {
         const preco = Number(item.preco || item.valor || 0);
         const quantidade = Number(item.quantidade || item.qtd || 1);
@@ -494,13 +429,14 @@ async function enviarPedido(e) {
     const observacao = document.getElementById("observacao").value.trim();
     const pagamento = document.getElementById("pagamento").value;
 
-    if (pagamento === "Pix") {
-        const confirmouFinalizacao = confirm(
-            "⚠️ Atenção: o pagamento Pix não finaliza o pedido sozinho.\n\n" +
-            "Depois de pagar pelo QR Code, você precisa confirmar agora para registrar o pedido e acompanhar o preparo.\n\n" +
-            "Deseja continuar e finalizar o pedido?"
-        );
-        if (!confirmouFinalizacao) {
+    let trocoPara = null;
+    if (pagamento === "Dinheiro" && document.getElementById("precisa-troco").checked) {
+        const campoTroco = document.getElementById("troco-para");
+        trocoPara = Number(campoTroco.value);
+        if (!campoTroco.value || !campoTroco.checkValidity() || !Number.isFinite(trocoPara)
+                || Math.round(trocoPara * 100) < Math.round(totalComTaxaGeral * 100)) {
+            alert("Informe um valor válido para troco, igual ou maior que o total do pedido.");
+            campoTroco.focus();
             return;
         }
     }
@@ -515,6 +451,7 @@ async function enviarPedido(e) {
         endereco: enderecoCompleto,
         formaPagamento: pagamento,
         valorTotal: Number(totalComTaxaGeral.toFixed(2)),
+        trocoPara,
         itens: JSON.stringify(itens.map(item => ({
             ...item,
             preco: Number(item.preco || item.valor || 0),
@@ -523,12 +460,6 @@ async function enviarPedido(e) {
         observacao,
         status: "RECEBIDO" // Já manda o status padrão esperado pelo @PostMapping
     };
-    const comprovante = document.getElementById("comprovante-pix")?.files?.[0];
-    if (comprovante && comprovante.size > 5 * 1024 * 1024) {
-        alert("O comprovante deve ter no máximo 5 MB.");
-        return;
-    }
-
     let pedidoIdGerado = "NOVO";
 
         // 6. BUSCA INTELIGENTE E CORREÇÃO DA URL DA API (Evita Erro 404)
@@ -548,10 +479,6 @@ async function enviarPedido(e) {
             // Faz a chamada e espera obrigatoriamente a resposta física do Render
             const formulario = new FormData();
             formulario.append("pedido", new Blob([JSON.stringify(dadosPedido)], { type: "application/json" }));
-            if (comprovante && pagamento === "Pix") {
-                formulario.append("comprovante", comprovante);
-            }
-
             const response = await fetch(urlLimpa, {
                 method: "POST",
                 headers: { 

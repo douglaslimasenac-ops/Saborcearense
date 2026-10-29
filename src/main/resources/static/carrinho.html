@@ -562,8 +562,8 @@
                 </div>
                 <div class="form-grupo">
                     <label for="pagamento">Escolha como deseja pagar:</label>
-                    <select id="pagamento" required onchange="controlarExibicaoPix(this.value)">
-                                <option value="Pix" selected>Pix (QR Code ou Copia e Cola)</option>
+                    <select id="pagamento" required onchange="controlarExibicaoPagamento(this.value)">
+                        <option value="Pix" selected>Pix (na entrega ou retirada)</option>
                         <option value="Dinheiro">Dinheiro (Pagar na Entrega)</option>
                         <option value="Cartão de Crédito">Cartão de Crédito (Na Entrega)</option>
                         <option value="Cartão de Débito">Cartão de Débito (Na Entrega)</option>
@@ -577,22 +577,14 @@
             </div>
 
             <div id="container-pix-dinamico" class="box-pix" style="display: block;">
-                <p style="margin: 0 0 8px 0; font-weight: bold; color: #166534; font-size: 0.95rem;">📲 Escaneie para pagar o valor exato:</p>
-                <div id="pix-qrcode" style="display: flex; justify-content: center; margin: 12px 0;"></div>
-                <p id="pix-valor-gerado" style="margin: 0 0 10px; text-align: center; color: #166534; font-weight: 800;">Valor: R$ 0,00</p>
-                <p style="margin: 0 0 8px 0; font-weight: bold; color: #166534; font-size: 0.95rem;">🔑 Pix Copia e Cola (CNPJ):</p>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="chave-pix-texto" readonly style="flex: 1; padding: 10px; border: 1px solid #bbf7d0; border-radius: 6px; font-weight: bold; text-align: center; background: #fff; color: #166534;">
-                    <button type="button" onclick="copiarChavePix()" style="background: #22c55e; color: white; border: none; padding: 0 15px; font-weight: bold; border-radius: 6px; cursor: pointer;">Copiar</button>
-                </div>
-                <div style="margin-top: 12px; padding: 12px; border: 2px solid #f59e0b; border-radius: 10px; background: #fffbeb; color: #92400e; font-size: 0.92rem; line-height: 1.4; font-weight: 800; text-align: center;">
-                    ⚠️ IMPORTANTE: pagar pelo QR Code não finaliza o pedido.
-                    <br>Depois de pagar, clique em <strong>“Finalizar pedido”</strong> abaixo para registrar e acompanhar o pedido.
-                </div>
-                <div class="form-grupo" style="margin-top: 16px;">
-                    <label for="comprovante-pix">Comprovante Pix (opcional)</label>
-                    <input type="file" id="comprovante-pix" accept="image/jpeg,image/png,image/webp,application/pdf">
-                    <small>Envie uma imagem ou PDF de até 5 MB pelo app. Se preferir, finalize o pedido e envie o comprovante pelo WhatsApp na tela de acompanhamento.</small>
+                <p id="informacao-pix" style="margin: 0; font-weight: bold; color: #166534;">Pagamento via Pix na entrega.</p>
+            </div>
+            <div id="container-troco" class="secao-card" hidden>
+                <label for="precisa-troco"><input type="checkbox" id="precisa-troco" onchange="atualizarCampoTroco()"> Precisa de troco?</label>
+                <div id="campos-troco" class="form-grupo" hidden>
+                    <label for="troco-para">Troco para quanto? (R$)</label>
+                    <input type="number" id="troco-para" min="0" max="99999999.99" step="0.01" inputmode="decimal" placeholder="Ex: 50,00">
+                    <small>Informe o valor que você entregará para o pagamento.</small>
                 </div>
             </div>
             
@@ -604,7 +596,6 @@
         </form>
     </div>
      <!-- Vincle o seu novo arquivo externo aqui de forma limpa -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="carrinho.js"></script>
     <script src="chat-widget.js"></script>
 </body>

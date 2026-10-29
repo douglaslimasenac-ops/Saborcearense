@@ -60,6 +60,27 @@ async function fetchAdmin(url, options = {}) {
     return response;
 }
 
+async function verificarArmazenamento() {
+    const aviso = document.getElementById("aviso-armazenamento");
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/armazenamento`);
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const dados = await resposta.json();
+        if (dados.tipo === "postgresql") {
+            aviso.hidden = true;
+            return;
+        }
+        aviso.textContent = dados.tipo === "temporario"
+            ? "Atenção: o banco é temporário. Pedidos e cadastros podem desaparecer ao reiniciar. Configure o banco persistente no Render."
+            : "Atenção: não foi possível confirmar que este banco preserva dados após o deploy. Verifique a configuração no Render.";
+        aviso.hidden = false;
+    } catch (erro) {
+        console.error("Erro ao verificar armazenamento:", erro);
+        aviso.textContent = "Não foi possível verificar o banco de dados. Confirme a configuração no Render.";
+        aviso.hidden = false;
+    }
+}
+
 // ==========================================
 // 🔐 FLUXO DE AUTENTICAÇÃO SEGURO
 // ==========================================
@@ -876,6 +897,13 @@ function obterLocalPedido(pedido) {
         : `📍 Endereço: ${escaparHtml(pedido.endereco || "Não informado")}`;
 }
 
+function textoTrocoPedido(pedido) {
+    if (pedido.trocoPara == null) return "";
+    const valor = Number(pedido.trocoPara);
+    const troco = Math.max(0, valor - obterTotalPedido(pedido));
+    return `Troco para R$ ${valor.toFixed(2).replace(".", ",")} (troco: R$ ${troco.toFixed(2).replace(".", ",")})`;
+}
+
 function atualizarResumoFinanceiro(pedidos, elementoId) {
     const validos = pedidos.filter(pedido => pedido.status !== "CANCELADO");
     const total = validos.reduce((soma, pedido) => soma + obterTotalPedido(pedido), 0);
@@ -995,6 +1023,7 @@ function atualizarListaPedidos(container, pedidos, tipo) {
                             <h4 style="margin: 0 0 6px 0; color: #1e293b;">📋 Pedido #${numeroExibicaoPedido(pedido)} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                             <small style="color: ${retirada ? "#92400e" : "var(--text-muted)"}; display: block; margin-bottom: 4px; font-size: 0.9rem; font-weight: ${retirada ? "800" : "400"};">${obterLocalPedido(pedido)}</small>
                             <small style="color: #0f766e; font-weight: 700; font-size: 0.9rem;">💳 Forma de Pagamento: ${pedido.formaPagamento}</small>
+                            ${pedido.trocoPara != null ? `<small style="display: block; margin-top: 6px; color: #92400e; font-weight: 700;">💵 ${textoTrocoPedido(pedido)}</small>` : ""}
                             <small style="display: block; margin-top: 6px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
                             <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
                             ${pedido.comprovantePixDisponivel ? `<small style="display: block; margin-top: 6px;"><button type="button" class="btn-status-toggle ativo" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;" onclick="abrirComprovantePix(${pedido.id})">🧾 Ver comprovante Pix</button></small>` : ""}
@@ -1031,7 +1060,8 @@ function atualizarListaPedidos(container, pedidos, tipo) {
                     <div>
                         <h4 style="margin: 0 0 6px 0; color: #1e293b;">${pedido.status === "CANCELADO" ? "✕" : "✅"} Pedido #${numeroExibicaoPedido(pedido)} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                         <small style="color: ${retirada ? "#92400e" : "var(--text-muted)"}; display: block; margin-bottom: 4px; font-size: 0.9rem; font-weight: ${retirada ? "800" : "400"};">${obterLocalPedido(pedido)}</small>
-                        <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento}</small>
+                        <small style="color: #475569; font-size: 0.9rem;">💳 Forma de pagamento: ${pedido.formaPagamento}</small>
+                        ${pedido.trocoPara != null ? `<small style="display: block; margin-top: 6px; color: #92400e; font-weight: 700;">💵 ${textoTrocoPedido(pedido)}</small>` : ""}
                         <small style="display: block; margin-top: 4px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
                         <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
                         ${pedido.comprovantePixDisponivel ? `<small style="display: block; margin-top: 6px;"><button type="button" class="btn-status-toggle ativo" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;" onclick="abrirComprovantePix(${pedido.id})">🧾 Ver comprovante Pix</button></small>` : ""}
@@ -1131,7 +1161,8 @@ function renderizarAtivosFiltrados() {
     const filtrados = pedidosAtivosLocal.filter(pedido => {
         const texto = `${numeroExibicaoPedido(pedido)} ${pedido.clienteNome || ""} ${pedido.telefone || ""}`.toLocaleLowerCase("pt-BR");
         return !busca || texto.includes(busca);
-    });
+    }).sort((a, b) => String(b.dataCriacao || "").localeCompare(String(a.dataCriacao || ""))
+        || Number(b.id || 0) - Number(a.id || 0));
     atualizarContagemPedidos("resumo-financeiro", filtrados.length);
     ultimoSnapshotPedidosAtivos = null;
     atualizarListaPedidos(document.getElementById("lista-pedidos-ativos"), filtrados, "ativos");
@@ -1465,6 +1496,7 @@ async function autenticarAdmin() {
         localStorage.setItem("adminToken", dados.token);
         document.getElementById("container-login-view").style.display = "none";
         document.getElementById("painel-adm-wrapper").style.display = "flex";
+        verificarArmazenamento();
         
         if (typeof carregarItensAdmin === "function") carregarItensAdmin();
         if (typeof carregarAcompanhamentosAdmin === "function") carregarAcompanhamentosAdmin();
@@ -1535,7 +1567,7 @@ function imprimirCupomIFood(pedido) {
         var matchBairro = enderecoBruto.match(/Bairro:\s*([^(\r\n]+?)(?:\s*\(|$)/i);
         if (matchBairro) {
             var nomeBairro = matchBairro[1].replace(/\s+-\s+R\$\s*\d+(?:[.,]\d{2})?\s*$/i, "").trim();
-            enderecoBruto = "Bairro: " + nomeBairro;
+            enderecoBruto = enderecoBruto.replace(matchBairro[0], "Bairro: " + nomeBairro);
         }
     }
     var pagamentoFinal = (pedido.formaPagamento || "Não informado").toUpperCase();
@@ -1572,7 +1604,7 @@ function imprimirCupomIFood(pedido) {
     var elEnderecoBloco = janelaImpressao.document.createElement("div");
     elEnderecoBloco.className = "bloco-conteudo";
     var tituloEndereco = tipoServico === "RETIRADA" ? "Local de Retirada" : "Endereço de Entrega";
-    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>" + tituloEndereco + "</div><div style='white-space: pre-wrap; font-size: 15px; font-weight: bold;'>" + enderecoBruto + "</div>" + (tipoServico === "RETIRADA" ? "" : "<div style='margin-top: 4px;'><span class='negrito'>Referência:</span> " + referenciaFinal + "</div>");
+    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>" + tituloEndereco + "</div><div style='white-space: pre-wrap; font-size: 15px; font-weight: bold;'>" + escaparHtml(enderecoBruto) + "</div>" + (tipoServico === "RETIRADA" ? "" : "<div style='margin-top: 4px;'><span class='negrito'>Referência:</span> " + escaparHtml(referenciaFinal) + "</div>");
     containerPrincipal.appendChild(elEnderecoBloco);
     
     var divDivisora3 = janelaImpressao.document.createElement("div");
@@ -1686,6 +1718,7 @@ function imprimirCupomIFood(pedido) {
         <div class='linha-financeiro'><span>Subtotal</span><span>R$ ${subtotalExibir.toFixed(2).replace(".", ",")}</span></div>
         <div class='linha-financeiro'><span>Taxa de Entrega</span><span>R$ ${taxaEntrega.toFixed(2).replace(".", ",")}</span></div>
         <div class='linha-financeiro'><span class='negrito'>Forma Pagto.</span><span>${pagamentoFinal}</span></div>
+        ${pedido.trocoPara != null ? `<div class='bloco-obs'>${textoTrocoPedido(pedido)}</div>` : ""}
         <div class='linha-total'><span>TOTAL</span><span>R$ ${totalGeralExibir.toFixed(2).replace(".", ",")}</span></div>
     `;
     containerPrincipal.appendChild(elFinanceiro);

@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Digits;
 
 @Entity
 @Table(name = "pedidos")
@@ -33,6 +35,10 @@ public class Pedido {
     @NotNull
     @DecimalMin(value = "0.00")
     private BigDecimal valorTotal;
+    @Digits(integer = 8, fraction = 2)
+    @DecimalMin(value = "0.00")
+    @Column(precision = 10, scale = 2)
+    private BigDecimal trocoPara;
     @Lob
     private String itens;
     @Column(length = 500)
@@ -65,6 +71,14 @@ public class Pedido {
     public void setFormaPagamento(String formaPagamento) { this.formaPagamento = formaPagamento; }
     public BigDecimal getValorTotal() { return valorTotal; }
     public void setValorTotal(BigDecimal valorTotal) { this.valorTotal = valorTotal; }
+    public BigDecimal getTrocoPara() { return trocoPara; }
+    public void setTrocoPara(BigDecimal trocoPara) { this.trocoPara = trocoPara; }
+    @JsonIgnore
+    @AssertTrue(message = "O valor para troco deve ser maior ou igual ao total e só pode ser informado para pagamento em dinheiro")
+    public boolean isTrocoValido() {
+        return trocoPara == null || ("Dinheiro".equalsIgnoreCase(formaPagamento)
+                && valorTotal != null && trocoPara.compareTo(valorTotal) >= 0);
+    }
     public String getItens() { return itens; }
     public void setItens(String itens) { this.itens = itens; }
     public String getObservacao() { return observacao; }

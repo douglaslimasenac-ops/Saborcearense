@@ -60,6 +60,7 @@ class FluxosAplicativoTest {
                 .content("{\"username\":\"admin\",\"password\":\"incorreta\"}"))
                 .andExpect(status().isUnauthorized());
         mvc.perform(get("/api/admin/pratos")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/admin/armazenamento")).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/cardapio")).andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(greaterThan(0))));
         mvc.perform(get("/api/bairros")).andExpect(status().isOk())
@@ -68,6 +69,8 @@ class FluxosAplicativoTest {
                 .andExpect(jsonPath("$", hasSize(greaterThan(0))));
         mvc.perform(get("/api/admin/pratos").header("Authorization", login()))
                 .andExpect(status().isOk());
+        mvc.perform(get("/api/admin/armazenamento").header("Authorization", login()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.tipo").value("temporario"));
     }
 
     @Test
@@ -131,6 +134,27 @@ class FluxosAplicativoTest {
                 .andExpect(jsonPath("$.status").value("ENTREGA"));
         mvc.perform(get("/api/pedidos/{id}/comprovante", id).header("Authorization", token))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void trocoEmDinheiroEhValidadoEPersistido() throws Exception {
+        String pedidoDinheiro = PEDIDO.replace("\"formaPagamento\":\"Pix\"", "\"formaPagamento\":\"Dinheiro\"");
+        String comTroco = pedidoDinheiro.replace("\"valorTotal\":25", "\"valorTotal\":25,\"trocoPara\":50");
+        String resposta = mvc.perform(post("/api/pedidos").contentType(MediaType.APPLICATION_JSON).content(comTroco))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.trocoPara").value(50))
+                .andReturn().getResponse().getContentAsString();
+        long numero = mapper.readTree(resposta).get("numeroPedido").asLong();
+        mvc.perform(get("/api/pedidos/numero/{numero}", numero)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.trocoPara").value(50));
+        mvc.perform(post("/api/pedidos").contentType(MediaType.APPLICATION_JSON)
+                .content(pedidoDinheiro.replace("\"valorTotal\":25", "\"valorTotal\":25,\"trocoPara\":24.99")))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/pedidos").contentType(MediaType.APPLICATION_JSON)
+                .content(PEDIDO.replace("\"valorTotal\":25", "\"valorTotal\":25,\"trocoPara\":50")))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/pedidos").contentType(MediaType.APPLICATION_JSON)
+                .content(pedidoDinheiro.replace("\"valorTotal\":25", "\"valorTotal\":25,\"trocoPara\":50.001")))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
