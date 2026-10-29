@@ -995,11 +995,14 @@ function organizarCardPedido(card, pedido, tipo) {
     titulo.textContent = `Pedido #${numeroExibicaoPedido(pedido)} - ${pedido.clienteNome || pedido.nomeCliente || "Não informado"}`;
     const info = document.createElement("span");
     info.className = "resumo-pedido-info";
-    info.textContent = `${pedidoEDeRetirada(pedido) ? "Retirada" : "Entrega"} · ${textoStatusPedido(pedido)} · R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}`;
+    info.textContent = `${pedidoEDeRetirada(pedido) ? "Retirada" : "Entrega"} · R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}`;
+    const status = document.createElement("span");
+    status.className = "resumo-pedido-status";
+    status.textContent = `Status: ${textoStatusPedido(pedido)}`;
     const acao = document.createElement("span");
     acao.className = "resumo-pedido-acao";
     acao.textContent = detalhes.open ? "Minimizar ▲" : "Ver detalhes ▼";
-    resumo.append(titulo, info, acao);
+    resumo.append(titulo, info, status, acao);
 
     const cabecalho = card.firstElementChild;
     cabecalho.querySelector("h4").remove();

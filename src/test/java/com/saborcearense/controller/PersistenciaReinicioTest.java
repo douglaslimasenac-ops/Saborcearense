@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -19,6 +20,7 @@ import com.saborcearense.model.Produto;
 import com.saborcearense.repository.AcompanhamentoRepository;
 import com.saborcearense.repository.BairroEntregaRepository;
 import com.saborcearense.repository.ItemCardapioRepository;
+import com.saborcearense.repository.InicializacaoDadosRepository;
 import com.saborcearense.repository.PedidoRepository;
 
 class PersistenciaReinicioTest {
@@ -79,6 +81,58 @@ class PersistenciaReinicioTest {
         try (ConfigurableApplicationContext contexto = iniciar(url)) {
             assertEquals(0, contexto.getBean(ItemCardapioRepository.class).count());
             assertEquals(0, contexto.getBean(BairroEntregaRepository.class).count());
+        }
+    }
+
+    @Test
+    void listaDeBairrosAtualizaUmaVezEPreservaAlteracoesPosteriores() {
+        String url = "jdbc:h2:file:" + diretorio.resolve("lista-bairros").toAbsolutePath() + ";MODE=PostgreSQL";
+        Map<String, String> taxas = Map.ofEntries(
+                Map.entry("Andaraí", "5.00"), Map.entry("MEIER", "3.00"),
+                Map.entry("Engenho Novo", "0.00"), Map.entry("Todos os Santos", "6.00"),
+                Map.entry("Grajaú", "4.00"), Map.entry("Encantado", "7.00"),
+                Map.entry("Engenho de Dentro", "6.00"), Map.entry("Tijuca", "7.00"),
+                Map.entry("Sampaio", "3.00"), Map.entry("Lins de Vasconcelos", "3.00"),
+                Map.entry("Jacaré", "5.00"), Map.entry("Mangueira", "6.00"),
+                Map.entry("Rocha", "4.00"), Map.entry("Cachambi", "5.00"),
+                Map.entry("Maracanã", "6.00"), Map.entry("Vila Isabel", "3.00"));
+        long meierId;
+        try (ConfigurableApplicationContext contexto = iniciar(url)) {
+            BairroEntregaRepository bairros = contexto.getBean(BairroEntregaRepository.class);
+            assertEquals(16, bairros.count());
+            assertFalse(bairros.findByNomeIgnoreCase("Fátima").isPresent());
+            BairroEntrega meier = bairros.findByNomeIgnoreCase("Méier").orElseThrow();
+            meier.setNome("MEIER");
+            meier.setTaxa(new BigDecimal("9.00"));
+            meierId = bairros.save(meier).getId();
+            BairroEntrega andarai = bairros.findByNomeIgnoreCase("Andaraí").orElseThrow();
+            andarai.setTaxa(new BigDecimal("9.00"));
+            bairros.save(andarai);
+            bairros.delete(bairros.findByNomeIgnoreCase("Sampaio").orElseThrow());
+            bairros.save(new BairroEntrega("Fatima", new BigDecimal("3.00")));
+            bairros.save(new BairroEntrega("Bairro preservado", new BigDecimal("8.50")));
+            contexto.getBean(InicializacaoDadosRepository.class).deleteById("bairros-lista-20261029");
+        }
+        try (ConfigurableApplicationContext contexto = iniciar(url)) {
+            BairroEntregaRepository bairros = contexto.getBean(BairroEntregaRepository.class);
+            assertEquals(17, bairros.count());
+            assertFalse(bairros.findByNomeIgnoreCase("Fatima").isPresent());
+            assertEquals(meierId, bairros.findByNomeIgnoreCase("MEIER").orElseThrow().getId());
+            assertFalse(bairros.findByNomeIgnoreCase("Méier").isPresent());
+            taxas.forEach((nome, valor) -> assertEquals(0,
+                    bairros.findByNomeIgnoreCase(nome).orElseThrow().getTaxa().compareTo(new BigDecimal(valor))));
+            assertEquals(0, bairros.findByNomeIgnoreCase("Bairro preservado").orElseThrow()
+                    .getTaxa().compareTo(new BigDecimal("8.50")));
+            BairroEntrega andarai = bairros.findByNomeIgnoreCase("Andaraí").orElseThrow();
+            andarai.setTaxa(new BigDecimal("12.00"));
+            bairros.save(andarai);
+            bairros.delete(bairros.findByNomeIgnoreCase("Sampaio").orElseThrow());
+        }
+        try (ConfigurableApplicationContext contexto = iniciar(url)) {
+            BairroEntregaRepository bairros = contexto.getBean(BairroEntregaRepository.class);
+            assertEquals(0, bairros.findByNomeIgnoreCase("Andaraí").orElseThrow()
+                    .getTaxa().compareTo(new BigDecimal("12.00")));
+            assertFalse(bairros.findByNomeIgnoreCase("Sampaio").isPresent());
         }
     }
 

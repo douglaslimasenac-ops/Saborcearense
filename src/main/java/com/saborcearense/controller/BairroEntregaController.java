@@ -16,9 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.saborcearense.model.BairroEntrega;
-import com.saborcearense.model.InicializacaoDados;
 import com.saborcearense.repository.BairroEntregaRepository;
-import com.saborcearense.repository.InicializacaoDadosRepository;
+import com.saborcearense.service.InicializacaoBairros;
 
 import jakarta.annotation.PostConstruct;
 
@@ -27,31 +26,16 @@ import jakarta.annotation.PostConstruct;
 public class BairroEntregaController {
 
     private final BairroEntregaRepository repository;
-    private final InicializacaoDadosRepository inicializacoes;
+    private final InicializacaoBairros inicializacao;
 
-    public BairroEntregaController(BairroEntregaRepository repository, InicializacaoDadosRepository inicializacoes) {
+    public BairroEntregaController(BairroEntregaRepository repository, InicializacaoBairros inicializacao) {
         this.repository = repository;
-        this.inicializacoes = inicializacoes;
+        this.inicializacao = inicializacao;
     }
 
     @PostConstruct
     void inicializarBairros() {
-        if (inicializacoes.existsById("bairros")) return;
-        if (repository.count() == 0) {
-            adicionarSeNaoExistir("Engenho Novo", "0.00");
-            adicionarSeNaoExistir("Fátima", "3.00");
-            adicionarSeNaoExistir("Grajaú", "5.00");
-            adicionarSeNaoExistir("Andaraí", "6.00");
-            adicionarSeNaoExistir("Tijuca", "7.00");
-            adicionarSeNaoExistir("Cachambi", "5.00");
-        }
-        inicializacoes.save(new InicializacaoDados("bairros"));
-    }
-
-    private void adicionarSeNaoExistir(String nome, String taxa) {
-        if (repository.findByNomeIgnoreCase(nome).isEmpty()) {
-            repository.save(new BairroEntrega(nome, new BigDecimal(taxa)));
-        }
+        inicializacao.inicializar();
     }
 
     @GetMapping("/bairros")
