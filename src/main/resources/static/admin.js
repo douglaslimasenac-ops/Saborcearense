@@ -996,17 +996,25 @@ function organizarCardPedido(card, pedido, tipo) {
     const info = document.createElement("span");
     info.className = "resumo-pedido-info";
     info.textContent = `${pedidoEDeRetirada(pedido) ? "Retirada" : "Entrega"} · R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}`;
-    const status = document.createElement("span");
-    status.className = "resumo-pedido-status";
-    status.textContent = `Status: ${textoStatusPedido(pedido)}`;
+    resumo.append(titulo, info);
+    if (!historico || pedido.status === "CANCELADO") {
+        const status = document.createElement("span");
+        status.className = "resumo-pedido-status";
+        if (pedido.status === "PREPARO" || pedido.status === "PREPARANDO") status.classList.add("preparo");
+        if (pedido.status === "ENTREGA" || pedido.status === "SAIU_ENTREGA") {
+            status.classList.add(pedidoEDeRetirada(pedido) ? "retirada" : "entrega");
+        }
+        if (pedido.status === "CANCELADO") status.classList.add("cancelado");
+        status.textContent = `Status: ${textoStatusPedido(pedido)}`;
+        resumo.appendChild(status);
+    }
     const acao = document.createElement("span");
     acao.className = "resumo-pedido-acao";
     acao.textContent = detalhes.open ? "Minimizar ▲" : "Ver detalhes ▼";
-    resumo.append(titulo, info, status, acao);
+    resumo.appendChild(acao);
 
     const cabecalho = card.firstElementChild;
     cabecalho.querySelector("h4").remove();
-    cabecalho.querySelector(".badge-cat").textContent = `Status: ${textoStatusPedido(pedido)}`;
     detalhes.appendChild(resumo);
     while (card.firstChild) detalhes.appendChild(card.firstChild);
     card.appendChild(detalhes);
@@ -1058,7 +1066,6 @@ function atualizarListaPedidos(container, pedidos, tipo) {
                             ${pedido.comprovantePixDisponivel ? `<small style="display: block; margin-top: 6px;"><button type="button" class="btn-status-toggle ativo" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;" onclick="abrirComprovantePix(${pedido.id})">🧾 Ver comprovante Pix</button></small>` : ""}
                             ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                         </div>
-                        <span class="badge-cat" style="background: #fffbeb; color: #b45309; border-color: #fde68a;">Status: ${pedido.status}</span>
                     </div>
                     ${renderizarItensPedido(pedido)}
                     <div class="acoes-pedido-bloco" style="border-top: 1px solid #f1f5f9; padding-top: 14px; display: flex; gap: 10px; justify-content: flex-end;">
@@ -1096,7 +1103,6 @@ function atualizarListaPedidos(container, pedidos, tipo) {
                         ${pedido.comprovantePixDisponivel ? `<small style="display: block; margin-top: 6px;"><button type="button" class="btn-status-toggle ativo" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;" onclick="abrirComprovantePix(${pedido.id})">🧾 Ver comprovante Pix</button></small>` : ""}
                         ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                     </div>
-                    <span class="badge-cat" style="background: ${pedido.status === "CANCELADO" ? "#fff1f2" : "#e6f4ea"}; color: ${pedido.status === "CANCELADO" ? "#be123c" : "#137333"}; border-color: ${pedido.status === "CANCELADO" ? "#fecdd3" : "#ceead6"};">Status: ${pedido.status}</span>
                 </div>
                 ${renderizarItensPedido(pedido)}
             `;
@@ -1239,13 +1245,11 @@ function renderizarResultadosBuscaBalcao() {
         .slice(0, 8);
     resultados.innerHTML = itens.length
         ? itens.map(item => `
-            <button type="button" class="btn-status-toggle ativo"
-                    onclick="adicionarItemBalcao(${item.id})"
-                    style="display: flex; justify-content: space-between; width: 100%; text-align: left;">
+            <button type="button" class="balcao-resultado" onclick="adicionarItemBalcao(${item.id})">
                 <span>${escaparHtml(item.nome)}</span>
-                <strong>R$ ${Number(item.preco || 0).toFixed(2).replace(".", ",")}</strong>
+                <strong>R$ ${Number(item.preco || 0).toFixed(2).replace(".", ",")} ＋</strong>
             </button>`).join("")
-        : `<small style="color: var(--text-muted);">Nenhum item encontrado.</small>`;
+        : `<p class="balcao-vazio">Nenhum item encontrado.</p>`;
 }
 
 function adicionarItemBalcao(idSelecionado) {
@@ -1314,21 +1318,21 @@ function renderizarPedidoBalcao() {
     if (lista) {
         lista.innerHTML = itensPedidoBalcao.length
             ? itensPedidoBalcao.map((item, indice) => `
-                <div class="card-balcao-prato" style="padding:16px; margin-bottom:12px; border:1px solid #e2e8f0; border-radius:14px; background:#fff;">
-                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+                <div class="card-balcao-prato">
+                    <div class="balcao-item-topo">
                         <div>
-                            <strong style="font-size:1.05rem;">${indice + 1}. ${item.quantidade}x ${escaparHtml(item.nome)}</strong>
-                            <div style="color:#64748b; margin-top:4px;">R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</div>
+                            <strong class="balcao-item-nome">${indice + 1}. ${item.quantidade}x ${escaparHtml(item.nome)}</strong>
+                            <div class="balcao-item-preco">R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</div>
                         </div>
-                        <button type="button" class="btn-status-toggle inativo" onclick="removerItemBalcao(${indice})">Remover</button>
+                        <button type="button" class="btn-status-toggle inativo" aria-label="Remover ${escaparHtml(item.nome)}" onclick="removerItemBalcao(${indice})">Remover</button>
                     </div>
                     ${categoriasComAcompanhamentos.has(String(item.categoria || "").trim().toUpperCase()) ? `
-                    <div class="acompanhamentos-item-balcao" data-item-index="${indice}" style="margin-top:12px; padding-top:12px; border-top:1px dashed #e2e8f0;">
-                        <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:8px;">
+                    <div class="acompanhamentos-item-balcao balcao-acompanhamentos" data-item-index="${indice}">
+                        <div class="balcao-acompanhamentos-titulo">
                             <strong>Acompanhamentos deste prato</strong>
-                            <span style="color:#64748b; font-size:.85rem;">${item.acompanhamentos.length}/2</span>
+                            <span>${item.acompanhamentos.length}/2</span>
                         </div>
-                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:7px;">
+                        <div class="opcoes-acompanhamentos-balcao">
                             ${acompanhamentosBalcao.map(acompanhamento => `
                                 <label class="opcao-acompanhamento-balcao ${item.acompanhamentos.includes(acompanhamento.nome) ? "selecionado" : ""}">
                                     <input type="checkbox" value="${escaparHtml(acompanhamento.nome)}"
@@ -1338,14 +1342,19 @@ function renderizarPedidoBalcao() {
                                 </label>`).join("")}
                         </div>
                     </div>` : ""}
-                    <input type="text" value="${escaparHtml(item.observacao)}" placeholder="Observação deste item (opcional)"
-                        oninput="atualizarObservacaoItemBalcao(${indice}, this.value)"
-                        style="width:100%; box-sizing:border-box; margin-top:12px; padding:9px; border:1px solid #cbd5e1; border-radius:8px;">
+                    <div class="balcao-campo balcao-observacao-grupo">
+                        <label for="balcao-observacao-${indice}">Observação do item (opcional)</label>
+                        <input id="balcao-observacao-${indice}" class="balcao-observacao" type="text" value="${escaparHtml(item.observacao)}"
+                            placeholder="Ex.: sem cebola" oninput="atualizarObservacaoItemBalcao(${indice}, this.value)">
+                    </div>
                 </div>`).join("")
-            : "<p style='margin: 0; color: var(--text-muted);'>Nenhum item adicionado.</p>";
+            : "<p class='balcao-vazio'>Nenhum item adicionado. Selecione um produto para começar.</p>";
     }
     const totalEl = document.getElementById("total-pedido-balcao");
-    if (totalEl) totalEl.textContent = `Total: R$ ${total.toFixed(2).replace(".", ",")}`;
+    if (totalEl) totalEl.textContent = `R$ ${total.toFixed(2).replace(".", ",")}`;
+    const contador = document.getElementById("contador-itens-balcao");
+    const quantidade = itensPedidoBalcao.reduce((soma, item) => soma + item.quantidade, 0);
+    if (contador) contador.textContent = `${quantidade} ${quantidade === 1 ? "item" : "itens"}`;
 }
 
 function imprimirPedidoBalcao() {

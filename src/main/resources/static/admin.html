@@ -417,7 +417,7 @@
         }
 
         .btn-status-toggle { 
-            border: none; padding: 10px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
+            border: none; padding: 10px 16px; border-radius: 6px; font-family: Arial, sans-serif; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
         }
         .btn-status-toggle.ativo { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
         .btn-status-toggle.inativo { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
@@ -535,11 +535,124 @@
             border: 1px solid #fde68a;
             border-radius: 999px;
             padding: 5px 10px;
+            font-family: Arial, sans-serif;
             font-size: 0.85rem;
-            font-weight: 800;
+            font-weight: 700;
         }
+        .resumo-pedido-status.preparo { color: #1e40af; background: #eff6ff; border-color: #bfdbfe; }
+        .resumo-pedido-status.entrega { color: #166534; background: #f0fdf4; border-color: #bbf7d0; }
+        .resumo-pedido-status.retirada { color: #9a3412; background: #fff7ed; border-color: #fed7aa; }
+        .resumo-pedido-status.cancelado { color: #be123c; background: #fff1f2; border-color: #fecdd3; }
         .resumo-pedido-acao { color: #237a4b; font-size: 0.85rem; font-weight: 800; }
         .detalhes-pedido[open] > .resumo-pedido { margin-bottom: 14px; }
+        .balcao-cabecalho h2 { margin: 0 0 6px; }
+        .balcao-cabecalho p { margin: 0; color: #806b51; font-size: 0.92rem; }
+        .balcao-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+            align-items: start;
+            gap: 18px;
+        }
+        .balcao-painel {
+            min-width: 0;
+            padding: 22px;
+            border: 1px solid #eadbc5;
+            border-radius: 18px;
+            background: #fff;
+            box-shadow: 0 7px 20px rgba(79, 52, 23, 0.06);
+        }
+        .balcao-painel-cabecalho {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+        .balcao-painel-cabecalho h3 { margin: 0 0 4px; font-size: 1.12rem; }
+        .balcao-painel-cabecalho p { margin: 0; color: #806b51; font-size: 0.84rem; }
+        .balcao-contador {
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: #fff3d9;
+            color: #8a5316;
+            font-size: 0.8rem;
+            font-weight: 800;
+        }
+        .balcao-busca-campos {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 100px;
+            gap: 10px;
+            align-items: end;
+        }
+        .balcao-campo { display: flex; flex-direction: column; min-width: 0; gap: 7px; }
+        .balcao-campo label { color: #66513b; font-size: 0.82rem; font-weight: 700; }
+        .balcao-campo input, .balcao-campo select, .balcao-observacao {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid #dfcfb9;
+            border-radius: 10px;
+            background: #fffdf9;
+            color: #302418;
+            font: inherit;
+        }
+        .balcao-campo input:focus, .balcao-campo select:focus, .balcao-observacao:focus {
+            outline: 2px solid rgba(217, 144, 36, 0.35);
+            border-color: #d99024;
+        }
+        .balcao-resultados {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            max-height: 340px;
+            overflow-y: auto;
+            margin-top: 14px;
+        }
+        .balcao-resultado {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+            min-height: 48px;
+            padding: 10px 12px;
+            border: 1px solid #f0e2d0;
+            border-radius: 10px;
+            background: #fffaf3;
+            color: #4a3a29;
+            text-align: left;
+            font: inherit;
+            font-size: 0.88rem;
+            cursor: pointer;
+        }
+        .balcao-resultado:hover, .balcao-resultado:focus-visible { border-color: #d99024; background: #fff3de; }
+        .balcao-resultado span { overflow-wrap: anywhere; }
+        .balcao-resultado strong { color: #8a5316; white-space: nowrap; }
+        .balcao-vazio { margin: 0; padding: 22px 12px; color: #806b51; text-align: center; font-size: 0.9rem; }
+        .balcao-lista { display: flex; flex-direction: column; gap: 12px; }
+        .card-balcao-prato {
+            min-width: 0;
+            padding: 15px;
+            border: 1px solid #eee1d0;
+            border-radius: 14px;
+            background: #fffdf9;
+        }
+        .balcao-item-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+        .balcao-item-nome { overflow-wrap: anywhere; color: #302418; }
+        .balcao-item-preco { margin-top: 4px; color: #8a5316; font-size: 0.9rem; font-weight: 700; }
+        .balcao-acompanhamentos { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e6d9c8; }
+        .balcao-acompanhamentos-titulo { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 0.88rem; }
+        .balcao-acompanhamentos-titulo span { color: #806b51; white-space: nowrap; }
+        .balcao-observacao-grupo { margin-top: 12px; }
+        .balcao-rodape { display: grid; gap: 15px; margin-top: 18px; padding-top: 18px; border-top: 1px solid #eee1d0; }
+        .balcao-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: #66513b; }
+        .balcao-total strong { color: #302418; font-size: 1.35rem; }
+        .balcao-imprimir { width: 100%; }
+        @media (max-width: 1050px) {
+            .balcao-layout { grid-template-columns: minmax(0, 1fr); }
+        }
         .resumo-financeiro {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -644,12 +757,15 @@
             .controles-prod { width: 100%; display: flex; justify-content: flex-end; gap: 8px; }
             .resumo-financeiro { grid-template-columns: 1fr; }
             .item-pedido-linha { align-items: flex-start; }
+            .balcao-layout { grid-template-columns: minmax(0, 1fr); }
+            .balcao-painel { padding: 16px; }
         }
         @media (max-width: 420px) {
             #login-admin { padding: 28px 20px; }
             main { padding-right: 12px; padding-left: 12px; }
             .card-pedido h4 { font-size: 0.95rem; line-height: 1.35; }
             .btn-status-toggle { padding: 9px 10px; font-size: 0.78rem; }
+            .resumo-pedido-status { font-size: 0.78rem; }
             .form-grid { padding: 18px; }
         }
     </style>
@@ -738,36 +854,57 @@
             <!-- ABA 2: PEDIDO RÁPIDO NO BALCÃO -->
             <section id="sec-balcao" class="section-view">
                 <div class="admin-header">
-                    <h2>🧾 Pedido rápido no balcão</h2>
-                    <button class="btn-acao" type="button" onclick="limparPedidoBalcao()">Limpar pedido</button>
-                </div>
-                <p style="color: var(--text-muted); margin-top: 0;">Pedido somente para retirada. Não é salvo no sistema nem aparece no histórico.</p>
-                <div class="form-grid" style="margin-bottom: 18px;">
-                    <div class="form-grupo">
-                        <label for="balcao-busca">Buscar produto</label>
-                        <input id="balcao-busca" type="search" placeholder="Digite o nome do item..." autocomplete="off">
-                        <div id="resultados-busca-balcao" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
+                    <div class="balcao-cabecalho">
+                        <h2>🧾 Pedido rápido no balcão</h2>
+                        <p>Monte a comanda para retirada no estabelecimento.</p>
                     </div>
-                    <div class="form-grupo">
-                        <label for="balcao-quantidade">Quantidade</label>
-                        <input id="balcao-quantidade" type="number" min="1" value="1">
+                    <button class="btn-limpar-filtros" type="button" onclick="limparPedidoBalcao()">Limpar pedido</button>
+                </div>
+                <div class="balcao-layout">
+                    <div class="balcao-painel">
+                        <div class="balcao-painel-cabecalho">
+                            <div>
+                                <h3>Adicionar produtos</h3>
+                                <p>Escolha a quantidade e toque em um produto.</p>
+                            </div>
+                        </div>
+                        <div class="balcao-busca-campos">
+                            <div class="balcao-campo">
+                                <label for="balcao-busca">Buscar produto</label>
+                                <input id="balcao-busca" type="search" placeholder="Nome do produto" autocomplete="off">
+                            </div>
+                            <div class="balcao-campo">
+                                <label for="balcao-quantidade">Quantidade</label>
+                                <input id="balcao-quantidade" type="number" min="1" value="1">
+                            </div>
+                        </div>
+                        <div id="resultados-busca-balcao" class="balcao-resultados"></div>
+                    </div>
+                    <div class="balcao-painel">
+                        <div class="balcao-painel-cabecalho">
+                            <div>
+                                <h3>Comanda</h3>
+                                <p>Confira os itens antes de imprimir.</p>
+                            </div>
+                            <span id="contador-itens-balcao" class="balcao-contador" aria-live="polite">0 itens</span>
+                        </div>
+                        <div id="lista-itens-balcao" class="balcao-lista">
+                            <p class="balcao-vazio">Nenhum item adicionado. Selecione um produto para começar.</p>
+                        </div>
+                        <div class="balcao-rodape">
+                            <div class="balcao-campo">
+                                <label for="balcao-pagamento">Forma de pagamento</label>
+                                <select id="balcao-pagamento">
+                                    <option>Dinheiro</option>
+                                    <option>Cartão</option>
+                                    <option>Pix</option>
+                                </select>
+                            </div>
+                            <div class="balcao-total"><span>Total do pedido</span><strong id="total-pedido-balcao" aria-live="polite">R$ 0,00</strong></div>
+                            <button class="btn-acao balcao-imprimir" type="button" onclick="imprimirPedidoBalcao()">🖨️ Imprimir comanda</button>
+                        </div>
                     </div>
                 </div>
-                <div id="lista-itens-balcao" class="itens-pedido" style="margin-top: 0;">
-                    <p style="margin: 0; color: var(--text-muted);">Nenhum item adicionado.</p>
-                </div>
-                <div class="form-grid" style="margin-top: 18px;">
-                    <div class="form-grupo">
-                        <label for="balcao-pagamento">Forma de pagamento</label>
-                        <select id="balcao-pagamento">
-                            <option>Dinheiro</option>
-                            <option>Cartão</option>
-                            <option>Pix</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="total-pedido-balcao" style="font-size: 1.2rem; font-weight: 800; text-align: right; margin: 18px 0;">Total: R$ 0,00</div>
-                <button class="btn-acao" type="button" onclick="imprimirPedidoBalcao()">🖨️ Imprimir comanda do balcão</button>
             </section>
 
             <!-- ABA 3: HISTÓRICO DE FINALIZADOS -->
@@ -908,7 +1045,7 @@
         </main>
     </div>
     
-   <script src="admin.js?v=2"></script>
+   <script src="admin.js?v=3"></script>
 
 </body>
 </html>
