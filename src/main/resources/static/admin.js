@@ -880,7 +880,15 @@ function atualizarResumoFinanceiro(pedidos, elementoId) {
     const validos = pedidos.filter(pedido => pedido.status !== "CANCELADO");
     const total = validos.reduce((soma, pedido) => soma + obterTotalPedido(pedido), 0);
     const ticketMedio = validos.length ? total / validos.length : 0;
-    resumosFinanceiros.set(elementoId, { quantidade: validos.length, total, ticketMedio });
+    const quantidade = resumosFinanceiros.get(elementoId)?.quantidade ?? 0;
+    resumosFinanceiros.set(elementoId, { quantidade, total, ticketMedio });
+    renderizarResumoFinanceiro(elementoId);
+}
+
+function atualizarContagemPedidos(elementoId, quantidade) {
+    const resumo = resumosFinanceiros.get(elementoId);
+    if (!resumo || resumo.quantidade === quantidade) return;
+    resumo.quantidade = quantidade;
     renderizarResumoFinanceiro(elementoId);
 }
 
@@ -1088,6 +1096,7 @@ function renderizarHistoricoFiltrado() {
             && (!inicio || data >= inicio)
             && (!fim || data <= fim);
     });
+    atualizarContagemPedidos("resumo-historico", filtrados.length);
     const totalPaginas = Math.max(1, Math.ceil(filtrados.length / pedidosPorPaginaHistorico));
     paginaHistorico = Math.min(paginaHistorico, totalPaginas);
     const inicioPagina = (paginaHistorico - 1) * pedidosPorPaginaHistorico;
@@ -1123,6 +1132,7 @@ function renderizarAtivosFiltrados() {
         const texto = `${numeroExibicaoPedido(pedido)} ${pedido.clienteNome || ""} ${pedido.telefone || ""}`.toLocaleLowerCase("pt-BR");
         return !busca || texto.includes(busca);
     });
+    atualizarContagemPedidos("resumo-financeiro", filtrados.length);
     ultimoSnapshotPedidosAtivos = null;
     atualizarListaPedidos(document.getElementById("lista-pedidos-ativos"), filtrados, "ativos");
 }
@@ -1188,6 +1198,7 @@ function adicionarItemBalcao(idSelecionado) {
     itensPedidoBalcao.push({
         id: produto.id,
         nome: produto.nome,
+        categoria: produto.categoria,
         preco: Number(produto.preco || 0),
         quantidade,
         acompanhamentos: [],
@@ -1239,6 +1250,7 @@ function atualizarObservacaoItemBalcao(indice, valor) {
 function renderizarPedidoBalcao() {
     const lista = document.getElementById("lista-itens-balcao");
     const total = itensPedidoBalcao.reduce((soma, item) => soma + item.preco * item.quantidade, 0);
+    const categoriasComAcompanhamentos = new Set(["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS"]);
     if (lista) {
         lista.innerHTML = itensPedidoBalcao.length
             ? itensPedidoBalcao.map((item, indice) => `
@@ -1250,6 +1262,7 @@ function renderizarPedidoBalcao() {
                         </div>
                         <button type="button" class="btn-status-toggle inativo" onclick="removerItemBalcao(${indice})">Remover</button>
                     </div>
+                    ${categoriasComAcompanhamentos.has(String(item.categoria || "").trim().toUpperCase()) ? `
                     <div class="acompanhamentos-item-balcao" data-item-index="${indice}" style="margin-top:12px; padding-top:12px; border-top:1px dashed #e2e8f0;">
                         <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:8px;">
                             <strong>Acompanhamentos deste prato</strong>
@@ -1264,8 +1277,8 @@ function renderizarPedidoBalcao() {
                                     <span>${escaparHtml(acompanhamento.nome)}</span>
                                 </label>`).join("")}
                         </div>
-                    </div>
-                    <input type="text" value="${escaparHtml(item.observacao)}" placeholder="Observação deste prato (opcional)"
+                    </div>` : ""}
+                    <input type="text" value="${escaparHtml(item.observacao)}" placeholder="Observação deste item (opcional)"
                         oninput="atualizarObservacaoItemBalcao(${indice}, this.value)"
                         style="width:100%; box-sizing:border-box; margin-top:12px; padding:9px; border:1px solid #cbd5e1; border-radius:8px;">
                 </div>`).join("")
