@@ -32,6 +32,7 @@ let ultimoSnapshotPedidosAtivos = "";
 let ultimoSnapshotPedidosHistorico = "";
 let pedidosHistoricoLocal = [];
 let pedidosAtivosLocal = [];
+const pedidosFinalizadosLocal = new Set();
 let paginaHistorico = 1;
 const pedidosPorPaginaHistorico = 10;
 let itensPedidoBalcao = [];
@@ -821,6 +822,7 @@ function atualizarListaPedidos(container, pedidos, tipo) {
                             <small style="color: #0f766e; font-weight: 700; font-size: 0.9rem;">💳 Forma de Pagamento: ${pedido.formaPagamento}</small>
                             <small style="display: block; margin-top: 6px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
                             <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                            ${pedido.comprovantePixDisponivel ? `<small style="display: block; margin-top: 6px;"><button type="button" class="btn-status-toggle ativo" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;" onclick="abrirComprovantePix(${pedido.id})">🧾 Ver comprovante Pix</button></small>` : ""}
                             ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                         </div>
                         <span class="badge-cat" style="background: #fffbeb; color: #b45309; border-color: #fde68a;">Status: ${pedido.status}</span>
@@ -857,6 +859,7 @@ function atualizarListaPedidos(container, pedidos, tipo) {
                         <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento}</small>
                         <small style="display: block; margin-top: 4px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
                         <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                        ${pedido.comprovantePixDisponivel ? `<small style="display: block; margin-top: 6px;"><button type="button" class="btn-status-toggle ativo" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;" onclick="abrirComprovantePix(${pedido.id})">🧾 Ver comprovante Pix</button></small>` : ""}
                         ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                     </div>
                     <span class="badge-cat" style="background: ${pedido.status === "CANCELADO" ? "#fff1f2" : "#e6f4ea"}; color: ${pedido.status === "CANCELADO" ? "#be123c" : "#137333"}; border-color: ${pedido.status === "CANCELADO" ? "#fecdd3" : "#ceead6"};">Status: ${pedido.status}</span>
@@ -886,6 +889,23 @@ function atualizarListaPedidos(container, pedidos, tipo) {
     if (containerScroll) {
         containerScroll.scrollTop = scrollAnterior;
     }
+}
+
+async function abrirComprovantePix(pedidoId) {
+    const resposta = await fetchAdmin(`${URL_BACKEND}/api/pedidos/${pedidoId}/comprovante`);
+    if (!resposta.ok) {
+        alert("Não foi possível abrir o comprovante Pix.");
+        return;
+    }
+    const arquivo = await resposta.blob();
+    const url = URL.createObjectURL(arquivo);
+    const janela = window.open(url, "_blank");
+    if (!janela) {
+        URL.revokeObjectURL(url);
+        alert("Permita pop-ups para visualizar o comprovante.");
+        return;
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 function renderizarHistoricoFiltrado() {
@@ -1148,7 +1168,11 @@ async function carregarPedidosAtivos() {
             pedidosAtivos.forEach(pedido => idsPedidosConhecidos.add(pedido.id));
             primeiraCargaPedidos = false;
 
-            const pedidosVisiveis = pedidosAtivos.filter(pedido => pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO');
+            const pedidosVisiveis = pedidosAtivos.filter(pedido =>
+                pedido.status !== 'ENTREGUE' &&
+                pedido.status !== 'CANCELADO' &&
+                !pedidosFinalizadosLocal.has(String(pedido.id))
+            );
             pedidosAtivosLocal = pedidosVisiveis;
             renderizarAtivosFiltrados();
         }
@@ -1200,6 +1224,16 @@ async function mudarStatusPedido(id, novoStatus) {
         const res = await fetchAdmin(`${URL_BACKEND}/api/pedidos/${id}/status?status=${encodeURIComponent(novoStatus)}`, { method: "PUT" });
         if (res.ok) {
             const pedidoAtualizado = await res.json();
+            const statusFinalizado = pedidoAtualizado.status === "ENTREGUE" || pedidoAtualizado.status === "CANCELADO";
+            if (statusFinalizado) {
+                pedidosFinalizadosLocal.add(String(id));
+                pedidosHistoricoLocal = [
+                    ...pedidosHistoricoLocal.filter(pedido => pedido.id !== id),
+                    pedidoAtualizado
+                ];
+                ultimoSnapshotPedidosHistorico = "";
+                renderizarHistoricoFiltrado();
+            }
             pedidosAtivosLocal = pedidosAtivosLocal
                 .map(pedido => pedido.id === id ? { ...pedido, ...pedidoAtualizado } : pedido)
                 .filter(pedido => pedido.status !== "ENTREGUE" && pedido.status !== "CANCELADO");

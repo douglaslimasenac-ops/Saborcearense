@@ -1,6 +1,7 @@
 package com.saborcearense.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import jakarta.validation.constraints.DecimalMin;
@@ -37,6 +38,13 @@ public class Pedido {
     @Column(length = 500)
     private String observacao;
     private LocalDateTime dataCriacao = LocalDateTime.now();
+    @Lob
+    @JsonIgnore
+    private String comprovantePix;
+    @Column(length = 100)
+    private String comprovantePixTipo;
+    @Column(length = 255)
+    private String comprovantePixNome;
 
     public Pedido() {}
 
@@ -63,4 +71,11 @@ public class Pedido {
     public void setObservacao(String observacao) { this.observacao = observacao; }
     public LocalDateTime getDataCriacao() { return dataCriacao; }
     public void setDataCriacao(LocalDateTime dataCriacao) { this.dataCriacao = dataCriacao; }
+    public String getComprovantePix() { return comprovantePix; }
+    public void setComprovantePix(String comprovantePix) { this.comprovantePix = comprovantePix; }
+    public String getComprovantePixTipo() { return comprovantePixTipo; }
+    public void setComprovantePixTipo(String comprovantePixTipo) { this.comprovantePixTipo = comprovantePixTipo; }
+    public String getComprovantePixNome() { return comprovantePixNome; }
+    public void setComprovantePixNome(String comprovantePixNome) { this.comprovantePixNome = comprovantePixNome; }
+    public boolean isComprovantePixDisponivel() { return comprovantePix != null && !comprovantePix.isBlank(); }
 }

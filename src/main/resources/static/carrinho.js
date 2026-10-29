@@ -523,6 +523,11 @@ async function enviarPedido(e) {
         observacao,
         status: "RECEBIDO" // Já manda o status padrão esperado pelo @PostMapping
     };
+    const comprovante = document.getElementById("comprovante-pix")?.files?.[0];
+    if (comprovante && comprovante.size > 5 * 1024 * 1024) {
+        alert("O comprovante deve ter no máximo 5 MB.");
+        return;
+    }
 
     let pedidoIdGerado = "NOVO";
 
@@ -541,13 +546,18 @@ async function enviarPedido(e) {
             console.log("Enviando pedido para o endereço correto:", urlLimpa);
 
             // Faz a chamada e espera obrigatoriamente a resposta física do Render
+            const formulario = new FormData();
+            formulario.append("pedido", new Blob([JSON.stringify(dadosPedido)], { type: "application/json" }));
+            if (comprovante && pagamento === "Pix") {
+                formulario.append("comprovante", comprovante);
+            }
+
             const response = await fetch(urlLimpa, {
                 method: "POST",
                 headers: { 
-                    "Content-Type": "application/json",
                     "Accept": "application/json"
                 },
-                body: JSON.stringify(dadosPedido)
+                body: formulario
             });
 
             if (response.ok) {

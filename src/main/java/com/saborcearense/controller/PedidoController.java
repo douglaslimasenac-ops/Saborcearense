@@ -2,19 +2,24 @@ package com.saborcearense.controller;
 
 import java.util.List;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.concurrent.ThreadLocalRandom;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.annotation.PostConstruct;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable; // Supondo o padrão do seu projeto
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -84,11 +89,23 @@ public class PedidoController {
                "limite", limite));
    }
 
-   @PostMapping
-   public Pedido receberNovoPedido(@Valid @RequestBody Pedido novoPedido) {
-       // Campos de controle pertencem ao servidor, não ao navegador do cliente.
-       novoPedido.setId(null);
-       novoPedido.setNumeroPedido(gerarNumeroPedido());
+   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+   public Pedido receberNovoPedido(
+           @Valid @org.springframework.web.bind.annotation.RequestPart("pedido") Pedido novoPedido,
+           @org.springframework.web.bind.annotation.RequestPart(value = "comprovante", required = false) MultipartFile comprovante) {
+       anexarComprovante(novoPedido, comprovante);
+       return salvarNovoPedido(novoPedido);
+   }
+
+   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+   public Pedido receberNovoPedidoJson(@Valid @org.springframework.web.bind.annotation.RequestBody Pedido novoPedido) {
+       return salvarNovoPedido(novoPedido);
+   }
+
+   private Pedido salvarNovoPedido(Pedido novoPedido) {
+      // Campos de controle pertencem ao servidor, não ao navegador do cliente.
+      novoPedido.setId(null);
+      novoPedido.setNumeroPedido(gerarNumeroPedido());
        novoPedido.setDataCriacao(java.time.LocalDateTime.now());
        novoPedido.setStatus("RECEBIDO");
         
@@ -116,6 +133,57 @@ public class PedidoController {
         }
 
         return pedidoSalvo;
+    }
+
+    @GetMapping("/{id}/comprovante")
+    public ResponseEntity<Resource> baixarComprovante(@PathVariable Long id) {
+        return pedidoRepository.findById(id)
+                .filter(pedido -> pedido.getComprovantePix() != null && !pedido.getComprovantePix().isBlank())
+                .map(pedido -> {
+                    MediaType tipo = MediaType.APPLICATION_OCTET_STREAM;
+                    try {
+                        tipo = MediaType.parseMediaType(pedido.getComprovantePixTipo());
+                    } catch (IllegalArgumentException ignored) {
+                        // Usa o tipo genérico para arquivos antigos ou metadados inválidos.
+                    }
+                    Resource recurso = new ByteArrayResource(Base64.getDecoder().decode(pedido.getComprovantePix()));
+                    return ResponseEntity.ok()
+                            .contentType(tipo)
+                            .header(HttpHeaders.CONTENT_DISPOSITION,
+                                    "inline; filename=\"" + nomeSeguro(pedido.getComprovantePixNome()) + "\"")
+                            .body(recurso);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    private void anexarComprovante(Pedido pedido, MultipartFile comprovante) {
+        if (comprovante == null || comprovante.isEmpty()) {
+            return;
+        }
+        if (comprovante.getSize() > 5 * 1024 * 1024) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE,
+                    "O comprovante deve ter no máximo 5 MB");
+        }
+        String tipo = comprovante.getContentType();
+        if (!java.util.Set.of("image/jpeg", "image/png", "image/webp", "application/pdf").contains(tipo)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Envie o comprovante em JPG, PNG, WEBP ou PDF");
+        }
+        try {
+            pedido.setComprovantePix(Base64.getEncoder().encodeToString(comprovante.getBytes()));
+        } catch (IOException erro) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Não foi possível ler o comprovante enviado", erro);
+        }
+        pedido.setComprovantePixTipo(tipo);
+        pedido.setComprovantePixNome(nomeSeguro(comprovante.getOriginalFilename()));
+    }
+
+    private String nomeSeguro(String nome) {
+        if (nome == null || nome.isBlank()) {
+            return "comprovante-pix";
+        }
+        return nome.replaceAll("[^a-zA-Z0-9._-]", "_");
     }
 
     private Long gerarNumeroPedido() {
