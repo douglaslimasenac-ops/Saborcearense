@@ -28,8 +28,8 @@ let idsPedidosConhecidos = new Set();
 let idsPedidosAlertados = new Set();
 let primeiraCargaPedidos = true;
 let termoBuscaProdutos = "";
-let ultimoSnapshotPedidosAtivos = "";
-let ultimoSnapshotPedidosHistorico = "";
+let ultimoSnapshotPedidosAtivos = null;
+let ultimoSnapshotPedidosHistorico = null;
 let pedidosHistoricoLocal = [];
 let pedidosAtivosLocal = [];
 const pedidosFinalizadosLocal = new Set();
@@ -646,6 +646,10 @@ async function carregarChatsAdmin() {
             badge.textContent = grupos.length;
             badge.style.display = grupos.length ? "inline-block" : "none";
         }
+        if (numeroChatAdminSelecionado && !grupos.includes(numeroChatAdminSelecionado)) {
+            numeroChatAdminSelecionado = null;
+            document.getElementById("chat-admin-painel").style.display = "none";
+        }
         if (numeroChatAdminSelecionado) renderizarChatAdmin();
     } catch (erro) {
         console.error("Erro ao carregar chats:", erro);
@@ -686,7 +690,6 @@ async function enviarMensagemChatAdmin() {
         return;
     }
     campo.value = "";
-    await carregarChatsAdmin();
 }
 
 async function encerrarChatAdmin() {
@@ -1021,7 +1024,7 @@ function renderizarHistoricoFiltrado() {
     const totalPaginas = Math.max(1, Math.ceil(filtrados.length / pedidosPorPaginaHistorico));
     paginaHistorico = Math.min(paginaHistorico, totalPaginas);
     const inicioPagina = (paginaHistorico - 1) * pedidosPorPaginaHistorico;
-    ultimoSnapshotPedidosHistorico = "";
+    ultimoSnapshotPedidosHistorico = null;
     atualizarListaPedidos(
         document.getElementById("lista-pedidos-finalizados"),
         filtrados.slice(inicioPagina, inicioPagina + pedidosPorPaginaHistorico),
@@ -1053,7 +1056,7 @@ function renderizarAtivosFiltrados() {
         const texto = `${numeroExibicaoPedido(pedido)} ${pedido.clienteNome || ""} ${pedido.telefone || ""}`.toLocaleLowerCase("pt-BR");
         return !busca || texto.includes(busca);
     });
-    ultimoSnapshotPedidosAtivos = "";
+    ultimoSnapshotPedidosAtivos = null;
     atualizarListaPedidos(document.getElementById("lista-pedidos-ativos"), filtrados, "ativos");
 }
 
@@ -1309,7 +1312,7 @@ async function apagarHistoricoAntigo() {
 
         const resultado = await res.json();
         alert(`${resultado.apagados || 0} pedido(s) antigo(s) foram apagados.`);
-        ultimoSnapshotPedidosHistorico = "";
+        ultimoSnapshotPedidosHistorico = null;
         await carregarPedidosAtivos();
     } catch (erro) {
         console.error("Erro ao apagar histórico antigo:", erro);
@@ -1329,14 +1332,16 @@ async function mudarStatusPedido(id, novoStatus) {
                     ...pedidosHistoricoLocal.filter(pedido => pedido.id !== id),
                     pedidoAtualizado
                 ];
-                ultimoSnapshotPedidosHistorico = "";
+                ultimoSnapshotPedidosHistorico = null;
                 renderizarHistoricoFiltrado();
+                await carregarChatsAdmin();
             }
             pedidosAtivosLocal = pedidosAtivosLocal
                 .map(pedido => pedido.id === id ? { ...pedido, ...pedidoAtualizado } : pedido)
                 .filter(pedido => pedido.status !== "ENTREGUE" && pedido.status !== "CANCELADO");
-            ultimoSnapshotPedidosAtivos = "";
+            ultimoSnapshotPedidosAtivos = null;
             renderizarAtivosFiltrados();
+            if (statusFinalizado) carregarChatsAdmin();
             await carregarPedidosAtivos();
             if (socketAdmin && socketAdmin.readyState === WebSocket.OPEN) {
                 socketAdmin.send(JSON.stringify({ id, status: novoStatus }));

@@ -18,24 +18,32 @@ import org.springframework.web.server.ResponseStatusException;
 import com.saborcearense.config.WebSocketConfig;
 import com.saborcearense.model.ChatMensagem;
 import com.saborcearense.repository.ChatMensagemRepository;
+import com.saborcearense.repository.PedidoRepository;
+import com.saborcearense.model.Pedido;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.socket.TextMessage;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping("/api/chat")
 public class ChatController {
     private final ChatMensagemRepository repository;
+    private final PedidoRepository pedidoRepository;
 
-    public ChatController(ChatMensagemRepository repository) {
+    public ChatController(ChatMensagemRepository repository, PedidoRepository pedidoRepository) {
         this.repository = repository;
+        this.pedidoRepository = pedidoRepository;
     }
 
     @GetMapping("/{numeroPedido}")
     public List<ChatMensagem> listar(@PathVariable Long numeroPedido) {
+        verificarPedidoAberto(pedidoRepository.findByNumeroPedido(numeroPedido)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pedido não encontrado")));
         return repository.findByNumeroPedidoOrderByDataCriacaoAsc(numeroPedido);
     }
 
     @PostMapping("/{numeroPedido}")
+    @Transactional
     public ResponseEntity<ChatMensagem> enviarCliente(
             @PathVariable Long numeroPedido, @RequestBody Map<String, String> dados) {
         return salvar(numeroPedido, dados, "CLIENTE");
@@ -47,6 +55,7 @@ public class ChatController {
     }
 
     @PostMapping("/admin/{numeroPedido}")
+    @Transactional
     public ResponseEntity<ChatMensagem> enviarAdmin(
             @PathVariable Long numeroPedido, @RequestBody Map<String, String> dados) {
         return salvar(numeroPedido, dados, "RESTAURANTE");
@@ -65,6 +74,8 @@ public class ChatController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "A mensagem deve ter entre 1 e 1000 caracteres");
         }
+        verificarPedidoAberto(pedidoRepository.findByNumeroPedidoForUpdate(numeroPedido)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pedido não encontrado")));
         ChatMensagem mensagem = new ChatMensagem();
         mensagem.setNumeroPedido(numeroPedido);
         mensagem.setMensagem(texto.trim());
@@ -73,6 +84,12 @@ public class ChatController {
         ChatMensagem salva = repository.save(mensagem);
         transmitir(Map.of("tipo", "CHAT_MENSAGEM", "numeroPedido", numeroPedido));
         return ResponseEntity.status(HttpStatus.CREATED).body(salva);
+    }
+
+    private void verificarPedidoAberto(Pedido pedido) {
+        if ("ENTREGUE".equals(pedido.getStatus()) || "CANCELADO".equals(pedido.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.GONE, "A conversa deste pedido foi encerrada");
+        }
     }
 
     private void transmitir(Map<String, Object> evento) {

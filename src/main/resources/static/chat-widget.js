@@ -70,18 +70,25 @@
             if (evento.key === "Enter") enviarMensagem(widget);
         });
         widget._timer = setInterval(() => {
-            if (aberto) carregarMensagens(widget);
+            if (chatAtivado) carregarMensagens(widget);
         }, 5000);
         return widget;
     }
 
     async function carregarMensagens(widget) {
         if (!numeroPedido) return;
+        const numeroConsultado = numeroPedido;
         const lista = widget.querySelector(".chat-widget-mensagens");
         try {
-            const resposta = await fetch(`${urlBackend}/api/chat/${encodeURIComponent(numeroPedido)}`);
+            const resposta = await fetch(`${urlBackend}/api/chat/${encodeURIComponent(numeroConsultado)}`);
+            if (numeroConsultado !== numeroPedido) return;
+            if (resposta.status === 410) {
+                encerrarChat(widget, numeroConsultado);
+                return;
+            }
             if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
             const mensagens = await resposta.json();
+            if (numeroConsultado !== numeroPedido || !aberto) return;
             lista.innerHTML = mensagens.length ? mensagens.map(mensagem => `
                 <div style="align-self:${mensagem.remetente === "CLIENTE" ? "flex-end" : "flex-start"};max-width:88%;padding:8px 10px;border-radius:10px;background:${mensagem.remetente === "CLIENTE" ? "#f7e7c7" : "#edf2f7"};color:#2f2922">
                     <strong style="font-size:.75rem">${mensagem.remetente === "CLIENTE" ? "Você" : "Restaurante"}</strong><div>${escapar(mensagem.mensagem)}</div>
@@ -96,12 +103,20 @@
         const campo = widget.querySelector(".chat-widget-form input");
         const mensagem = campo.value.trim();
         if (!mensagem || !numeroPedido) return;
+        const numeroEnviado = numeroPedido;
         try {
-            const resposta = await fetch(`${urlBackend}/api/chat/${encodeURIComponent(numeroPedido)}`, {
+            const resposta = await fetch(`${urlBackend}/api/chat/${encodeURIComponent(numeroEnviado)}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Accept": "application/json" },
                 body: JSON.stringify({ mensagem })
             });
+            atualizarVisibilidade(widget);
+            if (numeroEnviado !== numeroPedido) return;
+            if (resposta.status === 410) {
+                encerrarChat(widget, numeroEnviado);
+                alert("Esta conversa foi encerrada porque o pedido foi finalizado ou cancelado.");
+                return;
+            }
             if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
             campo.value = "";
             await carregarMensagens(widget);
@@ -109,6 +124,13 @@
             console.error("Erro ao enviar mensagem:", erro);
             alert("Não foi possível enviar a mensagem.");
         }
+    }
+
+    function encerrarChat(widget, numeroEncerrado) {
+        if (localStorage.getItem(chatAtivadoKey) === numeroEncerrado) {
+            localStorage.removeItem(chatAtivadoKey);
+        }
+        atualizarVisibilidade(widget);
     }
 
     function atualizarVisibilidade(widget) {
@@ -128,6 +150,7 @@
         document.body.classList.toggle("chat-widget-visivel", chatAtivado);
         const numero = widget.querySelector(".chat-widget-numero");
         if (numero) numero.textContent = numeroPedido ? `#${numeroPedido}` : "";
+        if (chatAtivado) carregarMensagens(widget);
     }
 
     document.addEventListener("DOMContentLoaded", () => {

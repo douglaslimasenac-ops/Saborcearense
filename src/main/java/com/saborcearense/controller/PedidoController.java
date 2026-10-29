@@ -29,6 +29,8 @@ import org.springframework.web.socket.TextMessage; // Adicione este import no to
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saborcearense.model.Pedido;
 import com.saborcearense.repository.PedidoRepository;
+import com.saborcearense.repository.ChatMensagemRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @RestController
@@ -44,6 +46,9 @@ public class PedidoController {
 
     @Autowired
     private PedidoRepository pedidoRepository;
+
+    @Autowired
+    private ChatMensagemRepository chatMensagemRepository;
 
     @PostConstruct
     void numerarPedidosLegados() {
@@ -196,6 +201,7 @@ public class PedidoController {
 
     // 🔄 ATUALIZAR STATUS DO PEDIDO: Gerencia o fluxo de entrega (Preparo, Despacho, Finalização)
     @PutMapping("/{id}/status")
+    @Transactional
     public ResponseEntity<Pedido> mudarStatusPedido(
             @PathVariable Long id, 
             @RequestParam String status) {
@@ -204,8 +210,12 @@ public class PedidoController {
             return ResponseEntity.badRequest().build();
         }
         
-        return pedidoRepository.findById(id).map(pedido -> {
+        return pedidoRepository.findByIdForUpdate(id).map(pedido -> {
             pedido.setStatus(statusNormalizado);
+            if (java.util.Set.of("ENTREGUE", "CANCELADO").contains(statusNormalizado)
+                    && pedido.getNumeroPedido() != null) {
+                chatMensagemRepository.deleteByNumeroPedido(pedido.getNumeroPedido());
+            }
             Pedido pedidoAtualizado = pedidoRepository.save(pedido);
             System.out.println("Sabor Cearense: Pedido #" + id + " alterado para o status: " + status);
             return ResponseEntity.ok(pedidoAtualizado);

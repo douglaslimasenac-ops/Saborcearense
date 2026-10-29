@@ -278,6 +278,7 @@
 
     let pedidoId = numeroDaUrl || localStorage.getItem("ultimoPedidoIdSaborCearense");
     let timerAtualizacao = null;
+    let ultimaConsultaStatus = 0;
 
     document.addEventListener("DOMContentLoaded", () => {
         if (pedidoId) {
@@ -333,11 +334,15 @@
         }
         
         consultarStatus(true);
+        if (!timerAtualizacao) {
+            timerAtualizacao = setInterval(() => consultarStatus(false), 7000);
+        }
     }
 
     // AQUI ESTÁ O ASYNC QUE EVITA O ERRO DO AWAIT:
     async function consultarStatus(mostrarCarregando = false) {
         if (!pedidoId) return;
+        const consulta = ++ultimaConsultaStatus;
         const botao = document.getElementById("btn-atualizar");
         const estadoConexao = document.getElementById("estado-conexao");
         if (mostrarCarregando && botao) {
@@ -351,8 +356,10 @@
                 ? `/api/pedidos/${idLimpo}`
                 : `/api/pedidos/numero/${idLimpo}`;
             const res = await fetch(`${URL_BACKEND}${caminhoBusca}`);
+            if (consulta !== ultimaConsultaStatus) return;
             if (res.ok) {
                 const pedido = await res.json();
+                if (consulta !== ultimaConsultaStatus) return;
                 
                 if (document.getElementById("txt-pedido-id")) {
                     document.getElementById("txt-pedido-id").innerText = `#${idLimpo}`;
@@ -380,7 +387,7 @@
             }
         } catch (e) { 
             console.error("Erro ao buscar status:", e); 
-            atualizarEstadoConexao(false);
+            if (consulta === ultimaConsultaStatus) atualizarEstadoConexao(false);
         } finally {
             if (mostrarCarregando && botao) {
                 botao.disabled = false;
@@ -430,8 +437,12 @@
         document.getElementById("total-acompanhamento").textContent = formatarMoeda(totalPedido);
         document.getElementById("pagamento-acompanhamento").textContent = `💳 ${pedido.formaPagamento || "Pagamento não informado"}`;
         painel.classList.add("visivel");
-        document.getElementById("chat-pedido").classList.add("visivel");
-        document.body.classList.add("chat-visivel");
+        if (pedido.status === "ENTREGUE" || pedido.status === "CANCELADO") {
+            encerrarChatPedido();
+        } else {
+            document.getElementById("chat-pedido").classList.add("visivel");
+            document.body.classList.add("chat-visivel");
+        }
     }
 
     function escaparTexto(valor) {
@@ -453,10 +464,17 @@
     async function carregarChatPedido() {
         const lista = document.getElementById("lista-chat-pedido");
         if (!lista || !pedidoId) return;
+        const numeroConsultado = pedidoId;
         try {
-            const resposta = await fetch(`${URL_BACKEND}/api/chat/${encodeURIComponent(pedidoId)}`);
+            const resposta = await fetch(`${URL_BACKEND}/api/chat/${encodeURIComponent(numeroConsultado)}`);
+            if (numeroConsultado !== pedidoId) return;
+            if (resposta.status === 410) {
+                encerrarChatPedido();
+                return;
+            }
             if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
             const mensagens = await resposta.json();
+            if (numeroConsultado !== pedidoId) return;
             lista.innerHTML = mensagens.length
                 ? mensagens.map(mensagem => `
                     <div style="align-self: ${mensagem.remetente === "CLIENTE" ? "flex-end" : "flex-start"}; max-width: 88%; padding: 8px 10px; border-radius: 10px; background: ${mensagem.remetente === "CLIENTE" ? "#f7e7c7" : "#edf2f7"}; color: #2f2922;">
@@ -471,6 +489,14 @@
             console.error("Erro ao carregar chat:", erro);
         }
 
+    }
+
+    function encerrarChatPedido() {
+        document.getElementById("chat-pedido").classList.remove("visivel", "aberto");
+        document.body.classList.remove("chat-visivel");
+        if (localStorage.getItem("pedidoChatIniciadoSaborCearense") === String(pedidoId)) {
+            localStorage.removeItem("pedidoChatIniciadoSaborCearense");
+        }
     }
 
     function alternarChatPedido(aberto) {
@@ -488,17 +514,26 @@
         const campo = document.getElementById("mensagem-chat-pedido");
         const mensagem = campo ? campo.value.trim() : "";
         if (!mensagem || !pedidoId) return;
-        const resposta = await fetch(`${URL_BACKEND}/api/chat/${encodeURIComponent(pedidoId)}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Accept": "application/json" },
-            body: JSON.stringify({ mensagem })
-        });
-        if (!resposta.ok) {
+        const numeroEnviado = pedidoId;
+        try {
+            const resposta = await fetch(`${URL_BACKEND}/api/chat/${encodeURIComponent(numeroEnviado)}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                body: JSON.stringify({ mensagem })
+            });
+            if (numeroEnviado !== pedidoId) return;
+            if (resposta.status === 410) {
+                encerrarChatPedido();
+                alert("Esta conversa foi encerrada porque o pedido foi finalizado ou cancelado.");
+                return;
+            }
+            if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+            campo.value = "";
+            await carregarChatPedido();
+        } catch (erro) {
+            console.error("Erro ao enviar mensagem:", erro);
             alert("Não foi possível enviar a mensagem.");
-            return;
         }
-        campo.value = "";
-        await carregarChatPedido();
     }
 
     function escaparTextoChat(valor) {
