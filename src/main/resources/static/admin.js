@@ -346,6 +346,8 @@ async function carregarItensAdmin() {
         
         listaPratosLocal = itens;
         renderizarItensAdmin();
+        if (pedidosAtivosLocal.length) renderizarAtivosFiltrados();
+        if (pedidosHistoricoLocal.length) renderizarHistoricoFiltrado();
     } catch(e) { container.innerHTML = `<p style="text-align: center; color: var(--danger);">Erro ao carregar o cardápio.</p>`; }
 }
 
@@ -845,8 +847,9 @@ function obterItensPedido(pedido) {
     if (!pedido.itens) return [];
     try {
         const itens = typeof pedido.itens === "string" ? JSON.parse(pedido.itens) : pedido.itens;
-        if (Array.isArray(itens)) return itens;
-        if (itens && typeof itens === "object") return Object.values(itens);
+        if (Array.isArray(itens)) return ordenarItensPorCategoria(itens, listaPratosLocal);
+        if (itens && typeof itens === "object" && "nome" in itens) return [itens];
+        if (itens && typeof itens === "object") return ordenarItensPorCategoria(Object.values(itens), listaPratosLocal);
     } catch (erro) {
         console.error(`Itens inválidos no pedido #${pedido.id}:`, erro);
     }
@@ -1369,6 +1372,9 @@ function imprimirPedidoBalcao() {
         alert("Libere pop-ups para imprimir a comanda.");
         return;
     }
+    const dataAgora = new Date();
+    const data = dataAgora.toLocaleDateString("pt-BR");
+    const hora = dataAgora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
     const linhas = itensPedidoBalcao.map(item =>
         `<div class="item"><div><span>${item.quantidade}x ${escaparHtml(item.nome)}</span>
         ${item.acompanhamentos.length ? `<small>ACOMPANHAMENTOS: ${item.acompanhamentos.map(escaparHtml).join(", ")}</small>` : ""}
@@ -1379,9 +1385,10 @@ function imprimirPedidoBalcao() {
         <style>
         @page{size:80mm auto;margin:0}body{width:72mm;margin:0 auto;padding:4mm 2mm;font:700 15px Arial,sans-serif;color:#000}
         h1{text-align:center;font-size:20px;margin:0 0 4px}h2{text-align:center;font-size:18px;border:2px solid #000;padding:5px;margin:8px 0}
+        .data-hora{text-align:center;margin:4px 0}
         .linha{border-top:1px dashed #000;margin:8px 0}.item{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dotted #777}.item small{display:block;font-size:12px;margin-top:3px}
         .total{display:flex;justify-content:space-between;font-size:20px;margin-top:10px}
-        </style></head><body><h1>SABOR CEARENSE</h1><h2>RETIRADA / BALCÃO</h2><div class="linha"></div>${linhas}
+        </style></head><body><h1>SABOR CEARENSE</h1><h2>RETIRADA / BALCÃO</h2><p class="data-hora">Data: ${data} - Hora: ${hora}</p><div class="linha"></div>${linhas}
         <div class="linha"></div><p>PAGAMENTO: ${escaparHtml(pagamento)}</p><div class="total"><span>TOTAL</span><span>R$ ${total.toFixed(2).replace(".", ",")}</span></div>
         <p style="text-align:center;margin-top:18px">Pedido de balcão</p></body></html>`);
     janela.document.close();
@@ -1679,45 +1686,10 @@ function imprimirCupomIFood(pedido) {
     var corpoTabelaItens = tabelaItens.querySelector("tbody");
     
     var totalProdutosCalculado = 0;
-    var listaItensImpressao = [];
-
-    // Os itens ficam persistidos no pedido; o localStorage pertence ao navegador do cliente.
-    if (pedido.itens) {
-        try {
-            var itensDecodificados = typeof pedido.itens === "string"
-                ? JSON.parse(pedido.itens)
-                : pedido.itens;
-            if (Array.isArray(itensDecodificados)) {
-                listaItensImpressao = itensDecodificados;
-            } else if (itensDecodificados && typeof itensDecodificados === 'object' && 'nome' in itensDecodificados) {
-                listaItensImpressao = [itensDecodificados];
-            } else if (itensDecodificados && typeof itensDecodificados === 'object') {
-                listaItensImpressao = Object.values(itensDecodificados);
-            }
-        } catch(e) {
-            console.error("Erro ao ler dados para a impressão:", e);
-        }
-    }
+    var listaItensImpressao = obterItensPedido(pedido);
 
     if (listaItensImpressao && listaItensImpressao.length > 0) {
-        var ordemImpressao = function(item) {
-            var categoria = String(item.categoria || "").trim().toUpperCase();
-            if (categoria === "BEBIDA" || categoria === "BEBIDAS") return 1;
-            if (categoria === "SOBREMESA" || categoria === "SOBREMESAS") return 2;
-            return 0;
-        };
-        var itensOrdenadosParaImpressao = listaItensImpressao
-            .map(function(item, indice) {
-                return { item: item, indice: indice, ordem: ordemImpressao(item) };
-            })
-            .sort(function(a, b) {
-                return a.ordem - b.ordem || a.indice - b.indice;
-            })
-            .map(function(entrada) {
-                return entrada.item;
-            });
-
-        itensOrdenadosParaImpressao.forEach(function(item) {
+        listaItensImpressao.forEach(function(item) {
             var tr = janelaImpressao.document.createElement("tr");
             
             var nomeTexto = item.nome ? item.nome.toString().toUpperCase() : "PRATO";
@@ -1727,7 +1699,7 @@ function imprimirCupomIFood(pedido) {
             
             totalProdutosCalculado += subtotalItem;
 
-            tr.innerHTML = "<td class='col-qtd'>" + qtdTexto + "x</td><td class='col-nome'>" + nomeTexto + "</td><td class='col-preco'>R$ " + subtotalItem.toFixed(2).replace(".", ",") + "</td>";
+            tr.innerHTML = "<td class='col-qtd'>" + qtdTexto + "x</td><td class='col-nome'>" + escaparHtml(nomeTexto) + "</td><td class='col-preco'>R$ " + subtotalItem.toFixed(2).replace(".", ",") + "</td>";
             corpoTabelaItens.appendChild(tr);
         });
         containerPrincipal.appendChild(tabelaItens);

@@ -1,5 +1,6 @@
  const URL_BACKEND = window.location.origin;
         let carrinho = {}
+        let catalogoProdutos = [];
         let dadosSacola = carrinho; 
         let estabelecimentoAberto = true;
         let rastreioTimerAutomatizado = null;
@@ -49,6 +50,19 @@
                 const itens = await res.json();
                 
                 if (!Array.isArray(itens)) return;
+                catalogoProdutos = itens;
+                let carrinhoAtualizado = false;
+                Object.entries(carrinho).forEach(([chave, item]) => {
+                    if (!item.categoria) {
+                        const categoria = obterCategoriaItem({ ...item, id: item.id ?? chave }, catalogoProdutos);
+                        if (categoria) {
+                            item.categoria = categoria;
+                            carrinhoAtualizado = true;
+                        }
+                    }
+                });
+                if (carrinhoAtualizado) localStorage.setItem("carrinhoSaborCearense", JSON.stringify(carrinho));
+                renderizarItensSacola();
                 
                 // 1. DICIONÁRIO PADRONIZADO DE IMAGENS RESIDENCIAIS
                 const IMAGENS_COMPLETAS_SABOR = {
@@ -231,7 +245,7 @@
         ? carrinho 
         : JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
         
-    const itens = Object.entries(carrinhoAtual);
+    const itens = ordenarItensPorCategoria(Object.entries(carrinhoAtual), catalogoProdutos, entrada => entrada[1]);
 
     if (itens.length === 0) {
         containerLista.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">Sua sacola está vazia.</p>`;
@@ -433,7 +447,13 @@ function executarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
 
     if (!carrinho[idChave]) {
         if (valor <= 0) return;
-        carrinho[idChave] = { id: idChave, nome: nome, preco: parseFloat(preco), quantidade: 0 };
+        carrinho[idChave] = {
+            id: idChave, nome: nome, preco: parseFloat(preco), quantidade: 0,
+            categoria: obterCategoriaItem({ id: idOriginal || idChave }, catalogoProdutos)
+        };
+    }
+    if (!carrinho[idChave].categoria) {
+        carrinho[idChave].categoria = obterCategoriaItem({ id: idOriginal || idChave }, catalogoProdutos);
     }
 
     carrinho[idChave].quantidade += valor;
@@ -467,7 +487,7 @@ function renderizarItensSacola() {
     if (!container) return;
 
     container.innerHTML = '';
-    const itens = Object.entries(carrinho);
+    const itens = ordenarItensPorCategoria(Object.entries(carrinho), catalogoProdutos, entrada => entrada[1]);
 
     if (itens.length === 0) {
         container.innerHTML = `<p style="text-align:center; color:#64748b; padding:20px;">Sua sacola está vazia.</p>`;
@@ -475,7 +495,7 @@ function renderizarItensSacola() {
     }
 
     itens.forEach(([chaveId, item]) => {
-        const idBaseOriginal = String(chaveId).split("-");
+        const idBaseOriginal = String(chaveId).split("-")[0];
         
         container.innerHTML += `
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">

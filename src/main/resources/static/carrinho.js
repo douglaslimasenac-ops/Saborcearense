@@ -9,6 +9,8 @@ let taxaEntregaSelecionada = 0;
 let bairroTextoSelecionado = "";
 let tipoRecebimentoSelecionado = "ENTREGA";
 let carrinho = {};
+let catalogoProdutosCarrinho = [];
+let preparacaoCategoriasCarrinho = Promise.resolve();
 
 const URL_API_BACKEND = window.location.origin;
 
@@ -42,7 +44,8 @@ document.addEventListener("DOMContentLoaded", () => {
     carregarBairrosEntrega();
 
     if (document.getElementById("lista-itens-carrinho")) {
-        carregarItensDaUrlNoCarrinho();
+        preparacaoCategoriasCarrinho = prepararCategoriasCarrinho();
+        preparacaoCategoriasCarrinho.then(carregarItensDaUrlNoCarrinho);
     }
     const campoObservacao = document.getElementById("observacao");
     if (campoObservacao) {
@@ -54,6 +57,45 @@ document.addEventListener("DOMContentLoaded", () => {
         atualizarContador();
     }
 });
+
+async function prepararCategoriasCarrinho() {
+    let dados;
+    try {
+        dados = JSON.parse(localStorage.getItem("carrinhoSaborCearense") || "{}");
+    } catch (erro) {
+        console.error("Não foi possível ler a sacola para identificar as categorias:", erro);
+        alert("Não foi possível ler os itens da sacola. Volte ao cardápio e tente novamente.");
+        return;
+    }
+    const entradas = Array.isArray(dados)
+        ? dados.map(item => [null, item])
+        : dados && typeof dados === "object" && "nome" in dados
+            ? [[null, dados]]
+            : Object.entries(dados || {});
+    if (!entradas.some(([, item]) => item && !item.categoria)) return;
+
+    try {
+        const resposta = await fetch(`${URL_API_BACKEND}/api/cardapio`);
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const produtos = await resposta.json();
+        if (!Array.isArray(produtos)) throw new Error("Cardápio inválido");
+        catalogoProdutosCarrinho = produtos;
+    } catch (erro) {
+        console.error("Não foi possível identificar as categorias dos itens antigos:", erro);
+        alert("Não foi possível identificar as categorias de alguns itens. Eles serão exibidos ao final da lista.");
+        return;
+    }
+    let alterado = false;
+    entradas.forEach(([chave, item]) => {
+        if (!item || item.categoria) return;
+        const categoria = obterCategoriaItem({ ...item, id: item.id ?? chave }, catalogoProdutosCarrinho);
+        if (categoria) {
+            item.categoria = categoria;
+            alterado = true;
+        }
+    });
+    if (alterado) localStorage.setItem("carrinhoSaborCearense", JSON.stringify(dados));
+}
 
 async function carregarBairrosEntrega() {
     const select = document.getElementById("bairro-entrega");
@@ -105,7 +147,7 @@ function carregarDadosDoCarrinho() {
             containerItens.innerHTML = "";
             subtotalProdutos = 0;
 
-            listaPratosGlobal.forEach(item => {
+            ordenarItensPorCategoria(listaPratosGlobal, catalogoProdutosCarrinho).forEach(item => {
                 const divItem = document.createElement("div");
                 divItem.className = "item-resumo";
 
@@ -173,7 +215,7 @@ function carregarItensDaUrlNoCarrinho() {
             containerItens.innerHTML = "";
             let subtotalCalculadoUrl = 0;
 
-            listaItens.forEach(item => {
+            ordenarItensPorCategoria(listaItens, catalogoProdutosCarrinho).forEach(item => {
                 const divItem = document.createElement("div");
                 // Herda perfeitamente a classe do seu layout CSS corporativo
                 divItem.className = "item-resumo";
@@ -381,6 +423,7 @@ async function enviarPedido(e) {
     if (e && typeof e.preventDefault === "function") {
         e.preventDefault();
     }
+    await preparacaoCategoriasCarrinho;
 
     // 1. Validação de Horário Comercial de Delivery
     const agora = new Date();
@@ -400,7 +443,7 @@ async function enviarPedido(e) {
     // 2. Resgata e valida a Sacola localmente (CORRIGIDO PARA O NOME EXATO)
     // ========================================================
     const carrinhoObjeto = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
-    const itens = Object.values(carrinhoObjeto);
+    const itens = ordenarItensPorCategoria(Object.values(carrinhoObjeto), catalogoProdutosCarrinho);
 
     if (itens.length === 0) {
         alert("Seu carrinho está vazio!");

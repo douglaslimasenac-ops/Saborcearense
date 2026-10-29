@@ -268,6 +268,7 @@
         <br><br>
         <a href="index.html" style="color: #f5a623; font-weight: bold; text-decoration: none; font-size: 0.9rem;">Ir para o Cardápio</a>
     </div>
+    <script src="ordenar-itens.js"></script>
     <script>
     // 1. Definição da URL oficial do seu backend no Render
     const URL_BACKEND = window.location.origin;
@@ -279,6 +280,9 @@
     let pedidoId = numeroDaUrl || localStorage.getItem("ultimoPedidoIdSaborCearense");
     let timerAtualizacao = null;
     let ultimaConsultaStatus = 0;
+    let catalogoCategoriasAcompanhamento = [];
+    let carregamentoCategoriasAcompanhamento = null;
+    let ultimoPedidoResumo = null;
 
     document.addEventListener("DOMContentLoaded", () => {
         if (pedidoId) {
@@ -414,6 +418,21 @@
         } catch (erro) {
             console.error("Não foi possível ler os itens do pedido:", erro);
         }
+        ultimoPedidoResumo = pedido;
+        if (!carregamentoCategoriasAcompanhamento && itens.some(item => item && !item.categoria && item.id != null)) {
+            carregamentoCategoriasAcompanhamento = fetch(`${URL_BACKEND}/api/cardapio`)
+                .then(resposta => {
+                    if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+                    return resposta.json();
+                })
+                .then(produtos => {
+                    if (!Array.isArray(produtos)) throw new Error("Cardápio inválido");
+                    catalogoCategoriasAcompanhamento = produtos;
+                    if (ultimoPedidoResumo) renderizarResumoPedido(ultimoPedidoResumo);
+                })
+                .catch(erro => console.error("Não foi possível identificar as categorias dos itens antigos:", erro));
+        }
+        itens = ordenarItensPorCategoria(itens, catalogoCategoriasAcompanhamento);
         const totalItens = itens.reduce((total, item) => {
             const quantidade = Number(item.quantidade || item.qtd || 1);
             const preco = Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0);
