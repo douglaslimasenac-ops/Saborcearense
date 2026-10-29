@@ -1088,6 +1088,13 @@ body {
     font-weight: 800;
 }
 
+.imagem-ilustrativa {
+    display: block;
+    margin-top: 3px;
+    color: #806b51;
+    font-size: 0.7rem;
+}
+
 .controles {
     flex-shrink: 0;
 }

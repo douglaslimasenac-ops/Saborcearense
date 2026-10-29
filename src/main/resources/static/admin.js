@@ -485,7 +485,7 @@ async function atualizarImagemRapido(id) {
         return;
     }
 
-    if (imagemUrl) {
+    if (imagemUrl && !/^\/imagens\/cardapio\/[a-z0-9-]+\.webp$/.test(imagemUrl)) {
         try {
             const urlImagem = new URL(imagemUrl);
             if (!["http:", "https:"].includes(urlImagem.protocol)) throw new Error();

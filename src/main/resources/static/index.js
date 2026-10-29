@@ -126,6 +126,7 @@
                                 <div class="item-info">
                                     <h4>${item.nome}</h4>
                                     <span class="preco">R$ ${Number(item.preco).toFixed(2).replace('.', ',')}</span>
+                                    ${fotoFinal.startsWith("/imagens/cardapio/") ? '<small class="imagem-ilustrativa">Imagem ilustrativa</small>' : ""}
                                 </div>
                             </div>
                             <div class="controles">${controleHtml}</div>

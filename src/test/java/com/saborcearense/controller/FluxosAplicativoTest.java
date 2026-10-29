@@ -165,6 +165,8 @@ class FluxosAplicativoTest {
                 .andExpect(jsonPath("$.imagemUrl").value("https://example.com/atualizada.png"));
         mvc.perform(get("/api/cardapio")).andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.id == " + pratoId + " && @.imagemUrl == 'https://example.com/atualizada.png')]", hasSize(1)));
+        mvc.perform(get("/imagens/cardapio/frango-grelhado.webp"))
+                .andExpect(status().isOk());
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.saborcearense.model.Produto;
 import com.saborcearense.model.InicializacaoDados;
 import com.saborcearense.repository.ItemCardapioRepository;
 import com.saborcearense.repository.InicializacaoDadosRepository;
+import com.saborcearense.service.InicializacaoImagensCardapio;
 
 import jakarta.annotation.PostConstruct;
 
@@ -20,6 +21,8 @@ public class CardapioController {
     private ItemCardapioRepository repository;
     @Autowired
     private InicializacaoDadosRepository inicializacoes;
+    @Autowired
+    private InicializacaoImagensCardapio inicializacaoImagens;
 
     @PostConstruct
     public void inicializarCardapio() {
@@ -102,6 +105,7 @@ public class CardapioController {
         if (!inicializacoes.existsById("cardapio")) {
             inicializacoes.save(new InicializacaoDados("cardapio"));
         }
+        inicializacaoImagens.inicializar();
 
     }
 

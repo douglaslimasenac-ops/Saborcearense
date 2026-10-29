@@ -88,6 +88,14 @@ test("produto existente aguarda upload e salva a imagem recebida", async () => {
     assert.equal(campos["salvar-imagem-produto-1"].disabled, false);
 });
 
+test("produto existente aceita imagem ilustrativa local ao salvar", async () => {
+    const { campos, contexto, alertas, pedidos } = criarAmbiente();
+    campos["imagem-produto-1"].value = "/imagens/cardapio/frango-grelhado.webp";
+    await contexto.atualizarImagemRapido(1);
+    assert.equal(alertas.length, 0);
+    assert.equal(JSON.parse(pedidos[0].opcoes.body).imagemUrl, "/imagens/cardapio/frango-grelhado.webp");
+});
+
 test("produto novo aceita URL direta e impede URL inválida", async () => {
     const { campos, contexto, alertas, pedidos } = criarAmbiente();
     contexto.configurarFormularioCadastro();
