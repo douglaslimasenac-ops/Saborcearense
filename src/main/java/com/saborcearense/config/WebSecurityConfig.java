@@ -25,7 +25,7 @@ public class WebSecurityConfig implements WebMvcConfigurer {
         registry.addInterceptor(new AdminAuthInterceptor(tokenService))
                 .addPathPatterns("/api/admin/**", "/api/pedidos", "/api/pedidos/ativos",
                         "/api/pedidos/*/status", "/api/pedidos/*/comprovante",
-                        "/api/pedidos/historico-antigo");
+                        "/api/pedidos/historico-antigo", "/api/chat/admin", "/api/chat/admin/**");
     }
 
     @Override

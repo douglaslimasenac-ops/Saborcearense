@@ -185,6 +185,16 @@
                 <button class="btn-secundario" onclick="copiarNumeroPedido()">📋 Copiar número</button>
                 <button class="btn-secundario" onclick="falarComRestaurante()">💬 Falar conosco</button>
             </div>
+            <div id="chat-pedido" class="painel-pedido" style="display: block; margin-top: 16px; padding: 14px;">
+                <h3>💬 Conversar com o restaurante</h3>
+                <div id="lista-chat-pedido" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                    <small style="color: #806b51;">Carregando conversa...</small>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <input id="mensagem-chat-pedido" type="text" maxlength="1000" placeholder="Digite sua mensagem..." style="flex: 1; padding: 10px; border: 1px solid #eadbc5; border-radius: 10px;">
+                    <button class="btn-secundario" type="button" onclick="enviarMensagemChat()">Enviar</button>
+                </div>
+            </div>
         </div>
         
         <div class="estado-conexao" id="estado-conexao">Monitoramento automático ativo</div>
@@ -220,6 +230,8 @@
             
             // Configura a ATUALIZAÇÃO EM TEMPO REAL (Polling) a cada 7 segundos
             timerAtualizacao = setInterval(() => consultarStatus(false), 7000);
+            setInterval(carregarChatPedido, 5000);
+            carregarChatPedido();
         } else {
             const elementoStatus = document.getElementById("txt-status-nome") || document.getElementById("txt-index-status");
             if (elementoStatus) {
@@ -360,6 +372,49 @@
     function falarComRestaurante() {
         const numeroWhats = "5521974720736";
         window.open("https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(`Olá! Gostaria de informações sobre o pedido #${pedidoId}.`), "_blank");
+    }
+
+    async function carregarChatPedido() {
+        const lista = document.getElementById("lista-chat-pedido");
+        if (!lista || !pedidoId) return;
+        try {
+            const resposta = await fetch(`${URL_BACKEND}/api/chat/${encodeURIComponent(pedidoId)}`);
+            if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+            const mensagens = await resposta.json();
+            lista.innerHTML = mensagens.length
+                ? mensagens.map(mensagem => `
+                    <div style="align-self: ${mensagem.remetente === "CLIENTE" ? "flex-end" : "flex-start"}; max-width: 88%; padding: 8px 10px; border-radius: 10px; background: ${mensagem.remetente === "CLIENTE" ? "#f7e7c7" : "#edf2f7"}; color: #2f2922;">
+                        <strong style="font-size: .75rem;">${mensagem.remetente === "CLIENTE" ? "Você" : "Restaurante"}</strong>
+                        <div>${escaparTextoChat(mensagem.mensagem)}</div>
+                    </div>`).join("")
+                : "<small style='color: #806b51;'>Ainda não há mensagens. Envie uma dúvida para o restaurante.</small>";
+            lista.scrollTop = lista.scrollHeight;
+        } catch (erro) {
+            console.error("Erro ao carregar chat:", erro);
+        }
+    }
+
+    async function enviarMensagemChat() {
+        const campo = document.getElementById("mensagem-chat-pedido");
+        const mensagem = campo ? campo.value.trim() : "";
+        if (!mensagem || !pedidoId) return;
+        const resposta = await fetch(`${URL_BACKEND}/api/chat/${encodeURIComponent(pedidoId)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({ mensagem })
+        });
+        if (!resposta.ok) {
+            alert("Não foi possível enviar a mensagem.");
+            return;
+        }
+        campo.value = "";
+        await carregarChatPedido();
+    }
+
+    function escaparTextoChat(valor) {
+        return String(valor).replace(/[&<>"']/g, caractere => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+        }[caractere]));
     }
 
     // Injeta dinamicamente os estilos de animações profissionais para garantir o funcionamento

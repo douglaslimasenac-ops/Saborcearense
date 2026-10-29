@@ -650,6 +650,7 @@
         <aside id="menu-lateral">
             <h2>Sabor Cearense</h2>
             <div class="nav-link active" id="tab-ativos" onclick="alternarAbasAdmin('ativos')"><i class="fas fa-motorcycle"></i> Em Andamento</div>
+            <div class="nav-link" id="tab-chat" onclick="alternarAbasAdmin('chat')"><i class="fas fa-comments"></i> Chat <span id="badge-chat-admin" style="display:none; background:#e11d48; color:#fff; border-radius:999px; padding:2px 7px; font-size:.72rem;">0</span></div>
             <div class="nav-link" id="tab-balcao" onclick="alternarAbasAdmin('balcao')"><i class="fas fa-cash-register"></i> Pedido no Balcão</div>
             <div class="nav-link" id="tab-historico" onclick="alternarAbasAdmin('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico / Finalizados</div>
             <div class="nav-link" id="tab-cardapio" onclick="alternarAbasAdmin('cardapio')"><i class="fas fa-utensils"></i> Alteração do Cardápio</div>
@@ -686,6 +687,23 @@
                 <div id="lista-pedidos-ativos" style="display: flex; flex-direction: column; gap: 15px;"></div>
             </section>
 
+            <section id="sec-chat" class="section-view">
+                <div class="admin-header">
+                    <h2>💬 Chat com clientes</h2>
+                    <button class="btn-acao" type="button" onclick="carregarChatsAdmin()">Atualizar</button>
+                </div>
+                <div id="lista-chats-admin" style="display:flex; flex-direction:column; gap:10px;"></div>
+                <div id="chat-admin-painel" style="display:none; margin-top:18px; padding:16px; border:1px solid #e2e8f0; border-radius:12px;">
+                    <h3 id="chat-admin-titulo"></h3>
+                    <div id="chat-admin-mensagens" style="max-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
+                    <div style="display:flex; gap:8px; margin-top:12px;">
+                        <input id="chat-admin-input" type="text" maxlength="1000" placeholder="Digite uma resposta..." style="flex:1; padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
+                        <button class="btn-acao" type="button" onclick="enviarMensagemChatAdmin()">Responder</button>
+                    </div>
+                    <button class="btn-status-toggle inativo" type="button" style="margin-top:12px;" onclick="encerrarChatAdmin()">Encerrar e apagar conversa</button>
+                </div>
+            </section>
+
             <!-- ABA 2: PEDIDO RÁPIDO NO BALCÃO -->
             <section id="sec-balcao" class="section-view">
                 <div class="admin-header">
@@ -708,20 +726,6 @@
                     <p style="margin: 0; color: var(--text-muted);">Nenhum item adicionado.</p>
                 </div>
                 <div class="form-grid" style="margin-top: 18px;">
-                    <div class="form-grupo">
-                        <div class="titulo-acompanhamentos-balcao">
-                            <label>Acompanhamentos</label>
-                            <span id="contador-acompanhamentos-balcao">0/2 escolhidos</span>
-                        </div>
-                        <div id="opcoes-acompanhamentos-balcao" class="opcoes-acompanhamentos-balcao">
-                            <small style="color: var(--text-muted);">Carregando acompanhamentos...</small>
-                        </div>
-                        <small class="ajuda-acompanhamentos-balcao">Escolha até 2 acompanhamentos para este pedido.</small>
-                    </div>
-                    <div class="form-grupo">
-                        <label for="balcao-observacao">Observação</label>
-                        <input id="balcao-observacao" type="text" placeholder="Ex.: sem cebola">
-                    </div>
                     <div class="form-grupo">
                         <label for="balcao-pagamento">Forma de pagamento</label>
                         <select id="balcao-pagamento">

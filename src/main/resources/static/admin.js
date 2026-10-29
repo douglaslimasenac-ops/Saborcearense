@@ -37,6 +37,10 @@ let paginaHistorico = 1;
 const pedidosPorPaginaHistorico = 10;
 let itensPedidoBalcao = [];
 let produtosBalcao = [];
+let acompanhamentosBalcao = [];
+let mensagensChatAdmin = [];
+let numeroChatAdminSelecionado = null;
+let totalMensagensChatAdmin = 0;
 
 async function fetchAdmin(url, options = {}) {
     const token = localStorage.getItem("adminToken");
@@ -89,6 +93,9 @@ function alternarAbasAdmin(abaAlvo) {
     }
     if (abaAlvo === 'balcao') {
         carregarProdutosBalcao();
+    }
+    if (abaAlvo === 'chat') {
+        carregarChatsAdmin();
     }
     if (abaAlvo === 'acompanhamentos') {
         carregarAcompanhamentosAdmin();
@@ -557,7 +564,9 @@ function inicializarControlePedidos() {
     if (pedidosTimerAdmin) clearInterval(pedidosTimerAdmin);
     pedidosTimerAdmin = setInterval(() => {
         carregarPedidosAtivos();
+        carregarChatsAdmin();
     }, 5000);
+    carregarChatsAdmin();
 }
 
 function conectarWebSocketAdmin() {
@@ -583,10 +592,14 @@ function conectarWebSocketAdmin() {
             }
             
             carregarPedidosAtivos();
+            if (dados.tipo === "CHAT_MENSAGEM" || dados.tipo === "CHAT_ENCERRADO") {
+                carregarChatsAdmin();
+            }
             if (dados.status === "RECEBIDO" && dados.clienteNome && dados.id) {
                 idsPedidosAlertados.add(dados.id);
                 tocarAlertaSonoro();
             }
+
         };
         
         socketAdmin.onclose = () => { 
@@ -602,6 +615,90 @@ function conectarWebSocketAdmin() {
     } catch (e) { 
         console.error("Falha ao abrir canal WebSocket:", e); 
     }
+}
+
+async function carregarChatsAdmin() {
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/chat/admin`);
+        if (!resposta.ok) return;
+        const mensagens = await resposta.json();
+        const mensagensNovas = mensagens.length > totalMensagensChatAdmin;
+        totalMensagensChatAdmin = mensagens.length;
+        mensagensChatAdmin = mensagens;
+        if (mensagensNovas && !document.getElementById("sec-chat")?.classList.contains("active")) {
+            tocarAlertaSonoro();
+        }
+        const grupos = [...new Set(mensagens.map(mensagem => mensagem.numeroPedido))];
+        const lista = document.getElementById("lista-chats-admin");
+        if (lista) {
+            lista.innerHTML = grupos.length
+                ? grupos.map(numero => {
+                    const doPedido = mensagens.filter(mensagem => mensagem.numeroPedido === numero);
+                    const ultima = doPedido[doPedido.length - 1];
+                    return `<button type="button" class="btn-acao" style="justify-content:space-between; width:100%;" onclick="selecionarChatAdmin(${numero})">
+                        <span>Pedido #${numero}</span><span>${ultima.remetente === "CLIENTE" ? "🔴" : "✅"} ${doPedido.length} mensagem(ns)</span>
+                    </button>`;
+                }).join("")
+                : "<p style='color:var(--text-muted);'>Nenhuma conversa aberta.</p>";
+        }
+        const badge = document.getElementById("badge-chat-admin");
+        if (badge) {
+            badge.textContent = grupos.length;
+            badge.style.display = grupos.length ? "inline-block" : "none";
+        }
+        if (numeroChatAdminSelecionado) renderizarChatAdmin();
+    } catch (erro) {
+        console.error("Erro ao carregar chats:", erro);
+    }
+}
+
+function selecionarChatAdmin(numeroPedido) {
+    numeroChatAdminSelecionado = numeroPedido;
+    renderizarChatAdmin();
+}
+
+function renderizarChatAdmin() {
+    const painel = document.getElementById("chat-admin-painel");
+    const lista = document.getElementById("chat-admin-mensagens");
+    if (!painel || !lista || !numeroChatAdminSelecionado) return;
+    const mensagens = mensagensChatAdmin.filter(mensagem => mensagem.numeroPedido === numeroChatAdminSelecionado);
+    painel.style.display = "block";
+    document.getElementById("chat-admin-titulo").textContent = `Conversa do pedido #${numeroChatAdminSelecionado}`;
+    lista.innerHTML = mensagens.map(mensagem => `
+        <div style="align-self:${mensagem.remetente === "RESTAURANTE" ? "flex-end" : "flex-start"}; max-width:85%; padding:8px 10px; border-radius:9px; background:${mensagem.remetente === "RESTAURANTE" ? "#dcfce7" : "#f1f5f9"};">
+            <strong>${mensagem.remetente === "RESTAURANTE" ? "Restaurante" : "Cliente"}</strong>
+            <div>${escaparHtml(mensagem.mensagem)}</div>
+        </div>`).join("");
+    lista.scrollTop = lista.scrollHeight;
+}
+
+async function enviarMensagemChatAdmin() {
+    const campo = document.getElementById("chat-admin-input");
+    const mensagem = campo ? campo.value.trim() : "";
+    if (!mensagem || !numeroChatAdminSelecionado) return;
+    const resposta = await fetchAdmin(`${URL_BACKEND}/api/chat/admin/${numeroChatAdminSelecionado}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({ mensagem })
+    });
+    if (!resposta.ok) {
+        alert("Não foi possível enviar a resposta.");
+        return;
+    }
+    campo.value = "";
+    await carregarChatsAdmin();
+}
+
+async function encerrarChatAdmin() {
+    if (!numeroChatAdminSelecionado || !confirm("Encerrar e apagar esta conversa?")) return;
+    const resposta = await fetchAdmin(`${URL_BACKEND}/api/chat/admin/${numeroChatAdminSelecionado}`, { method: "DELETE" });
+    if (!resposta.ok) {
+        alert("Não foi possível encerrar a conversa.");
+        return;
+    }
+    numeroChatAdminSelecionado = null;
+    document.getElementById("chat-admin-painel").style.display = "none";
+    await carregarChatsAdmin();
 }
 
 function iniciarHeartbeatAdmin() {
@@ -981,19 +1078,8 @@ async function carregarProdutosBalcao() {
         ]);
         if (!resProdutos.ok) throw new Error(`Produtos: HTTP ${resProdutos.status}`);
         produtosBalcao = await resProdutos.json();
-        const acompanhamentos = resAcompanhamentos.ok ? await resAcompanhamentos.json() : [];
-        const opcoesAcompanhamentos = document.getElementById("opcoes-acompanhamentos-balcao");
-        if (opcoesAcompanhamentos) {
-            opcoesAcompanhamentos.innerHTML = acompanhamentos
-                .filter(item => item.disponivel)
-                .map(item => `
-                    <label class="opcao-acompanhamento-balcao">
-                        <input type="checkbox" value="${escaparHtml(item.nome)}"
-                               onchange="atualizarAcompanhamentosBalcao(this)">
-                        <span>${escaparHtml(item.nome)}</span>
-                    </label>`)
-                .join("");
-        }
+        acompanhamentosBalcao = (resAcompanhamentos.ok ? await resAcompanhamentos.json() : [])
+            .filter(item => item.disponivel);
         busca.oninput = renderizarResultadosBuscaBalcao;
         renderizarResultadosBuscaBalcao();
     } catch (erro) {
@@ -1029,9 +1115,14 @@ function adicionarItemBalcao(idSelecionado) {
     if (!produto) {
         return;
     }
-    const existente = itensPedidoBalcao.find(item => item.id === id);
-    if (existente) existente.quantidade += quantidade;
-    else itensPedidoBalcao.push({ id: produto.id, nome: produto.nome, preco: Number(produto.preco || 0), quantidade });
+    itensPedidoBalcao.push({
+        id: produto.id,
+        nome: produto.nome,
+        preco: Number(produto.preco || 0),
+        quantidade,
+        acompanhamentos: [],
+        observacao: ""
+    });
     const busca = document.getElementById("balcao-busca");
     if (busca) {
         busca.value = "";
@@ -1049,41 +1140,30 @@ function removerItemBalcao(indice) {
 function limparPedidoBalcao() {
     itensPedidoBalcao = [];
     const busca = document.getElementById("balcao-busca");
-    const acompanhamentos = document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']");
-    const observacao = document.getElementById("balcao-observacao");
     if (busca) {
         busca.value = "";
         renderizarResultadosBuscaBalcao();
     }
-    acompanhamentos.forEach(option => {
-        option.checked = false;
-        option.closest(".opcao-acompanhamento-balcao")?.classList.remove("selecionado", "bloqueado");
-    });
-    atualizarContadorAcompanhamentosBalcao();
-    if (observacao) observacao.value = "";
     renderizarPedidoBalcao();
 }
 
-function atualizarAcompanhamentosBalcao(checkbox) {
-    const selecionados = document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']:checked");
+function atualizarAcompanhamentosItemBalcao(indice, checkbox) {
+    const item = itensPedidoBalcao[indice];
+    if (!item) return;
+    const selecionados = Array.from(document.querySelectorAll(
+        `.acompanhamentos-item-balcao[data-item-index="${indice}"] input[type='checkbox']:checked`
+    ));
     if (selecionados.length > 2) {
         checkbox.checked = false;
-        alert("Você pode escolher no máximo 2 acompanhamentos.");
+        alert("Escolha no máximo 2 acompanhamentos para este prato.");
+        return;
     }
-    atualizarContadorAcompanhamentosBalcao();
+    item.acompanhamentos = selecionados.map(opcao => opcao.value);
+    renderizarPedidoBalcao();
 }
 
-function atualizarContadorAcompanhamentosBalcao() {
-    const opcoes = document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']");
-    const selecionados = document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']:checked");
-    const contador = document.getElementById("contador-acompanhamentos-balcao");
-    if (contador) contador.textContent = `${selecionados.length}/2 escolhidos`;
-    opcoes.forEach(opcao => {
-        const cartao = opcao.closest(".opcao-acompanhamento-balcao");
-        if (!cartao) return;
-        cartao.classList.toggle("selecionado", opcao.checked);
-        cartao.classList.toggle("bloqueado", !opcao.checked && selecionados.length >= 2);
-    });
+function atualizarObservacaoItemBalcao(indice, valor) {
+    if (itensPedidoBalcao[indice]) itensPedidoBalcao[indice].observacao = valor;
 }
 
 function renderizarPedidoBalcao() {
@@ -1092,11 +1172,32 @@ function renderizarPedidoBalcao() {
     if (lista) {
         lista.innerHTML = itensPedidoBalcao.length
             ? itensPedidoBalcao.map((item, indice) => `
-                <div class="item-pedido-linha">
-                    <span><b>${item.quantidade}x</b> ${escaparHtml(item.nome)}</span>
-                    <span>R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}
-                        <button type="button" onclick="removerItemBalcao(${indice})">Remover</button>
-                    </span>
+                <div class="card-balcao-prato" style="padding:16px; margin-bottom:12px; border:1px solid #e2e8f0; border-radius:14px; background:#fff;">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+                        <div>
+                            <strong style="font-size:1.05rem;">${indice + 1}. ${item.quantidade}x ${escaparHtml(item.nome)}</strong>
+                            <div style="color:#64748b; margin-top:4px;">R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</div>
+                        </div>
+                        <button type="button" class="btn-status-toggle inativo" onclick="removerItemBalcao(${indice})">Remover</button>
+                    </div>
+                    <div class="acompanhamentos-item-balcao" data-item-index="${indice}" style="margin-top:12px; padding-top:12px; border-top:1px dashed #e2e8f0;">
+                        <div style="display:flex; justify-content:space-between; gap:8px; margin-bottom:8px;">
+                            <strong>Acompanhamentos deste prato</strong>
+                            <span style="color:#64748b; font-size:.85rem;">${item.acompanhamentos.length}/2</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:7px;">
+                            ${acompanhamentosBalcao.map(acompanhamento => `
+                                <label class="opcao-acompanhamento-balcao ${item.acompanhamentos.includes(acompanhamento.nome) ? "selecionado" : ""}">
+                                    <input type="checkbox" value="${escaparHtml(acompanhamento.nome)}"
+                                        ${item.acompanhamentos.includes(acompanhamento.nome) ? "checked" : ""}
+                                        onchange="atualizarAcompanhamentosItemBalcao(${indice}, this)">
+                                    <span>${escaparHtml(acompanhamento.nome)}</span>
+                                </label>`).join("")}
+                        </div>
+                    </div>
+                    <input type="text" value="${escaparHtml(item.observacao)}" placeholder="Observação deste prato (opcional)"
+                        oninput="atualizarObservacaoItemBalcao(${indice}, this.value)"
+                        style="width:100%; box-sizing:border-box; margin-top:12px; padding:9px; border:1px solid #cbd5e1; border-radius:8px;">
                 </div>`).join("")
             : "<p style='margin: 0; color: var(--text-muted);'>Nenhum item adicionado.</p>";
     }
@@ -1109,10 +1210,6 @@ function imprimirPedidoBalcao() {
         alert("Adicione pelo menos um item antes de imprimir.");
         return;
     }
-    const acompanhamentos = Array.from(
-        document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']:checked")
-    ).map(option => option.value).join(", ");
-    const observacao = document.getElementById("balcao-observacao").value.trim();
     const pagamento = document.getElementById("balcao-pagamento").value;
     const total = itensPedidoBalcao.reduce((soma, item) => soma + item.preco * item.quantidade, 0);
     const janela = window.open("", "_blank", "width=360,height=650");
@@ -1121,17 +1218,18 @@ function imprimirPedidoBalcao() {
         return;
     }
     const linhas = itensPedidoBalcao.map(item =>
-        `<div class="item"><span>${item.quantidade}x ${escaparHtml(item.nome)}</span><b>R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</b></div>`
+        `<div class="item"><div><span>${item.quantidade}x ${escaparHtml(item.nome)}</span>
+        ${item.acompanhamentos.length ? `<small>ACOMPANHAMENTOS: ${item.acompanhamentos.map(escaparHtml).join(", ")}</small>` : ""}
+        ${item.observacao ? `<small>OBS: ${escaparHtml(item.observacao)}</small>` : ""}</div>
+        <b>R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</b></div>`
     ).join("");
     janela.document.write(`<!doctype html><html><head><meta charset="UTF-8"><title>Comanda balcão</title>
         <style>
         @page{size:80mm auto;margin:0}body{width:72mm;margin:0 auto;padding:4mm 2mm;font:700 15px Arial,sans-serif;color:#000}
         h1{text-align:center;font-size:20px;margin:0 0 4px}h2{text-align:center;font-size:18px;border:2px solid #000;padding:5px;margin:8px 0}
-        .linha{border-top:1px dashed #000;margin:8px 0}.item{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dotted #777}
-        .obs{border-left:4px solid #000;padding-left:7px;margin-top:10px;font-size:14px}.total{display:flex;justify-content:space-between;font-size:20px;margin-top:10px}
+        .linha{border-top:1px dashed #000;margin:8px 0}.item{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dotted #777}.item small{display:block;font-size:12px;margin-top:3px}
+        .total{display:flex;justify-content:space-between;font-size:20px;margin-top:10px}
         </style></head><body><h1>SABOR CEARENSE</h1><h2>RETIRADA / BALCÃO</h2><div class="linha"></div>${linhas}
-        ${acompanhamentos ? `<p><b>ACOMPANHAMENTOS:</b> ${escaparHtml(acompanhamentos)}</p>` : ""}
-        ${observacao ? `<div class="obs">OBSERVAÇÃO: ${escaparHtml(observacao)}</div>` : ""}
         <div class="linha"></div><p>PAGAMENTO: ${escaparHtml(pagamento)}</p><div class="total"><span>TOTAL</span><span>R$ ${total.toFixed(2).replace(".", ",")}</span></div>
         <p style="text-align:center;margin-top:18px">Pedido de balcão</p></body></html>`);
     janela.document.close();
