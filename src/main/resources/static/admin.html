@@ -517,11 +517,30 @@
         .card-pedido {
             border-left-color: var(--primary);
         }
+        .resumo-pedido {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px 14px;
+            cursor: pointer;
+            list-style: none;
+        }
+        .resumo-pedido::-webkit-details-marker { display: none; }
+        .resumo-pedido-titulo { color: #1e293b; font-weight: 800; }
+        .resumo-pedido-info { color: #806b51; font-size: 0.85rem; font-weight: 700; }
+        .resumo-pedido-acao { color: #237a4b; font-size: 0.85rem; font-weight: 800; }
+        .detalhes-pedido[open] > .resumo-pedido { margin-bottom: 14px; }
         .resumo-financeiro {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 12px;
             margin: 0 0 20px;
+        }
+        .controle-valores-financeiros {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
         }
         .resumo-card {
             padding: 16px;
@@ -671,6 +690,9 @@
                 <div class="admin-header">
                     <h2>🛵 Pedidos em Andamento (Tempo Real)</h2>
                 </div>
+                <div class="controle-valores-financeiros">
+                    <button class="btn-status-toggle ativo botao-valores-financeiros" type="button" onclick="alternarValoresFinanceiros()" aria-pressed="false">Ocultar valores</button>
+                </div>
                 <div id="resumo-financeiro" class="resumo-financeiro" aria-live="polite"></div>
                 <div class="filtro-ativos-bloco">
                     <span class="filtro-ativos-icone" aria-hidden="true">🔎</span>
@@ -746,6 +768,9 @@
                     <button class="btn-acao" type="button" onclick="apagarHistoricoAntigo()">
                         🗑️ Apagar finalizados com mais de 2 dias
                     </button>
+                </div>
+                <div class="controle-valores-financeiros">
+                    <button class="btn-status-toggle ativo botao-valores-financeiros" type="button" onclick="alternarValoresFinanceiros()" aria-pressed="false">Ocultar valores</button>
                 </div>
                 <div id="resumo-historico" class="resumo-financeiro" aria-live="polite"></div>
                 <div class="filtros-historico">

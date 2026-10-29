@@ -33,6 +33,8 @@ let ultimoSnapshotPedidosHistorico = null;
 let pedidosHistoricoLocal = [];
 let pedidosAtivosLocal = [];
 const pedidosFinalizadosLocal = new Set();
+const pedidosAtivosMinimizados = new Set();
+const pedidosHistoricoExpandidos = new Set();
 let paginaHistorico = 1;
 const pedidosPorPaginaHistorico = 10;
 let itensPedidoBalcao = [];
@@ -41,6 +43,9 @@ let acompanhamentosBalcao = [];
 let mensagensChatAdmin = [];
 let numeroChatAdminSelecionado = null;
 let totalMensagensChatAdmin = 0;
+const chaveValoresFinanceirosOcultos = "valoresFinanceirosOcultosSaborCearense";
+let valoresFinanceirosOcultos = localStorage.getItem(chaveValoresFinanceirosOcultos) === "true";
+const resumosFinanceiros = new Map();
 
 async function fetchAdmin(url, options = {}) {
     const token = localStorage.getItem("adminToken");
@@ -60,6 +65,7 @@ async function fetchAdmin(url, options = {}) {
 // ==========================================
 
 window.addEventListener('DOMContentLoaded', function() {
+    atualizarBotoesValoresFinanceiros();
     const botaoLogin = document.getElementById("btn-submeter-login");
     if (botaoLogin) {
         botaoLogin.addEventListener('click', autenticarAdmin);
@@ -871,22 +877,83 @@ function obterLocalPedido(pedido) {
 }
 
 function atualizarResumoFinanceiro(pedidos, elementoId) {
-    const elemento = document.getElementById(elementoId);
-    if (!elemento) return;
     const validos = pedidos.filter(pedido => pedido.status !== "CANCELADO");
     const total = validos.reduce((soma, pedido) => soma + obterTotalPedido(pedido), 0);
     const ticketMedio = validos.length ? total / validos.length : 0;
+    resumosFinanceiros.set(elementoId, { quantidade: validos.length, total, ticketMedio });
+    renderizarResumoFinanceiro(elementoId);
+}
+
+function renderizarResumoFinanceiro(elementoId) {
+    const elemento = document.getElementById(elementoId);
+    const resumo = resumosFinanceiros.get(elementoId);
+    if (!elemento || !resumo) return;
+    const formatarValor = valor => valoresFinanceirosOcultos
+        ? '<strong aria-label="Valor oculto">••••</strong>'
+        : `<strong>R$ ${valor.toFixed(2).replace(".", ",")}</strong>`;
     elemento.innerHTML = `
-        <div class="resumo-card"><span>Pedidos</span><strong>${validos.length}</strong></div>
-        <div class="resumo-card"><span>Saldo geral</span><strong>R$ ${total.toFixed(2).replace(".", ",")}</strong></div>
-        <div class="resumo-card"><span>Ticket médio</span><strong>R$ ${ticketMedio.toFixed(2).replace(".", ",")}</strong></div>
+        <div class="resumo-card"><span>Pedidos</span><strong>${resumo.quantidade}</strong></div>
+        <div class="resumo-card"><span>Saldo geral</span>${formatarValor(resumo.total)}</div>
+        <div class="resumo-card"><span>Ticket médio</span>${formatarValor(resumo.ticketMedio)}</div>
     `;
+}
+
+function atualizarBotoesValoresFinanceiros() {
+    document.querySelectorAll(".botao-valores-financeiros").forEach(botao => {
+        botao.textContent = valoresFinanceirosOcultos ? "Mostrar valores" : "Ocultar valores";
+        botao.setAttribute("aria-pressed", String(valoresFinanceirosOcultos));
+    });
+}
+
+function alternarValoresFinanceiros() {
+    valoresFinanceirosOcultos = !valoresFinanceirosOcultos;
+    localStorage.setItem(chaveValoresFinanceirosOcultos, String(valoresFinanceirosOcultos));
+    atualizarBotoesValoresFinanceiros();
+    resumosFinanceiros.forEach((_, elementoId) => renderizarResumoFinanceiro(elementoId));
 }
 
 function serializarPedidos(pedidos) {
     return (pedidos || [])
         .map(pedido => `${numeroExibicaoPedido(pedido)}|${pedido.status}|${Number(pedido.valorTotal ?? pedido.total ?? 0).toFixed(2)}|${Array.isArray(pedido.itens) ? pedido.itens.map(item => `${item.nome || ""}:${item.quantidade || item.qtd || 1}:${Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0).toFixed(2)}`).join(";") : ""}`)
         .join("~");
+}
+
+function organizarCardPedido(card, pedido, tipo) {
+    const chave = String(pedido.id ?? numeroExibicaoPedido(pedido));
+    const historico = tipo === "historico";
+    if (!historico) pedidosHistoricoExpandidos.delete(chave);
+    const detalhes = document.createElement("details");
+    detalhes.className = "detalhes-pedido";
+    detalhes.open = historico ? pedidosHistoricoExpandidos.has(chave) : !pedidosAtivosMinimizados.has(chave);
+
+    const resumo = document.createElement("summary");
+    resumo.className = "resumo-pedido";
+    const titulo = document.createElement("span");
+    titulo.className = "resumo-pedido-titulo";
+    titulo.textContent = `Pedido #${numeroExibicaoPedido(pedido)} - ${pedido.clienteNome || pedido.nomeCliente || "Não informado"}`;
+    const info = document.createElement("span");
+    info.className = "resumo-pedido-info";
+    info.textContent = `${pedidoEDeRetirada(pedido) ? "Retirada" : "Entrega"} · ${pedido.status} · R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}`;
+    const acao = document.createElement("span");
+    acao.className = "resumo-pedido-acao";
+    acao.textContent = detalhes.open ? "Minimizar ▲" : "Ver detalhes ▼";
+    resumo.append(titulo, info, acao);
+
+    const cabecalho = card.firstElementChild;
+    cabecalho.querySelector("h4").remove();
+    cabecalho.querySelector(".badge-cat").remove();
+    detalhes.appendChild(resumo);
+    while (card.firstChild) detalhes.appendChild(card.firstChild);
+    card.appendChild(detalhes);
+
+    detalhes.addEventListener("toggle", () => {
+        const estado = historico ? pedidosHistoricoExpandidos : pedidosAtivosMinimizados;
+        const guardar = historico ? detalhes.open : !detalhes.open;
+        if (guardar) estado.add(chave);
+        else estado.delete(chave);
+        acao.textContent = detalhes.open ? "Minimizar ▲" : "Ver detalhes ▼";
+    });
+    return card;
 }
 
 function atualizarListaPedidos(container, pedidos, tipo) {
@@ -944,7 +1011,7 @@ function atualizarListaPedidos(container, pedidos, tipo) {
                     imprimirCupomIFood(pedido);
                 });
                 card.querySelector(".acoes-pedido-bloco").prepend(btnImprimir);
-                return card;
+                return organizarCardPedido(card, pedido, tipo);
             }
 
             const card = document.createElement("div");
@@ -972,7 +1039,7 @@ function atualizarListaPedidos(container, pedidos, tipo) {
             btnImprimirHistorico.textContent = "🖨️ Imprimir Cupom";
             btnImprimirHistorico.addEventListener("click", () => imprimirCupomIFood(pedido));
             card.appendChild(btnImprimirHistorico);
-            return card;
+            return organizarCardPedido(card, pedido, tipo);
         });
 
     container.innerHTML = "";
@@ -1452,9 +1519,10 @@ function imprimirCupomIFood(pedido) {
     var enderecoPedido = (pedido.endereco || "").toString().trim().toUpperCase();
     var tipoServico = enderecoPedido.startsWith("RETIRADA") ? "RETIRADA" : "ENTREGA";
     if (tipoServico === "ENTREGA") {
-        var matchBairro = enderecoBruto.match(/Bairro:\s*([^,(]+?)(?:\s*\(|$)/i);
+        var matchBairro = enderecoBruto.match(/Bairro:\s*([^(\r\n]+?)(?:\s*\(|$)/i);
         if (matchBairro) {
-            enderecoBruto = "Bairro: " + matchBairro[1].trim();
+            var nomeBairro = matchBairro[1].replace(/\s+-\s+R\$\s*\d+(?:[.,]\d{2})?\s*$/i, "").trim();
+            enderecoBruto = "Bairro: " + nomeBairro;
         }
     }
     var pagamentoFinal = (pedido.formaPagamento || "Não informado").toUpperCase();
