@@ -302,11 +302,10 @@
                 const resposta = await fetch(URL_BACKEND + "/api/funcionamento", { cache: "no-store" });
                 if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
                 const status = await resposta.json();
-                const modoAdmin = status.modo === "AUTOMATICO" && Boolean(localStorage.getItem("adminToken"));
-                estabelecimentoAberto = status.aberto || modoAdmin;
+                estabelecimentoAberto = status.aberto;
                 if (statusLoja) {
                     statusLoja.innerHTML = estabelecimentoAberto
-                        ? `<span class="status-dot status-aberto"></span> ABERTO AGORA${modoAdmin && !status.aberto ? ' <small style="color: #f5a623; margin-left: 5px; font-weight: bold;">(Modo Admin Ativo)</small>' : ""}`
+                        ? '<span class="status-dot status-aberto"></span> ABERTO AGORA'
                         : '<span class="status-dot status-fechado"></span> FECHADO NO MOMENTO';
                 }
                 atualizarBloqueioFuncionamento();

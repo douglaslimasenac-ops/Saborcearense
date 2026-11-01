@@ -37,6 +37,11 @@ test("cardápio bloqueia e libera os controles conforme o funcionamento manual",
     assert.equal(quantidade.disabled, false);
     assert.equal(avancar.disabled, false);
     assert.match(statusLoja.innerHTML, /ABERTO/);
+    status = { aberto: false, modo: "AUTOMATICO" };
+    await contexto.verificarHorarioFuncionamento();
+    assert.equal(quantidade.disabled, true);
+    assert.equal(avancar.disabled, true);
+    assert.match(statusLoja.innerHTML, /FECHADO/);
 });
 
 test("painel consulta status e envia mudança autenticada", async () => {
@@ -44,8 +49,11 @@ test("painel consulta status e envia mudança autenticada", async () => {
     const trecho = codigo.slice(codigo.indexOf("let funcionamentoAdmin = null;"),
         codigo.indexOf("async function fetchAdmin("));
     const campos = {
-        "status-funcionamento-admin": {},
-        "botao-funcionamento-admin": {}
+        "botao-funcionamento-admin": {
+            atributos: {},
+            setAttribute(nome, valor) { this.atributos[nome] = valor; },
+            removeAttribute(nome) { delete this.atributos[nome]; }
+        }
     };
     let requisicao;
     const contexto = {
@@ -61,12 +69,15 @@ test("painel consulta status e envia mudança autenticada", async () => {
     };
     vm.runInNewContext(trecho, contexto);
     await contexto.carregarFuncionamentoAdmin();
-    assert.equal(campos["botao-funcionamento-admin"].textContent, "Fechar restaurante");
+    assert.equal(campos["botao-funcionamento-admin"].textContent, "Aberto");
+    assert.match(campos["botao-funcionamento-admin"].atributos["aria-label"], /Clique para fechar/);
+    assert.equal(campos["botao-funcionamento-admin"].atributos["aria-pressed"], "true");
     await contexto.alternarFuncionamentoAdmin();
     assert.equal(requisicao.url, "/api/admin/funcionamento");
     assert.equal(JSON.parse(requisicao.opcoes.body).aberto, false);
-    assert.equal(campos["botao-funcionamento-admin"].textContent, "Abrir restaurante");
-    assert.match(campos["status-funcionamento-admin"].textContent, /Fechado/);
+    assert.equal(campos["botao-funcionamento-admin"].textContent, "Fechado");
+    assert.match(campos["botao-funcionamento-admin"].atributos["aria-label"], /Clique para abrir/);
+    assert.equal(campos["botao-funcionamento-admin"].atributos["aria-pressed"], "false");
 });
 
 test("checkout impede envio quando o restaurante é fechado manualmente", async () => {
@@ -81,6 +92,28 @@ test("checkout impede envio quando o restaurante é fechado manualmente", async 
         fetch: async url => {
             urls.push(url);
             return { ok: true, json: async () => ({ aberto: false, modo: "MANUAL" }) };
+        },
+        alert: mensagem => alertas.push(mensagem),
+        console
+    };
+    vm.runInNewContext(trecho, contexto);
+    await contexto.enviarPedido();
+    assert.deepEqual(urls, ["/api/funcionamento"]);
+    assert.match(alertas[0], /fechado/);
+});
+
+test("checkout respeita fechamento automático mesmo com sessão administrativa", async () => {
+    const codigo = ler("carrinho.js");
+    const trecho = codigo.slice(codigo.indexOf("async function enviarPedido(e)"));
+    const alertas = [];
+    const urls = [];
+    const contexto = {
+        URL_API_BACKEND: "",
+        preparacaoCategoriasCarrinho: Promise.resolve(),
+        localStorage: { getItem: () => "token-admin" },
+        fetch: async url => {
+            urls.push(url);
+            return { ok: true, json: async () => ({ aberto: false, modo: "AUTOMATICO" }) };
         },
         alert: mensagem => alertas.push(mensagem),
         console

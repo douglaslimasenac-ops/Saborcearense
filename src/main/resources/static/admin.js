@@ -48,14 +48,20 @@ const chaveValoresFinanceirosOcultos = "valoresFinanceirosOcultosSaborCearense";
 let valoresFinanceirosOcultos = localStorage.getItem(chaveValoresFinanceirosOcultos) === "true";
 const resumosFinanceiros = new Map();
 let funcionamentoAdmin = null;
+let alterandoFuncionamentoAdmin = false;
+let timerFuncionamentoAdmin = null;
 
 function mostrarFuncionamentoAdmin(status) {
     funcionamentoAdmin = status;
-    const texto = document.getElementById("status-funcionamento-admin");
     const botao = document.getElementById("botao-funcionamento-admin");
-    texto.textContent = `${status.aberto ? "Aberto" : "Fechado"}${status.modo === "AUTOMATICO" ? " (horário automático)" : " (controle manual)"}`;
-    botao.textContent = status.aberto ? "Fechar restaurante" : "Abrir restaurante";
-    botao.className = `btn-status-toggle ${status.aberto ? "inativo" : "ativo"}`;
+    const situacao = status.aberto ? "Aberto" : "Fechado";
+    const acao = status.aberto ? "fechar" : "abrir";
+    const modo = status.modo === "AUTOMATICO" ? "horário automático" : "manual até o próximo horário programado";
+    botao.textContent = situacao;
+    botao.title = `Restaurante ${situacao.toLowerCase()} (${modo}). Clique para ${acao}.`;
+    botao.setAttribute("aria-label", botao.title);
+    botao.setAttribute("aria-pressed", String(status.aberto));
+    botao.className = `btn-status-toggle ${status.aberto ? "ativo" : "inativo"}`;
     botao.disabled = false;
 }
 
@@ -63,11 +69,17 @@ async function carregarFuncionamentoAdmin() {
     try {
         const resposta = await fetch(`${URL_BACKEND}/api/funcionamento`, { cache: "no-store" });
         if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
-        mostrarFuncionamentoAdmin(await resposta.json());
+        const status = await resposta.json();
+        if (!alterandoFuncionamentoAdmin) mostrarFuncionamentoAdmin(status);
     } catch (erro) {
+        if (alterandoFuncionamentoAdmin) return;
         console.error("Erro ao consultar funcionamento:", erro);
-        document.getElementById("status-funcionamento-admin").textContent = "Não foi possível consultar o funcionamento. Recarregue a página.";
-        document.getElementById("botao-funcionamento-admin").disabled = true;
+        const botao = document.getElementById("botao-funcionamento-admin");
+        botao.textContent = "Indisponível";
+        botao.title = "Não foi possível consultar o funcionamento. Recarregue a página.";
+        botao.setAttribute("aria-label", botao.title);
+        botao.removeAttribute("aria-pressed");
+        botao.disabled = true;
     }
 }
 
@@ -77,6 +89,7 @@ async function alternarFuncionamentoAdmin() {
     const aberto = !funcionamentoAdmin.aberto;
     if (!confirm(`${aberto ? "Abrir" : "Fechar"} o restaurante para novos pedidos?`)) return;
     botao.disabled = true;
+    alterandoFuncionamentoAdmin = true;
     try {
         const consulta = await fetch(`${URL_BACKEND}/api/funcionamento`, { cache: "no-store" });
         if (!consulta.ok) throw new Error(`HTTP ${consulta.status}`);
@@ -96,7 +109,10 @@ async function alternarFuncionamentoAdmin() {
     } catch (erro) {
         console.error("Erro ao alterar funcionamento:", erro);
         alert("Não foi possível alterar o funcionamento. Confira o status e tente novamente.");
+        alterandoFuncionamentoAdmin = false;
         await carregarFuncionamentoAdmin();
+    } finally {
+        alterandoFuncionamentoAdmin = false;
     }
 }
 
@@ -1624,6 +1640,11 @@ async function autenticarAdmin() {
         document.getElementById("container-login-view").style.display = "none";
         document.getElementById("painel-adm-wrapper").style.display = "flex";
         carregarFuncionamentoAdmin();
+        if (!timerFuncionamentoAdmin) {
+            timerFuncionamentoAdmin = setInterval(() => {
+                if (!alterandoFuncionamentoAdmin) carregarFuncionamentoAdmin();
+            }, 30000);
+        }
         
         if (typeof carregarItensAdmin === "function") carregarItensAdmin();
         if (typeof carregarAcompanhamentosAdmin === "function") carregarAcompanhamentosAdmin();

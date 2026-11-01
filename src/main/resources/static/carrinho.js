@@ -429,8 +429,7 @@ async function enviarPedido(e) {
         const resposta = await fetch(`${URL_API_BACKEND}/api/funcionamento`, { cache: "no-store" });
         if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
         const status = await resposta.json();
-        const modoAdmin = status.modo === "AUTOMATICO" && Boolean(localStorage.getItem("adminToken"));
-        if (!status.aberto && !modoAdmin) {
+        if (!status.aberto) {
             alert("O restaurante está fechado no momento. Não é possível enviar novos pedidos.");
             return;
         }

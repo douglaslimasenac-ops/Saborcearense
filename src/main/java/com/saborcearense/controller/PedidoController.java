@@ -117,7 +117,7 @@ public class PedidoController {
 
    private void verificarFuncionamento() {
        var status = funcionamentoRestauranteService.obterStatus();
-       if ("MANUAL".equals(status.modo()) && !status.aberto()) {
+       if (!status.aberto()) {
            throw new ResponseStatusException(HttpStatus.CONFLICT, "Restaurante fechado no momento");
        }
    }

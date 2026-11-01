@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.saborcearense.repository.FuncionamentoRestauranteRepository;
+import com.saborcearense.service.FuncionamentoRestauranteService;
+import com.saborcearense.model.FuncionamentoRestaurante;
 
 @SpringBootTest(properties = "app.admin.password=teste-local")
 @AutoConfigureMockMvc
@@ -37,6 +41,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 class FluxosAplicativoTest {
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper mapper;
+    @Autowired private FuncionamentoRestauranteService funcionamento;
+    @Autowired private FuncionamentoRestauranteRepository funcionamentoRepository;
+
+    @BeforeEach
+    void abrirParaTestesDePedidos() {
+        funcionamento.alterar(true);
+    }
 
     private static final String PEDIDO = """
             {"clienteNome":"Cliente teste","telefone":"000000001",
@@ -115,6 +126,8 @@ class FluxosAplicativoTest {
 
     @Test
     void funcionamentoManualProtegeAlteracaoEBloqueiaNovosPedidos() throws Exception {
+        funcionamentoRepository.deleteAll();
+        funcionamentoRepository.flush();
         mvc.perform(get("/api/funcionamento")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.modo").value("AUTOMATICO"));
         mvc.perform(put("/api/admin/funcionamento").contentType(MediaType.APPLICATION_JSON)
@@ -140,6 +153,28 @@ class FluxosAplicativoTest {
                 .andExpect(status().isOk());
         mvc.perform(multipart("/api/pedidos").file(dadosPedido()))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void pedidosSeguemHorarioAutomaticoNoServidor() throws Exception {
+        funcionamentoRepository.deleteAll();
+        funcionamentoRepository.flush();
+        boolean aberto = mapper.readTree(mvc.perform(get("/api/funcionamento"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.modo").value("AUTOMATICO"))
+                .andReturn().getResponse().getContentAsString()).get("aberto").asBoolean();
+        mvc.perform(post("/api/pedidos").contentType(MediaType.APPLICATION_JSON).content(PEDIDO))
+                .andExpect(status().is(aberto ? 200 : 409));
+        mvc.perform(multipart("/api/pedidos").file(dadosPedido()))
+                .andExpect(status().is(aberto ? 200 : 409));
+    }
+
+    @Test
+    void estadoManualAnteriorRecebePrazoAoSerConsultado() throws Exception {
+        funcionamentoRepository.saveAndFlush(new FuncionamentoRestaurante(false, null));
+        mvc.perform(get("/api/funcionamento")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.modo").value("MANUAL"))
+                .andExpect(jsonPath("$.aberto").value(false));
+        assertFalse(funcionamentoRepository.findById(1L).orElseThrow().getManualAte() == null);
     }
 
     @Test
