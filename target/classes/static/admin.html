@@ -417,7 +417,7 @@
         }
 
         .btn-status-toggle { 
-            border: none; padding: 10px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
+            border: none; padding: 10px 16px; border-radius: 6px; font-family: Arial, sans-serif; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
         }
         .btn-status-toggle.ativo { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
         .btn-status-toggle.inativo { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
@@ -517,11 +517,152 @@
         .card-pedido {
             border-left-color: var(--primary);
         }
+        .resumo-pedido {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px 14px;
+            cursor: pointer;
+            list-style: none;
+        }
+        .resumo-pedido::-webkit-details-marker { display: none; }
+        .resumo-pedido-titulo { color: #1e293b; font-weight: 800; }
+        .resumo-pedido-info { color: #806b51; font-size: 0.85rem; font-weight: 700; }
+        .resumo-pedido-status {
+            color: #92400e;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-family: Arial, sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        .resumo-pedido-status.preparo { color: #1e40af; background: #eff6ff; border-color: #bfdbfe; }
+        .resumo-pedido-status.entrega { color: #166534; background: #f0fdf4; border-color: #bbf7d0; }
+        .resumo-pedido-status.retirada { color: #9a3412; background: #fff7ed; border-color: #fed7aa; }
+        .resumo-pedido-status.cancelado { color: #be123c; background: #fff1f2; border-color: #fecdd3; }
+        .resumo-pedido-acao { color: #237a4b; font-size: 0.85rem; font-weight: 800; }
+        .detalhes-pedido[open] > .resumo-pedido { margin-bottom: 14px; }
+        .balcao-cabecalho h2 { margin: 0 0 6px; }
+        .balcao-cabecalho p { margin: 0; color: #806b51; font-size: 0.92rem; }
+        .balcao-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+            align-items: start;
+            gap: 18px;
+        }
+        .balcao-painel {
+            min-width: 0;
+            padding: 22px;
+            border: 1px solid #eadbc5;
+            border-radius: 18px;
+            background: #fff;
+            box-shadow: 0 7px 20px rgba(79, 52, 23, 0.06);
+        }
+        .balcao-painel-cabecalho {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+        .balcao-painel-cabecalho h3 { margin: 0 0 4px; font-size: 1.12rem; }
+        .balcao-painel-cabecalho p { margin: 0; color: #806b51; font-size: 0.84rem; }
+        .balcao-contador {
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: #fff3d9;
+            color: #8a5316;
+            font-size: 0.8rem;
+            font-weight: 800;
+        }
+        .balcao-busca-campos {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 100px;
+            gap: 10px;
+            align-items: end;
+        }
+        .balcao-campo { display: flex; flex-direction: column; min-width: 0; gap: 7px; }
+        .balcao-campo label { color: #66513b; font-size: 0.82rem; font-weight: 700; }
+        .balcao-campo input, .balcao-campo select, .balcao-observacao {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            border: 1px solid #dfcfb9;
+            border-radius: 10px;
+            background: #fffdf9;
+            color: #302418;
+            font: inherit;
+        }
+        .balcao-campo input:focus, .balcao-campo select:focus, .balcao-observacao:focus {
+            outline: 2px solid rgba(217, 144, 36, 0.35);
+            border-color: #d99024;
+        }
+        .balcao-resultados {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            max-height: 340px;
+            overflow-y: auto;
+            margin-top: 14px;
+        }
+        .balcao-resultado {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+            min-height: 48px;
+            padding: 10px 12px;
+            border: 1px solid #f0e2d0;
+            border-radius: 10px;
+            background: #fffaf3;
+            color: #4a3a29;
+            text-align: left;
+            font: inherit;
+            font-size: 0.88rem;
+            cursor: pointer;
+        }
+        .balcao-resultado:hover, .balcao-resultado:focus-visible { border-color: #d99024; background: #fff3de; }
+        .balcao-resultado span { overflow-wrap: anywhere; }
+        .balcao-resultado strong { color: #8a5316; white-space: nowrap; }
+        .balcao-vazio { margin: 0; padding: 22px 12px; color: #806b51; text-align: center; font-size: 0.9rem; }
+        .balcao-lista { display: flex; flex-direction: column; gap: 12px; }
+        .card-balcao-prato {
+            min-width: 0;
+            padding: 15px;
+            border: 1px solid #eee1d0;
+            border-radius: 14px;
+            background: #fffdf9;
+        }
+        .balcao-item-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+        .balcao-item-nome { overflow-wrap: anywhere; color: #302418; }
+        .balcao-item-preco { margin-top: 4px; color: #8a5316; font-size: 0.9rem; font-weight: 700; }
+        .balcao-acompanhamentos { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e6d9c8; }
+        .balcao-acompanhamentos-titulo { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; font-size: 0.88rem; }
+        .balcao-acompanhamentos-titulo span { color: #806b51; white-space: nowrap; }
+        .balcao-observacao-grupo { margin-top: 12px; }
+        .balcao-rodape { display: grid; gap: 15px; margin-top: 18px; padding-top: 18px; border-top: 1px solid #eee1d0; }
+        .balcao-total { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: #66513b; }
+        .balcao-total strong { color: #302418; font-size: 1.35rem; }
+        .balcao-imprimir { width: 100%; }
+        @media (max-width: 1050px) {
+            .balcao-layout { grid-template-columns: minmax(0, 1fr); }
+        }
         .resumo-financeiro {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 12px;
             margin: 0 0 20px;
+        }
+        .controle-valores-financeiros {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
         }
         .resumo-card {
             padding: 16px;
@@ -616,12 +757,15 @@
             .controles-prod { width: 100%; display: flex; justify-content: flex-end; gap: 8px; }
             .resumo-financeiro { grid-template-columns: 1fr; }
             .item-pedido-linha { align-items: flex-start; }
+            .balcao-layout { grid-template-columns: minmax(0, 1fr); }
+            .balcao-painel { padding: 16px; }
         }
         @media (max-width: 420px) {
             #login-admin { padding: 28px 20px; }
             main { padding-right: 12px; padding-left: 12px; }
             .card-pedido h4 { font-size: 0.95rem; line-height: 1.35; }
             .btn-status-toggle { padding: 9px 10px; font-size: 0.78rem; }
+            .resumo-pedido-status { font-size: 0.78rem; }
             .form-grid { padding: 18px; }
         }
     </style>
@@ -650,6 +794,7 @@
         <aside id="menu-lateral">
             <h2>Sabor Cearense</h2>
             <div class="nav-link active" id="tab-ativos" onclick="alternarAbasAdmin('ativos')"><i class="fas fa-motorcycle"></i> Em Andamento</div>
+            <div class="nav-link" id="tab-chat" onclick="alternarAbasAdmin('chat')"><i class="fas fa-comments"></i> Chat <span id="badge-chat-admin" style="display:none; background:#e11d48; color:#fff; border-radius:999px; padding:2px 7px; font-size:.72rem;">0</span></div>
             <div class="nav-link" id="tab-balcao" onclick="alternarAbasAdmin('balcao')"><i class="fas fa-cash-register"></i> Pedido no Balcão</div>
             <div class="nav-link" id="tab-historico" onclick="alternarAbasAdmin('historico')"><i class="fas fa-clock-rotate-left"></i> Histórico / Finalizados</div>
             <div class="nav-link" id="tab-cardapio" onclick="alternarAbasAdmin('cardapio')"><i class="fas fa-utensils"></i> Alteração do Cardápio</div>
@@ -670,6 +815,9 @@
                 <div class="admin-header">
                     <h2>🛵 Pedidos em Andamento (Tempo Real)</h2>
                 </div>
+                <div class="controle-valores-financeiros">
+                    <button class="btn-status-toggle ativo botao-valores-financeiros" type="button" onclick="alternarValoresFinanceiros()" aria-pressed="false">Ocultar valores</button>
+                </div>
                 <div id="resumo-financeiro" class="resumo-financeiro" aria-live="polite"></div>
                 <div class="filtro-ativos-bloco">
                     <span class="filtro-ativos-icone" aria-hidden="true">🔎</span>
@@ -686,53 +834,77 @@
                 <div id="lista-pedidos-ativos" style="display: flex; flex-direction: column; gap: 15px;"></div>
             </section>
 
+            <section id="sec-chat" class="section-view">
+                <div class="admin-header">
+                    <h2>💬 Chat com clientes</h2>
+                    <button class="btn-acao" type="button" onclick="carregarChatsAdmin()">Atualizar</button>
+                </div>
+                <div id="lista-chats-admin" style="display:flex; flex-direction:column; gap:10px;"></div>
+                <div id="chat-admin-painel" style="display:none; margin-top:18px; padding:16px; border:1px solid #e2e8f0; border-radius:12px;">
+                    <h3 id="chat-admin-titulo"></h3>
+                    <div id="chat-admin-mensagens" style="max-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
+                    <div style="display:flex; gap:8px; margin-top:12px;">
+                        <input id="chat-admin-input" type="text" maxlength="1000" placeholder="Digite uma resposta..." style="flex:1; padding:10px; border:1px solid #cbd5e1; border-radius:8px;">
+                        <button class="btn-acao" type="button" onclick="enviarMensagemChatAdmin()">Responder</button>
+                    </div>
+                    <button class="btn-status-toggle inativo" type="button" style="margin-top:12px;" onclick="encerrarChatAdmin()">Encerrar e apagar conversa</button>
+                </div>
+            </section>
+
             <!-- ABA 2: PEDIDO RÁPIDO NO BALCÃO -->
             <section id="sec-balcao" class="section-view">
                 <div class="admin-header">
-                    <h2>🧾 Pedido rápido no balcão</h2>
-                    <button class="btn-acao" type="button" onclick="limparPedidoBalcao()">Limpar pedido</button>
-                </div>
-                <p style="color: var(--text-muted); margin-top: 0;">Pedido somente para retirada. Não é salvo no sistema nem aparece no histórico.</p>
-                <div class="form-grid" style="margin-bottom: 18px;">
-                    <div class="form-grupo">
-                        <label for="balcao-busca">Buscar produto</label>
-                        <input id="balcao-busca" type="search" placeholder="Digite o nome do item..." autocomplete="off">
-                        <div id="resultados-busca-balcao" style="display: flex; flex-direction: column; gap: 6px; margin-top: 8px;"></div>
+                    <div class="balcao-cabecalho">
+                        <h2>🧾 Pedido rápido no balcão</h2>
+                        <p>Monte a comanda para retirada no estabelecimento.</p>
                     </div>
-                    <div class="form-grupo">
-                        <label for="balcao-quantidade">Quantidade</label>
-                        <input id="balcao-quantidade" type="number" min="1" value="1">
-                    </div>
+                    <button class="btn-limpar-filtros" type="button" onclick="limparPedidoBalcao()">Limpar pedido</button>
                 </div>
-                <div id="lista-itens-balcao" class="itens-pedido" style="margin-top: 0;">
-                    <p style="margin: 0; color: var(--text-muted);">Nenhum item adicionado.</p>
-                </div>
-                <div class="form-grid" style="margin-top: 18px;">
-                    <div class="form-grupo">
-                        <div class="titulo-acompanhamentos-balcao">
-                            <label>Acompanhamentos</label>
-                            <span id="contador-acompanhamentos-balcao">0/2 escolhidos</span>
+                <div class="balcao-layout">
+                    <div class="balcao-painel">
+                        <div class="balcao-painel-cabecalho">
+                            <div>
+                                <h3>Adicionar produtos</h3>
+                                <p>Escolha a quantidade e toque em um produto.</p>
+                            </div>
                         </div>
-                        <div id="opcoes-acompanhamentos-balcao" class="opcoes-acompanhamentos-balcao">
-                            <small style="color: var(--text-muted);">Carregando acompanhamentos...</small>
+                        <div class="balcao-busca-campos">
+                            <div class="balcao-campo">
+                                <label for="balcao-busca">Buscar produto</label>
+                                <input id="balcao-busca" type="search" placeholder="Nome do produto" autocomplete="off">
+                            </div>
+                            <div class="balcao-campo">
+                                <label for="balcao-quantidade">Quantidade</label>
+                                <input id="balcao-quantidade" type="number" min="1" value="1">
+                            </div>
                         </div>
-                        <small class="ajuda-acompanhamentos-balcao">Escolha até 2 acompanhamentos para este pedido.</small>
+                        <div id="resultados-busca-balcao" class="balcao-resultados"></div>
                     </div>
-                    <div class="form-grupo">
-                        <label for="balcao-observacao">Observação</label>
-                        <input id="balcao-observacao" type="text" placeholder="Ex.: sem cebola">
-                    </div>
-                    <div class="form-grupo">
-                        <label for="balcao-pagamento">Forma de pagamento</label>
-                        <select id="balcao-pagamento">
-                            <option>Dinheiro</option>
-                            <option>Cartão</option>
-                            <option>Pix</option>
-                        </select>
+                    <div class="balcao-painel">
+                        <div class="balcao-painel-cabecalho">
+                            <div>
+                                <h3>Comanda</h3>
+                                <p>Confira os itens antes de imprimir.</p>
+                            </div>
+                            <span id="contador-itens-balcao" class="balcao-contador" aria-live="polite">0 itens</span>
+                        </div>
+                        <div id="lista-itens-balcao" class="balcao-lista">
+                            <p class="balcao-vazio">Nenhum item adicionado. Selecione um produto para começar.</p>
+                        </div>
+                        <div class="balcao-rodape">
+                            <div class="balcao-campo">
+                                <label for="balcao-pagamento">Forma de pagamento</label>
+                                <select id="balcao-pagamento">
+                                    <option>Dinheiro</option>
+                                    <option>Cartão</option>
+                                    <option>Pix</option>
+                                </select>
+                            </div>
+                            <div class="balcao-total"><span>Total do pedido</span><strong id="total-pedido-balcao" aria-live="polite">R$ 0,00</strong></div>
+                            <button class="btn-acao balcao-imprimir" type="button" onclick="imprimirPedidoBalcao()">🖨️ Imprimir comanda</button>
+                        </div>
                     </div>
                 </div>
-                <div id="total-pedido-balcao" style="font-size: 1.2rem; font-weight: 800; text-align: right; margin: 18px 0;">Total: R$ 0,00</div>
-                <button class="btn-acao" type="button" onclick="imprimirPedidoBalcao()">🖨️ Imprimir comanda do balcão</button>
             </section>
 
             <!-- ABA 3: HISTÓRICO DE FINALIZADOS -->
@@ -742,6 +914,9 @@
                     <button class="btn-acao" type="button" onclick="apagarHistoricoAntigo()">
                         🗑️ Apagar finalizados com mais de 2 dias
                     </button>
+                </div>
+                <div class="controle-valores-financeiros">
+                    <button class="btn-status-toggle ativo botao-valores-financeiros" type="button" onclick="alternarValoresFinanceiros()" aria-pressed="false">Ocultar valores</button>
                 </div>
                 <div id="resumo-historico" class="resumo-financeiro" aria-live="polite"></div>
                 <div class="filtros-historico">
@@ -795,6 +970,7 @@
                         <label for="imagem" style="margin-top: 8px;">Ou cole a URL da imagem</label>
                         <input type="url" id="imagem" placeholder="https://site.com/imagem-do-prato.jpg"
                                autocomplete="url" inputmode="url">
+                        <span id="status-imagem-prato" role="status" aria-live="polite"></span>
                         <div id="preview-imagem-prato" class="preview-imagem-prato" hidden>
                             <img id="preview-imagem-prato-img" alt="Prévia da imagem do prato">
                             <span>Prévia da imagem</span>
@@ -870,7 +1046,8 @@
         </main>
     </div>
     
-   <script src="admin.js"></script>
+   <script src="ordenar-itens.js"></script>
+   <script src="admin.js?v=7"></script>
 
 </body>
 </html>

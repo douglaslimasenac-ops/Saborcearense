@@ -1,1 +1,6 @@
+com\saborcearense\controller\PedidoChatFinalizacaoTest.class
+com\saborcearense\service\InicializacaoImagensCardapioTest.class
+com\saborcearense\controller\PersistenciaReinicioTest.class
+com\saborcearense\config\DatabaseUrlEnvironmentPostProcessorTest.class
 com\saborcearense\security\AdminTokenServiceTest.class
+com\saborcearense\controller\FluxosAplicativoTest.class

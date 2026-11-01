@@ -425,18 +425,19 @@ async function enviarPedido(e) {
     }
     await preparacaoCategoriasCarrinho;
 
-    // 1. Validação de Horário Comercial de Delivery
-    const agora = new Date();
-    const diaSemana = agora.getDay();
-    const minutosAtuais = (agora.getHours() * 60) + agora.getMinutes();
-    
-    const modoAdminSecreto = Boolean(localStorage.getItem("adminToken"));
-
-    if (diaSemana === 0 || minutosAtuais < (8 * 60) || minutosAtuais > (15 * 60)) {
-        if (!modoAdminSecreto) {
-            alert("Desculpe! O restaurante acabou de fechar o expediente de entregas. Não é possível fechar novos pedidos agora.");
+    try {
+        const resposta = await fetch(`${URL_API_BACKEND}/api/funcionamento`, { cache: "no-store" });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const status = await resposta.json();
+        const modoAdmin = status.modo === "AUTOMATICO" && Boolean(localStorage.getItem("adminToken"));
+        if (!status.aberto && !modoAdmin) {
+            alert("O restaurante está fechado no momento. Não é possível enviar novos pedidos.");
             return;
         }
+    } catch (erro) {
+        console.error("Erro ao consultar funcionamento:", erro);
+        alert("Não foi possível consultar o funcionamento do restaurante. Tente novamente.");
+        return;
     }
 
         // ========================================================
@@ -537,6 +538,10 @@ async function enviarPedido(e) {
                 pedidoSalvoComSucesso = true;
             } else {
                 console.error("O backend recusou os dados. Status do erro:", response.status);
+                if (response.status === 409) {
+                    alert("O restaurante está fechado no momento. Não é possível enviar novos pedidos.");
+                    return;
+                }
             }
         } catch (apiError) {
             console.error("Falha ao processar requisição fetch para o Render:", apiError);

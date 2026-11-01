@@ -57,6 +57,64 @@
         .estado-conexao { display: inline-flex; align-items: center; gap: 6px; color: #237a4b; font-size: 0.78rem; font-weight: 700; }
         .estado-conexao::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
         .estado-conexao.offline { color: #b45309; }
+        #chat-pedido {
+            display: none;
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 20;
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+        }
+        #chat-pedido.visivel { display: block; }
+        body.chat-visivel { padding-bottom: 110px; }
+        .botao-chat-flutuante {
+            border: 0;
+            border-radius: 999px;
+            padding: 13px 18px;
+            background: linear-gradient(135deg, #237a4b, #2f9a62);
+            color: #fff;
+            font-weight: 800;
+            box-shadow: 0 10px 24px rgba(35, 122, 75, 0.28);
+            cursor: pointer;
+        }
+        .janela-chat-pedido {
+            box-sizing: border-box;
+            display: none;
+            width: min(360px, calc(100vw - 32px));
+            max-height: calc(100vh - 85px);
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 14px;
+            background: #fff;
+            border: 1px solid #eadbc5;
+            border-radius: 18px;
+            box-shadow: 0 18px 45px rgba(47, 41, 34, 0.2);
+        }
+        #chat-pedido.aberto .janela-chat-pedido { display: block; }
+        #chat-pedido.aberto .botao-chat-flutuante { background: #8a5316; }
+        .cabecalho-chat-pedido {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            color: #6b461e;
+            font-weight: 800;
+        }
+        .fechar-chat-pedido {
+            border: 0;
+            background: transparent;
+            color: #806b51;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        @media (max-width: 520px) {
+            #chat-pedido { right: 12px; bottom: 12px; }
+            .janela-chat-pedido { width: calc(100vw - 24px); }
+        }
         @keyframes surgirPainel { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .linha-tempo { display: flex; justify-content: space-between; position: relative; margin: 40px 0; padding: 0 10px; }
         .linha-tempo::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 4px; background: #e2e8f0; z-index: 1; }
@@ -186,12 +244,31 @@
                 <button class="btn-secundario" onclick="falarComRestaurante()">💬 Falar conosco</button>
             </div>
         </div>
+
+        <div id="chat-pedido">
+            <div class="janela-chat-pedido">
+                <div class="cabecalho-chat-pedido">
+                    <span>💬 Falar com o restaurante</span>
+                    <button class="fechar-chat-pedido" type="button" onclick="alternarChatPedido(false)" aria-label="Fechar chat">×</button>
+                </div>
+                <small style="display:block; color:#806b51; margin:6px 0 10px;">Conversa sobre o pedido <span id="chat-numero-pedido"></span></small>
+                <div id="lista-chat-pedido" style="height: 210px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px;">
+                    <small style="color: #806b51;">Carregando conversa...</small>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <input id="mensagem-chat-pedido" type="text" maxlength="1000" placeholder="Digite sua mensagem..." style="min-width:0; flex: 1; padding: 10px; border: 1px solid #eadbc5; border-radius: 10px;">
+                    <button class="btn-secundario" type="button" onclick="enviarMensagemChat()">Enviar</button>
+                </div>
+            </div>
+            <button class="botao-chat-flutuante" type="button" onclick="alternarChatPedido()" aria-label="Abrir conversa com o restaurante">💬 Chat</button>
+        </div>
         
         <div class="estado-conexao" id="estado-conexao">Monitoramento automático ativo</div>
         <button class="btn-atualizar" id="btn-atualizar" onclick="consultarStatus(true)">🔄 Atualizar Status</button>
         <br><br>
         <a href="index.html" style="color: #f5a623; font-weight: bold; text-decoration: none; font-size: 0.9rem;">Ir para o Cardápio</a>
     </div>
+    <script src="ordenar-itens.js"></script>
     <script>
     // 1. Definição da URL oficial do seu backend no Render
     const URL_BACKEND = window.location.origin;
@@ -202,6 +279,10 @@
 
     let pedidoId = numeroDaUrl || localStorage.getItem("ultimoPedidoIdSaborCearense");
     let timerAtualizacao = null;
+    let ultimaConsultaStatus = 0;
+    let catalogoCategoriasAcompanhamento = [];
+    let carregamentoCategoriasAcompanhamento = null;
+    let ultimoPedidoResumo = null;
 
     document.addEventListener("DOMContentLoaded", () => {
         if (pedidoId) {
@@ -226,6 +307,11 @@
                 elementoStatus.innerText = "Insira o número do pedido acima para rastrear.";
             }
         }
+        setInterval(() => {
+            if (document.getElementById("chat-pedido").classList.contains("aberto")) {
+                carregarChatPedido();
+            }
+        }, 5000);
     });
 
     function buscarNovoPedido() {
@@ -239,7 +325,12 @@
         }
         
         // Salva a nova pesquisa
-        pedidoId = inputVal.replace('#', '').trim();
+        const novoPedidoId = inputVal.replace('#', '').trim();
+        if (novoPedidoId !== String(pedidoId)) {
+            alternarChatPedido(false);
+            document.getElementById("mensagem-chat-pedido").value = "";
+        }
+        pedidoId = novoPedidoId;
         localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoId);
         
         if (document.getElementById("txt-pedido-id")) {
@@ -247,11 +338,15 @@
         }
         
         consultarStatus(true);
+        if (!timerAtualizacao) {
+            timerAtualizacao = setInterval(() => consultarStatus(false), 7000);
+        }
     }
 
     // AQUI ESTÁ O ASYNC QUE EVITA O ERRO DO AWAIT:
     async function consultarStatus(mostrarCarregando = false) {
         if (!pedidoId) return;
+        const consulta = ++ultimaConsultaStatus;
         const botao = document.getElementById("btn-atualizar");
         const estadoConexao = document.getElementById("estado-conexao");
         if (mostrarCarregando && botao) {
@@ -265,8 +360,10 @@
                 ? `/api/pedidos/${idLimpo}`
                 : `/api/pedidos/numero/${idLimpo}`;
             const res = await fetch(`${URL_BACKEND}${caminhoBusca}`);
+            if (consulta !== ultimaConsultaStatus) return;
             if (res.ok) {
                 const pedido = await res.json();
+                if (consulta !== ultimaConsultaStatus) return;
                 
                 if (document.getElementById("txt-pedido-id")) {
                     document.getElementById("txt-pedido-id").innerText = `#${idLimpo}`;
@@ -294,7 +391,7 @@
             }
         } catch (e) { 
             console.error("Erro ao buscar status:", e); 
-            atualizarEstadoConexao(false);
+            if (consulta === ultimaConsultaStatus) atualizarEstadoConexao(false);
         } finally {
             if (mostrarCarregando && botao) {
                 botao.disabled = false;
@@ -321,6 +418,21 @@
         } catch (erro) {
             console.error("Não foi possível ler os itens do pedido:", erro);
         }
+        ultimoPedidoResumo = pedido;
+        if (!carregamentoCategoriasAcompanhamento && itens.some(item => item && !item.categoria && item.id != null)) {
+            carregamentoCategoriasAcompanhamento = fetch(`${URL_BACKEND}/api/cardapio`)
+                .then(resposta => {
+                    if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+                    return resposta.json();
+                })
+                .then(produtos => {
+                    if (!Array.isArray(produtos)) throw new Error("Cardápio inválido");
+                    catalogoCategoriasAcompanhamento = produtos;
+                    if (ultimoPedidoResumo) renderizarResumoPedido(ultimoPedidoResumo);
+                })
+                .catch(erro => console.error("Não foi possível identificar as categorias dos itens antigos:", erro));
+        }
+        itens = ordenarItensPorCategoria(itens, catalogoCategoriasAcompanhamento);
         const totalItens = itens.reduce((total, item) => {
             const quantidade = Number(item.quantidade || item.qtd || 1);
             const preco = Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0);
@@ -343,7 +455,15 @@
         document.getElementById("taxa-acompanhamento").textContent = formatarMoeda(taxaEntrega);
         document.getElementById("total-acompanhamento").textContent = formatarMoeda(totalPedido);
         document.getElementById("pagamento-acompanhamento").textContent = `💳 ${pedido.formaPagamento || "Pagamento não informado"}`;
+        const troco = pedido.trocoPara == null ? "" : ` · Troco para ${formatarMoeda(Number(pedido.trocoPara))}`;
+        document.getElementById("pagamento-acompanhamento").textContent += troco;
         painel.classList.add("visivel");
+        if (pedido.status === "ENTREGUE" || pedido.status === "CANCELADO") {
+            encerrarChatPedido();
+        } else {
+            document.getElementById("chat-pedido").classList.add("visivel");
+            document.body.classList.add("chat-visivel");
+        }
     }
 
     function escaparTexto(valor) {
@@ -359,7 +479,89 @@
 
     function falarComRestaurante() {
         const numeroWhats = "5521974720736";
-        window.open("https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(`Olá! Gostaria de informações sobre o pedido #${pedidoId}.`), "_blank");
+        const mensagem = `Olá! Gostaria de informações sobre o pedido #${pedidoId}.`;
+        window.open("https://wa.me/" + numeroWhats + "?text=" + encodeURIComponent(mensagem), "_blank");
+    }
+
+    async function carregarChatPedido() {
+        const lista = document.getElementById("lista-chat-pedido");
+        if (!lista || !pedidoId) return;
+        const numeroConsultado = pedidoId;
+        try {
+            const resposta = await fetch(`${URL_BACKEND}/api/chat/${encodeURIComponent(numeroConsultado)}`);
+            if (numeroConsultado !== pedidoId) return;
+            if (resposta.status === 410) {
+                encerrarChatPedido();
+                return;
+            }
+            if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+            const mensagens = await resposta.json();
+            if (numeroConsultado !== pedidoId) return;
+            lista.innerHTML = mensagens.length
+                ? mensagens.map(mensagem => `
+                    <div style="align-self: ${mensagem.remetente === "CLIENTE" ? "flex-end" : "flex-start"}; max-width: 88%; padding: 8px 10px; border-radius: 10px; background: ${mensagem.remetente === "CLIENTE" ? "#f7e7c7" : "#edf2f7"}; color: #2f2922;">
+                        <strong style="font-size: .75rem;">${mensagem.remetente === "CLIENTE" ? "Você" : "Restaurante"}</strong>
+                        <div>${escaparTextoChat(mensagem.mensagem)}</div>
+                    </div>`).join("")
+                : "<small style='color: #806b51;'>Ainda não há mensagens. Envie uma dúvida para o restaurante.</small>";
+            lista.scrollTop = lista.scrollHeight;
+            const numeroChat = document.getElementById("chat-numero-pedido");
+            if (numeroChat) numeroChat.textContent = `#${pedidoId}`;
+        } catch (erro) {
+            console.error("Erro ao carregar chat:", erro);
+        }
+
+    }
+
+    function encerrarChatPedido() {
+        document.getElementById("chat-pedido").classList.remove("visivel", "aberto");
+        document.body.classList.remove("chat-visivel");
+        if (localStorage.getItem("pedidoChatIniciadoSaborCearense") === String(pedidoId)) {
+            localStorage.removeItem("pedidoChatIniciadoSaborCearense");
+        }
+    }
+
+    function alternarChatPedido(aberto) {
+        const chat = document.getElementById("chat-pedido");
+        if (!chat) return;
+        const abrir = aberto === undefined ? !chat.classList.contains("aberto") : aberto;
+        chat.classList.toggle("aberto", abrir);
+        if (abrir && pedidoId) {
+            localStorage.setItem("pedidoChatIniciadoSaborCearense", String(pedidoId));
+            carregarChatPedido();
+        }
+    }
+
+    async function enviarMensagemChat() {
+        const campo = document.getElementById("mensagem-chat-pedido");
+        const mensagem = campo ? campo.value.trim() : "";
+        if (!mensagem || !pedidoId) return;
+        const numeroEnviado = pedidoId;
+        try {
+            const resposta = await fetch(`${URL_BACKEND}/api/chat/${encodeURIComponent(numeroEnviado)}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                body: JSON.stringify({ mensagem })
+            });
+            if (numeroEnviado !== pedidoId) return;
+            if (resposta.status === 410) {
+                encerrarChatPedido();
+                alert("Esta conversa foi encerrada porque o pedido foi finalizado ou cancelado.");
+                return;
+            }
+            if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+            campo.value = "";
+            await carregarChatPedido();
+        } catch (erro) {
+            console.error("Erro ao enviar mensagem:", erro);
+            alert("Não foi possível enviar a mensagem.");
+        }
+    }
+
+    function escaparTextoChat(valor) {
+        return String(valor).replace(/[&<>"']/g, caractere => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+        }[caractere]));
     }
 
     // Injeta dinamicamente os estilos de animações profissionais para garantir o funcionamento
@@ -592,6 +794,8 @@ function limparLinhaTempo() {
     if (barra) barra.style.width = "0%";
     const painel = document.getElementById("painel-pedido");
     if (painel) painel.classList.remove("visivel");
+    document.getElementById("chat-pedido").classList.remove("visivel", "aberto");
+    document.body.classList.remove("chat-visivel");
 }
 
 

@@ -24,18 +24,29 @@ let socketAdmin = null;
 let pingTimerAdmin = null;
 let pedidosTimerAdmin = null;
 let audioCtxCompartilhado = null;
+let somNovoPedido = null;
 let idsPedidosConhecidos = new Set();
 let idsPedidosAlertados = new Set();
 let primeiraCargaPedidos = true;
 let termoBuscaProdutos = "";
-let ultimoSnapshotPedidosAtivos = "";
-let ultimoSnapshotPedidosHistorico = "";
+let ultimoSnapshotPedidosAtivos = null;
+let ultimoSnapshotPedidosHistorico = null;
 let pedidosHistoricoLocal = [];
 let pedidosAtivosLocal = [];
+const pedidosFinalizadosLocal = new Set();
+const pedidosAtivosMinimizados = new Set();
+const pedidosHistoricoExpandidos = new Set();
 let paginaHistorico = 1;
 const pedidosPorPaginaHistorico = 10;
 let itensPedidoBalcao = [];
 let produtosBalcao = [];
+let acompanhamentosBalcao = [];
+let mensagensChatAdmin = [];
+let numeroChatAdminSelecionado = null;
+let totalMensagensChatAdmin = 0;
+const chaveValoresFinanceirosOcultos = "valoresFinanceirosOcultosSaborCearense";
+let valoresFinanceirosOcultos = localStorage.getItem(chaveValoresFinanceirosOcultos) === "true";
+const resumosFinanceiros = new Map();
 
 async function fetchAdmin(url, options = {}) {
     const token = localStorage.getItem("adminToken");
@@ -55,6 +66,7 @@ async function fetchAdmin(url, options = {}) {
 // ==========================================
 
 window.addEventListener('DOMContentLoaded', function() {
+    atualizarBotoesValoresFinanceiros();
     const botaoLogin = document.getElementById("btn-submeter-login");
     if (botaoLogin) {
         botaoLogin.addEventListener('click', autenticarAdmin);
@@ -88,6 +100,9 @@ function alternarAbasAdmin(abaAlvo) {
     }
     if (abaAlvo === 'balcao') {
         carregarProdutosBalcao();
+    }
+    if (abaAlvo === 'chat') {
+        carregarChatsAdmin();
     }
     if (abaAlvo === 'acompanhamentos') {
         carregarAcompanhamentosAdmin();
@@ -247,6 +262,9 @@ function configurarFormularioCadastro() {
     const campoImagem = document.getElementById("imagem");
     const previewImagem = document.getElementById("preview-imagem-prato");
     const previewImagemEl = document.getElementById("preview-imagem-prato-img");
+    const statusImagem = document.getElementById("status-imagem-prato");
+    const botaoSalvar = form.querySelector('button[type="submit"]');
+    let enviandoImagem = false;
 
     const atualizarPreviewImagem = () => {
         const valor = campoImagem.value.trim();
@@ -271,6 +289,11 @@ function configurarFormularioCadastro() {
         seletorImagem.addEventListener("change", async () => {
             const arquivo = seletorImagem.files && seletorImagem.files[0];
             if (!arquivo) return;
+            enviandoImagem = true;
+            seletorImagem.disabled = true;
+            campoImagem.disabled = true;
+            botaoSalvar.disabled = true;
+            statusImagem.textContent = "Enviando imagem...";
             try {
                 campoImagem.value = await enviarImagemCloudinary(arquivo);
                 atualizarPreviewImagem();
@@ -278,6 +301,12 @@ function configurarFormularioCadastro() {
                 console.error("Erro ao enviar imagem do novo prato:", erro);
                 seletorImagem.value = "";
                 alert(erro.message || "Não foi possível enviar a imagem.");
+            } finally {
+                enviandoImagem = false;
+                seletorImagem.disabled = false;
+                campoImagem.disabled = false;
+                botaoSalvar.disabled = false;
+                statusImagem.textContent = "";
             }
         });
     }
@@ -288,6 +317,10 @@ function configurarFormularioCadastro() {
 
     form.onsubmit = async function(e) {
         e.preventDefault();
+        if (enviandoImagem) {
+            alert("Aguarde o envio da imagem antes de salvar o produto.");
+            return;
+        }
         const nome = document.getElementById("nome").value;
         const preco = parseFloat(document.getElementById("preco").value);
         const categoria = document.getElementById("categoria").value;
@@ -331,6 +364,8 @@ async function carregarItensAdmin() {
         
         listaPratosLocal = itens;
         renderizarItensAdmin();
+        if (pedidosAtivosLocal.length) renderizarAtivosFiltrados();
+        if (pedidosHistoricoLocal.length) renderizarHistoricoFiltrado();
     } catch(e) { container.innerHTML = `<p style="text-align: center; color: var(--danger);">Erro ao carregar o cardápio.</p>`; }
 }
 
@@ -375,7 +410,8 @@ function renderizarItensAdmin() {
                             <input type="url" id="imagem-produto-${item.id}"
                                 value="${escaparHtml(item.imagemUrl || "")}"
                                 placeholder="Cole aqui a URL da imagem">
-                            <button type="button" onclick="atualizarImagemRapido(${item.id})">Salvar imagem</button>
+                            <button type="button" id="salvar-imagem-produto-${item.id}" onclick="atualizarImagemRapido(${item.id})">Salvar imagem</button>
+                            <span id="status-imagem-produto-${item.id}" role="status" aria-live="polite"></span>
                         </div>
                     </div>
                 </div>
@@ -417,8 +453,14 @@ async function enviarImagemCloudinary(arquivo) {
 async function enviarImagemProdutoExistente(id, arquivo) {
     const campo = document.getElementById(`imagem-produto-${id}`);
     const seletor = document.getElementById(`arquivo-produto-${id}`);
+    const botaoSalvar = document.getElementById(`salvar-imagem-produto-${id}`);
+    const statusImagem = document.getElementById(`status-imagem-produto-${id}`);
     if (!arquivo) return;
 
+    seletor.disabled = true;
+    campo.disabled = true;
+    botaoSalvar.disabled = true;
+    statusImagem.textContent = "Enviando imagem...";
     try {
         campo.value = await enviarImagemCloudinary(arquivo);
         await atualizarImagemRapido(id);
@@ -426,6 +468,11 @@ async function enviarImagemProdutoExistente(id, arquivo) {
         console.error("Erro ao enviar imagem do produto:", erro);
         if (seletor) seletor.value = "";
         alert(erro.message || "Não foi possível enviar a imagem.");
+    } finally {
+        seletor.disabled = false;
+        campo.disabled = false;
+        botaoSalvar.disabled = false;
+        statusImagem.textContent = "";
     }
 }
 
@@ -438,7 +485,7 @@ async function atualizarImagemRapido(id) {
         return;
     }
 
-    if (imagemUrl) {
+    if (imagemUrl && !/^\/imagens\/cardapio\/[a-z0-9-]+\.webp$/.test(imagemUrl)) {
         try {
             const urlImagem = new URL(imagemUrl);
             if (!["http:", "https:"].includes(urlImagem.protocol)) throw new Error();
@@ -556,7 +603,9 @@ function inicializarControlePedidos() {
     if (pedidosTimerAdmin) clearInterval(pedidosTimerAdmin);
     pedidosTimerAdmin = setInterval(() => {
         carregarPedidosAtivos();
+        carregarChatsAdmin();
     }, 5000);
+    carregarChatsAdmin();
 }
 
 function conectarWebSocketAdmin() {
@@ -582,10 +631,14 @@ function conectarWebSocketAdmin() {
             }
             
             carregarPedidosAtivos();
+            if (dados.tipo === "CHAT_MENSAGEM" || dados.tipo === "CHAT_ENCERRADO") {
+                carregarChatsAdmin();
+            }
             if (dados.status === "RECEBIDO" && dados.clienteNome && dados.id) {
                 idsPedidosAlertados.add(dados.id);
-                tocarAlertaSonoro();
+                tocarSomNovoPedido();
             }
+
         };
         
         socketAdmin.onclose = () => { 
@@ -601,6 +654,93 @@ function conectarWebSocketAdmin() {
     } catch (e) { 
         console.error("Falha ao abrir canal WebSocket:", e); 
     }
+}
+
+async function carregarChatsAdmin() {
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/chat/admin`);
+        if (!resposta.ok) return;
+        const mensagens = await resposta.json();
+        const mensagensNovas = mensagens.length > totalMensagensChatAdmin;
+        totalMensagensChatAdmin = mensagens.length;
+        mensagensChatAdmin = mensagens;
+        if (mensagensNovas && !document.getElementById("sec-chat")?.classList.contains("active")) {
+            tocarAlertaSonoro();
+        }
+        const grupos = [...new Set(mensagens.map(mensagem => mensagem.numeroPedido))];
+        const lista = document.getElementById("lista-chats-admin");
+        if (lista) {
+            lista.innerHTML = grupos.length
+                ? grupos.map(numero => {
+                    const doPedido = mensagens.filter(mensagem => mensagem.numeroPedido === numero);
+                    const ultima = doPedido[doPedido.length - 1];
+                    return `<button type="button" class="btn-acao" style="justify-content:space-between; width:100%;" onclick="selecionarChatAdmin(${numero})">
+                        <span>Pedido #${numero}</span><span>${ultima.remetente === "CLIENTE" ? "🔴" : "✅"} ${doPedido.length} mensagem(ns)</span>
+                    </button>`;
+                }).join("")
+                : "<p style='color:var(--text-muted);'>Nenhuma conversa aberta.</p>";
+        }
+        const badge = document.getElementById("badge-chat-admin");
+        if (badge) {
+            badge.textContent = grupos.length;
+            badge.style.display = grupos.length ? "inline-block" : "none";
+        }
+        if (numeroChatAdminSelecionado && !grupos.includes(numeroChatAdminSelecionado)) {
+            numeroChatAdminSelecionado = null;
+            document.getElementById("chat-admin-painel").style.display = "none";
+        }
+        if (numeroChatAdminSelecionado) renderizarChatAdmin();
+    } catch (erro) {
+        console.error("Erro ao carregar chats:", erro);
+    }
+}
+
+function selecionarChatAdmin(numeroPedido) {
+    numeroChatAdminSelecionado = numeroPedido;
+    renderizarChatAdmin();
+}
+
+function renderizarChatAdmin() {
+    const painel = document.getElementById("chat-admin-painel");
+    const lista = document.getElementById("chat-admin-mensagens");
+    if (!painel || !lista || !numeroChatAdminSelecionado) return;
+    const mensagens = mensagensChatAdmin.filter(mensagem => mensagem.numeroPedido === numeroChatAdminSelecionado);
+    painel.style.display = "block";
+    document.getElementById("chat-admin-titulo").textContent = `Conversa do pedido #${numeroChatAdminSelecionado}`;
+    lista.innerHTML = mensagens.map(mensagem => `
+        <div style="align-self:${mensagem.remetente === "RESTAURANTE" ? "flex-end" : "flex-start"}; max-width:85%; padding:8px 10px; border-radius:9px; background:${mensagem.remetente === "RESTAURANTE" ? "#dcfce7" : "#f1f5f9"};">
+            <strong>${mensagem.remetente === "RESTAURANTE" ? "Restaurante" : "Cliente"}</strong>
+            <div>${escaparHtml(mensagem.mensagem)}</div>
+        </div>`).join("");
+    lista.scrollTop = lista.scrollHeight;
+}
+
+async function enviarMensagemChatAdmin() {
+    const campo = document.getElementById("chat-admin-input");
+    const mensagem = campo ? campo.value.trim() : "";
+    if (!mensagem || !numeroChatAdminSelecionado) return;
+    const resposta = await fetchAdmin(`${URL_BACKEND}/api/chat/admin/${numeroChatAdminSelecionado}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({ mensagem })
+    });
+    if (!resposta.ok) {
+        alert("Não foi possível enviar a resposta.");
+        return;
+    }
+    campo.value = "";
+}
+
+async function encerrarChatAdmin() {
+    if (!numeroChatAdminSelecionado || !confirm("Encerrar e apagar esta conversa?")) return;
+    const resposta = await fetchAdmin(`${URL_BACKEND}/api/chat/admin/${numeroChatAdminSelecionado}`, { method: "DELETE" });
+    if (!resposta.ok) {
+        alert("Não foi possível encerrar a conversa.");
+        return;
+    }
+    numeroChatAdminSelecionado = null;
+    document.getElementById("chat-admin-painel").style.display = "none";
+    await carregarChatsAdmin();
 }
 
 function iniciarHeartbeatAdmin() {
@@ -638,6 +778,7 @@ function exibirBannerAtivacaoAudio() {
 
     banner.addEventListener("click", () => {
         inicializarAudioContext();
+        if (audioCtxCompartilhado) somNovoPedido = carregarSomNovoPedido(audioCtxCompartilhado);
         banner.remove();
         if (typeof iniciarTurnoAdmin === "function") iniciarTurnoAdmin();
     });
@@ -659,6 +800,38 @@ function inicializarAudioContext() {
         console.log("Contexto de áudio inicializado via clique administrativo.");
     } catch (e) {
         console.error("Falha ao inicializar o AudioContext:", e);
+    }
+}
+
+async function carregarSomNovoPedido(contexto) {
+    try {
+        const resposta = await fetch("som-novo-pedido.mp3");
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        return await contexto.decodeAudioData(await resposta.arrayBuffer());
+    } catch (erro) {
+        console.error("Não foi possível carregar o som de novos pedidos:", erro);
+        alert("Não foi possível carregar o novo som de pedidos. O alerta sonoro original será usado.");
+        return null;
+    }
+}
+
+async function tocarSomNovoPedido() {
+    const contexto = audioCtxCompartilhado;
+    if (!contexto || !somNovoPedido) return;
+    const som = await somNovoPedido;
+    if (!som) {
+        tocarAlertaSonoro();
+        return;
+    }
+    try {
+        if (contexto.state === "suspended") await contexto.resume();
+        const fonte = contexto.createBufferSource();
+        fonte.buffer = som;
+        fonte.connect(contexto.destination);
+        fonte.start();
+    } catch (erro) {
+        console.error("Não foi possível reproduzir o som de novo pedido:", erro);
+        alert("Não foi possível reproduzir o som de novo pedido. Verifique o áudio do navegador.");
     }
 }
 
@@ -704,8 +877,9 @@ function obterItensPedido(pedido) {
     if (!pedido.itens) return [];
     try {
         const itens = typeof pedido.itens === "string" ? JSON.parse(pedido.itens) : pedido.itens;
-        if (Array.isArray(itens)) return itens;
-        if (itens && typeof itens === "object") return Object.values(itens);
+        if (Array.isArray(itens)) return ordenarItensPorCategoria(itens, listaPratosLocal);
+        if (itens && typeof itens === "object" && "nome" in itens) return [itens];
+        if (itens && typeof itens === "object") return ordenarItensPorCategoria(Object.values(itens), listaPratosLocal);
     } catch (erro) {
         console.error(`Itens inválidos no pedido #${pedido.id}:`, erro);
     }
@@ -763,29 +937,129 @@ function numeroExibicaoPedido(pedido) {
     return pedido.numeroPedido || pedido.id;
 }
 
+function textoStatusPedido(pedido) {
+    const status = {
+        RECEBIDO: "Recebido",
+        PREPARO: "Preparando",
+        PREPARANDO: "Preparando",
+        ENTREGA: pedidoEDeRetirada(pedido) ? "Pronto para retirada" : "Saiu para entrega",
+        SAIU_ENTREGA: "Saiu para entrega",
+        ENTREGUE: pedidoEDeRetirada(pedido) ? "Retirado" : "Entregue",
+        CANCELADO: "Cancelado"
+    };
+    return status[pedido.status] || pedido.status || "Não informado";
+}
+
 function obterLocalPedido(pedido) {
     return pedidoEDeRetirada(pedido)
         ? "🏪 RETIRADA NO ESTABELECIMENTO"
         : `📍 Endereço: ${escaparHtml(pedido.endereco || "Não informado")}`;
 }
 
+function textoTrocoPedido(pedido) {
+    if (pedido.trocoPara == null) return "";
+    const valor = Number(pedido.trocoPara);
+    const troco = Math.max(0, valor - obterTotalPedido(pedido));
+    return `Troco para R$ ${valor.toFixed(2).replace(".", ",")} (troco: R$ ${troco.toFixed(2).replace(".", ",")})`;
+}
+
 function atualizarResumoFinanceiro(pedidos, elementoId) {
-    const elemento = document.getElementById(elementoId);
-    if (!elemento) return;
     const validos = pedidos.filter(pedido => pedido.status !== "CANCELADO");
     const total = validos.reduce((soma, pedido) => soma + obterTotalPedido(pedido), 0);
     const ticketMedio = validos.length ? total / validos.length : 0;
+    const quantidade = resumosFinanceiros.get(elementoId)?.quantidade ?? 0;
+    resumosFinanceiros.set(elementoId, { quantidade, total, ticketMedio });
+    renderizarResumoFinanceiro(elementoId);
+}
+
+function atualizarContagemPedidos(elementoId, quantidade) {
+    const resumo = resumosFinanceiros.get(elementoId);
+    if (!resumo || resumo.quantidade === quantidade) return;
+    resumo.quantidade = quantidade;
+    renderizarResumoFinanceiro(elementoId);
+}
+
+function renderizarResumoFinanceiro(elementoId) {
+    const elemento = document.getElementById(elementoId);
+    const resumo = resumosFinanceiros.get(elementoId);
+    if (!elemento || !resumo) return;
+    const formatarValor = valor => valoresFinanceirosOcultos
+        ? '<strong aria-label="Valor oculto">••••</strong>'
+        : `<strong>R$ ${valor.toFixed(2).replace(".", ",")}</strong>`;
     elemento.innerHTML = `
-        <div class="resumo-card"><span>Pedidos</span><strong>${validos.length}</strong></div>
-        <div class="resumo-card"><span>Saldo geral</span><strong>R$ ${total.toFixed(2).replace(".", ",")}</strong></div>
-        <div class="resumo-card"><span>Ticket médio</span><strong>R$ ${ticketMedio.toFixed(2).replace(".", ",")}</strong></div>
+        <div class="resumo-card"><span>Pedidos</span><strong>${resumo.quantidade}</strong></div>
+        <div class="resumo-card"><span>Saldo geral</span>${formatarValor(resumo.total)}</div>
+        <div class="resumo-card"><span>Ticket médio</span>${formatarValor(resumo.ticketMedio)}</div>
     `;
+}
+
+function atualizarBotoesValoresFinanceiros() {
+    document.querySelectorAll(".botao-valores-financeiros").forEach(botao => {
+        botao.textContent = valoresFinanceirosOcultos ? "Mostrar valores" : "Ocultar valores";
+        botao.setAttribute("aria-pressed", String(valoresFinanceirosOcultos));
+    });
+}
+
+function alternarValoresFinanceiros() {
+    valoresFinanceirosOcultos = !valoresFinanceirosOcultos;
+    localStorage.setItem(chaveValoresFinanceirosOcultos, String(valoresFinanceirosOcultos));
+    atualizarBotoesValoresFinanceiros();
+    resumosFinanceiros.forEach((_, elementoId) => renderizarResumoFinanceiro(elementoId));
 }
 
 function serializarPedidos(pedidos) {
     return (pedidos || [])
         .map(pedido => `${numeroExibicaoPedido(pedido)}|${pedido.status}|${Number(pedido.valorTotal ?? pedido.total ?? 0).toFixed(2)}|${Array.isArray(pedido.itens) ? pedido.itens.map(item => `${item.nome || ""}:${item.quantidade || item.qtd || 1}:${Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0).toFixed(2)}`).join(";") : ""}`)
         .join("~");
+}
+
+function organizarCardPedido(card, pedido, tipo) {
+    const chave = String(pedido.id ?? numeroExibicaoPedido(pedido));
+    const historico = tipo === "historico";
+    if (!historico) pedidosHistoricoExpandidos.delete(chave);
+    const detalhes = document.createElement("details");
+    detalhes.className = "detalhes-pedido";
+    detalhes.open = historico ? pedidosHistoricoExpandidos.has(chave) : !pedidosAtivosMinimizados.has(chave);
+
+    const resumo = document.createElement("summary");
+    resumo.className = "resumo-pedido";
+    const titulo = document.createElement("span");
+    titulo.className = "resumo-pedido-titulo";
+    titulo.textContent = `Pedido #${numeroExibicaoPedido(pedido)} - ${pedido.clienteNome || pedido.nomeCliente || "Não informado"}`;
+    const info = document.createElement("span");
+    info.className = "resumo-pedido-info";
+    info.textContent = `${pedidoEDeRetirada(pedido) ? "Retirada" : "Entrega"} · R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}`;
+    resumo.append(titulo, info);
+    if (!historico || pedido.status === "CANCELADO") {
+        const status = document.createElement("span");
+        status.className = "resumo-pedido-status";
+        if (pedido.status === "PREPARO" || pedido.status === "PREPARANDO") status.classList.add("preparo");
+        if (pedido.status === "ENTREGA" || pedido.status === "SAIU_ENTREGA") {
+            status.classList.add(pedidoEDeRetirada(pedido) ? "retirada" : "entrega");
+        }
+        if (pedido.status === "CANCELADO") status.classList.add("cancelado");
+        status.textContent = `Status: ${textoStatusPedido(pedido)}`;
+        resumo.appendChild(status);
+    }
+    const acao = document.createElement("span");
+    acao.className = "resumo-pedido-acao";
+    acao.textContent = detalhes.open ? "Minimizar ▲" : "Ver detalhes ▼";
+    resumo.appendChild(acao);
+
+    const cabecalho = card.firstElementChild;
+    cabecalho.querySelector("h4").remove();
+    detalhes.appendChild(resumo);
+    while (card.firstChild) detalhes.appendChild(card.firstChild);
+    card.appendChild(detalhes);
+
+    detalhes.addEventListener("toggle", () => {
+        const estado = historico ? pedidosHistoricoExpandidos : pedidosAtivosMinimizados;
+        const guardar = historico ? detalhes.open : !detalhes.open;
+        if (guardar) estado.add(chave);
+        else estado.delete(chave);
+        acao.textContent = detalhes.open ? "Minimizar ▲" : "Ver detalhes ▼";
+    });
+    return card;
 }
 
 function atualizarListaPedidos(container, pedidos, tipo) {
@@ -819,11 +1093,12 @@ function atualizarListaPedidos(container, pedidos, tipo) {
                             <h4 style="margin: 0 0 6px 0; color: #1e293b;">📋 Pedido #${numeroExibicaoPedido(pedido)} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                             <small style="color: ${retirada ? "#92400e" : "var(--text-muted)"}; display: block; margin-bottom: 4px; font-size: 0.9rem; font-weight: ${retirada ? "800" : "400"};">${obterLocalPedido(pedido)}</small>
                             <small style="color: #0f766e; font-weight: 700; font-size: 0.9rem;">💳 Forma de Pagamento: ${pedido.formaPagamento}</small>
+                            ${pedido.trocoPara != null ? `<small style="display: block; margin-top: 6px; color: #92400e; font-weight: 700;">💵 ${textoTrocoPedido(pedido)}</small>` : ""}
                             <small style="display: block; margin-top: 6px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
                             <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                            ${pedido.comprovantePixDisponivel ? `<small style="display: block; margin-top: 6px;"><button type="button" class="btn-status-toggle ativo" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;" onclick="abrirComprovantePix(${pedido.id})">🧾 Ver comprovante Pix</button></small>` : ""}
                             ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                         </div>
-                        <span class="badge-cat" style="background: #fffbeb; color: #b45309; border-color: #fde68a;">Status: ${pedido.status}</span>
                     </div>
                     ${renderizarItensPedido(pedido)}
                     <div class="acoes-pedido-bloco" style="border-top: 1px solid #f1f5f9; padding-top: 14px; display: flex; gap: 10px; justify-content: flex-end;">
@@ -842,7 +1117,7 @@ function atualizarListaPedidos(container, pedidos, tipo) {
                     imprimirCupomIFood(pedido);
                 });
                 card.querySelector(".acoes-pedido-bloco").prepend(btnImprimir);
-                return card;
+                return organizarCardPedido(card, pedido, tipo);
             }
 
             const card = document.createElement("div");
@@ -854,12 +1129,13 @@ function atualizarListaPedidos(container, pedidos, tipo) {
                     <div>
                         <h4 style="margin: 0 0 6px 0; color: #1e293b;">${pedido.status === "CANCELADO" ? "✕" : "✅"} Pedido #${numeroExibicaoPedido(pedido)} - Cliente: ${pedido.clienteNome || pedido.nomeCliente || 'Não informado'}</h4>
                         <small style="color: ${retirada ? "#92400e" : "var(--text-muted)"}; display: block; margin-bottom: 4px; font-size: 0.9rem; font-weight: ${retirada ? "800" : "400"};">${obterLocalPedido(pedido)}</small>
-                        <small style="color: #475569; font-size: 0.9rem;">💳 Pago via: ${pedido.formaPagamento}</small>
+                        <small style="color: #475569; font-size: 0.9rem;">💳 Forma de pagamento: ${pedido.formaPagamento}</small>
+                        ${pedido.trocoPara != null ? `<small style="display: block; margin-top: 6px; color: #92400e; font-weight: 700;">💵 ${textoTrocoPedido(pedido)}</small>` : ""}
                         <small style="display: block; margin-top: 4px; color: #766b5f; font-weight: 700;">🧾 Subtotal: R$ ${calcularTotalItensPedido(pedido).toFixed(2).replace(".", ",")} · Taxa: R$ ${obterTaxaEntregaPedido(pedido).toFixed(2).replace(".", ",")}</small>
                         <small style="display: block; margin-top: 4px; color: #b45309; font-weight: 800;">💰 Total: R$ ${obterTotalPedido(pedido).toFixed(2).replace(".", ",")}</small>
+                        ${pedido.comprovantePixDisponivel ? `<small style="display: block; margin-top: 6px;"><button type="button" class="btn-status-toggle ativo" style="background: #eff6ff; color: #1e40af; border-color: #bfdbfe;" onclick="abrirComprovantePix(${pedido.id})">🧾 Ver comprovante Pix</button></small>` : ""}
                         ${pedido.observacao ? `<small style="color: #92400e; display: block; margin-top: 6px; font-weight: 700;">📝 Observação: ${pedido.observacao}</small>` : ""}
                     </div>
-                    <span class="badge-cat" style="background: ${pedido.status === "CANCELADO" ? "#fff1f2" : "#e6f4ea"}; color: ${pedido.status === "CANCELADO" ? "#be123c" : "#137333"}; border-color: ${pedido.status === "CANCELADO" ? "#fecdd3" : "#ceead6"};">Status: ${pedido.status}</span>
                 </div>
                 ${renderizarItensPedido(pedido)}
             `;
@@ -869,7 +1145,7 @@ function atualizarListaPedidos(container, pedidos, tipo) {
             btnImprimirHistorico.textContent = "🖨️ Imprimir Cupom";
             btnImprimirHistorico.addEventListener("click", () => imprimirCupomIFood(pedido));
             card.appendChild(btnImprimirHistorico);
-            return card;
+            return organizarCardPedido(card, pedido, tipo);
         });
 
     container.innerHTML = "";
@@ -888,6 +1164,23 @@ function atualizarListaPedidos(container, pedidos, tipo) {
     }
 }
 
+async function abrirComprovantePix(pedidoId) {
+    const resposta = await fetchAdmin(`${URL_BACKEND}/api/pedidos/${pedidoId}/comprovante`);
+    if (!resposta.ok) {
+        alert("Não foi possível abrir o comprovante Pix.");
+        return;
+    }
+    const arquivo = await resposta.blob();
+    const url = URL.createObjectURL(arquivo);
+    const janela = window.open(url, "_blank");
+    if (!janela) {
+        URL.revokeObjectURL(url);
+        alert("Permita pop-ups para visualizar o comprovante.");
+        return;
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
 function renderizarHistoricoFiltrado() {
     const busca = (document.getElementById("filtro-historico-busca")?.value || "").trim().toLocaleLowerCase("pt-BR");
     const status = document.getElementById("filtro-historico-status")?.value || "";
@@ -901,10 +1194,11 @@ function renderizarHistoricoFiltrado() {
             && (!inicio || data >= inicio)
             && (!fim || data <= fim);
     });
+    atualizarContagemPedidos("resumo-historico", filtrados.length);
     const totalPaginas = Math.max(1, Math.ceil(filtrados.length / pedidosPorPaginaHistorico));
     paginaHistorico = Math.min(paginaHistorico, totalPaginas);
     const inicioPagina = (paginaHistorico - 1) * pedidosPorPaginaHistorico;
-    ultimoSnapshotPedidosHistorico = "";
+    ultimoSnapshotPedidosHistorico = null;
     atualizarListaPedidos(
         document.getElementById("lista-pedidos-finalizados"),
         filtrados.slice(inicioPagina, inicioPagina + pedidosPorPaginaHistorico),
@@ -935,8 +1229,10 @@ function renderizarAtivosFiltrados() {
     const filtrados = pedidosAtivosLocal.filter(pedido => {
         const texto = `${numeroExibicaoPedido(pedido)} ${pedido.clienteNome || ""} ${pedido.telefone || ""}`.toLocaleLowerCase("pt-BR");
         return !busca || texto.includes(busca);
-    });
-    ultimoSnapshotPedidosAtivos = "";
+    }).sort((a, b) => String(b.dataCriacao || "").localeCompare(String(a.dataCriacao || ""))
+        || Number(b.id || 0) - Number(a.id || 0));
+    atualizarContagemPedidos("resumo-financeiro", filtrados.length);
+    ultimoSnapshotPedidosAtivos = null;
     atualizarListaPedidos(document.getElementById("lista-pedidos-ativos"), filtrados, "ativos");
 }
 
@@ -961,19 +1257,8 @@ async function carregarProdutosBalcao() {
         ]);
         if (!resProdutos.ok) throw new Error(`Produtos: HTTP ${resProdutos.status}`);
         produtosBalcao = await resProdutos.json();
-        const acompanhamentos = resAcompanhamentos.ok ? await resAcompanhamentos.json() : [];
-        const opcoesAcompanhamentos = document.getElementById("opcoes-acompanhamentos-balcao");
-        if (opcoesAcompanhamentos) {
-            opcoesAcompanhamentos.innerHTML = acompanhamentos
-                .filter(item => item.disponivel)
-                .map(item => `
-                    <label class="opcao-acompanhamento-balcao">
-                        <input type="checkbox" value="${escaparHtml(item.nome)}"
-                               onchange="atualizarAcompanhamentosBalcao(this)">
-                        <span>${escaparHtml(item.nome)}</span>
-                    </label>`)
-                .join("");
-        }
+        acompanhamentosBalcao = (resAcompanhamentos.ok ? await resAcompanhamentos.json() : [])
+            .filter(item => item.disponivel);
         busca.oninput = renderizarResultadosBuscaBalcao;
         renderizarResultadosBuscaBalcao();
     } catch (erro) {
@@ -993,13 +1278,11 @@ function renderizarResultadosBuscaBalcao() {
         .slice(0, 8);
     resultados.innerHTML = itens.length
         ? itens.map(item => `
-            <button type="button" class="btn-status-toggle ativo"
-                    onclick="adicionarItemBalcao(${item.id})"
-                    style="display: flex; justify-content: space-between; width: 100%; text-align: left;">
+            <button type="button" class="balcao-resultado" onclick="adicionarItemBalcao(${item.id})">
                 <span>${escaparHtml(item.nome)}</span>
-                <strong>R$ ${Number(item.preco || 0).toFixed(2).replace(".", ",")}</strong>
+                <strong>R$ ${Number(item.preco || 0).toFixed(2).replace(".", ",")} ＋</strong>
             </button>`).join("")
-        : `<small style="color: var(--text-muted);">Nenhum item encontrado.</small>`;
+        : `<p class="balcao-vazio">Nenhum item encontrado.</p>`;
 }
 
 function adicionarItemBalcao(idSelecionado) {
@@ -1009,9 +1292,15 @@ function adicionarItemBalcao(idSelecionado) {
     if (!produto) {
         return;
     }
-    const existente = itensPedidoBalcao.find(item => item.id === id);
-    if (existente) existente.quantidade += quantidade;
-    else itensPedidoBalcao.push({ id: produto.id, nome: produto.nome, preco: Number(produto.preco || 0), quantidade });
+    itensPedidoBalcao.push({
+        id: produto.id,
+        nome: produto.nome,
+        categoria: produto.categoria,
+        preco: Number(produto.preco || 0),
+        quantidade,
+        acompanhamentos: [],
+        observacao: ""
+    });
     const busca = document.getElementById("balcao-busca");
     if (busca) {
         busca.value = "";
@@ -1029,59 +1318,76 @@ function removerItemBalcao(indice) {
 function limparPedidoBalcao() {
     itensPedidoBalcao = [];
     const busca = document.getElementById("balcao-busca");
-    const acompanhamentos = document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']");
-    const observacao = document.getElementById("balcao-observacao");
     if (busca) {
         busca.value = "";
         renderizarResultadosBuscaBalcao();
     }
-    acompanhamentos.forEach(option => {
-        option.checked = false;
-        option.closest(".opcao-acompanhamento-balcao")?.classList.remove("selecionado", "bloqueado");
-    });
-    atualizarContadorAcompanhamentosBalcao();
-    if (observacao) observacao.value = "";
     renderizarPedidoBalcao();
 }
 
-function atualizarAcompanhamentosBalcao(checkbox) {
-    const selecionados = document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']:checked");
+function atualizarAcompanhamentosItemBalcao(indice, checkbox) {
+    const item = itensPedidoBalcao[indice];
+    if (!item) return;
+    const selecionados = Array.from(document.querySelectorAll(
+        `.acompanhamentos-item-balcao[data-item-index="${indice}"] input[type='checkbox']:checked`
+    ));
     if (selecionados.length > 2) {
         checkbox.checked = false;
-        alert("Você pode escolher no máximo 2 acompanhamentos.");
+        alert("Escolha no máximo 2 acompanhamentos para este prato.");
+        return;
     }
-    atualizarContadorAcompanhamentosBalcao();
+    item.acompanhamentos = selecionados.map(opcao => opcao.value);
+    renderizarPedidoBalcao();
 }
 
-function atualizarContadorAcompanhamentosBalcao() {
-    const opcoes = document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']");
-    const selecionados = document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']:checked");
-    const contador = document.getElementById("contador-acompanhamentos-balcao");
-    if (contador) contador.textContent = `${selecionados.length}/2 escolhidos`;
-    opcoes.forEach(opcao => {
-        const cartao = opcao.closest(".opcao-acompanhamento-balcao");
-        if (!cartao) return;
-        cartao.classList.toggle("selecionado", opcao.checked);
-        cartao.classList.toggle("bloqueado", !opcao.checked && selecionados.length >= 2);
-    });
+function atualizarObservacaoItemBalcao(indice, valor) {
+    if (itensPedidoBalcao[indice]) itensPedidoBalcao[indice].observacao = valor;
 }
 
 function renderizarPedidoBalcao() {
     const lista = document.getElementById("lista-itens-balcao");
     const total = itensPedidoBalcao.reduce((soma, item) => soma + item.preco * item.quantidade, 0);
+    const categoriasComAcompanhamentos = new Set(["PRATOS_DO_DIA", "FRANGO", "CARNE", "OUTROS"]);
     if (lista) {
         lista.innerHTML = itensPedidoBalcao.length
             ? itensPedidoBalcao.map((item, indice) => `
-                <div class="item-pedido-linha">
-                    <span><b>${item.quantidade}x</b> ${escaparHtml(item.nome)}</span>
-                    <span>R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}
-                        <button type="button" onclick="removerItemBalcao(${indice})">Remover</button>
-                    </span>
+                <div class="card-balcao-prato">
+                    <div class="balcao-item-topo">
+                        <div>
+                            <strong class="balcao-item-nome">${indice + 1}. ${item.quantidade}x ${escaparHtml(item.nome)}</strong>
+                            <div class="balcao-item-preco">R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</div>
+                        </div>
+                        <button type="button" class="btn-status-toggle inativo" aria-label="Remover ${escaparHtml(item.nome)}" onclick="removerItemBalcao(${indice})">Remover</button>
+                    </div>
+                    ${categoriasComAcompanhamentos.has(String(item.categoria || "").trim().toUpperCase()) ? `
+                    <div class="acompanhamentos-item-balcao balcao-acompanhamentos" data-item-index="${indice}">
+                        <div class="balcao-acompanhamentos-titulo">
+                            <strong>Acompanhamentos deste prato</strong>
+                            <span>${item.acompanhamentos.length}/2</span>
+                        </div>
+                        <div class="opcoes-acompanhamentos-balcao">
+                            ${acompanhamentosBalcao.map(acompanhamento => `
+                                <label class="opcao-acompanhamento-balcao ${item.acompanhamentos.includes(acompanhamento.nome) ? "selecionado" : ""}">
+                                    <input type="checkbox" value="${escaparHtml(acompanhamento.nome)}"
+                                        ${item.acompanhamentos.includes(acompanhamento.nome) ? "checked" : ""}
+                                        onchange="atualizarAcompanhamentosItemBalcao(${indice}, this)">
+                                    <span>${escaparHtml(acompanhamento.nome)}</span>
+                                </label>`).join("")}
+                        </div>
+                    </div>` : ""}
+                    <div class="balcao-campo balcao-observacao-grupo">
+                        <label for="balcao-observacao-${indice}">Observação do item (opcional)</label>
+                        <input id="balcao-observacao-${indice}" class="balcao-observacao" type="text" value="${escaparHtml(item.observacao)}"
+                            placeholder="Ex.: sem cebola" oninput="atualizarObservacaoItemBalcao(${indice}, this.value)">
+                    </div>
                 </div>`).join("")
-            : "<p style='margin: 0; color: var(--text-muted);'>Nenhum item adicionado.</p>";
+            : "<p class='balcao-vazio'>Nenhum item adicionado. Selecione um produto para começar.</p>";
     }
     const totalEl = document.getElementById("total-pedido-balcao");
-    if (totalEl) totalEl.textContent = `Total: R$ ${total.toFixed(2).replace(".", ",")}`;
+    if (totalEl) totalEl.textContent = `R$ ${total.toFixed(2).replace(".", ",")}`;
+    const contador = document.getElementById("contador-itens-balcao");
+    const quantidade = itensPedidoBalcao.reduce((soma, item) => soma + item.quantidade, 0);
+    if (contador) contador.textContent = `${quantidade} ${quantidade === 1 ? "item" : "itens"}`;
 }
 
 function imprimirPedidoBalcao() {
@@ -1089,10 +1395,6 @@ function imprimirPedidoBalcao() {
         alert("Adicione pelo menos um item antes de imprimir.");
         return;
     }
-    const acompanhamentos = Array.from(
-        document.querySelectorAll("#opcoes-acompanhamentos-balcao input[type='checkbox']:checked")
-    ).map(option => option.value).join(", ");
-    const observacao = document.getElementById("balcao-observacao").value.trim();
     const pagamento = document.getElementById("balcao-pagamento").value;
     const total = itensPedidoBalcao.reduce((soma, item) => soma + item.preco * item.quantidade, 0);
     const janela = window.open("", "_blank", "width=360,height=650");
@@ -1100,18 +1402,23 @@ function imprimirPedidoBalcao() {
         alert("Libere pop-ups para imprimir a comanda.");
         return;
     }
+    const dataAgora = new Date();
+    const data = dataAgora.toLocaleDateString("pt-BR");
+    const hora = dataAgora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
     const linhas = itensPedidoBalcao.map(item =>
-        `<div class="item"><span>${item.quantidade}x ${escaparHtml(item.nome)}</span><b>R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</b></div>`
+        `<div class="item"><div><span>${item.quantidade}x ${escaparHtml(item.nome)}</span>
+        ${item.acompanhamentos.length ? `<small>ACOMPANHAMENTOS: ${item.acompanhamentos.map(escaparHtml).join(", ")}</small>` : ""}
+        ${item.observacao ? `<small>OBS: ${escaparHtml(item.observacao)}</small>` : ""}</div>
+        <b>R$ ${(item.preco * item.quantidade).toFixed(2).replace(".", ",")}</b></div>`
     ).join("");
     janela.document.write(`<!doctype html><html><head><meta charset="UTF-8"><title>Comanda balcão</title>
         <style>
         @page{size:80mm auto;margin:0}body{width:72mm;margin:0 auto;padding:4mm 2mm;font:700 15px Arial,sans-serif;color:#000}
         h1{text-align:center;font-size:20px;margin:0 0 4px}h2{text-align:center;font-size:18px;border:2px solid #000;padding:5px;margin:8px 0}
-        .linha{border-top:1px dashed #000;margin:8px 0}.item{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dotted #777}
-        .obs{border-left:4px solid #000;padding-left:7px;margin-top:10px;font-size:14px}.total{display:flex;justify-content:space-between;font-size:20px;margin-top:10px}
-        </style></head><body><h1>SABOR CEARENSE</h1><h2>RETIRADA / BALCÃO</h2><div class="linha"></div>${linhas}
-        ${acompanhamentos ? `<p><b>ACOMPANHAMENTOS:</b> ${escaparHtml(acompanhamentos)}</p>` : ""}
-        ${observacao ? `<div class="obs">OBSERVAÇÃO: ${escaparHtml(observacao)}</div>` : ""}
+        .data-hora{text-align:center;margin:4px 0}
+        .linha{border-top:1px dashed #000;margin:8px 0}.item{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dotted #777}.item small{display:block;font-size:12px;margin-top:3px}
+        .total{display:flex;justify-content:space-between;font-size:20px;margin-top:10px}
+        </style></head><body><h1>SABOR CEARENSE</h1><h2>RETIRADA / BALCÃO</h2><p class="data-hora">Data: ${data} - Hora: ${hora}</p><div class="linha"></div>${linhas}
         <div class="linha"></div><p>PAGAMENTO: ${escaparHtml(pagamento)}</p><div class="total"><span>TOTAL</span><span>R$ ${total.toFixed(2).replace(".", ",")}</span></div>
         <p style="text-align:center;margin-top:18px">Pedido de balcão</p></body></html>`);
     janela.document.close();
@@ -1143,12 +1450,16 @@ async function carregarPedidosAtivos() {
                 );
             novosPedidos.forEach(pedido => {
                 idsPedidosAlertados.add(pedido.id);
-                tocarAlertaSonoro();
+                tocarSomNovoPedido();
             });
             pedidosAtivos.forEach(pedido => idsPedidosConhecidos.add(pedido.id));
             primeiraCargaPedidos = false;
 
-            const pedidosVisiveis = pedidosAtivos.filter(pedido => pedido.status !== 'ENTREGUE' && pedido.status !== 'CANCELADO');
+            const pedidosVisiveis = pedidosAtivos.filter(pedido =>
+                pedido.status !== 'ENTREGUE' &&
+                pedido.status !== 'CANCELADO' &&
+                !pedidosFinalizadosLocal.has(String(pedido.id))
+            );
             pedidosAtivosLocal = pedidosVisiveis;
             renderizarAtivosFiltrados();
         }
@@ -1187,7 +1498,7 @@ async function apagarHistoricoAntigo() {
 
         const resultado = await res.json();
         alert(`${resultado.apagados || 0} pedido(s) antigo(s) foram apagados.`);
-        ultimoSnapshotPedidosHistorico = "";
+        ultimoSnapshotPedidosHistorico = null;
         await carregarPedidosAtivos();
     } catch (erro) {
         console.error("Erro ao apagar histórico antigo:", erro);
@@ -1200,11 +1511,23 @@ async function mudarStatusPedido(id, novoStatus) {
         const res = await fetchAdmin(`${URL_BACKEND}/api/pedidos/${id}/status?status=${encodeURIComponent(novoStatus)}`, { method: "PUT" });
         if (res.ok) {
             const pedidoAtualizado = await res.json();
+            const statusFinalizado = pedidoAtualizado.status === "ENTREGUE" || pedidoAtualizado.status === "CANCELADO";
+            if (statusFinalizado) {
+                pedidosFinalizadosLocal.add(String(id));
+                pedidosHistoricoLocal = [
+                    ...pedidosHistoricoLocal.filter(pedido => pedido.id !== id),
+                    pedidoAtualizado
+                ];
+                ultimoSnapshotPedidosHistorico = null;
+                renderizarHistoricoFiltrado();
+                await carregarChatsAdmin();
+            }
             pedidosAtivosLocal = pedidosAtivosLocal
                 .map(pedido => pedido.id === id ? { ...pedido, ...pedidoAtualizado } : pedido)
                 .filter(pedido => pedido.status !== "ENTREGUE" && pedido.status !== "CANCELADO");
-            ultimoSnapshotPedidosAtivos = "";
+            ultimoSnapshotPedidosAtivos = null;
             renderizarAtivosFiltrados();
+            if (statusFinalizado) carregarChatsAdmin();
             await carregarPedidosAtivos();
             if (socketAdmin && socketAdmin.readyState === WebSocket.OPEN) {
                 socketAdmin.send(JSON.stringify({ id, status: novoStatus }));
@@ -1265,6 +1588,14 @@ function criarDivDivisora(janela, dupla) {
     return div;
 }
 
+function formatarPrevisaoEntrega(pedido) {
+    const padrao = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2})/;
+    const inicio = String(pedido.previsaoEntregaInicio || "").match(padrao);
+    const fim = String(pedido.previsaoEntregaFim || "").match(padrao);
+    if (!inicio || !fim) return "Não disponível";
+    return `${inicio[4]} às ${fim[4]}`;
+}
+
 function imprimirCupomIFood(pedido) {
     var larguraJanela = 360;
     var alturaJanela = 700;
@@ -1310,14 +1641,15 @@ function imprimirCupomIFood(pedido) {
         enderecoBruto = enderecoBruto.replace(matchRef[0], ""); 
     }
 
-    enderecoBruto = enderecoBruto.replace(/,\s*$/, "").replace(/\s+/g, " ").trim();
+    enderecoBruto = enderecoBruto.replace(/,\s*$/, "").replace(/[ \t]+/g, " ").trim();
 
     var enderecoPedido = (pedido.endereco || "").toString().trim().toUpperCase();
     var tipoServico = enderecoPedido.startsWith("RETIRADA") ? "RETIRADA" : "ENTREGA";
     if (tipoServico === "ENTREGA") {
-        var matchBairro = enderecoBruto.match(/Bairro:\s*([^,(]+?)(?:\s*\(|$)/i);
+        var matchBairro = enderecoBruto.match(/Bairro:\s*([^(\r\n]+?)(?:\s*\(|$)/i);
         if (matchBairro) {
-            enderecoBruto = "Bairro: " + matchBairro[1].trim();
+            var nomeBairro = matchBairro[1].replace(/\s+-\s+R\$\s*\d+(?:[.,]\d{2})?\s*$/i, "").trim();
+            enderecoBruto = enderecoBruto.replace(matchBairro[0], "Bairro: " + nomeBairro);
         }
     }
     var pagamentoFinal = (pedido.formaPagamento || "Não informado").toUpperCase();
@@ -1337,6 +1669,18 @@ function imprimirCupomIFood(pedido) {
     elCabecalho.className = "text-center";
     elCabecalho.innerHTML = "<div class='titulo-loja'>🌵 SABOR CEARENSE 🌵</div><div class='subtitulo-loja'>Comida Caseira Legítima</div><div class='divider-dashed'></div><div class='subtitulo-loja'>Não vale como nota fiscal</div><div class='id-pedido'>PEDIDO #" + numeroExibicaoPedido(pedido) + "</div><div class='subtitulo-loja'>Data: " + dataFinal + " - Hora: " + horaFinal + "</div>";
     containerPrincipal.appendChild(elCabecalho);
+
+    if (tipoServico === "ENTREGA") {
+        var elPrevisao = janelaImpressao.document.createElement("div");
+        elPrevisao.className = "text-center bloco-conteudo";
+        var elTituloPrevisao = janelaImpressao.document.createElement("div");
+        elTituloPrevisao.textContent = "Previsão de entrega";
+        var elHorarioPrevisao = janelaImpressao.document.createElement("div");
+        elHorarioPrevisao.textContent = formatarPrevisaoEntrega(pedido);
+        elPrevisao.appendChild(elTituloPrevisao);
+        elPrevisao.appendChild(elHorarioPrevisao);
+        containerPrincipal.appendChild(elPrevisao);
+    }
     
     var divDivisora1 = janelaImpressao.document.createElement("div");
     divDivisora1.className = "divider-double";
@@ -1354,7 +1698,8 @@ function imprimirCupomIFood(pedido) {
     var elEnderecoBloco = janelaImpressao.document.createElement("div");
     elEnderecoBloco.className = "bloco-conteudo";
     var tituloEndereco = tipoServico === "RETIRADA" ? "Local de Retirada" : "Endereço de Entrega";
-    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>" + tituloEndereco + "</div><div style='white-space: pre-wrap; font-size: 15px; font-weight: bold;'>" + enderecoBruto + "</div>" + (tipoServico === "RETIRADA" ? "" : "<div style='margin-top: 4px;'><span class='negrito'>Referência:</span> " + referenciaFinal + "</div>");
+    var linhasEndereco = tipoServico === "RETIRADA" ? [enderecoBruto] : enderecoBruto.split(/,|\r?\n/).map(linha => linha.trim()).filter(Boolean);
+    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>" + tituloEndereco + "</div>" + linhasEndereco.map(linha => "<div>" + escaparHtml(linha) + "</div>").join("") + (tipoServico === "RETIRADA" ? "" : "<div style='margin-top: 4px;'><span class='negrito'>Referência:</span> " + escaparHtml(referenciaFinal) + "</div>");
     containerPrincipal.appendChild(elEnderecoBloco);
     
     var divDivisora3 = janelaImpressao.document.createElement("div");
@@ -1372,45 +1717,10 @@ function imprimirCupomIFood(pedido) {
     var corpoTabelaItens = tabelaItens.querySelector("tbody");
     
     var totalProdutosCalculado = 0;
-    var listaItensImpressao = [];
-
-    // Os itens ficam persistidos no pedido; o localStorage pertence ao navegador do cliente.
-    if (pedido.itens) {
-        try {
-            var itensDecodificados = typeof pedido.itens === "string"
-                ? JSON.parse(pedido.itens)
-                : pedido.itens;
-            if (Array.isArray(itensDecodificados)) {
-                listaItensImpressao = itensDecodificados;
-            } else if (itensDecodificados && typeof itensDecodificados === 'object' && 'nome' in itensDecodificados) {
-                listaItensImpressao = [itensDecodificados];
-            } else if (itensDecodificados && typeof itensDecodificados === 'object') {
-                listaItensImpressao = Object.values(itensDecodificados);
-            }
-        } catch(e) {
-            console.error("Erro ao ler dados para a impressão:", e);
-        }
-    }
+    var listaItensImpressao = obterItensPedido(pedido);
 
     if (listaItensImpressao && listaItensImpressao.length > 0) {
-        var ordemImpressao = function(item) {
-            var categoria = String(item.categoria || "").trim().toUpperCase();
-            if (categoria === "BEBIDA" || categoria === "BEBIDAS") return 1;
-            if (categoria === "SOBREMESA" || categoria === "SOBREMESAS") return 2;
-            return 0;
-        };
-        var itensOrdenadosParaImpressao = listaItensImpressao
-            .map(function(item, indice) {
-                return { item: item, indice: indice, ordem: ordemImpressao(item) };
-            })
-            .sort(function(a, b) {
-                return a.ordem - b.ordem || a.indice - b.indice;
-            })
-            .map(function(entrada) {
-                return entrada.item;
-            });
-
-        itensOrdenadosParaImpressao.forEach(function(item) {
+        listaItensImpressao.forEach(function(item) {
             var tr = janelaImpressao.document.createElement("tr");
             
             var nomeTexto = item.nome ? item.nome.toString().toUpperCase() : "PRATO";
@@ -1420,7 +1730,7 @@ function imprimirCupomIFood(pedido) {
             
             totalProdutosCalculado += subtotalItem;
 
-            tr.innerHTML = "<td class='col-qtd'>" + qtdTexto + "x</td><td class='col-nome'>" + nomeTexto + "</td><td class='col-preco'>R$ " + subtotalItem.toFixed(2).replace(".", ",") + "</td>";
+            tr.innerHTML = "<td class='col-qtd'>" + qtdTexto + "x</td><td class='col-nome'>" + escaparHtml(nomeTexto) + "</td><td class='col-preco'>R$ " + subtotalItem.toFixed(2).replace(".", ",") + "</td>";
             corpoTabelaItens.appendChild(tr);
         });
         containerPrincipal.appendChild(tabelaItens);
@@ -1468,6 +1778,7 @@ function imprimirCupomIFood(pedido) {
         <div class='linha-financeiro'><span>Subtotal</span><span>R$ ${subtotalExibir.toFixed(2).replace(".", ",")}</span></div>
         <div class='linha-financeiro'><span>Taxa de Entrega</span><span>R$ ${taxaEntrega.toFixed(2).replace(".", ",")}</span></div>
         <div class='linha-financeiro'><span class='negrito'>Forma Pagto.</span><span>${pagamentoFinal}</span></div>
+        ${pedido.trocoPara != null ? `<div class='bloco-obs'>${textoTrocoPedido(pedido)}</div>` : ""}
         <div class='linha-total'><span>TOTAL</span><span>R$ ${totalGeralExibir.toFixed(2).replace(".", ",")}</span></div>
     `;
     containerPrincipal.appendChild(elFinanceiro);

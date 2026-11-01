@@ -22,6 +22,7 @@ import com.saborcearense.repository.BairroEntregaRepository;
 import com.saborcearense.repository.ItemCardapioRepository;
 import com.saborcearense.repository.InicializacaoDadosRepository;
 import com.saborcearense.repository.PedidoRepository;
+import com.saborcearense.service.FuncionamentoRestauranteService;
 
 class PersistenciaReinicioTest {
     @TempDir Path diretorio;
@@ -54,6 +55,7 @@ class PersistenciaReinicioTest {
             pedido.setPrevisaoEntregaInicio(LocalDateTime.of(2026, 10, 29, 12, 10));
             pedido.setPrevisaoEntregaFim(LocalDateTime.of(2026, 10, 29, 12, 20));
             pedidoId = contexto.getBean(PedidoRepository.class).save(pedido).getId();
+            contexto.getBean(FuncionamentoRestauranteService.class).alterar(false);
         }
         try (ConfigurableApplicationContext contexto = iniciar(url)) {
             var bairro = contexto.getBean(BairroEntregaRepository.class)
@@ -68,6 +70,9 @@ class PersistenciaReinicioTest {
             Pedido pedido = contexto.getBean(PedidoRepository.class).findById(pedidoId).orElseThrow();
             assertEquals(LocalDateTime.of(2026, 10, 29, 12, 10), pedido.getPrevisaoEntregaInicio());
             assertEquals(LocalDateTime.of(2026, 10, 29, 12, 20), pedido.getPrevisaoEntregaFim());
+            var funcionamento = contexto.getBean(FuncionamentoRestauranteService.class).obterStatus();
+            assertEquals("MANUAL", funcionamento.modo());
+            assertFalse(funcionamento.aberto());
         }
     }
 

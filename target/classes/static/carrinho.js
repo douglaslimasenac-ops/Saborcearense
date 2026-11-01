@@ -9,6 +9,8 @@ let taxaEntregaSelecionada = 0;
 let bairroTextoSelecionado = "";
 let tipoRecebimentoSelecionado = "ENTREGA";
 let carrinho = {};
+let catalogoProdutosCarrinho = [];
+let preparacaoCategoriasCarrinho = Promise.resolve();
 
 const URL_API_BACKEND = window.location.origin;
 
@@ -42,7 +44,8 @@ document.addEventListener("DOMContentLoaded", () => {
     carregarBairrosEntrega();
 
     if (document.getElementById("lista-itens-carrinho")) {
-        carregarItensDaUrlNoCarrinho();
+        preparacaoCategoriasCarrinho = prepararCategoriasCarrinho();
+        preparacaoCategoriasCarrinho.then(carregarItensDaUrlNoCarrinho);
     }
     const campoObservacao = document.getElementById("observacao");
     if (campoObservacao) {
@@ -54,6 +57,45 @@ document.addEventListener("DOMContentLoaded", () => {
         atualizarContador();
     }
 });
+
+async function prepararCategoriasCarrinho() {
+    let dados;
+    try {
+        dados = JSON.parse(localStorage.getItem("carrinhoSaborCearense") || "{}");
+    } catch (erro) {
+        console.error("Não foi possível ler a sacola para identificar as categorias:", erro);
+        alert("Não foi possível ler os itens da sacola. Volte ao cardápio e tente novamente.");
+        return;
+    }
+    const entradas = Array.isArray(dados)
+        ? dados.map(item => [null, item])
+        : dados && typeof dados === "object" && "nome" in dados
+            ? [[null, dados]]
+            : Object.entries(dados || {});
+    if (!entradas.some(([, item]) => item && !item.categoria)) return;
+
+    try {
+        const resposta = await fetch(`${URL_API_BACKEND}/api/cardapio`);
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const produtos = await resposta.json();
+        if (!Array.isArray(produtos)) throw new Error("Cardápio inválido");
+        catalogoProdutosCarrinho = produtos;
+    } catch (erro) {
+        console.error("Não foi possível identificar as categorias dos itens antigos:", erro);
+        alert("Não foi possível identificar as categorias de alguns itens. Eles serão exibidos ao final da lista.");
+        return;
+    }
+    let alterado = false;
+    entradas.forEach(([chave, item]) => {
+        if (!item || item.categoria) return;
+        const categoria = obterCategoriaItem({ ...item, id: item.id ?? chave }, catalogoProdutosCarrinho);
+        if (categoria) {
+            item.categoria = categoria;
+            alterado = true;
+        }
+    });
+    if (alterado) localStorage.setItem("carrinhoSaborCearense", JSON.stringify(dados));
+}
 
 async function carregarBairrosEntrega() {
     const select = document.getElementById("bairro-entrega");
@@ -105,7 +147,7 @@ function carregarDadosDoCarrinho() {
             containerItens.innerHTML = "";
             subtotalProdutos = 0;
 
-            listaPratosGlobal.forEach(item => {
+            ordenarItensPorCategoria(listaPratosGlobal, catalogoProdutosCarrinho).forEach(item => {
                 const divItem = document.createElement("div");
                 divItem.className = "item-resumo";
 
@@ -173,7 +215,7 @@ function carregarItensDaUrlNoCarrinho() {
             containerItens.innerHTML = "";
             let subtotalCalculadoUrl = 0;
 
-            listaItens.forEach(item => {
+            ordenarItensPorCategoria(listaItens, catalogoProdutosCarrinho).forEach(item => {
                 const divItem = document.createElement("div");
                 // Herda perfeitamente a classe do seu layout CSS corporativo
                 divItem.className = "item-resumo";
@@ -277,6 +319,9 @@ function alterarTipoRecebimento(tipo) {
     } else if (bairro && bairro.value) {
         atualizarTaxaEntrega(bairro.value);
     }
+    document.getElementById("informacao-pix").textContent = entrega
+        ? "Pagamento via Pix na entrega."
+        : "Pagamento via Pix na retirada.";
     atualizarResumoFinanceiroTela();
     document.querySelectorAll(".opcao-recebimento").forEach(opcao => {
         const radio = opcao.querySelector("input");
@@ -303,90 +348,22 @@ function atualizarResumoFinanceiroTela() {
     if (campoTaxa) campoTaxa.textContent = formatar(taxa);
     if (campoTotal) campoTotal.textContent = formatar(totalGeral);
     if (campoTotalPagar) campoTotalPagar.textContent = formatar(totalGeral);
-    atualizarPixDinamico(totalGeral);
 }
 
 // ==========================================
-// 💳 INTERAÇÃO E REGRAS PIX
+// 💳 INTERAÇÃO DE PAGAMENTO
 // ==========================================
-const PIX_CHAVE_CNPJ = "59361228000150";
-
-function crc16Pix(texto) {
-    let crc = 0xFFFF;
-    for (let i = 0; i < texto.length; i++) {
-        crc ^= texto.charCodeAt(i) << 8;
-        for (let bit = 0; bit < 8; bit++) {
-            crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1;
-            crc &= 0xFFFF;
-        }
-    }
-    return crc.toString(16).toUpperCase().padStart(4, "0");
+function controlarExibicaoPagamento(opcao) {
+    document.getElementById("container-pix-dinamico").style.display = opcao === "Pix" ? "block" : "none";
+    document.getElementById("container-troco").hidden = opcao !== "Dinheiro";
+    atualizarCampoTroco();
 }
 
-function campoPix(id, valor) {
-    const texto = String(valor);
-    return id + String(texto.length).padStart(2, "0") + texto;
-}
-
-function gerarCodigoPix(valor) {
-    const valorFormatado = Number(valor || 0).toFixed(2);
-    const merchantAccount = campoPix("00", "br.gov.bcb.pix") + campoPix("01", PIX_CHAVE_CNPJ);
-    const payloadSemCrc = [
-        campoPix("00", "01"),
-        campoPix("26", merchantAccount),
-        campoPix("52", "0000"),
-        campoPix("53", "986"),
-        campoPix("54", valorFormatado),
-        campoPix("58", "BR"),
-        campoPix("59", "SABOR CEARENSE"),
-        campoPix("60", "RIO DE JANEIRO"),
-        campoPix("62", campoPix("05", "***"))
-    ].join("") + "6304";
-    return payloadSemCrc + crc16Pix(payloadSemCrc);
-}
-
-function atualizarPixDinamico(valor) {
-    const campoPix = document.getElementById("chave-pix-texto");
-    const valorPix = document.getElementById("pix-valor-gerado");
-    const qrContainer = document.getElementById("pix-qrcode");
-    if (!campoPix || !qrContainer) return;
-
-    const valorNumerico = Number(valor || 0);
-    const payload = gerarCodigoPix(valorNumerico);
-    campoPix.value = payload;
-    if (valorPix) valorPix.textContent = `Valor: R$ ${valorNumerico.toFixed(2).replace(".", ",")}`;
-
-    qrContainer.innerHTML = "";
-    if (typeof QRCode === "undefined") {
-        qrContainer.textContent = "QR Code indisponível. Use o Pix Copia e Cola.";
-        return;
-    }
-    new QRCode(qrContainer, {
-        text: payload,
-        width: 190,
-        height: 190,
-        colorDark: "#29231d",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
-    });
-}
-
-function controlarExibicaoPix(opcao) {
-    const boxPix = document.getElementById("container-pix-dinamico");
-    if (boxPix) {
-        boxPix.style.display = (opcao === "Pix") ? "block" : "none";
-    }
-
-}
-
-function copiarChavePix() {
-    const campoTexto = document.getElementById("chave-pix-texto");
-    if (campoTexto) {
-        campoTexto.select();
-        campoTexto.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(campoTexto.value);
-        alert("🔑 Chave CNPJ copiada com sucesso!");
-    }
+function atualizarCampoTroco() {
+    const ativo = document.getElementById("pagamento").value === "Dinheiro"
+        && document.getElementById("precisa-troco").checked;
+    document.getElementById("campos-troco").hidden = !ativo;
+    document.getElementById("troco-para").required = ativo;
 }
 
 function atualizarEtapaCheckout(etapaAtual) {
@@ -446,6 +423,7 @@ async function enviarPedido(e) {
     if (e && typeof e.preventDefault === "function") {
         e.preventDefault();
     }
+    await preparacaoCategoriasCarrinho;
 
     // 1. Validação de Horário Comercial de Delivery
     const agora = new Date();
@@ -465,7 +443,7 @@ async function enviarPedido(e) {
     // 2. Resgata e valida a Sacola localmente (CORRIGIDO PARA O NOME EXATO)
     // ========================================================
     const carrinhoObjeto = JSON.parse(localStorage.getItem("carrinhoSaborCearense")) || {};
-    const itens = Object.values(carrinhoObjeto);
+    const itens = ordenarItensPorCategoria(Object.values(carrinhoObjeto), catalogoProdutosCarrinho);
 
     if (itens.length === 0) {
         alert("Seu carrinho está vazio!");
@@ -478,7 +456,7 @@ async function enviarPedido(e) {
     const isRetirada = tipoRecebimentoSelecionado === "RETIRADA";
     const bairroTextoPedido = isRetirada
         ? "Retirada no estabelecimento"
-        : (selectBairro.options[selectBairro.selectedIndex]?.text || selectBairro.value);
+        : selectBairro.value.split("|")[0];
     const subtotalDoPedido = itens.reduce((soma, item) => {
         const preco = Number(item.preco || item.valor || 0);
         const quantidade = Number(item.quantidade || item.qtd || 1);
@@ -494,13 +472,14 @@ async function enviarPedido(e) {
     const observacao = document.getElementById("observacao").value.trim();
     const pagamento = document.getElementById("pagamento").value;
 
-    if (pagamento === "Pix") {
-        const confirmouFinalizacao = confirm(
-            "⚠️ Atenção: o pagamento Pix não finaliza o pedido sozinho.\n\n" +
-            "Depois de pagar pelo QR Code, você precisa confirmar agora para registrar o pedido e acompanhar o preparo.\n\n" +
-            "Deseja continuar e finalizar o pedido?"
-        );
-        if (!confirmouFinalizacao) {
+    let trocoPara = null;
+    if (pagamento === "Dinheiro" && document.getElementById("precisa-troco").checked) {
+        const campoTroco = document.getElementById("troco-para");
+        trocoPara = Number(campoTroco.value);
+        if (!campoTroco.value || !campoTroco.checkValidity() || !Number.isFinite(trocoPara)
+                || Math.round(trocoPara * 100) < Math.round(totalComTaxaGeral * 100)) {
+            alert("Informe um valor válido para troco, igual ou maior que o total do pedido.");
+            campoTroco.focus();
             return;
         }
     }
@@ -515,6 +494,7 @@ async function enviarPedido(e) {
         endereco: enderecoCompleto,
         formaPagamento: pagamento,
         valorTotal: Number(totalComTaxaGeral.toFixed(2)),
+        trocoPara,
         itens: JSON.stringify(itens.map(item => ({
             ...item,
             preco: Number(item.preco || item.valor || 0),
@@ -523,7 +503,6 @@ async function enviarPedido(e) {
         observacao,
         status: "RECEBIDO" // Já manda o status padrão esperado pelo @PostMapping
     };
-
     let pedidoIdGerado = "NOVO";
 
         // 6. BUSCA INTELIGENTE E CORREÇÃO DA URL DA API (Evita Erro 404)
@@ -541,13 +520,14 @@ async function enviarPedido(e) {
             console.log("Enviando pedido para o endereço correto:", urlLimpa);
 
             // Faz a chamada e espera obrigatoriamente a resposta física do Render
+            const formulario = new FormData();
+            formulario.append("pedido", new Blob([JSON.stringify(dadosPedido)], { type: "application/json" }));
             const response = await fetch(urlLimpa, {
                 method: "POST",
                 headers: { 
-                    "Content-Type": "application/json",
                     "Accept": "application/json"
                 },
-                body: JSON.stringify(dadosPedido)
+                body: formulario
             });
 
             if (response.ok) {

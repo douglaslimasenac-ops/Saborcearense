@@ -47,6 +47,58 @@ let totalMensagensChatAdmin = 0;
 const chaveValoresFinanceirosOcultos = "valoresFinanceirosOcultosSaborCearense";
 let valoresFinanceirosOcultos = localStorage.getItem(chaveValoresFinanceirosOcultos) === "true";
 const resumosFinanceiros = new Map();
+let funcionamentoAdmin = null;
+
+function mostrarFuncionamentoAdmin(status) {
+    funcionamentoAdmin = status;
+    const texto = document.getElementById("status-funcionamento-admin");
+    const botao = document.getElementById("botao-funcionamento-admin");
+    texto.textContent = `${status.aberto ? "Aberto" : "Fechado"}${status.modo === "AUTOMATICO" ? " (horário automático)" : " (controle manual)"}`;
+    botao.textContent = status.aberto ? "Fechar restaurante" : "Abrir restaurante";
+    botao.className = `btn-status-toggle ${status.aberto ? "inativo" : "ativo"}`;
+    botao.disabled = false;
+}
+
+async function carregarFuncionamentoAdmin() {
+    try {
+        const resposta = await fetch(`${URL_BACKEND}/api/funcionamento`, { cache: "no-store" });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        mostrarFuncionamentoAdmin(await resposta.json());
+    } catch (erro) {
+        console.error("Erro ao consultar funcionamento:", erro);
+        document.getElementById("status-funcionamento-admin").textContent = "Não foi possível consultar o funcionamento. Recarregue a página.";
+        document.getElementById("botao-funcionamento-admin").disabled = true;
+    }
+}
+
+async function alternarFuncionamentoAdmin() {
+    if (!funcionamentoAdmin) return;
+    const botao = document.getElementById("botao-funcionamento-admin");
+    const aberto = !funcionamentoAdmin.aberto;
+    if (!confirm(`${aberto ? "Abrir" : "Fechar"} o restaurante para novos pedidos?`)) return;
+    botao.disabled = true;
+    try {
+        const consulta = await fetch(`${URL_BACKEND}/api/funcionamento`, { cache: "no-store" });
+        if (!consulta.ok) throw new Error(`HTTP ${consulta.status}`);
+        const atual = await consulta.json();
+        if (atual.aberto !== funcionamentoAdmin.aberto || atual.modo !== funcionamentoAdmin.modo) {
+            mostrarFuncionamentoAdmin(atual);
+            alert("O funcionamento mudou. Confira o status atualizado antes de alterar.");
+            return;
+        }
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/funcionamento`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ aberto })
+        });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        mostrarFuncionamentoAdmin(await resposta.json());
+    } catch (erro) {
+        console.error("Erro ao alterar funcionamento:", erro);
+        alert("Não foi possível alterar o funcionamento. Confira o status e tente novamente.");
+        await carregarFuncionamentoAdmin();
+    }
+}
 
 async function fetchAdmin(url, options = {}) {
     const token = localStorage.getItem("adminToken");
@@ -1571,6 +1623,7 @@ async function autenticarAdmin() {
         localStorage.setItem("adminToken", dados.token);
         document.getElementById("container-login-view").style.display = "none";
         document.getElementById("painel-adm-wrapper").style.display = "flex";
+        carregarFuncionamentoAdmin();
         
         if (typeof carregarItensAdmin === "function") carregarItensAdmin();
         if (typeof carregarAcompanhamentosAdmin === "function") carregarAcompanhamentosAdmin();

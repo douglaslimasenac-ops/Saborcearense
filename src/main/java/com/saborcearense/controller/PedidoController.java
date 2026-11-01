@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saborcearense.model.Pedido;
 import com.saborcearense.repository.PedidoRepository;
 import com.saborcearense.repository.ChatMensagemRepository;
+import com.saborcearense.service.FuncionamentoRestauranteService;
 import org.springframework.transaction.annotation.Transactional;
 
 
@@ -51,6 +52,9 @@ public class PedidoController {
 
     @Autowired
     private ChatMensagemRepository chatMensagemRepository;
+
+    @Autowired
+    private FuncionamentoRestauranteService funcionamentoRestauranteService;
 
     @PostConstruct
     void numerarPedidosLegados() {
@@ -100,13 +104,22 @@ public class PedidoController {
    public Pedido receberNovoPedido(
            @Valid @org.springframework.web.bind.annotation.RequestPart("pedido") Pedido novoPedido,
            @org.springframework.web.bind.annotation.RequestPart(value = "comprovante", required = false) MultipartFile comprovante) {
+       verificarFuncionamento();
        anexarComprovante(novoPedido, comprovante);
        return salvarNovoPedido(novoPedido);
    }
 
    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
    public Pedido receberNovoPedidoJson(@Valid @org.springframework.web.bind.annotation.RequestBody Pedido novoPedido) {
+       verificarFuncionamento();
        return salvarNovoPedido(novoPedido);
+   }
+
+   private void verificarFuncionamento() {
+       var status = funcionamentoRestauranteService.obterStatus();
+       if ("MANUAL".equals(status.modo()) && !status.aberto()) {
+           throw new ResponseStatusException(HttpStatus.CONFLICT, "Restaurante fechado no momento");
+       }
    }
 
    private Pedido salvarNovoPedido(Pedido novoPedido) {

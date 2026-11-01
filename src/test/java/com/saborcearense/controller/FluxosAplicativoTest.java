@@ -114,6 +114,35 @@ class FluxosAplicativoTest {
     }
 
     @Test
+    void funcionamentoManualProtegeAlteracaoEBloqueiaNovosPedidos() throws Exception {
+        mvc.perform(get("/api/funcionamento")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.modo").value("AUTOMATICO"));
+        mvc.perform(put("/api/admin/funcionamento").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"aberto\":false}")).andExpect(status().isUnauthorized());
+        String token = login();
+        mvc.perform(put("/api/admin/funcionamento").header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(put("/api/admin/funcionamento").header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"aberto\":false}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.aberto").value(false))
+                .andExpect(jsonPath("$.modo").value("MANUAL"));
+        mvc.perform(get("/api/funcionamento")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.aberto").value(false));
+        mvc.perform(post("/api/pedidos").contentType(MediaType.APPLICATION_JSON).content(PEDIDO))
+                .andExpect(status().isConflict());
+        mvc.perform(multipart("/api/pedidos").file(dadosPedido()))
+                .andExpect(status().isConflict());
+        mvc.perform(put("/api/admin/funcionamento").header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"aberto\":true}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.aberto").value(true));
+        mvc.perform(post("/api/pedidos").contentType(MediaType.APPLICATION_JSON).content(PEDIDO))
+                .andExpect(status().isOk());
+        mvc.perform(multipart("/api/pedidos").file(dadosPedido()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void administrarBairrosEPratos() throws Exception {
         String token = login();
         String bairro = mvc.perform(post("/api/admin/bairros").header("Authorization", token)

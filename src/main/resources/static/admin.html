@@ -664,6 +664,18 @@
             justify-content: flex-end;
             margin-bottom: 10px;
         }
+        .controle-funcionamento {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            border: 1px solid #eadbc5;
+            border-radius: 14px;
+            background: #fffaf1;
+        }
         .resumo-card {
             padding: 16px;
             border: 1px solid #eadbc5;
@@ -810,6 +822,13 @@
         </aside>
 
         <main id="conteudo-painel">
+            <div class="controle-funcionamento">
+                <div>
+                    <strong>Funcionamento do restaurante</strong>
+                    <div id="status-funcionamento-admin" aria-live="polite">Carregando status...</div>
+                </div>
+                <button id="botao-funcionamento-admin" class="btn-status-toggle" type="button" onclick="alternarFuncionamentoAdmin()" disabled>Carregando...</button>
+            </div>
             <!-- ABA 1: PEDIDOS EM ANDAMENTO -->
             <section id="sec-ativos" class="section-view active">
                 <div class="admin-header">
@@ -1047,7 +1066,7 @@
     </div>
     
    <script src="ordenar-itens.js"></script>
-   <script src="admin.js?v=7"></script>
+   <script src="admin.js?v=8"></script>
 
 </body>
 </html>

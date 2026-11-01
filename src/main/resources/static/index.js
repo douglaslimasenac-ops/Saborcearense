@@ -2,7 +2,7 @@
         let carrinho = {}
         let catalogoProdutos = [];
         let dadosSacola = carrinho; 
-        let estabelecimentoAberto = true;
+        let estabelecimentoAberto = false;
         let rastreioTimerAutomatizado = null;
 
         async function compartilharSite() {
@@ -41,6 +41,7 @@
         document.addEventListener("DOMContentLoaded", () => {
             carregarCardapio();
             verificarHorarioFuncionamento();
+            setInterval(verificarHorarioFuncionamento, 30000);
         });
         const DIAS_SEMANA = ["DOMINGO", "SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO"];
         async function carregarCardapio() {
@@ -295,48 +296,41 @@
             window.location.href = `acompanhar.html?numero=${encodeURIComponent(pedidoId)}`;
         }
 
-        function verificarHorarioFuncionamento() {
-            const agora = new Date();
-            const diaSemana = agora.getDay(); 
-            const hora = agora.getHours();
-            const minuto = agora.getMinutes();
-            
-            const minutosAtuais = (hora * 60) + minuto;
-            const aberturaMinutos = 8 * 60;
-            const fechamentoMinutos = (15 * 60) + 0;  
-
+        async function verificarHorarioFuncionamento() {
             const statusLoja = document.getElementById("status-loja");
-            const isAdmin = Boolean(localStorage.getItem("adminToken"));
-
-            if (diaSemana === 0 || minutosAtuais < aberturaMinutos || minutosAtuais > fechamentoMinutos) {
-                if (isAdmin) {
-                    estabelecimentoAberto = true;
-                    if(statusLoja) statusLoja.innerHTML = `<span class="status-dot status-aberto"></span> ABERTO AGORA <small style="color: #f5a623; margin-left: 5px; font-weight: bold;">(Modo Admin Ativo)</small>`;
-                    return;
+            try {
+                const resposta = await fetch(URL_BACKEND + "/api/funcionamento", { cache: "no-store" });
+                if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+                const status = await resposta.json();
+                const modoAdmin = status.modo === "AUTOMATICO" && Boolean(localStorage.getItem("adminToken"));
+                estabelecimentoAberto = status.aberto || modoAdmin;
+                if (statusLoja) {
+                    statusLoja.innerHTML = estabelecimentoAberto
+                        ? `<span class="status-dot status-aberto"></span> ABERTO AGORA${modoAdmin && !status.aberto ? ' <small style="color: #f5a623; margin-left: 5px; font-weight: bold;">(Modo Admin Ativo)</small>' : ""}`
+                        : '<span class="status-dot status-fechado"></span> FECHADO NO MOMENTO';
                 }
+                atualizarBloqueioFuncionamento();
+            } catch (erro) {
+                console.error("Erro ao consultar funcionamento:", erro);
                 estabelecimentoAberto = false;
-                if(statusLoja) statusLoja.innerHTML = `<span class="status-dot status-fechado"></span> FECHADO NO MOMENTO`;
-                aplicarBloqueioInterfaceFechado();
-            } else {
-                estabelecimentoAberto = true;
-                if(statusLoja) statusLoja.innerHTML = `<span class="status-dot status-aberto"></span> ABERTO AGORA`;
+                if (statusLoja) statusLoja.textContent = "Não foi possível consultar o funcionamento. Tentaremos novamente.";
+                atualizarBloqueioFuncionamento();
             }
         }
 
         function aplicarBloqueioInterfaceFechado() {
+            atualizarBloqueioFuncionamento();
+        }
+
+        function atualizarBloqueioFuncionamento() {
             document.querySelectorAll(".btn-qtd").forEach(btn => {
-                btn.disabled = true;
-                btn.style.cursor = "not-allowed";
-                btn.style.opacity = "0.3";
+                btn.disabled = !estabelecimentoAberto;
+                btn.style.cursor = estabelecimentoAberto ? "" : "not-allowed";
+                btn.style.opacity = estabelecimentoAberto ? "" : "0.3";
             });
-            const btnAvancar = document.getElementById("botao-avancar-checkout");
-            if(btnAvancar) {
-                btnAvancar.disabled = true;
-                btnAvancar.style.setProperty("background-color", "#94a3b8", "important");
-                btnAvancar.style.setProperty("color", "#ffffff", "important");
-                btnAvancar.style.cursor = "not-allowed";
-                btnAvancar.innerText = "Fechado no Momento 🔒";
-            }
+            document.querySelectorAll(".cart-bar-avancar, .sacola-finalizar").forEach(btn => {
+                btn.disabled = !estabelecimentoAberto;
+            });
         }
         
     function irParaCheckout() {

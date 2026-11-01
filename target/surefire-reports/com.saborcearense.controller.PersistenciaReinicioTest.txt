@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.saborcearense.controller.PersistenciaReinicioTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.55 s -- in com.saborcearense.controller.PersistenciaReinicioTest
