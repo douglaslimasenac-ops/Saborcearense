@@ -81,6 +81,13 @@ test("comanda de entrega imprime endereço na mesma linha e mantém bairro e ref
     assert.match(endereco.innerHTML, /Referência:<\/span> Mercado/);
 });
 
+test("comanda identifica o cliente com dois-pontos", () => {
+    const blocos = imprimirPedido({ endereco: "Rua A", clienteNome: "Maria" });
+    const cliente = blocos.find(elemento => (elemento.innerHTML || "").includes("Cliente:"));
+    assert.match(cliente.innerHTML, /Cliente:<\/div>/);
+    assert.match(cliente.innerHTML, /MARIA/);
+});
+
 test("comanda de retirada mantém identificação do local", () => {
     const blocos = imprimirPedido({ endereco: "RETIRADA NO ESTABELECIMENTO" });
     const endereco = blocos.find(elemento => (elemento.innerHTML || "").includes("Local de Retirada"));

@@ -115,7 +115,8 @@ class FluxosAplicativoTest {
         mvc.perform(get("/api/cardapio")).andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(greaterThan(0))));
         mvc.perform(get("/api/bairros")).andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(greaterThan(0))));
+                .andExpect(jsonPath("$", hasSize(greaterThan(0))))
+                .andExpect(jsonPath("$[?(@.nome == 'Vila Isabel' && @.taxa == 6.00)]", hasSize(1)));
         mvc.perform(get("/api/acompanhamentos")).andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(greaterThan(0))));
         mvc.perform(get("/api/admin/pratos").header("Authorization", login()))

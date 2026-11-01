@@ -1762,7 +1762,7 @@ function imprimirCupomIFood(pedido) {
 
     var elDadosCliente = janelaImpressao.document.createElement("div");
     elDadosCliente.className = "bloco-conteudo";
-    elDadosCliente.innerHTML = "<div class='secao-titulo'>Cliente</div><div class='negrito' style='font-size: 14px;'>" + nomeClienteFinal + "</div><div>Telefone: " + telefoneFinal + "</div>";
+    elDadosCliente.innerHTML = "<div class='secao-titulo'>Cliente:</div><div class='negrito' style='font-size: 14px;'>" + nomeClienteFinal + "</div><div>Telefone: " + telefoneFinal + "</div>";
     containerPrincipal.appendChild(elDadosCliente);
     
     var divDivisora2 = janelaImpressao.document.createElement("div");

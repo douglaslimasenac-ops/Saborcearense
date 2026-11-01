@@ -100,7 +100,7 @@ class PersistenciaReinicioTest {
                 Map.entry("Sampaio", "3.00"), Map.entry("Lins de Vasconcelos", "3.00"),
                 Map.entry("Jacaré", "5.00"), Map.entry("Mangueira", "6.00"),
                 Map.entry("Rocha", "4.00"), Map.entry("Cachambi", "5.00"),
-                Map.entry("Maracanã", "6.00"), Map.entry("Vila Isabel", "3.00"));
+                Map.entry("Maracanã", "6.00"), Map.entry("Vila Isabel", "6.00"));
         long meierId;
         try (ConfigurableApplicationContext contexto = iniciar(url)) {
             BairroEntregaRepository bairros = contexto.getBean(BairroEntregaRepository.class);
@@ -118,6 +118,7 @@ class PersistenciaReinicioTest {
             bairros.save(new BairroEntrega("Bairro preservado", new BigDecimal("8.50")));
             contexto.getBean(InicializacaoDadosRepository.class).deleteById("bairros-lista-20261029");
         }
+
         try (ConfigurableApplicationContext contexto = iniciar(url)) {
             BairroEntregaRepository bairros = contexto.getBean(BairroEntregaRepository.class);
             assertEquals(17, bairros.count());
@@ -138,6 +139,58 @@ class PersistenciaReinicioTest {
             assertEquals(0, bairros.findByNomeIgnoreCase("Andaraí").orElseThrow()
                     .getTaxa().compareTo(new BigDecimal("12.00")));
             assertFalse(bairros.findByNomeIgnoreCase("Sampaio").isPresent());
+        }
+    }
+
+    @Test
+    void taxaDeVilaIsabelAtualizaCadastroExistenteUmaVez() {
+        String url = "jdbc:h2:file:" + diretorio.resolve("vila-isabel").toAbsolutePath() + ";MODE=PostgreSQL";
+        long id;
+        try (ConfigurableApplicationContext contexto = iniciar(url)) {
+            BairroEntregaRepository bairros = contexto.getBean(BairroEntregaRepository.class);
+            BairroEntrega vila = bairros.findByNomeIgnoreCase("Vila Isabel").orElseThrow();
+            assertEquals(0, vila.getTaxa().compareTo(new BigDecimal("6.00")));
+            vila.setTaxa(new BigDecimal("3.00"));
+            id = bairros.save(vila).getId();
+            BairroEntrega tijuca = bairros.findByNomeIgnoreCase("Tijuca").orElseThrow();
+            tijuca.setTaxa(new BigDecimal("9.00"));
+            bairros.save(tijuca);
+            contexto.getBean(InicializacaoDadosRepository.class).deleteById("bairros-vila-isabel-6-reais");
+        }
+        try (ConfigurableApplicationContext contexto = iniciar(url)) {
+            BairroEntregaRepository bairros = contexto.getBean(BairroEntregaRepository.class);
+            BairroEntrega vila = bairros.findByNomeIgnoreCase("Vila Isabel").orElseThrow();
+            assertEquals(id, vila.getId());
+            assertEquals(0, vila.getTaxa().compareTo(new BigDecimal("6.00")));
+            assertEquals(0, bairros.findByNomeIgnoreCase("Tijuca").orElseThrow()
+                    .getTaxa().compareTo(new BigDecimal("9.00")));
+            vila.setTaxa(new BigDecimal("8.00"));
+            bairros.save(vila);
+        }
+        try (ConfigurableApplicationContext contexto = iniciar(url)) {
+            BairroEntregaRepository bairros = contexto.getBean(BairroEntregaRepository.class);
+            BairroEntrega vila = bairros.findByNomeIgnoreCase("Vila Isabel").orElseThrow();
+            assertEquals(0, vila.getTaxa().compareTo(new BigDecimal("8.00")));
+            bairros.delete(vila);
+        }
+        try (ConfigurableApplicationContext contexto = iniciar(url)) {
+            assertFalse(contexto.getBean(BairroEntregaRepository.class)
+                    .findByNomeIgnoreCase("Vila Isabel").isPresent());
+        }
+    }
+
+    @Test
+    void migracaoCadastraVilaIsabelQuandoAindaNaoExiste() {
+        String url = "jdbc:h2:file:" + diretorio.resolve("vila-ausente").toAbsolutePath() + ";MODE=PostgreSQL";
+        try (ConfigurableApplicationContext contexto = iniciar(url)) {
+            BairroEntregaRepository bairros = contexto.getBean(BairroEntregaRepository.class);
+            bairros.delete(bairros.findByNomeIgnoreCase("Vila Isabel").orElseThrow());
+            contexto.getBean(InicializacaoDadosRepository.class).deleteById("bairros-vila-isabel-6-reais");
+        }
+        try (ConfigurableApplicationContext contexto = iniciar(url)) {
+            var vila = contexto.getBean(BairroEntregaRepository.class)
+                    .findByNomeIgnoreCase("Vila Isabel").orElseThrow();
+            assertEquals(0, vila.getTaxa().compareTo(new BigDecimal("6.00")));
         }
     }
 
