@@ -38,13 +38,17 @@ function imprimirPedido(pedido) {
     };
     vm.runInNewContext(codigoImpressao, contexto);
     contexto.imprimirCupomIFood(pedido);
-    return body.children[0].children.find(elemento =>
+    return body.children[0].children;
+}
+
+function previsaoPedido(pedido) {
+    return imprimirPedido(pedido).find(elemento =>
         elemento.children.some(filho => filho.textContent === "Previsão de entrega")
     );
 }
 
 test("comanda de entrega exibe somente os horários abaixo do título", () => {
-    const previsao = imprimirPedido({
+    const previsao = previsaoPedido({
         endereco: "Rua A",
         previsaoEntregaInicio: "2026-10-29T12:10:00",
         previsaoEntregaFim: "2026-10-29T12:20:00"
@@ -55,15 +59,31 @@ test("comanda de entrega exibe somente os horários abaixo do título", () => {
 });
 
 test("comanda mantém horários de dias diferentes e sinaliza previsão ausente", () => {
-    const previsao = imprimirPedido({
+    const previsao = previsaoPedido({
         endereco: "Rua A",
         previsaoEntregaInicio: "2026-10-29T23:55:00",
         previsaoEntregaFim: "2026-10-30T00:05:00"
     });
     assert.equal(previsao.children[1].textContent, "23:55 às 00:05");
-    assert.equal(imprimirPedido({ endereco: "Rua A" }).children[1].textContent, "Não disponível");
+    assert.equal(previsaoPedido({ endereco: "Rua A" }).children[1].textContent, "Não disponível");
 });
 
 test("comanda de retirada não exibe previsão de entrega", () => {
-    assert.equal(imprimirPedido({ endereco: "RETIRADA NO ESTABELECIMENTO" }), undefined);
+    assert.equal(previsaoPedido({ endereco: "RETIRADA NO ESTABELECIMENTO" }), undefined);
+});
+
+test("comanda de entrega imprime endereço na mesma linha e mantém bairro e referência", () => {
+    const blocos = imprimirPedido({ endereco: "Rua das Flores, 123, Bairro: Tijuca (Ref: Mercado)" });
+    const endereco = blocos.find(elemento => (elemento.innerHTML || "").includes("Endereço:"));
+    assert.match(endereco.innerHTML, /Endereço:<\/span> Rua das Flores/);
+    assert.match(endereco.innerHTML, /<div>123<\/div>/);
+    assert.match(endereco.innerHTML, /<div>Bairro: Tijuca<\/div>/);
+    assert.match(endereco.innerHTML, /Referência:<\/span> Mercado/);
+});
+
+test("comanda de retirada mantém identificação do local", () => {
+    const blocos = imprimirPedido({ endereco: "RETIRADA NO ESTABELECIMENTO" });
+    const endereco = blocos.find(elemento => (elemento.innerHTML || "").includes("Local de Retirada"));
+    assert.match(endereco.innerHTML, /RETIRADA NO ESTABELECIMENTO/);
+    assert.doesNotMatch(endereco.innerHTML, /Endereço:/);
 });

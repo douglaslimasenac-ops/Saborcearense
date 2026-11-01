@@ -1771,9 +1771,10 @@ function imprimirCupomIFood(pedido) {
 
     var elEnderecoBloco = janelaImpressao.document.createElement("div");
     elEnderecoBloco.className = "bloco-conteudo";
-    var tituloEndereco = tipoServico === "RETIRADA" ? "Local de Retirada" : "Endereço de Entrega";
     var linhasEndereco = tipoServico === "RETIRADA" ? [enderecoBruto] : enderecoBruto.split(/,|\r?\n/).map(linha => linha.trim()).filter(Boolean);
-    elEnderecoBloco.innerHTML = "<div class='secao-titulo'>" + tituloEndereco + "</div>" + linhasEndereco.map(linha => "<div>" + escaparHtml(linha) + "</div>").join("") + (tipoServico === "RETIRADA" ? "" : "<div style='margin-top: 4px;'><span class='negrito'>Referência:</span> " + escaparHtml(referenciaFinal) + "</div>");
+    elEnderecoBloco.innerHTML = tipoServico === "RETIRADA"
+        ? "<div class='secao-titulo'>Local de Retirada</div><div>" + escaparHtml(enderecoBruto) + "</div>"
+        : linhasEndereco.map((linha, indice) => "<div>" + (indice === 0 ? "<span class='negrito'>Endereço:</span> " : "") + escaparHtml(linha) + "</div>").join("") + "<div style='margin-top: 4px;'><span class='negrito'>Referência:</span> " + escaparHtml(referenciaFinal) + "</div>";
     containerPrincipal.appendChild(elEnderecoBloco);
     
     var divDivisora3 = janelaImpressao.document.createElement("div");

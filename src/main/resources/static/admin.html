@@ -664,11 +664,6 @@
             justify-content: flex-end;
             margin-bottom: 10px;
         }
-        .controle-funcionamento {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 10px;
-        }
         #botao-funcionamento-admin {
             padding: 6px 12px;
             border-radius: 999px;
@@ -820,13 +815,11 @@
         </aside>
 
         <main id="conteudo-painel">
-            <div class="controle-funcionamento">
-                <button id="botao-funcionamento-admin" class="btn-status-toggle" type="button" onclick="alternarFuncionamentoAdmin()" aria-live="polite" aria-label="Carregando funcionamento do restaurante" disabled>Carregando...</button>
-            </div>
             <!-- ABA 1: PEDIDOS EM ANDAMENTO -->
             <section id="sec-ativos" class="section-view active">
                 <div class="admin-header">
                     <h2>🛵 Pedidos em Andamento (Tempo Real)</h2>
+                    <button id="botao-funcionamento-admin" class="btn-status-toggle" type="button" onclick="alternarFuncionamentoAdmin()" aria-live="polite" aria-label="Carregando funcionamento do restaurante" disabled>Carregando...</button>
                 </div>
                 <div class="controle-valores-financeiros">
                     <button class="btn-status-toggle ativo botao-valores-financeiros" type="button" onclick="alternarValoresFinanceiros()" aria-pressed="false">Ocultar valores</button>
@@ -1060,7 +1053,7 @@
     </div>
     
    <script src="ordenar-itens.js"></script>
-   <script src="admin.js?v=10"></script>
+   <script src="admin.js?v=11"></script>
 
 </body>
 </html>

@@ -8,6 +8,15 @@ function ler(nome) {
     return fs.readFileSync(path.join(__dirname, "../../main/resources/static", nome), "utf8");
 }
 
+test("controle de funcionamento aparece somente na aba de pedidos em andamento", () => {
+    const html = ler("admin.html");
+    const secoes = [...html.matchAll(/<section\b[^>]*id="([^"]+)"[^>]*>[\s\S]*?<\/section>/g)];
+    const secoesComBotao = secoes.filter(secao => secao[0].includes('id="botao-funcionamento-admin"'));
+    assert.equal(secoesComBotao.length, 1);
+    assert.equal(secoesComBotao[0][1], "sec-ativos");
+    assert.equal((html.match(/id="botao-funcionamento-admin"/g) || []).length, 1);
+});
+
 test("cardápio bloqueia e libera os controles conforme o funcionamento manual", async () => {
     const codigo = ler("index.js");
     const trecho = codigo.slice(codigo.indexOf("async function verificarHorarioFuncionamento()"),
