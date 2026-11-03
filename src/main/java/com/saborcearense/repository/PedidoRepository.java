@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     boolean existsByNumeroPedido(Long numeroPedido);
 
+    @Transactional(readOnly = true)
     java.util.Optional<Pedido> findByNumeroPedido(Long numeroPedido);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -25,10 +26,13 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Pedido p where p.numeroPedido = :numero")
     java.util.Optional<Pedido> findByNumeroPedidoForUpdate(@Param("numero") Long numero);
+    @Transactional(readOnly = true)
     List<Pedido> findByStatusNotIgnoreCase(String status);
 
+    @Transactional(readOnly = true)
     List<Pedido> findByStatusNotIn(java.util.Collection<String> statuses);
 
+    @Transactional(readOnly = true)
     List<Pedido> findByTelefone(String telefone);
 
     @Modifying
