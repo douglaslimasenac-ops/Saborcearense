@@ -4,6 +4,9 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -21,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,9 +32,12 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.saborcearense.config.WebSocketConfig;
 import com.saborcearense.repository.FuncionamentoRestauranteRepository;
 import com.saborcearense.service.FuncionamentoRestauranteService;
 import com.saborcearense.model.FuncionamentoRestaurante;
@@ -67,6 +74,37 @@ class FluxosAplicativoTest {
     private MockMultipartFile dadosPedido() {
         return new MockMultipartFile("pedido", "", "application/json",
                 PEDIDO.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void novoPedidoEhEnviadoAoPainelEmTempoReal() throws Exception {
+        WebSocketSession sessao = mock(WebSocketSession.class);
+        when(sessao.isOpen()).thenReturn(true);
+        WebSocketConfig.getSessoes().add(sessao);
+        try {
+            String dados = PEDIDO.replace("\"endereco\":\"RETIRADA\"",
+                    "\"endereco\":\"Rua Teste, 123, Bairro: Tijuca\"");
+            MockMultipartFile partePedido = new MockMultipartFile("pedido", "", "application/json",
+                    dados.getBytes(StandardCharsets.UTF_8));
+            String resposta = mvc.perform(multipart("/api/pedidos").file(partePedido))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+            JsonNode pedido = mapper.readTree(resposta);
+
+            ArgumentCaptor<TextMessage> mensagem = ArgumentCaptor.forClass(TextMessage.class);
+            verify(sessao).sendMessage(mensagem.capture());
+            JsonNode notificacao = mapper.readTree(mensagem.getValue().getPayload());
+            assertEquals(pedido, notificacao);
+            assertEquals("RECEBIDO", notificacao.get("status").asText());
+            LocalDateTime.parse(notificacao.get("dataCriacao").asText());
+            LocalDateTime.parse(notificacao.get("previsaoEntregaInicio").asText());
+            LocalDateTime.parse(notificacao.get("previsaoEntregaFim").asText());
+            mvc.perform(get("/api/pedidos/ativos").header("Authorization", login()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[?(@.id == " + pedido.get("id").asLong() + ")]", hasSize(1)));
+        } finally {
+            WebSocketConfig.getSessoes().remove(sessao);
+        }
     }
 
     @Test

@@ -56,6 +56,9 @@ public class PedidoController {
     @Autowired
     private FuncionamentoRestauranteService funcionamentoRestauranteService;
 
+    @Autowired
+    private ObjectMapper mapper;
+
     @PostConstruct
     void numerarPedidosLegados() {
         pedidoRepository.findAll().stream()
@@ -144,7 +147,6 @@ public class PedidoController {
 
         // 👇 TRANSMITE O PEDIDO SALVO VIA WEBSOCKET EM TEMPO REAL
         try {
-            ObjectMapper mapper = new ObjectMapper();
             // Converte o objeto Pedido completo para uma String JSON
             String pedidoJson = mapper.writeValueAsString(pedidoSalvo); 
             TextMessage message = new TextMessage(pedidoJson);
