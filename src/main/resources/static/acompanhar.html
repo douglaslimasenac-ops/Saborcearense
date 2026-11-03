@@ -204,7 +204,7 @@
             <button onclick="buscarNovoPedido()">Buscar</button>
         </div>
 
-        <div class="pedido-id" id="area-id">Pedido #<span id="txt-pedido-id">...</span></div>
+        <div class="pedido-id" id="area-id">Pedido <span id="txt-pedido-id">...</span></div>
         
         <div class="linha-tempo">
             <div id="passo-RECEBIDO" class="passo">
@@ -278,17 +278,16 @@
     let numeroDaUrl = urlParams.get('numero') || urlParams.get('id');
 
     let pedidoId = numeroDaUrl || localStorage.getItem("ultimoPedidoIdSaborCearense");
+    let buscaPorIdLegado = Boolean(urlParams.get('id') && !urlParams.get('numero'));
     let timerAtualizacao = null;
     let ultimaConsultaStatus = 0;
+    let versaoLinhaTempo = 0;
     let catalogoCategoriasAcompanhamento = [];
     let carregamentoCategoriasAcompanhamento = null;
     let ultimoPedidoResumo = null;
 
     document.addEventListener("DOMContentLoaded", () => {
         if (pedidoId) {
-            // Sincroniza o ID no localStorage para persistência
-            localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoId);
-            
             if (document.getElementById("txt-pedido-id")) {
                 document.getElementById("txt-pedido-id").innerText = `#${pedidoId}`;
             }
@@ -319,19 +318,21 @@
         if (!inputElement) return;
 
         const inputVal = inputElement.value.trim();
-        if (!inputVal) {
+        const novoPedidoId = inputVal.replace(/^#/, '').trim();
+        if (!/^\d+$/.test(novoPedidoId)) {
             alert("Por favor, digite um número de pedido válido.");
             return;
         }
         
-        // Salva a nova pesquisa
-        const novoPedidoId = inputVal.replace('#', '').trim();
-        if (novoPedidoId !== String(pedidoId)) {
+        if (novoPedidoId !== String(pedidoId) || buscaPorIdLegado) {
             alternarChatPedido(false);
             document.getElementById("mensagem-chat-pedido").value = "";
+            ultimoPedidoResumo = null;
+            limparLinhaTempo();
         }
+        ++ultimaConsultaStatus;
         pedidoId = novoPedidoId;
-        localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoId);
+        buscaPorIdLegado = false;
         
         if (document.getElementById("txt-pedido-id")) {
             document.getElementById("txt-pedido-id").innerText = `#${pedidoId}`;
@@ -356,17 +357,29 @@
         try {
             const idLimpo = pedidoId.toString().replace('#', '').trim();
             
-            const caminhoBusca = urlParams.get('id') && !urlParams.get('numero')
+            const caminhoBusca = buscaPorIdLegado
                 ? `/api/pedidos/${idLimpo}`
                 : `/api/pedidos/numero/${idLimpo}`;
-            const res = await fetch(`${URL_BACKEND}${caminhoBusca}`);
+            const res = await fetch(`${URL_BACKEND}${caminhoBusca}`, { cache: "no-store" });
             if (consulta !== ultimaConsultaStatus) return;
             if (res.ok) {
                 const pedido = await res.json();
                 if (consulta !== ultimaConsultaStatus) return;
+                if (buscaPorIdLegado && pedido.numeroPedido != null) {
+                    pedidoId = String(pedido.numeroPedido);
+                    buscaPorIdLegado = false;
+                    document.getElementById("input-busca-id").value = pedidoId;
+                }
+                localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoId);
+                if (!buscaPorIdLegado) {
+                    const endereco = new URL(window.location.href);
+                    endereco.searchParams.delete("id");
+                    endereco.searchParams.set("numero", pedidoId);
+                    window.history.replaceState(null, "", endereco);
+                }
                 
                 if (document.getElementById("txt-pedido-id")) {
-                    document.getElementById("txt-pedido-id").innerText = `#${idLimpo}`;
+                    document.getElementById("txt-pedido-id").innerText = `#${pedidoId}`;
                 }
 
                 // Atualiza a interface visual conforme entrega ou retirada
@@ -387,11 +400,20 @@
                     elementoStatus.innerText = "Pedido não localizado no sistema.";
                 }
                 limparLinhaTempo();
-                atualizarEstadoConexao(false);
+                ultimoPedidoResumo = null;
+                document.getElementById("txt-status-detalhe").innerText = "Confira o número e tente novamente.";
+                atualizarEstadoConexao(false, "Pedido não encontrado.");
+            } else {
+                throw new Error(`HTTP ${res.status}`);
             }
         } catch (e) { 
             console.error("Erro ao buscar status:", e); 
-            if (consulta === ultimaConsultaStatus) atualizarEstadoConexao(false);
+            if (consulta === ultimaConsultaStatus) {
+                if (!ultimoPedidoResumo) {
+                    document.getElementById("txt-status-nome").innerText = "Não foi possível consultar o pedido.";
+                }
+                atualizarEstadoConexao(false);
+            }
         } finally {
             if (mostrarCarregando && botao) {
                 botao.disabled = false;
@@ -400,11 +422,11 @@
         }
     }
 
-    function atualizarEstadoConexao(online) {
+    function atualizarEstadoConexao(online, mensagem) {
         const estado = document.getElementById("estado-conexao");
         if (!estado) return;
         estado.classList.toggle("offline", !online);
-        estado.textContent = online ? "Monitoramento automático ativo" : "Sem conexão — tentando novamente";
+        estado.textContent = mensagem || (online ? "Monitoramento automático ativo" : "Não foi possível atualizar — tentando novamente");
     }
 
     function renderizarResumoPedido(pedido) {
@@ -640,6 +662,7 @@
 })();
 
 function atualizarInterfaceLinhaTempo(statusOriginal, ehRetirada) {
+    const versao = ++versaoLinhaTempo;
     const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
     const passoEntrega = document.querySelector("#passo-ENTREGA .legenda");
     const passoFinal = document.querySelector("#passo-ENTREGUE .legenda");
@@ -733,6 +756,7 @@ function atualizarInterfaceLinhaTempo(statusOriginal, ehRetirada) {
 
         // 3. Aplica as animações e cores com efeito cascata profissional
         setTimeout(() => {
+            if (versao !== versaoLinhaTempo) return;
             if (idx < indexAtual) {
                 // ETAPA CONCLUÍDA: Transforma a bolinha em Verde iFood/Mercado Livre
                 elemento.classList.add("concluido", "completed");
@@ -766,6 +790,7 @@ function atualizarInterfaceLinhaTempo(statusOriginal, ehRetirada) {
 }
 
 function limparLinhaTempo() {
+    ++versaoLinhaTempo;
     const ordens = ["RECEBIDO", "PREPARO", "ENTREGA", "ENTREGUE"];
     ordens.forEach(st => {
         const elemento = document.getElementById("passo-" + st) || 

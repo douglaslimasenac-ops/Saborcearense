@@ -815,6 +815,10 @@
         </aside>
 
         <main id="conteudo-painel">
+            <div id="aviso-novo-pedido" role="status" hidden style="margin-bottom: 20px; padding: 14px; background: #ecfdf5; border: 1px solid #86efac; border-radius: 10px;">
+                <strong id="texto-aviso-novo-pedido"></strong>
+                <button type="button" class="btn-status-toggle ativo" onclick="verNovosPedidos()">Ver pedidos</button>
+            </div>
             <!-- ABA 1: PEDIDOS EM ANDAMENTO -->
             <section id="sec-ativos" class="section-view active">
                 <div class="admin-header">
@@ -831,6 +835,8 @@
                            aria-label="Buscar pedidos em andamento">
                     <button type="button" class="btn-limpar-busca-ativos" onclick="limparBuscaAtivos()" aria-label="Limpar busca">×</button>
                 </div>
+                <p id="aviso-filtro-pedidos" role="status" hidden></p>
+                <p id="erro-pedidos-ativos" role="alert" hidden></p>
                 
                 <!-- CONTAINER INTEGRADO PARA CARDS DO WEBSOCKET -->
                 <div id="container-novos-pedidos" style="margin-bottom: 20px; display: none;">
@@ -1053,7 +1059,7 @@
     </div>
     
    <script src="ordenar-itens.js"></script>
-   <script src="admin.js?v=12"></script>
+   <script src="admin.js?v=13"></script>
 
 </body>
 </html>

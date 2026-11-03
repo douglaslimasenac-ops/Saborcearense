@@ -20,6 +20,8 @@ const dicionarioCategorias = {
 
 let listaPratosLocal = [];
 let carregandoPedidosAtivos = false;
+let atualizacaoPedidosPendente = false;
+let versaoPedidosRecebidos = 0;
 let socketAdmin = null;
 let pingTimerAdmin = null;
 let pedidosTimerAdmin = null;
@@ -432,7 +434,10 @@ async function carregarItensAdmin() {
         
         listaPratosLocal = itens;
         renderizarItensAdmin();
-        if (pedidosAtivosLocal.length) renderizarAtivosFiltrados();
+        if (pedidosAtivosLocal.length) {
+            ultimoSnapshotPedidosAtivos = null;
+            renderizarAtivosFiltrados();
+        }
         if (pedidosHistoricoLocal.length) renderizarHistoricoFiltrado();
     } catch(e) { container.innerHTML = `<p style="text-align: center; color: var(--danger);">Erro ao carregar o cardápio.</p>`; }
 }
@@ -676,6 +681,21 @@ function inicializarControlePedidos() {
     carregarChatsAdmin();
 }
 
+function avisarNovoPedido(pedido) {
+    const aviso = document.getElementById("aviso-novo-pedido");
+    const texto = document.getElementById("texto-aviso-novo-pedido");
+    if (!aviso || !texto) return;
+    texto.textContent = `Novo pedido #${numeroExibicaoPedido(pedido)} recebido. `;
+    aviso.hidden = false;
+}
+
+function verNovosPedidos() {
+    const aviso = document.getElementById("aviso-novo-pedido");
+    if (aviso) aviso.hidden = true;
+    limparBuscaAtivos();
+    alternarAbasAdmin("ativos");
+}
+
 function conectarWebSocketAdmin() {
     if (socketAdmin && socketAdmin.readyState === WebSocket.OPEN) return;
 
@@ -698,14 +718,23 @@ function conectarWebSocketAdmin() {
                 return;
             }
             
-            carregarPedidosAtivos();
             if (dados.tipo === "CHAT_MENSAGEM" || dados.tipo === "CHAT_ENCERRADO") {
                 carregarChatsAdmin();
             }
             if (dados.status === "RECEBIDO" && dados.clienteNome && dados.id) {
-                idsPedidosAlertados.add(dados.id);
-                tocarSomNovoPedido();
+                if (!idsPedidosAlertados.has(dados.id)) {
+                    idsPedidosAlertados.add(dados.id);
+                    tocarSomNovoPedido();
+                    avisarNovoPedido(dados);
+                }
+                if (!pedidosFinalizadosLocal.has(String(dados.id))
+                        && !pedidosAtivosLocal.some(pedido => pedido.id === dados.id)) {
+                    pedidosAtivosLocal = [...pedidosAtivosLocal, dados];
+                    versaoPedidosRecebidos++;
+                    renderizarAtivosFiltrados();
+                }
             }
+            carregarPedidosAtivos();
 
         };
         
@@ -1076,9 +1105,7 @@ function alternarValoresFinanceiros() {
 }
 
 function serializarPedidos(pedidos) {
-    return (pedidos || [])
-        .map(pedido => `${numeroExibicaoPedido(pedido)}|${pedido.status}|${Number(pedido.valorTotal ?? pedido.total ?? 0).toFixed(2)}|${Array.isArray(pedido.itens) ? pedido.itens.map(item => `${item.nome || ""}:${item.quantidade || item.qtd || 1}:${Number(item.preco ?? item.valor ?? item.precoUnitario ?? 0).toFixed(2)}`).join(";") : ""}`)
-        .join("~");
+    return JSON.stringify(pedidos || []);
 }
 
 function organizarCardPedido(card, pedido, tipo) {
@@ -1140,12 +1167,6 @@ function atualizarListaPedidos(container, pedidos, tipo) {
 
     if (snapshot === ultimoSnapshot && container.children.length > 0) {
         return;
-    }
-
-    if (tipo === "ativos") {
-        ultimoSnapshotPedidosAtivos = snapshot;
-    } else {
-        ultimoSnapshotPedidosHistorico = snapshot;
     }
 
     const cards = pedidos
@@ -1227,6 +1248,12 @@ function atualizarListaPedidos(container, pedidos, tipo) {
         container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 30px; background: #f8fafc; border-radius: 10px; border: 2px dashed #e2e8f0; margin: 0;">Nenhum pedido finalizado no histórico.</p>`;
     }
 
+    if (tipo === "ativos") {
+        ultimoSnapshotPedidosAtivos = snapshot;
+    } else {
+        ultimoSnapshotPedidosHistorico = snapshot;
+    }
+
     if (containerScroll) {
         containerScroll.scrollTop = scrollAnterior;
     }
@@ -1299,8 +1326,15 @@ function renderizarAtivosFiltrados() {
         return !busca || texto.includes(busca);
     }).sort((a, b) => String(b.dataCriacao || "").localeCompare(String(a.dataCriacao || ""))
         || Number(b.id || 0) - Number(a.id || 0));
+    const aviso = document.getElementById("aviso-filtro-pedidos");
+    if (aviso) {
+        const ocultos = pedidosAtivosLocal.length - filtrados.length;
+        aviso.hidden = !ocultos;
+        aviso.textContent = ocultos
+            ? `${ocultos} pedido(s) oculto(s) pela busca. Limpe a busca para ver todos.`
+            : "";
+    }
     atualizarContagemPedidos("resumo-financeiro", filtrados.length);
-    ultimoSnapshotPedidosAtivos = null;
     atualizarListaPedidos(document.getElementById("lista-pedidos-ativos"), filtrados, "ativos");
 }
 
@@ -1496,16 +1530,22 @@ function imprimirPedidoBalcao() {
 }
 
 async function carregarPedidosAtivos() {
-    if (carregandoPedidosAtivos) return;
+    if (carregandoPedidosAtivos) {
+        atualizacaoPedidosPendente = true;
+        return;
+    }
     carregandoPedidosAtivos = true;
-
-    const containerAtivos = document.getElementById("lista-pedidos-ativos");
-    const containerHistorico = document.getElementById("lista-pedidos-finalizados");
+    const versaoConsulta = versaoPedidosRecebidos;
+    const erroAtivos = document.getElementById("erro-pedidos-ativos");
 
     try {
-        const resAtivos = await fetchAdmin(URL_BACKEND + "/api/pedidos/ativos");
-        if (resAtivos.ok) {
-            const pedidosAtivos = await resAtivos.json();
+        const resAtivos = await fetchAdmin(URL_BACKEND + "/api/pedidos/ativos", { cache: "no-store" });
+        if (!resAtivos.ok) throw new Error(`HTTP ${resAtivos.status}`);
+        const pedidosAtivos = await resAtivos.json();
+        if (!Array.isArray(pedidosAtivos)) throw new Error("Lista de pedidos inválida");
+        if (versaoConsulta !== versaoPedidosRecebidos) {
+            atualizacaoPedidosPendente = true;
+        } else {
             atualizarResumoFinanceiro(pedidosAtivos, "resumo-financeiro");
 
             const novosPedidos = primeiraCargaPedidos
@@ -1519,6 +1559,7 @@ async function carregarPedidosAtivos() {
             novosPedidos.forEach(pedido => {
                 idsPedidosAlertados.add(pedido.id);
                 tocarSomNovoPedido();
+                avisarNovoPedido(pedido);
             });
             pedidosAtivos.forEach(pedido => idsPedidosConhecidos.add(pedido.id));
             primeiraCargaPedidos = false;
@@ -1530,11 +1571,21 @@ async function carregarPedidosAtivos() {
             );
             pedidosAtivosLocal = pedidosVisiveis;
             renderizarAtivosFiltrados();
+            if (erroAtivos) {
+                erroAtivos.hidden = true;
+                erroAtivos.textContent = "";
         }
-    } catch (e) { console.log("Erro ao carregar pedidos ativos:", e); }
+            }
+    } catch (e) {
+        console.error("Erro ao carregar pedidos ativos:", e);
+        if (erroAtivos) {
+            erroAtivos.textContent = "Não foi possível atualizar os pedidos. Verifique a conexão; o painel tentará novamente.";
+            erroAtivos.hidden = false;
+        }
+    }
 
     try {
-        const resTodos = await fetchAdmin(URL_BACKEND + "/api/pedidos");
+        const resTodos = await fetchAdmin(URL_BACKEND + "/api/pedidos", { cache: "no-store" });
         if (resTodos.ok) {
             const todosPedidos = await resTodos.json();
             atualizarResumoFinanceiro(todosPedidos, "resumo-financeiro");
@@ -1546,6 +1597,10 @@ async function carregarPedidosAtivos() {
     } catch (e) { console.log("Erro ao carregar histórico de finalizados:", e); }
 
     carregandoPedidosAtivos = false;
+    if (atualizacaoPedidosPendente) {
+        atualizacaoPedidosPendente = false;
+        carregarPedidosAtivos();
+    }
 }
 
 async function apagarHistoricoAntigo() {
@@ -1579,6 +1634,7 @@ async function mudarStatusPedido(id, novoStatus) {
         const res = await fetchAdmin(`${URL_BACKEND}/api/pedidos/${id}/status?status=${encodeURIComponent(novoStatus)}`, { method: "PUT" });
         if (res.ok) {
             const pedidoAtualizado = await res.json();
+            versaoPedidosRecebidos++;
             const statusFinalizado = pedidoAtualizado.status === "ENTREGUE" || pedidoAtualizado.status === "CANCELADO";
             if (statusFinalizado) {
                 pedidosFinalizadosLocal.add(String(id));
