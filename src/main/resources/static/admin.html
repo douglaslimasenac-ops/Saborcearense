@@ -373,6 +373,17 @@
             padding-top: 16px;
             border-top: 1px solid rgba(255,255,255,0.1);
         }
+        .instalacao-impressora {
+            max-width: 720px;
+            padding: 24px;
+            border: 1px solid #eadbc5;
+            border-radius: 16px;
+            background: #fffaf1;
+            line-height: 1.55;
+        }
+        .instalacao-impressora li { margin-bottom: 10px; }
+        .instalacao-impressora p { color: #604d38; }
+        .instalacao-impressora .btn-acao { margin: 8px 0; }
 
         @media (max-width: 900px) {
             .form-grid { grid-template-columns: 1fr; }
@@ -851,6 +862,7 @@
             <div class="nav-link" id="tab-cardapio" onclick="alternarAbasAdmin('cardapio')"><i class="fas fa-utensils"></i> Alteração do Cardápio</div>
             <div class="nav-link" id="tab-acompanhamentos" onclick="alternarAbasAdmin('acompanhamentos')"><i class="fas fa-carrot"></i> Acompanhamentos</div>
             <div class="nav-link" id="tab-bairros" onclick="alternarAbasAdmin('bairros')"><i class="fas fa-map-marker-alt"></i> Bairros e Taxas</div>
+            <div class="nav-link" id="tab-impressora" onclick="alternarAbasAdmin('impressora')"><i class="fas fa-print"></i> Impressão Automática</div>
             
             <!-- Bloco fixado na base com linha divisória corporativa -->
             <div class="menu-cardapio-admin">
@@ -1102,11 +1114,32 @@
                 </form>
                 <div id="lista-bairros-admin" class="grid-produtos"></div>
             </section>
+
+            <section id="sec-impressora" class="section-view">
+                <div class="admin-header">
+                    <h2>🖨️ Impressão automática</h2>
+                </div>
+                <div class="instalacao-impressora">
+                    <h3>Instalar no computador da impressora</h3>
+                    <p>O agente funciona no Windows e recebe os pedidos mesmo com o painel fechado. A impressora USB precisa estar instalada no computador.</p>
+                    <p id="status-fila-impressao" role="status">Consultando a fila de impressão...</p>
+                    <button class="btn-acao" id="baixar-instalador-impressao" type="button" onclick="baixarInstaladorImpressao()">⬇ Baixar instalador para Windows</button>
+                    <ol>
+                        <li>Baixe o arquivo neste computador Windows e extraia a pasta ZIP.</li>
+                        <li>Na pasta extraída, clique duas vezes em <strong>instalar.cmd</strong>.</li>
+                        <li>Informe o endereço do site, o nome exato da impressora e o usuário e a senha do painel na janela que abrir.</li>
+                        <li>Mantenha a janela do agente aberta e faça um pedido de teste. Ele iniciará novamente quando este usuário entrar no Windows.</li>
+                    </ol>
+                    <p>Use apenas um computador para a impressão automática. Se ele estiver desligado ou sem internet, os pedidos pendentes serão processados quando voltar.</p>
+                    <p>Se o envio à impressora ficar em situação incerta, confira a impressora e a fila do Windows. Feche o agente e siga o arquivo <strong>leia-me.txt</strong> incluído no ZIP para resolver o pedido.</p>
+                    <p>O botão de impressão dos pedidos continua disponível para reimpressão manual.</p>
+                </div>
+            </section>
         </main>
     </div>
     
    <script src="ordenar-itens.js"></script>
-   <script src="admin.js?v=13"></script>
+   <script src="admin.js?v=14"></script>
    <script src="pwa-admin.js"></script>
 
 </body>

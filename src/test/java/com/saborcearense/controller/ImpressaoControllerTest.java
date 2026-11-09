@@ -1,14 +1,20 @@
 package com.saborcearense.controller;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
+import java.io.ByteArrayInputStream;
+import java.util.HashMap;
+import java.util.zip.ZipInputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saborcearense.repository.PedidoRepository;
@@ -20,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +48,29 @@ class ImpressaoControllerTest {
     void iniciar() {
         funcionamento.alterar(true);
         auth = "Bearer " + tokens.authenticate("admin", "teste-local");
+    }
+
+    @Test
+    void instaladorExigeLoginEContemArquivosOriginais() throws Exception {
+        mvc.perform(get("/api/admin/impressao/instalador")).andExpect(status().isUnauthorized());
+        byte[] zip = mvc.perform(get("/api/admin/impressao/instalador").header("Authorization", auth))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"sabor-cearense-impressao.zip\""))
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andReturn().getResponse().getContentAsByteArray();
+        var arquivos = new HashMap<String, byte[]>();
+        try (ZipInputStream entrada = new ZipInputStream(new ByteArrayInputStream(zip))) {
+            java.util.zip.ZipEntry item;
+            while ((item = entrada.getNextEntry()) != null) {
+                arquivos.put(item.getName(), entrada.readAllBytes());
+            }
+        }
+        assertEquals(3, arquivos.size());
+        for (String nome : java.util.List.of("agente.ps1", "instalar.cmd", "leia-me.txt")) {
+            try (var arquivo = new ClassPathResource("impressao/" + nome).getInputStream()) {
+                assertArrayEquals(arquivo.readAllBytes(), arquivos.get(nome));
+            }
+        }
     }
 
     @Test

@@ -180,6 +180,52 @@ function alternarAbasAdmin(abaAlvo) {
     if (abaAlvo === 'bairros') {
         carregarBairrosAdmin();
     }
+    if (abaAlvo === 'impressora') {
+        carregarStatusFilaImpressao();
+    }
+}
+
+async function carregarStatusFilaImpressao() {
+    const status = document.getElementById("status-fila-impressao");
+    status.textContent = "Consultando a fila de impressão...";
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/impressao/configuracao`, { cache: "no-store" });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const configuracao = await resposta.json();
+        if (typeof configuracao.habilitada !== "boolean") throw new Error("Resposta de configuração inválida");
+        status.textContent = configuracao.habilitada
+            ? "Fila automática ativada no servidor. Instale e mantenha o agente aberto no computador da impressora."
+            : "Fila automática desativada no servidor. Peça ao responsável pelo servidor para ativá-la antes de receber pedidos.";
+    } catch (erro) {
+        console.error("Erro ao consultar a fila de impressão:", erro);
+        status.textContent = "Não foi possível consultar a fila. Verifique a conexão e abra esta aba novamente.";
+    }
+}
+
+async function baixarInstaladorImpressao() {
+    const botao = document.getElementById("baixar-instalador-impressao");
+    botao.disabled = true;
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/impressao/instalador`, { cache: "no-store" });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const arquivo = await resposta.blob();
+        const url = URL.createObjectURL(arquivo);
+        try {
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "sabor-cearense-impressao.zip";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } finally {
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+    } catch (erro) {
+        console.error("Erro ao baixar instalador de impressão:", erro);
+        alert("Não foi possível baixar o instalador. Confira a conexão e tente novamente.");
+    } finally {
+        botao.disabled = false;
+    }
 }
 
 async function carregarBairrosAdmin() {

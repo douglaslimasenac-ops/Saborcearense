@@ -1,4 +1,5 @@
 param(
+    [switch]$Instalar,
     [switch]$Configurar,
     [switch]$IniciarComWindows,
     [switch]$Resolver
@@ -49,13 +50,13 @@ function Configurar-Agente {
     Write-Host 'Configuracao salva para este usuario do Windows.'
 }
 
-function Instalar-Inicializacao {
+function Instalar-Inicializacao($caminhoScript = $PSCommandPath) {
     if (-not (Test-Path -LiteralPath $configPath)) { throw 'Execute primeiro com -Configurar.' }
     $startup = [Environment]::GetFolderPath('Startup')
     $atalho = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $startup 'Sabor Cearense Impressao.lnk'))
     $atalho.TargetPath = (Join-Path $PSHOME 'powershell.exe')
-    $atalho.Arguments = '-NoExit -NoProfile -ExecutionPolicy Bypass -File "' + $PSCommandPath + '"'
-    $atalho.WorkingDirectory = Split-Path -Parent $PSCommandPath
+    $atalho.Arguments = '-NoExit -NoProfile -ExecutionPolicy Bypass -File "' + $caminhoScript + '"'
+    $atalho.WorkingDirectory = Split-Path -Parent $caminhoScript
     $atalho.Save()
     Write-Host 'Atalho criado. O agente iniciara quando este usuario entrar no Windows.'
 }
@@ -179,6 +180,28 @@ function Obter-Token($config) {
     } finally { $corpo = $null; $credencial = $null }
 }
 
+function Instalar-Agente($origem = $PSCommandPath) {
+    $mutex = New-Object System.Threading.Mutex($false, 'Local\SaborCearenseAgenteImpressao')
+    if (-not $mutex.WaitOne(0)) { $mutex.Dispose(); throw 'Feche o agente de impressao antes de instalar novamente.' }
+    try {
+        New-Item -ItemType Directory -Force -Path $dadosDir | Out-Null
+        $destino = Join-Path $dadosDir 'agente.ps1'
+        if ([IO.Path]::GetFullPath($origem) -ne [IO.Path]::GetFullPath($destino)) {
+            Copy-Item -LiteralPath $origem -Destination $destino -Force
+        }
+        Configurar-Agente
+        $config = Ler-Json $configPath
+        $token = Obter-Token $config
+        $servidor = Invoke-RestMethod -Uri ($config.url + '/api/admin/impressao/configuracao') -Headers @{ Authorization = "Bearer $token" } -TimeoutSec 15
+        if (-not $servidor.habilitada) {
+            Write-Warning 'A fila automatica esta desativada no servidor. Peca ao responsavel para ativa-la antes de receber pedidos.'
+        }
+        Instalar-Inicializacao $destino
+        Write-Host 'Instalacao concluida. Mantenha esta janela aberta para receber pedidos.'
+    } finally { $mutex.ReleaseMutex(); $mutex.Dispose() }
+    Iniciar-Agente
+}
+
 function Iniciar-Agente {
     if (-not (Test-Path -LiteralPath $configPath) -or -not (Test-Path -LiteralPath $senhaPath)) {
         throw 'Execute primeiro com -Configurar no usuario do Windows que executara o agente.'
@@ -228,7 +251,8 @@ function Iniciar-Agente {
     } finally { $mutex.ReleaseMutex(); $mutex.Dispose() }
 }
 
-if ($Configurar) { Configurar-Agente }
+if ($Instalar) { Instalar-Agente }
+elseif ($Configurar) { Configurar-Agente }
 elseif ($IniciarComWindows) { Instalar-Inicializacao }
 elseif ($Resolver) { Resolver-Estado }
 elseif ($MyInvocation.InvocationName -ne '.') { Iniciar-Agente }

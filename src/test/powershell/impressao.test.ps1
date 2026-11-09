@@ -3,7 +3,7 @@ $raizTeste = Join-Path $env:TEMP ('sabor-impressao-teste-' + [guid]::NewGuid())
 $anterior = $env:LOCALAPPDATA
 $env:LOCALAPPDATA = $raizTeste
 try {
-    . (Join-Path $PSScriptRoot '..\..\..\impressao\agente.ps1')
+    . (Join-Path $PSScriptRoot '..\..\main\resources\impressao\agente.ps1')
     New-Item -ItemType Directory -Force -Path $dadosDir | Out-Null
     Gravar-JsonAtomico $configPath @{ url = 'https://exemplo.invalid'; impressora = 'Teste'; usuario = 'admin' }
     Set-Content -LiteralPath $senhaPath -Value 'teste'
@@ -73,6 +73,28 @@ try {
             throw "$modo : pedido nao foi confirmado e limpo."
         }
     }
+    $origem = Join-Path $raizTeste 'origem.ps1'
+    Set-Content -LiteralPath $origem -Value 'agente de teste'
+    function Configurar-Agente { $script:configuracoes++ }
+    function Instalar-Inicializacao($caminhoScript) { $script:atalhoDestino = $caminhoScript }
+    function Iniciar-Agente { $script:iniciou = $true }
+    $script:configuracoes = 0
+    $script:atalhoDestino = $null
+    $script:iniciou = $false
+    Instalar-Agente $origem
+    $destino = Join-Path $dadosDir 'agente.ps1'
+    if ($script:configuracoes -ne 1 -or $script:atalhoDestino -ne $destino -or -not $script:iniciou) {
+        throw 'Instalador nao configurou, criou o atalho e iniciou o agente.'
+    }
+    if ((Get-Content -LiteralPath $destino -Raw).Trim() -ne 'agente de teste') {
+        throw 'Instalador nao copiou o agente para o local permanente.'
+    }
+    function Obter-Token($config) { throw 'Login rejeitado' }
+    $script:atalhoDestino = $null
+    $script:iniciou = $false
+    try { Instalar-Agente $origem; throw 'Login invalido deveria impedir a instalacao.' }
+    catch { if ($_.Exception.Message -ne 'Login rejeitado') { throw } }
+    if ($script:atalhoDestino -or $script:iniciou) { throw 'Instalador continuou apos falha no login.' }
     Write-Output 'Testes do agente passaram.'
 } finally {
     $env:LOCALAPPDATA = $anterior
