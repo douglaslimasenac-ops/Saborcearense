@@ -9,6 +9,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import jakarta.annotation.PostConstruct;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -58,6 +59,9 @@ public class PedidoController {
 
     @Autowired
     private ObjectMapper mapper;
+
+    @Value("${app.impressao-automatica.enabled:false}")
+    private boolean impressaoAutomaticaHabilitada;
 
     @PostConstruct
     void numerarPedidosLegados() {
@@ -131,6 +135,7 @@ public class PedidoController {
       novoPedido.setNumeroPedido(gerarNumeroPedido());
        novoPedido.setDataCriacao(java.time.LocalDateTime.now());
        novoPedido.setStatus("RECEBIDO");
+       novoPedido.setImpressaoPendente(impressaoAutomaticaHabilitada);
        if (novoPedido.getEndereco().trim().regionMatches(true, 0, "RETIRADA", 0, "RETIRADA".length())) {
            novoPedido.setPrevisaoEntregaInicio(null);
            novoPedido.setPrevisaoEntregaFim(null);

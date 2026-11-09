@@ -1606,6 +1606,7 @@ async function carregarPedidosAtivos() {
 async function apagarHistoricoAntigo() {
     const confirmou = confirm(
         "Deseja realmente apagar os pedidos ENTREGUES ou CANCELADOS com mais de 2 dias?\n\n" +
+        "Pedidos pendentes de impressão automática serão mantidos.\n" +
         "Essa ação é permanente e não pode ser desfeita."
     );
     if (!confirmou) return;

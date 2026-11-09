@@ -35,7 +35,13 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     @Transactional(readOnly = true)
     List<Pedido> findByTelefone(String telefone);
 
+    @Transactional(readOnly = true)
+    List<Pedido> findByImpressaoPendenteTrueOrderByIdAsc();
+
     @Modifying
     @Transactional
-    int deleteByStatusInAndDataCriacaoBefore(List<String> statuses, LocalDateTime limite);
+    @Query("delete from Pedido p where p.status in :statuses and p.dataCriacao < :limite "
+            + "and (p.impressaoPendente = false or p.impressaoPendente is null)")
+    int deleteByStatusInAndDataCriacaoBefore(@Param("statuses") List<String> statuses,
+            @Param("limite") LocalDateTime limite);
 }

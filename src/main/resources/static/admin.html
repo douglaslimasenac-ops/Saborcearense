@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#141414">
+    <meta name="application-name" content="Sabor Cearense Admin">
+    <link rel="manifest" href="admin-manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="imagens/app/admin-192.png">
     <title>Gestão Executiva - Sabor Cearense</title>
     <style>
         .filtros-historico {
@@ -331,6 +335,43 @@
             border-radius: 16px; 
             box-shadow: 0 25px 50px rgba(0,0,0,0.06); 
             border: 1px solid #e2e8f0; 
+        }
+        .marca-admin {
+            display: block;
+            width: 88px;
+            height: 88px;
+            margin: 0 auto 12px;
+            border-radius: 22px;
+        }
+        .instalar-admin {
+            display: block;
+            margin: 12px auto 0;
+            min-height: 40px;
+            padding: 8px 12px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: #806b51;
+            font: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .instalar-admin[hidden] { display: none; }
+        .instalar-admin:hover, .instalar-admin:focus-visible { background: #fff4df; color: #70430d; }
+        aside .instalar-admin { color: #dbc4a4; }
+        aside .instalar-admin:hover, aside .instalar-admin:focus-visible { background: #352b1e; color: #fff; }
+        .aviso-conexao-admin {
+            padding: 10px 16px;
+            background: #fff2cf;
+            color: #70430d;
+            text-align: center;
+            font-weight: 700;
+        }
+        .menu-cardapio-admin {
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
 
         @media (max-width: 900px) {
@@ -741,7 +782,7 @@
         }
 
         @media (max-width: 700px) {
-            .admin-wrapper { display: block !important; }
+            .admin-wrapper { flex-direction: column; }
             aside {
                 width: 100%;
                 min-height: auto;
@@ -776,10 +817,14 @@
     </style>
 </head>
 <body>
+    <div id="aviso-conexao-admin" class="aviso-conexao-admin" role="status" hidden>
+        Sem conexão. Os pedidos e as alterações não podem ser atualizados até a internet voltar.
+    </div>
     <!-- Elemento de áudio original para alertas sonoros -->
     <!-- CONTAINER DA TELA DE LOGIN -->
     <div class="login-wrapper" id="container-login-view">
         <div id="login-admin">
+            <img class="marca-admin" src="imagens/app/admin-192.png" alt="">
             <h2 style="text-align: center; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">🔒 Gestão Executiva</h2>
             <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; margin-bottom: 30px;">Sabor Cearense Delivery</p>
             <div class="form-grupo" style="margin-bottom: 15px;">
@@ -791,6 +836,7 @@
                 <input type="password" id="senha-login" placeholder="••••••••">
             </div>
             <button class="btn-acao" onclick="autenticarAdmin()" style="width: 100%; justify-content: center; display: flex;">Autenticar no Painel</button>
+            <button type="button" class="instalar-admin" hidden>↓ Instalar aplicativo</button>
         </div>
     </div>
 
@@ -807,10 +853,11 @@
             <div class="nav-link" id="tab-bairros" onclick="alternarAbasAdmin('bairros')"><i class="fas fa-map-marker-alt"></i> Bairros e Taxas</div>
             
             <!-- Bloco fixado na base com linha divisória corporativa -->
-            <div style="position: absolute; bottom: 0; left: 0; width: 100%; padding: 20px 15px; background: var(--dark); border-top: 1px solid rgba(255,255,255,0.1); box-sizing: border-box;">
+            <div class="menu-cardapio-admin">
                 <a href="index.html?admin=1" class="nav-link" style="color: var(--primary); background: rgba(255,255,255,0.03); font-weight: bold; margin-bottom: 0; justify-content: center;">
                     <i class="fas fa-shop"></i> Ver Cardápio
                 </a>
+                <button type="button" class="instalar-admin" hidden>↓ Instalar aplicativo</button>
             </div>
         </aside>
 
@@ -1060,6 +1107,7 @@
     
    <script src="ordenar-itens.js"></script>
    <script src="admin.js?v=13"></script>
+   <script src="pwa-admin.js"></script>
 
 </body>
 </html>

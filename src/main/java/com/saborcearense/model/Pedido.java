@@ -46,6 +46,8 @@ public class Pedido {
     private LocalDateTime dataCriacao = LocalDateTime.now();
     private LocalDateTime previsaoEntregaInicio;
     private LocalDateTime previsaoEntregaFim;
+    @JsonIgnore
+    private Boolean impressaoPendente;
     @Lob
     @JsonIgnore
     private String comprovantePix;
@@ -91,6 +93,8 @@ public class Pedido {
     public void setPrevisaoEntregaInicio(LocalDateTime previsaoEntregaInicio) { this.previsaoEntregaInicio = previsaoEntregaInicio; }
     public LocalDateTime getPrevisaoEntregaFim() { return previsaoEntregaFim; }
     public void setPrevisaoEntregaFim(LocalDateTime previsaoEntregaFim) { this.previsaoEntregaFim = previsaoEntregaFim; }
+    public Boolean getImpressaoPendente() { return impressaoPendente; }
+    public void setImpressaoPendente(Boolean impressaoPendente) { this.impressaoPendente = impressaoPendente; }
     public String getComprovantePix() { return comprovantePix; }
     public void setComprovantePix(String comprovantePix) { this.comprovantePix = comprovantePix; }
     public String getComprovantePixTipo() { return comprovantePixTipo; }
