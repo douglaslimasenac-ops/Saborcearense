@@ -7,13 +7,16 @@ const vm = require("node:vm");
 const source = fs.readFileSync(path.join(__dirname, "../../main/resources/static/admin.js"), "utf8");
 const codigoImpressao = source.slice(source.indexOf("function formatarPrevisaoEntrega("));
 
-function imprimirPedido(pedido) {
+function imprimirPedido(pedido, renderizacaoDireta = false) {
     function criarElemento() {
         return {
             children: [],
             style: {},
             appendChild(child) { this.children.push(child); },
-            querySelector() { return criarElemento(); }
+            querySelector() {
+                if (!this.tbody) this.tbody = criarElemento();
+                return this.tbody;
+            }
         };
     }
 
@@ -32,14 +35,39 @@ function imprimirPedido(pedido) {
         window: { screen: { width: 1024, height: 768 }, open: () => janela },
         document: { getElementById: () => null },
         numeroExibicaoPedido: () => 1,
-        obterItensPedido: () => [],
+        obterItensPedido: pedido => pedido.itens || [],
+        obterPrecoItem: item => item.preco,
+        textoTrocoPedido: pedido => `Troco para R$ ${pedido.trocoPara}`,
         escaparHtml: texto => texto,
+        Date: class extends Date {
+            constructor() { super("2026-10-29T12:00:00"); }
+        },
         setTimeout() {}
     };
     vm.runInNewContext(codigoImpressao, contexto);
-    contexto.imprimirCupomIFood(pedido);
+    if (renderizacaoDireta) {
+        contexto.renderizarCupomIFood(pedido, janela);
+    } else {
+        contexto.imprimirCupomIFood(pedido);
+    }
     return body.children[0].children;
 }
+
+test("renderizador compartilhado mantém o conteúdo da impressão manual", () => {
+    const pedido = {
+        endereco: "Rua das Flores, 123, Bairro: Centro (Ref: Mercado)",
+        clienteNome: "Maria",
+        telefone: "123",
+        formaPagamento: "Cartão",
+        valorTotal: 30,
+        itens: [{ nome: "Prato", quantidade: 2, preco: 12.5 }],
+        trocoPara: 50,
+        observacao: "Sem cebola",
+        previsaoEntregaInicio: "2026-10-29T12:10:00",
+        previsaoEntregaFim: "2026-10-29T12:20:00"
+    };
+    assert.equal(JSON.stringify(imprimirPedido(pedido, true)), JSON.stringify(imprimirPedido(pedido)));
+});
 
 function previsaoPedido(pedido) {
     return imprimirPedido(pedido).find(elemento =>

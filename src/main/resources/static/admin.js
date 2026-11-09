@@ -1810,6 +1810,13 @@ function imprimirCupomIFood(pedido) {
     janelaImpressao.document.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>iFood Cupom #" + numeroExibicaoPedido(pedido) + "</title></head><body></body></html>");
     janelaImpressao.document.close();
 
+    renderizarCupomIFood(pedido, janelaImpressao);
+    setTimeout(function() {
+        janelaImpressao.print();
+    }, 250);
+}
+
+function renderizarCupomIFood(pedido, janelaImpressao) {
     var elEstilo = janelaImpressao.document.createElement("style");
     var regrasCSS = "body { width: 72mm; max-width: 72mm; box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: 700; line-height: 1.4; margin: 0 auto; padding: 3mm 2mm; color: #000 !important; background: #fff; overflow-wrap: anywhere; -webkit-print-color-adjust: exact; print-color-adjust: exact; -webkit-font-smoothing: none; } * { color: #000 !important; font-weight: 700; text-shadow: 0 0 0 #000; } .tabela-itens td, .tabela-itens th { font-size: 15px; } .text-center { text-align: center; } .text-right { text-align: right; } .negrito { font-weight: bold; } .divider-dashed { border-top: 1px dashed #000; margin: 7px 0; } .divider-double { border-top: 3px double #000; margin: 9px 0; } .tag-tipo-entrega { font-size: 22px; font-weight: bold; text-align: center; border: 2px solid #000; padding: 5px 4px; margin-bottom: 9px; letter-spacing: 1px; } .titulo-loja { font-size: 20px; margin: 0; font-weight: 900; text-transform: uppercase; } .subtitulo-loja { font-size: 13px; margin: 3px 0; } .id-pedido { font-size: 26px; font-weight: 900; font-weight: bold; margin: 5px 0; } .secao-titulo { font-size: 14px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; } .bloco-conteudo { margin-bottom: 8px; } .tabela-itens { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 6px 0; } .tabela-itens th { border-bottom: 1px solid #000; font-size: 12px; padding: 3px 0; text-align: left; } .tabela-itens td { vertical-align: top; padding: 5px 0; border-bottom: 1px dotted #999; overflow-wrap: anywhere; } .col-qtd { width: 13%; font-weight: bold; }     .col-nome { width: 60%; font-style: italic; } .col-preco { width: 27%; text-align: right !important; white-space: nowrap; } .linha-financeiro { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; } .linha-total { display: flex; justify-content: space-between; gap: 8px; font-size: 19px; font-weight: bold; margin-top: 7px; padding-top: 5px; border-top: 1px dashed #000; } .bloco-obs { border-left: 4px solid #000; padding-left: 8px; margin: 6px 0; white-space: pre-wrap; font-size: 14px; font-weight: bold; } @media print { @page { size: 80mm auto; margin: 0; } body { width: 72mm; max-width: 72mm; padding: 4mm 2mm; } }";
     
@@ -1989,10 +1996,6 @@ function imprimirCupomIFood(pedido) {
     elRodape.innerHTML = "* COMPROVANTE DE PRODUÇÃO *<br>Agradecemos a preferência!";
     containerPrincipal.appendChild(elRodape);
 
-    // Renderiza tudo na janela aberta e executa a impressão
+    // Renderiza tudo na janela aberta
     janelaImpressao.document.body.appendChild(containerPrincipal);
-    
-    setTimeout(function() {
-        janelaImpressao.print();
-    }, 250);
 }
