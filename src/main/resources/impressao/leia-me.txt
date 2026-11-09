@@ -1,10 +1,11 @@
 SABOR CEARENSE - IMPRESSAO AUTOMATICA NO WINDOWS
 
-1. Instale e teste a impressora no Windows.
+1. Instale e teste a impressora no Windows. Defina-a como impressora padrao e configure papel de 80 mm.
 2. Extraia todos os arquivos deste ZIP e clique duas vezes em instalar.cmd.
-3. Na central de impressao, escolha a impressora e clique em Salvar e iniciar. Nao e necessario informar senha.
-4. Ao minimizar ou fechar a janela, a impressao continua no icone da bandeja ao lado do relogio. Para abrir novamente, clique duas vezes no icone.
-5. Faca um pedido de teste e confira a impressao fisica.
+3. O instalador baixa os componentes oficiais WebView2, se necessario. Mantenha a internet conectada e autorize se o Windows solicitar. Se falhar ou o codigo expirar, baixe outro instalador.
+4. Na central de impressao, escolha a impressora padrao e clique em Salvar e iniciar. Nao e necessario informar senha.
+5. Ao minimizar ou fechar a janela, a impressao continua no icone da bandeja ao lado do relogio. Para abrir novamente, clique duas vezes no icone.
+6. Faca um pedido de teste, imprima-o tambem manualmente e compare as comandas fisicas.
 
 A fila deve estar ativada no servidor. Verifique a situacao na aba Impressao Automatica do painel.
 O instalador deve ser executado em ate 15 minutos. Se expirar ou ja tiver sido utilizado, baixe outro no painel.

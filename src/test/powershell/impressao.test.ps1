@@ -4,6 +4,7 @@ $anterior = $env:LOCALAPPDATA
 $env:LOCALAPPDATA = $raizTeste
 try {
     . (Join-Path $PSScriptRoot '..\..\main\resources\impressao\agente.ps1')
+    function Criar-MutexAgente { return New-Object System.Threading.Mutex($false, "Local\SaborCearenseTeste-$PID") }
     New-Item -ItemType Directory -Force -Path $dadosDir | Out-Null
     Gravar-JsonAtomico $configPath @{ url = 'https://exemplo.invalid'; impressora = 'Teste'; usuario = 'admin' }
     ConvertTo-SecureString 'senha-teste' -AsPlainText -Force | ConvertFrom-SecureString | Set-Content -LiteralPath $senhaPath -Encoding ASCII
@@ -39,10 +40,23 @@ try {
         if (-not $textoEntrega.Contains($esperado)) { throw "Texto de entrega nao contem $esperado" }
     }
 
+    function Get-CimInstance {
+        param($ClassName, $Filter)
+        return [pscustomobject]@{ Default = $script:impressoraPadrao; WorkOffline = $false; PrinterStatus = 3 }
+    }
+    $script:impressoraPadrao = $true
+    Verificar-Impressora 'Teste'
+    $script:impressoraPadrao = $false
+    try { Verificar-Impressora 'Teste'; throw 'Impressora nao padrao foi aceita.' }
+    catch { if ($_.Exception.Message -notmatch 'padrao do Windows') { throw } }
+
     function Obter-Token($config) { return 'token-teste' }
     function Verificar-Impressora($nome) {
         if ($script:modo -eq 'offline' -and $script:esperas -eq 0) { throw 'Impressora offline' }
     }
+    function Testar-RuntimeWebView { return -not ($script:modo -eq 'runtime' -and $script:esperas -eq 0) }
+    function Testar-SdkWebView { return $true }
+    function Preparar-ComandaWebView($config, $pedido) { return 'comanda-teste' }
     function Enviar-ParaImpressora($nome, $texto, $numero) {
         $script:impressoes++
         if ($script:modo -eq 'incerto') { throw 'Erro no envio' }
@@ -74,7 +88,7 @@ try {
         $script:esperas++
         if ($script:esperas -ge 2) { throw 'fim do teste' }
     }
-    foreach ($modo in @('rede', 'offline', 'incerto')) {
+    foreach ($modo in @('rede', 'offline', 'incerto', 'runtime')) {
         if (Test-Path -LiteralPath $estadoPath) { Remove-Item -LiteralPath $estadoPath }
         $script:modo = $modo
         $script:impressoes = 0
@@ -92,6 +106,18 @@ try {
         }
     }
     if (Test-Path -LiteralPath $estadoPath) { Remove-Item -LiteralPath $estadoPath }
+    $script:modo = 'invalido'
+    $itensOriginais = $script:pedidoTeste.itens
+    $script:pedidoTeste.itens = 'json-invalido'
+    $script:impressoes = 0
+    $script:confirmacoes = 0
+    $script:confirmado = $false
+    $script:esperas = 0
+    try { Iniciar-Agente } catch { if ($_.Exception.Message -ne 'fim do teste') { throw } }
+    if ($script:impressoes -ne 0 -or $script:confirmacoes -ne 0 -or (Test-Path -LiteralPath $estadoPath)) {
+        throw 'Pedido invalido nao deveria ser enviado nem confirmado.'
+    }
+    $script:pedidoTeste.itens = $itensOriginais
     $script:modo = 'parada'
     $script:impressoes = 0
     $script:confirmacoes = 0
@@ -106,6 +132,7 @@ try {
     $origem = Join-Path $raizTeste 'origem.ps1'
     Set-Content -LiteralPath $origem -Value 'agente de teste'
     function Configurar-Agente { $script:configuracoes++ }
+    function Instalar-DependenciasWebView { }
     function Instalar-Inicializacao($caminhoScript) { $script:atalhoDestino = $caminhoScript }
     function Iniciar-Agente { $script:iniciou = $true }
     $script:configuracoes = 0

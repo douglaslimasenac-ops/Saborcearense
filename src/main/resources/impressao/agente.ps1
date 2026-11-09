@@ -14,6 +14,11 @@ $credencialPath = Join-Path $dadosDir 'credencial.txt'
 $estadoPath = Join-Path $dadosDir 'estado.json'
 $statusPath = Join-Path $dadosDir 'status.json'
 $paradaPath = Join-Path $dadosDir 'parar'
+. (Join-Path $PSScriptRoot 'webview.ps1')
+
+function Criar-MutexAgente {
+    return New-Object System.Threading.Mutex($false, 'Local\SaborCearenseAgenteImpressao')
+}
 
 function Gravar-JsonAtomico($caminho, $valor) {
     $temporario = "$caminho.tmp"
@@ -128,40 +133,53 @@ function Converter-ParaTexto($pedido) {
 }
 
 function Verificar-Impressora($nome) {
+    if (-not $nome -or $nome.Contains('"')) { throw 'Nome de impressora invalido.' }
     $printer = Get-CimInstance Win32_Printer -Filter ("Name='" + $nome.Replace('\', '\\').Replace("'", "''") + "'")
     if (-not $printer -or $printer.WorkOffline -or $printer.PrinterStatus -in @(6, 7)) {
         throw "Impressora indisponivel ou em erro: $nome"
     }
+    if (-not $printer.Default) {
+        throw "Defina a impressora $nome como padrao do Windows antes de imprimir."
+    }
 }
 
-function Enviar-ParaImpressora($nome, $texto, $numero) {
-    Add-Type -AssemblyName System.Drawing
-    $documento = New-Object System.Drawing.Printing.PrintDocument
-    $documento.PrinterSettings.PrinterName = $nome
-    if (-not $documento.PrinterSettings.IsValid) { throw "Impressora invalida: $nome" }
-    $documento.DocumentName = "Sabor Cearense pedido $numero"
-    $documento.PrintController = New-Object System.Drawing.Printing.StandardPrintController
-    $documento.DefaultPageSettings.Margins = New-Object System.Drawing.Printing.Margins(5, 5, 5, 5)
-    $script:textoRestante = $texto
-    $script:fonteImpressao = New-Object System.Drawing.Font('Arial', 10, [System.Drawing.FontStyle]::Bold)
-    $documento.add_PrintPage({
-        param($sender, $evento)
-        $area = New-Object System.Drawing.SizeF([single]$evento.MarginBounds.Width, [single]$evento.MarginBounds.Height)
-        $caracteres = 0
-        $linhas = 0
-        $formato = [System.Drawing.StringFormat]::GenericTypographic
-        $null = $evento.Graphics.MeasureString($script:textoRestante, $script:fonteImpressao, $area, $formato, [ref]$caracteres, [ref]$linhas)
-        if ($caracteres -le 0) { throw 'A area de impressao e pequena demais.' }
-        $retangulo = New-Object System.Drawing.RectangleF([single]$evento.MarginBounds.X, [single]$evento.MarginBounds.Y, $area.Width, $area.Height)
-        $evento.Graphics.DrawString($script:textoRestante.Substring(0, $caracteres), $script:fonteImpressao, [System.Drawing.Brushes]::Black, $retangulo, $formato)
-        $script:textoRestante = $script:textoRestante.Substring($caracteres)
-        $evento.HasMorePages = $script:textoRestante.Length -gt 0
-    })
-    try { $documento.Print() } finally { $script:fonteImpressao.Dispose(); $documento.Dispose() }
+function Enviar-ParaImpressora($nome, $comanda, $numero) {
+    $worker = Join-Path $PSScriptRoot 'renderizar.ps1'
+    $perfil = Join-Path $dadosDir 'webview2-perfil'
+    $inicio = New-Object System.Diagnostics.ProcessStartInfo
+    $inicio.FileName = Join-Path $PSHOME 'powershell.exe'
+    $inicio.Arguments = '-STA -NoProfile -ExecutionPolicy Bypass -File "' + $worker +
+        '" -PastaSdk "' + $script:webviewSdk + '" -Perfil "' + $perfil + '" -Impressora "' + $nome + '"'
+    $inicio.UseShellExecute = $false
+    $inicio.CreateNoWindow = $true
+    $inicio.RedirectStandardInput = $true
+    $inicio.RedirectStandardError = $true
+    $processo = New-Object System.Diagnostics.Process
+    $processo.StartInfo = $inicio
+    try {
+        if (-not $processo.Start()) { throw 'Nao foi possivel iniciar a renderizacao da comanda.' }
+        $leituraErro = $processo.StandardError.ReadToEndAsync()
+        $bytes = [Text.Encoding]::UTF8.GetBytes($comanda)
+        $escrita = $processo.StandardInput.BaseStream.WriteAsync($bytes, 0, $bytes.Length)
+        if (-not $escrita.Wait(30000)) {
+            $processo.Kill()
+            $processo.WaitForExit()
+            throw 'O componente de impressao nao respondeu; confira a impressora e a fila do Windows.'
+        }
+        $null = $escrita.GetAwaiter().GetResult()
+        $processo.StandardInput.Close()
+        if (-not $processo.WaitForExit(120000)) {
+            $processo.Kill()
+            $processo.WaitForExit()
+            throw 'O envio demorou demais; confira a impressora e a fila do Windows.'
+        }
+        $erro = $leituraErro.GetAwaiter().GetResult().Trim()
+        if ($processo.ExitCode -ne 0) { throw "Falha na impressao: $erro" }
+    } finally { $processo.Dispose() }
 }
 
 function Resolver-Estado {
-    $mutex = New-Object System.Threading.Mutex($false, 'Local\SaborCearenseAgenteImpressao')
+    $mutex = Criar-MutexAgente
     if (-not $mutex.WaitOne(0)) { $mutex.Dispose(); throw 'Feche o agente antes de resolver o pedido.' }
     try {
     if (-not (Test-Path -LiteralPath $estadoPath)) { Write-Host 'Nao ha pedido aguardando conferencia.'; return }
@@ -198,7 +216,7 @@ function Obter-Token($config) {
 }
 
 function Instalar-Agente($origem = $PSCommandPath) {
-    $mutex = New-Object System.Threading.Mutex($false, 'Local\SaborCearenseAgenteImpressao')
+    $mutex = Criar-MutexAgente
     if (-not $mutex.WaitOne(0)) { $mutex.Dispose(); throw 'Feche o agente de impressao antes de instalar novamente.' }
     try {
         New-Item -ItemType Directory -Force -Path $dadosDir | Out-Null
@@ -206,6 +224,14 @@ function Instalar-Agente($origem = $PSCommandPath) {
         if ([IO.Path]::GetFullPath($origem) -ne [IO.Path]::GetFullPath($destino)) {
             Copy-Item -LiteralPath $origem -Destination $destino -Force
         }
+        foreach ($nome in @('webview.ps1', 'renderizar.ps1')) {
+            $arquivoOrigem = Join-Path $PSScriptRoot $nome
+            $arquivoDestino = Join-Path $dadosDir $nome
+            if ([IO.Path]::GetFullPath($arquivoOrigem) -ne [IO.Path]::GetFullPath($arquivoDestino)) {
+                Copy-Item -LiteralPath $arquivoOrigem -Destination $arquivoDestino -Force
+            }
+        }
+        Instalar-DependenciasWebView
         Configurar-Agente
         $config = Ler-Json $configPath
         $token = Obter-Token $config
@@ -240,7 +266,7 @@ function Iniciar-Agente {
     if (-not (Test-Path -LiteralPath $configPath)) {
         throw 'Execute primeiro com -Configurar no usuario do Windows que executara o agente.'
     }
-    $mutex = New-Object System.Threading.Mutex($false, 'Local\SaborCearenseAgenteImpressao')
+    $mutex = Criar-MutexAgente
     if (-not $mutex.WaitOne(0)) { $mutex.Dispose(); throw 'O agente ja esta aberto nesta sessao do Windows.' }
     try {
         $config = Ler-Json $configPath
@@ -265,10 +291,14 @@ function Iniciar-Agente {
                 $pendentes = Invoke-RestMethod -Uri ($config.url + '/api/admin/impressao/pendentes') -Headers $headers -TimeoutSec 15
                 $quantidadePendente = @($pendentes | Where-Object { $null -ne $_ }).Count
                 Verificar-Impressora $config.impressora
+                if (-not (Testar-RuntimeWebView) -or -not (Testar-SdkWebView)) {
+                    throw 'Componente WebView2 ausente. Baixe e execute novamente o instalador pelo painel.'
+                }
                 foreach ($pedido in $pendentes) {
                     if (Deve-PararAgente) { break }
                     if (-not $pedido.id) { throw 'Resposta invalida da fila de impressao.' }
-                    $texto = Converter-ParaTexto $pedido
+                    $null = Converter-ParaTexto $pedido
+                    $texto = Preparar-ComandaWebView $config $pedido
                     $numero = if ($pedido.numeroPedido) { $pedido.numeroPedido } else { $pedido.id }
                     Verificar-Impressora $config.impressora
                     Atualizar-StatusAgente 'verificando' "Enviando pedido #$numero para a impressora."

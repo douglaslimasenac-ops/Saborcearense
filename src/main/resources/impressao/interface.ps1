@@ -18,11 +18,11 @@ function Mostrar-Erro($mensagem) {
 }
 
 function Instalar-Arquivos {
-    $mutex = New-Object System.Threading.Mutex($false, 'Local\SaborCearenseAgenteImpressao')
+    $mutex = Criar-MutexAgente
     if (-not $mutex.WaitOne(0)) { $mutex.Dispose(); throw 'Feche o agente de impressão anterior antes de instalar esta versão.' }
     try {
     New-Item -ItemType Directory -Force -Path $script:pastaAplicativo | Out-Null
-    foreach ($nome in @('interface.ps1', 'agente.ps1', 'icone.ico', 'marca.png')) {
+    foreach ($nome in @('interface.ps1', 'agente.ps1', 'webview.ps1', 'renderizar.ps1', 'icone.ico', 'marca.png')) {
         $origem = Join-Path $PSScriptRoot $nome
         $destino = Join-Path $script:pastaAplicativo $nome
         if ([IO.Path]::GetFullPath($origem) -ne [IO.Path]::GetFullPath($destino)) {
@@ -45,7 +45,7 @@ function Criar-AtalhoInterface {
 }
 
 function Vincular-Dispositivo($origem = $PSScriptRoot) {
-    $mutex = New-Object System.Threading.Mutex($false, 'Local\SaborCearenseAgenteImpressao')
+    $mutex = Criar-MutexAgente
     if (-not $mutex.WaitOne(0)) { $mutex.Dispose(); throw 'Feche o agente de impressão anterior antes de vincular este computador.' }
     try {
     $arquivo = Join-Path $origem 'vinculacao.json'
@@ -131,7 +131,7 @@ function Validar-Configuracao {
 function Salvar-Configuracao {
     Validar-Configuracao
     $impressora = [string]$script:campoImpressora.SelectedItem
-    $mutex = New-Object System.Threading.Mutex($false, 'Local\SaborCearenseAgenteImpressao')
+    $mutex = Criar-MutexAgente
     if (-not $mutex.WaitOne(0)) { $mutex.Dispose(); throw 'Outro agente está aberto. Feche-o antes de alterar a configuração.' }
     try {
         $config = Ler-Json $configPath
@@ -152,7 +152,7 @@ function Resolver-Pedido {
         'Conferir pedido', [System.Windows.Forms.MessageBoxButtons]::YesNoCancel,
         [System.Windows.Forms.MessageBoxIcon]::Warning)
     if ($resposta -eq [System.Windows.Forms.DialogResult]::Cancel) { return }
-    $mutex = New-Object System.Threading.Mutex($false, 'Local\SaborCearenseAgenteImpressao')
+    $mutex = Criar-MutexAgente
     if (-not $mutex.WaitOne(0)) { $mutex.Dispose(); throw 'Outro agente está aberto. Feche-o antes de resolver o pedido.' }
     try {
         $estado = Ler-Json $estadoPath
@@ -406,7 +406,15 @@ function Iniciar-Interface {
         throw 'O aplicativo já está aberto. Use o ícone ao lado do relógio para abri-lo.'
     }
     try {
-        if ($InstalarInterface) { Instalar-Arquivos; Vincular-Dispositivo }
+        if ($InstalarInterface) {
+            Instalar-Arquivos
+            [System.Windows.Forms.MessageBox]::Show(
+                'Vamos preparar os componentes de impressão. Mantenha a internet conectada e autorize a instalação se o Windows solicitar.',
+                'Sabor Cearense - Instalação', [System.Windows.Forms.MessageBoxButtons]::OK,
+                [System.Windows.Forms.MessageBoxIcon]::Information) | Out-Null
+            Instalar-DependenciasWebView
+            Vincular-Dispositivo
+        }
         Criar-Janela
         try {
             Atualizar-Impressoras

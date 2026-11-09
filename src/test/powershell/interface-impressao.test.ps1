@@ -4,8 +4,9 @@ $anterior = $env:LOCALAPPDATA
 $env:LOCALAPPDATA = $raizTeste
 try {
     . (Join-Path $PSScriptRoot '..\..\main\resources\impressao\interface.ps1')
+    function Criar-MutexAgente { return New-Object System.Threading.Mutex($false, "Local\SaborCearenseTeste-$PID") }
     Instalar-Arquivos
-    foreach ($nome in @('interface.ps1', 'agente.ps1', 'icone.ico', 'marca.png')) {
+    foreach ($nome in @('interface.ps1', 'agente.ps1', 'webview.ps1', 'renderizar.ps1', 'icone.ico', 'marca.png')) {
         if (-not (Test-Path -LiteralPath (Join-Path $script:pastaAplicativo $nome))) {
             throw "Arquivo $nome nao foi instalado."
         }

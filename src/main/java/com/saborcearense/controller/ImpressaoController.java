@@ -74,7 +74,8 @@ public class ImpressaoController {
         String codigo = dispositivos.gerarCodigo();
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         try (ZipOutputStream zip = new ZipOutputStream(bytes)) {
-            for (String nome : List.of("agente.ps1", "interface.ps1", "icone.ico", "marca.png", "instalar.cmd", "leia-me.txt")) {
+            for (String nome : List.of("agente.ps1", "interface.ps1", "webview.ps1", "renderizar.ps1",
+                    "icone.ico", "marca.png", "instalar.cmd", "leia-me.txt")) {
                 zip.putNextEntry(new ZipEntry(nome));
                 try (var entrada = new ClassPathResource("impressao/" + nome).getInputStream()) {
                     entrada.transferTo(zip);

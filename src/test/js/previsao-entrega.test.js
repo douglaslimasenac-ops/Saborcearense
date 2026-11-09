@@ -3,11 +3,15 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const { ordenarItensPorCategoria } = require("../../main/resources/static/ordenar-itens.js");
 
 const source = fs.readFileSync(path.join(__dirname, "../../main/resources/static/admin.js"), "utf8");
 const codigoImpressao = source.slice(source.indexOf("function formatarPrevisaoEntrega("));
+const helpers = source.slice(source.indexOf("function escaparHtml("), source.indexOf("function renderizarItensPedido("))
+    + source.slice(source.indexOf("function calcularTotalItensPedido("), source.indexOf("function textoStatusPedido("))
+    + source.slice(source.indexOf("function textoTrocoPedido("), source.indexOf("function atualizarResumoFinanceiro("));
 
-function imprimirPedido(pedido, renderizacaoDireta = false) {
+function imprimirPedido(pedido, renderizacaoDireta = false, retornarDocumento = false) {
     function criarElemento() {
         return {
             children: [],
@@ -34,39 +38,49 @@ function imprimirPedido(pedido, renderizacaoDireta = false) {
     const contexto = {
         window: { screen: { width: 1024, height: 768 }, open: () => janela },
         document: { getElementById: () => null },
-        numeroExibicaoPedido: () => 1,
-        obterItensPedido: pedido => pedido.itens || [],
-        obterPrecoItem: item => item.preco,
-        textoTrocoPedido: pedido => `Troco para R$ ${pedido.trocoPara}`,
-        escaparHtml: texto => texto,
+        listaPratosLocal: [{ id: 1, categoria: "FRANGO" }, { id: 2, categoria: "BEBIDA" }],
+        ordenarItensPorCategoria,
+        console,
         Date: class extends Date {
             constructor() { super("2026-10-29T12:00:00"); }
         },
         setTimeout() {}
     };
+    vm.runInNewContext(helpers, contexto);
     vm.runInNewContext(codigoImpressao, contexto);
     if (renderizacaoDireta) {
         contexto.renderizarCupomIFood(pedido, janela);
     } else {
         contexto.imprimirCupomIFood(pedido);
     }
-    return body.children[0].children;
+    return retornarDocumento ? janela.document : body.children[0].children;
 }
 
-test("renderizador compartilhado mantém o conteúdo da impressão manual", () => {
+test("renderizador compartilhado mantém o conteúdo e o estilo da impressão manual", () => {
     const pedido = {
+        id: 123,
         endereco: "Rua das Flores, 123, Bairro: Centro (Ref: Mercado)",
         clienteNome: "Maria",
         telefone: "123",
         formaPagamento: "Cartão",
         valorTotal: 30,
-        itens: [{ nome: "Prato", quantidade: 2, preco: 12.5 }],
+        itens: JSON.stringify([{ id: 2, nome: "Bebida", quantidade: 1, preco: 5 },
+            { id: 1, nome: "Prato", quantidade: 2, preco: 12.5 }]),
         trocoPara: 50,
         observacao: "Sem cebola",
         previsaoEntregaInicio: "2026-10-29T12:10:00",
         previsaoEntregaFim: "2026-10-29T12:20:00"
     };
-    assert.equal(JSON.stringify(imprimirPedido(pedido, true)), JSON.stringify(imprimirPedido(pedido)));
+    const direto = imprimirPedido(pedido, true, true);
+    const manual = imprimirPedido(pedido, false, true);
+    assert.equal(JSON.stringify(direto.body), JSON.stringify(manual.body));
+    assert.equal(JSON.stringify(direto.head), JSON.stringify(manual.head));
+    assert.match(direto.head.children[0].textContent, /@page \{ size: 80mm auto; margin: 0; \}/);
+    const tabela = direto.body.children[0].children.find(elemento => elemento.className === "tabela-itens");
+    assert.match(tabela.tbody.children[0].innerHTML, /PRATO/);
+    assert.match(tabela.tbody.children[1].innerHTML, /BEBIDA/);
+    const financeiro = direto.body.children[0].children.find(elemento => (elemento.innerHTML || "").includes("Forma Pagto."));
+    assert.match(financeiro.innerHTML, /Troco para R\$ 50,00 \(troco: R\$ 20,00\)/);
 });
 
 function previsaoPedido(pedido) {

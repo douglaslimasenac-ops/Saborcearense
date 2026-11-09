@@ -90,8 +90,9 @@ class ImpressaoControllerTest {
                 arquivos.put(item.getName(), entrada.readAllBytes());
             }
         }
-        assertEquals(7, arquivos.size());
-        for (String nome : java.util.List.of("agente.ps1", "interface.ps1", "icone.ico", "marca.png", "instalar.cmd", "leia-me.txt")) {
+        assertEquals(9, arquivos.size());
+        for (String nome : java.util.List.of("agente.ps1", "interface.ps1", "webview.ps1", "renderizar.ps1",
+                "icone.ico", "marca.png", "instalar.cmd", "leia-me.txt")) {
             try (var arquivo = new ClassPathResource("impressao/" + nome).getInputStream()) {
                 assertArrayEquals(arquivo.readAllBytes(), arquivos.get(nome));
             }
