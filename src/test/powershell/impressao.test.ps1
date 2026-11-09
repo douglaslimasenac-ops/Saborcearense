@@ -6,7 +6,18 @@ try {
     . (Join-Path $PSScriptRoot '..\..\main\resources\impressao\agente.ps1')
     New-Item -ItemType Directory -Force -Path $dadosDir | Out-Null
     Gravar-JsonAtomico $configPath @{ url = 'https://exemplo.invalid'; impressora = 'Teste'; usuario = 'admin' }
-    Set-Content -LiteralPath $senhaPath -Value 'teste'
+    ConvertTo-SecureString 'senha-teste' -AsPlainText -Force | ConvertFrom-SecureString | Set-Content -LiteralPath $senhaPath -Encoding ASCII
+    function Invoke-RestMethod {
+        param($Method, $Uri, $ContentType, $Body, $TimeoutSec)
+        $dadosLogin = [Text.Encoding]::UTF8.GetString($Body) | ConvertFrom-Json
+        if ($dadosLogin.username -ne 'admin' -or $dadosLogin.password -ne 'senha-teste') {
+            throw 'Credenciais nao foram carregadas corretamente.'
+        }
+        return @{ token = 'token-valido' }
+    }
+    if ((Obter-Token (Ler-Json $configPath)) -ne 'token-valido') {
+        throw 'Login do agente falhou com senha gravada pelo Windows.'
+    }
 
     $script:pedidoTeste = @{
         id = 5; numeroPedido = 1234; clienteNome = 'Cliente'; telefone = '123'
@@ -41,11 +52,18 @@ try {
         if ($Uri.EndsWith('/configuracao')) { return @{ habilitada = $true } }
         if ($Uri.EndsWith('/pendentes')) {
             if ($script:confirmado) { return ,@() }
+            if ($script:modo -eq 'parada') {
+                $outro = $script:pedidoTeste.Clone()
+                $outro.id = 6
+                $outro.numeroPedido = 1235
+                return ,@([pscustomobject]$script:pedidoTeste, [pscustomobject]$outro)
+            }
             return ,@([pscustomobject]$script:pedidoTeste)
         }
         if ($Uri.EndsWith('/confirmar')) {
             $script:confirmacoes++
             if ($script:modo -eq 'rede' -and $script:confirmacoes -eq 1) { throw 'Conexao interrompida' }
+            if ($script:modo -eq 'parada') { Set-Content -LiteralPath $paradaPath -Value 'parar' }
             $script:confirmado = $true
             return
         }
@@ -73,6 +91,18 @@ try {
             throw "$modo : pedido nao foi confirmado e limpo."
         }
     }
+    if (Test-Path -LiteralPath $estadoPath) { Remove-Item -LiteralPath $estadoPath }
+    $script:modo = 'parada'
+    $script:impressoes = 0
+    $script:confirmacoes = 0
+    $script:confirmado = $false
+    $script:esperas = 0
+    Iniciar-Agente
+    if ($script:impressoes -ne 1 -or $script:confirmacoes -ne 1) {
+        throw 'Parada segura deveria concluir somente o pedido em andamento.'
+    }
+    if ((Ler-Json $statusPath).pendentes -ne 1) { throw 'Estado nao registra o pedido restante.' }
+    Remove-Item -LiteralPath $paradaPath
     $origem = Join-Path $raizTeste 'origem.ps1'
     Set-Content -LiteralPath $origem -Value 'agente de teste'
     function Configurar-Agente { $script:configuracoes++ }

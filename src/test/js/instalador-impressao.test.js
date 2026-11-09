@@ -49,8 +49,10 @@ test("informa se a fila está ativada e não confunde falha com fila desativada"
 
 test("baixa o instalador e informa erros sem manter o botão bloqueado", async () => {
     const { contexto, botao, estado } = criarPainel();
-    contexto.fetch = async url => {
+    contexto.fetch = async (url, options) => {
         assert.match(url, /\/api\/admin\/impressao\/instalador$/);
+        assert.equal(options.method, "POST");
+        assert.equal(JSON.parse(options.body).site, "https://exemplo.test");
         return { ok: true, blob: async () => ({}) };
     };
     await contexto.baixarInstaladorImpressao();

@@ -2,18 +2,17 @@ SABOR CEARENSE - IMPRESSAO AUTOMATICA NO WINDOWS
 
 1. Instale e teste a impressora no Windows.
 2. Extraia todos os arquivos deste ZIP e clique duas vezes em instalar.cmd.
-3. Informe o endereco HTTPS do site, o nome exato da impressora instalada e o usuario e senha do painel.
-4. Mantenha a janela do agente aberta. Ele sera iniciado quando este usuario entrar no Windows.
+3. Na central de impressao, escolha a impressora e clique em Salvar e iniciar. Nao e necessario informar senha.
+4. Ao minimizar ou fechar a janela, a impressao continua no icone da bandeja ao lado do relogio. Para abrir novamente, clique duas vezes no icone.
 5. Faca um pedido de teste e confira a impressao fisica.
 
 A fila deve estar ativada no servidor. Verifique a situacao na aba Impressao Automatica do painel.
+O instalador deve ser executado em ate 15 minutos. Se expirar ou ja tiver sido utilizado, baixe outro no painel.
+A vinculacao e exclusiva para impressao. Instalar em outro computador desvincula o anterior.
 Se o computador estiver desligado ou sem internet, os pedidos pendentes aguardam a volta da conexao.
 Use somente um computador para a impressao automatica.
 
-Se um pedido ficar em situacao incerta, confira a impressora e a fila do Windows. Feche o agente.
-Abra o PowerShell e execute:
-
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\SaborCearense\Impressao\agente.ps1" -Resolver
-
-Digite IMPRESSO se ja saiu ou IMPRIMIR para tentar novamente. Inicie o agente pelo atalho da pasta Inicializar.
+Se um pedido ficar em situacao incerta, confira a impressora e a fila do Windows, abra o aplicativo e clique em Conferir pedido.
+Escolha se o pedido ja foi impresso ou se deseja tentar novamente.
+Para parar a impressao, clique com o botao direito no icone da bandeja e escolha Sair e parar impressao.
 O painel continua oferecendo impressao manual. O envio ao Windows nao garante impressao fisica.

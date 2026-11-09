@@ -8,9 +8,11 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 public class AdminAuthInterceptor implements HandlerInterceptor {
     private final AdminTokenService tokenService;
+    private final DispositivoImpressaoService dispositivos;
 
-    public AdminAuthInterceptor(AdminTokenService tokenService) {
+    public AdminAuthInterceptor(AdminTokenService tokenService, DispositivoImpressaoService dispositivos) {
         this.tokenService = tokenService;
+        this.dispositivos = dispositivos;
     }
 
     @Override
@@ -27,9 +29,15 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
             return true;
         }
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (header != null && header.startsWith("Bearer ")
-                && tokenService.isValid(header.substring("Bearer ".length()).trim())) {
-            return true;
+        if (header != null && header.startsWith("Bearer ")) {
+            String token = header.substring("Bearer ".length()).trim();
+            if (tokenService.isValid(token)) return true;
+            String uri = request.getRequestURI();
+            boolean acessoImpressao = ("GET".equalsIgnoreCase(request.getMethod())
+                    && (uri.equals("/api/admin/impressao/configuracao") || uri.equals("/api/admin/impressao/pendentes")))
+                    || ("POST".equalsIgnoreCase(request.getMethod())
+                    && uri.matches("/api/admin/impressao/[0-9]+/confirmar"));
+            if (acessoImpressao && dispositivos.credencialValida(token)) return true;
         }
 
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Autenticacao administrativa necessaria");

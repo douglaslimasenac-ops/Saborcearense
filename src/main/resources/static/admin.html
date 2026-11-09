@@ -1125,21 +1125,22 @@
                     <p id="status-fila-impressao" role="status">Consultando a fila de impressão...</p>
                     <button class="btn-acao" id="baixar-instalador-impressao" type="button" onclick="baixarInstaladorImpressao()">⬇ Baixar instalador para Windows</button>
                     <ol>
-                        <li>Baixe o arquivo neste computador Windows e extraia a pasta ZIP.</li>
+                        <li>Baixe o arquivo neste computador Windows e extraia a pasta ZIP. O vínculo é válido por 15 minutos; apenas o download mais recente pode ser usado.</li>
                         <li>Na pasta extraída, clique duas vezes em <strong>instalar.cmd</strong>.</li>
-                        <li>Informe o endereço do site, o nome exato da impressora e o usuário e a senha do painel na janela que abrir.</li>
-                        <li>Mantenha a janela do agente aberta e faça um pedido de teste. Ele iniciará novamente quando este usuário entrar no Windows.</li>
+                        <li>Na central de impressão, escolha a impressora e clique em <strong>Salvar e iniciar</strong>. Não é necessário informar a senha do painel.</li>
+                        <li>Faça um pedido de teste. Ao fechar ou minimizar a janela, o aplicativo continua funcionando no ícone ao lado do relógio e inicia quando este usuário entrar no Windows.</li>
                     </ol>
                     <p>Use apenas um computador para a impressão automática. Se ele estiver desligado ou sem internet, os pedidos pendentes serão processados quando voltar.</p>
-                    <p>Se o envio à impressora ficar em situação incerta, confira a impressora e a fila do Windows. Feche o agente e siga o arquivo <strong>leia-me.txt</strong> incluído no ZIP para resolver o pedido.</p>
+                    <p>Se um pedido precisar de conferência, confira a impressora e a fila do Windows e use o botão <strong>Conferir pedido</strong> na central de impressão.</p>
                     <p>O botão de impressão dos pedidos continua disponível para reimpressão manual.</p>
+                    <button class="btn-limpar-filtros" type="button" onclick="revogarDispositivosImpressao()">Desvincular computadores de impressão</button>
                 </div>
             </section>
         </main>
     </div>
     
    <script src="ordenar-itens.js"></script>
-   <script src="admin.js?v=14"></script>
+   <script src="admin.js?v=15"></script>
    <script src="pwa-admin.js"></script>
 
 </body>

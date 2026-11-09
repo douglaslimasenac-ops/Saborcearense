@@ -12,13 +12,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDateTime;
+import java.time.Instant;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.zip.ZipInputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saborcearense.repository.PedidoRepository;
+import com.saborcearense.repository.DispositivoImpressaoRepository;
 import com.saborcearense.security.AdminTokenService;
+import com.saborcearense.security.DispositivoImpressaoService;
 import com.saborcearense.service.FuncionamentoRestauranteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +45,8 @@ class ImpressaoControllerTest {
     @Autowired private AdminTokenService tokens;
     @Autowired private FuncionamentoRestauranteService funcionamento;
     @Autowired private PedidoRepository pedidos;
+    @Autowired private DispositivoImpressaoRepository dispositivos;
+    @Autowired private DispositivoImpressaoService vinculacoes;
     private String auth;
 
     @BeforeEach
@@ -51,9 +56,29 @@ class ImpressaoControllerTest {
     }
 
     @Test
+    void codigoExpiraEVincularOutroComputadorRevogaOAnterior() throws Exception {
+        String codigoExpirado = vinculacoes.gerarCodigo();
+        var registro = dispositivos.findAll().stream()
+                .filter(d -> d.getCodigoHash() != null).findFirst().orElseThrow();
+        registro.setExpiraEm(Instant.now().minusSeconds(1));
+        dispositivos.saveAndFlush(registro);
+        mvc.perform(post("/api/impressao/vincular").contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(java.util.Map.of("codigo", codigoExpirado))))
+                .andExpect(status().isUnauthorized());
+        String primeiraCredencial = vinculacoes.vincular(vinculacoes.gerarCodigo());
+        String segundaCredencial = vinculacoes.vincular(vinculacoes.gerarCodigo());
+        mvc.perform(get("/api/admin/impressao/pendentes").header("Authorization", "Bearer " + primeiraCredencial))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/admin/impressao/pendentes").header("Authorization", "Bearer " + segundaCredencial))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void instaladorExigeLoginEContemArquivosOriginais() throws Exception {
-        mvc.perform(get("/api/admin/impressao/instalador")).andExpect(status().isUnauthorized());
-        byte[] zip = mvc.perform(get("/api/admin/impressao/instalador").header("Authorization", auth))
+        mvc.perform(post("/api/admin/impressao/instalador").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"site\":\"http://localhost:8080\"}")).andExpect(status().isUnauthorized());
+        byte[] zip = mvc.perform(post("/api/admin/impressao/instalador").header("Authorization", auth)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"site\":\"http://localhost:8080\"}"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"sabor-cearense-impressao.zip\""))
                 .andExpect(header().string("Cache-Control", "no-store"))
@@ -65,12 +90,38 @@ class ImpressaoControllerTest {
                 arquivos.put(item.getName(), entrada.readAllBytes());
             }
         }
-        assertEquals(3, arquivos.size());
-        for (String nome : java.util.List.of("agente.ps1", "instalar.cmd", "leia-me.txt")) {
+        assertEquals(7, arquivos.size());
+        for (String nome : java.util.List.of("agente.ps1", "interface.ps1", "icone.ico", "marca.png", "instalar.cmd", "leia-me.txt")) {
             try (var arquivo = new ClassPathResource("impressao/" + nome).getInputStream()) {
                 assertArrayEquals(arquivo.readAllBytes(), arquivos.get(nome));
             }
         }
+        var vinculacao = mapper.readTree(arquivos.get("vinculacao.json"));
+        assertEquals("http://localhost:8080", vinculacao.get("site").asText());
+        String codigo = vinculacao.get("codigo").asText();
+        String resposta = mvc.perform(post("/api/impressao/vincular").contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(java.util.Map.of("codigo", codigo))))
+                .andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
+                .andReturn().getResponse().getContentAsString();
+        String dispositivo = "Bearer " + mapper.readTree(resposta).get("credencial").asText();
+        mvc.perform(post("/api/impressao/vincular").contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(java.util.Map.of("codigo", codigo))))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/admin/impressao/configuracao").header("Authorization", dispositivo)).andExpect(status().isOk());
+        mvc.perform(get("/api/admin/impressao/pendentes").header("Authorization", dispositivo)).andExpect(status().isOk());
+        mvc.perform(post("/api/admin/impressao/999999/confirmar").header("Authorization", dispositivo))
+                .andExpect(status().isNotFound());
+        mvc.perform(get("/api/pedidos").header("Authorization", dispositivo)).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/admin/pratos").header("Authorization", dispositivo)).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/admin/impressao/instalador").header("Authorization", dispositivo)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"site\":\"http://localhost:8080\"}"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(delete("/api/admin/impressao/dispositivos").header("Authorization", dispositivo)).andExpect(status().isUnauthorized());
+        mvc.perform(delete("/api/admin/impressao/dispositivos").header("Authorization", auth)).andExpect(status().isNoContent());
+        mvc.perform(get("/api/admin/impressao/pendentes").header("Authorization", dispositivo)).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/admin/impressao/instalador").header("Authorization", auth)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"site\":\"https://site-invalido.example\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

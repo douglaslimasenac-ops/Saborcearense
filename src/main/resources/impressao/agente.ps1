@@ -2,14 +2,18 @@ param(
     [switch]$Instalar,
     [switch]$Configurar,
     [switch]$IniciarComWindows,
-    [switch]$Resolver
+    [switch]$Resolver,
+    [int]$ResponsavelPid = 0
 )
 
 $ErrorActionPreference = 'Stop'
 $dadosDir = Join-Path $env:LOCALAPPDATA 'SaborCearense\Impressao'
 $configPath = Join-Path $dadosDir 'config.json'
 $senhaPath = Join-Path $dadosDir 'senha.txt'
+$credencialPath = Join-Path $dadosDir 'credencial.txt'
 $estadoPath = Join-Path $dadosDir 'estado.json'
+$statusPath = Join-Path $dadosDir 'status.json'
+$paradaPath = Join-Path $dadosDir 'parar'
 
 function Gravar-JsonAtomico($caminho, $valor) {
     $temporario = "$caminho.tmp"
@@ -28,15 +32,20 @@ function Ler-Json($caminho) {
     return (Get-Content -LiteralPath $caminho -Raw -Encoding UTF8 | ConvertFrom-Json)
 }
 
-function Configurar-Agente {
-    New-Item -ItemType Directory -Force -Path $dadosDir | Out-Null
-    $url = (Read-Host 'Endereco do site (https://...)').Trim().TrimEnd('/')
+function Validar-UrlServidor($valor) {
+    $url = $valor.Trim().TrimEnd('/')
     $uri = $null
     if (-not [Uri]::TryCreate($url, [UriKind]::Absolute, [ref]$uri) -or
         ($uri.Scheme -ne 'https' -and -not ($uri.Scheme -eq 'http' -and $uri.IsLoopback)) -or
         $uri.AbsolutePath -ne '/' -or $uri.Query -or $uri.Fragment -or $uri.UserInfo) {
         throw 'Use o endereco HTTPS do site, sem caminho ou credenciais.'
     }
+    return $url
+}
+
+function Configurar-Agente {
+    New-Item -ItemType Directory -Force -Path $dadosDir | Out-Null
+    $url = Validar-UrlServidor (Read-Host 'Endereco do site (https://...)')
     Write-Host 'Impressoras instaladas:'
     Get-Printer | Format-Table Name, PrinterStatus -AutoSize | Out-Host
     $impressora = (Read-Host 'Nome exato da impressora').Trim()
@@ -170,7 +179,15 @@ function Resolver-Estado {
 }
 
 function Obter-Token($config) {
-    $senhaSegura = Get-Content -LiteralPath $senhaPath -Raw | ConvertTo-SecureString
+    if ($config.autenticacao -eq 'dispositivo') {
+        if (-not (Test-Path -LiteralPath $credencialPath)) {
+            throw 'Vinculacao ausente. Baixe um novo instalador pelo painel administrativo.'
+        }
+        $segura = (Get-Content -LiteralPath $credencialPath -Raw).Trim() | ConvertTo-SecureString
+        $credencialDispositivo = New-Object System.Management.Automation.PSCredential('impressora', $segura)
+        return $credencialDispositivo.GetNetworkCredential().Password
+    }
+    $senhaSegura = (Get-Content -LiteralPath $senhaPath -Raw).Trim() | ConvertTo-SecureString
     $credencial = New-Object System.Management.Automation.PSCredential($config.usuario, $senhaSegura)
     $corpo = @{ username = $config.usuario; password = $credencial.GetNetworkCredential().Password } | ConvertTo-Json -Compress
     try {
@@ -202,8 +219,25 @@ function Instalar-Agente($origem = $PSCommandPath) {
     Iniciar-Agente
 }
 
+function Atualizar-StatusAgente($tipo, $mensagem, $pendentes = $null) {
+    Gravar-JsonAtomico $statusPath @{
+        tipo = $tipo
+        mensagem = $mensagem
+        pendentes = $pendentes
+        atualizado = [DateTimeOffset]::UtcNow.ToString('o')
+    }
+}
+
+function Deve-PararAgente {
+    if (Test-Path -LiteralPath $paradaPath) { return $true }
+    if ($ResponsavelPid -gt 0 -and -not (Get-Process -Id $ResponsavelPid -ErrorAction SilentlyContinue)) {
+        return $true
+    }
+    return $false
+}
+
 function Iniciar-Agente {
-    if (-not (Test-Path -LiteralPath $configPath) -or -not (Test-Path -LiteralPath $senhaPath)) {
+    if (-not (Test-Path -LiteralPath $configPath)) {
         throw 'Execute primeiro com -Configurar no usuario do Windows que executara o agente.'
     }
     $mutex = New-Object System.Threading.Mutex($false, 'Local\SaborCearenseAgenteImpressao')
@@ -211,8 +245,9 @@ function Iniciar-Agente {
     try {
         $config = Ler-Json $configPath
         $token = $null
-        while ($true) {
+        while (-not (Deve-PararAgente)) {
             try {
+                Atualizar-StatusAgente 'verificando' 'Conectando ao servidor e verificando a impressora.'
                 if (-not $token) { $token = Obter-Token $config }
                 $headers = @{ Authorization = "Bearer $token" }
                 if (Test-Path -LiteralPath $estadoPath) {
@@ -228,11 +263,15 @@ function Iniciar-Agente {
                 $configServidor = Invoke-RestMethod -Uri ($config.url + '/api/admin/impressao/configuracao') -Headers $headers -TimeoutSec 15
                 if (-not $configServidor.habilitada) { Write-Warning 'Fila automatica desativada no servidor; novos pedidos nao serao adicionados.' }
                 $pendentes = Invoke-RestMethod -Uri ($config.url + '/api/admin/impressao/pendentes') -Headers $headers -TimeoutSec 15
+                $quantidadePendente = @($pendentes | Where-Object { $null -ne $_ }).Count
+                Verificar-Impressora $config.impressora
                 foreach ($pedido in $pendentes) {
+                    if (Deve-PararAgente) { break }
                     if (-not $pedido.id) { throw 'Resposta invalida da fila de impressao.' }
                     $texto = Converter-ParaTexto $pedido
                     $numero = if ($pedido.numeroPedido) { $pedido.numeroPedido } else { $pedido.id }
                     Verificar-Impressora $config.impressora
+                    Atualizar-StatusAgente 'verificando' "Enviando pedido #$numero para a impressora."
                     $estado = @{ id = $pedido.id; numero = $numero; status = 'incerto' }
                     Gravar-JsonAtomico $estadoPath $estado
                     Enviar-ParaImpressora $config.impressora $texto $numero
@@ -241,11 +280,23 @@ function Iniciar-Agente {
                     Invoke-RestMethod -Method Post -Uri ($config.url + "/api/admin/impressao/$($estado.id)/confirmar") -Headers $headers -TimeoutSec 15 | Out-Null
                     Remove-Item -LiteralPath $estadoPath
                     Write-Host "Pedido #$numero enviado a impressora e confirmado."
+                    $quantidadePendente--
+                }
+                if ($configServidor.habilitada) {
+                    Atualizar-StatusAgente 'operacional' 'Servidor conectado e impressora reconhecida pelo Windows.' $quantidadePendente
+                } else {
+                    Atualizar-StatusAgente 'alerta' 'Fila automatica desativada no servidor. Novos pedidos nao entrarao na fila.' $quantidadePendente
                 }
             } catch {
-                Write-Warning ("{0} - {1}" -f (Get-Date -Format 'dd/MM/yyyy HH:mm:ss'), $_.Exception.Message)
+                $mensagem = $_.Exception.Message
+                if ($_.Exception.Response -and [int]$_.Exception.Response.StatusCode -eq 401 -and $config.autenticacao -eq 'dispositivo') {
+                    $mensagem = 'Vinculacao encerrada. Baixe um novo instalador pelo painel administrativo.'
+                }
+                Write-Warning ("{0} - {1}" -f (Get-Date -Format 'dd/MM/yyyy HH:mm:ss'), $mensagem)
+                Atualizar-StatusAgente 'erro' $mensagem
                 if ($_.Exception.Response -and [int]$_.Exception.Response.StatusCode -eq 401) { $token = $null }
             }
+            if (Deve-PararAgente) { break }
             Start-Sleep -Seconds 5
         }
     } finally { $mutex.ReleaseMutex(); $mutex.Dispose() }
@@ -255,4 +306,11 @@ if ($Instalar) { Instalar-Agente }
 elseif ($Configurar) { Configurar-Agente }
 elseif ($IniciarComWindows) { Instalar-Inicializacao }
 elseif ($Resolver) { Resolver-Estado }
-elseif ($MyInvocation.InvocationName -ne '.') { Iniciar-Agente }
+elseif ($MyInvocation.InvocationName -ne '.') {
+    try { Iniciar-Agente }
+    catch {
+        try { Atualizar-StatusAgente 'erro' ("O agente parou: " + $_.Exception.Message) }
+        catch { Write-Error "Nao foi possivel registrar o erro do agente: $_" }
+        throw
+    }
+}

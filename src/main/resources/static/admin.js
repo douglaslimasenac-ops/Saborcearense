@@ -194,7 +194,7 @@ async function carregarStatusFilaImpressao() {
         const configuracao = await resposta.json();
         if (typeof configuracao.habilitada !== "boolean") throw new Error("Resposta de configuração inválida");
         status.textContent = configuracao.habilitada
-            ? "Fila automática ativada no servidor. Instale e mantenha o agente aberto no computador da impressora."
+            ? "Fila automática ativada no servidor. Instale e mantenha o aplicativo em execução no computador da impressora."
             : "Fila automática desativada no servidor. Peça ao responsável pelo servidor para ativá-la antes de receber pedidos.";
     } catch (erro) {
         console.error("Erro ao consultar a fila de impressão:", erro);
@@ -206,7 +206,12 @@ async function baixarInstaladorImpressao() {
     const botao = document.getElementById("baixar-instalador-impressao");
     botao.disabled = true;
     try {
-        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/impressao/instalador`, { cache: "no-store" });
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/impressao/instalador`, {
+            method: "POST",
+            cache: "no-store",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ site: URL_BACKEND })
+        });
         if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
         const arquivo = await resposta.blob();
         const url = URL.createObjectURL(arquivo);
@@ -225,6 +230,18 @@ async function baixarInstaladorImpressao() {
         alert("Não foi possível baixar o instalador. Confira a conexão e tente novamente.");
     } finally {
         botao.disabled = false;
+    }
+}
+
+async function revogarDispositivosImpressao() {
+    if (!confirm("Desvincular todos os computadores de impressão? A impressão automática parará até instalar novamente pelo painel.")) return;
+    try {
+        const resposta = await fetchAdmin(`${URL_BACKEND}/api/admin/impressao/dispositivos`, { method: "DELETE" });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        alert("Computadores desvinculados. Baixe um novo instalador para vincular novamente.");
+    } catch (erro) {
+        console.error("Erro ao desvincular computadores de impressão:", erro);
+        alert("Não foi possível desvincular os computadores. Tente novamente.");
     }
 }
 
