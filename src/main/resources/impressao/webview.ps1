@@ -79,12 +79,18 @@ function Recortar-Codigo($codigo, $inicio, $fim) {
     return $codigo.Substring($de)
 }
 
+function Obter-JsonUtf8($uri, $headers = @{}) {
+    $resposta = Invoke-WebRequest -UseBasicParsing -Uri $uri -Headers $headers -TimeoutSec 15
+    $json = [Text.Encoding]::UTF8.GetString($resposta.RawContentStream.ToArray())
+    return ,(ConvertFrom-Json -InputObject $json)
+}
+
 function Preparar-ComandaWebView($config, $pedido) {
     $respostaAdmin = Invoke-WebRequest -UseBasicParsing -Uri ($config.url + '/admin.js') -TimeoutSec 15
     $respostaOrdenacao = Invoke-WebRequest -UseBasicParsing -Uri ($config.url + '/ordenar-itens.js') -TimeoutSec 15
     $admin = [Text.Encoding]::UTF8.GetString($respostaAdmin.RawContentStream.ToArray())
     $ordenacao = [Text.Encoding]::UTF8.GetString($respostaOrdenacao.RawContentStream.ToArray())
-    $catalogo = Invoke-RestMethod -Uri ($config.url + '/api/cardapio') -TimeoutSec 15
+    $catalogo = Obter-JsonUtf8 ($config.url + '/api/cardapio')
     if ($catalogo -isnot [array]) { throw 'O servidor retornou um cardapio invalido para a comanda.' }
     $catalogo = @($catalogo | ForEach-Object { $_ })
     $helpers = (Recortar-Codigo $admin 'function escaparHtml(' 'function renderizarItensPedido(') +

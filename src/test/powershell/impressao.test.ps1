@@ -57,6 +57,7 @@ try {
     function Testar-RuntimeWebView { return -not ($script:modo -eq 'runtime' -and $script:esperas -eq 0) }
     function Testar-SdkWebView { return $true }
     function Preparar-ComandaWebView($config, $pedido) { return 'comanda-teste' }
+    function Obter-JsonUtf8($uri, $headers) { return Invoke-RestMethod -Uri $uri -Headers $headers -TimeoutSec 15 }
     function Enviar-ParaImpressora($nome, $texto, $numero) {
         $script:impressoes++
         if ($script:modo -eq 'incerto') { throw 'Erro no envio' }

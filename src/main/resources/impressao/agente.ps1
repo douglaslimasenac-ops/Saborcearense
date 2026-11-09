@@ -288,7 +288,7 @@ function Iniciar-Agente {
                 }
                 $configServidor = Invoke-RestMethod -Uri ($config.url + '/api/admin/impressao/configuracao') -Headers $headers -TimeoutSec 15
                 if (-not $configServidor.habilitada) { Write-Warning 'Fila automatica desativada no servidor; novos pedidos nao serao adicionados.' }
-                $pendentes = Invoke-RestMethod -Uri ($config.url + '/api/admin/impressao/pendentes') -Headers $headers -TimeoutSec 15
+                $pendentes = Obter-JsonUtf8 ($config.url + '/api/admin/impressao/pendentes') $headers
                 $quantidadePendente = @($pendentes | Where-Object { $null -ne $_ }).Count
                 Verificar-Impressora $config.impressora
                 if (-not (Testar-RuntimeWebView) -or -not (Testar-SdkWebView)) {

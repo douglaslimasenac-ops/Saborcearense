@@ -6,17 +6,31 @@ try {
     . (Join-Path $PSScriptRoot '..\..\main\resources\impressao\agente.ps1')
     $static = Join-Path $PSScriptRoot '..\..\main\resources\static'
     function Invoke-WebRequest {
-        param($Uri, [switch]$UseBasicParsing, $TimeoutSec)
+        param($Uri, [switch]$UseBasicParsing, $TimeoutSec, $Headers)
+        if ($Uri.EndsWith('/api/cardapio')) {
+            $json = if ($script:catalogoInvalido) { '{"erro":"erro"}' } else {
+                '[{"id":1,"categoria":"FRANGO"},{"id":2,"categoria":"BEBIDA"}]'
+            }
+            return @{ RawContentStream = New-Object IO.MemoryStream(,[Text.Encoding]::UTF8.GetBytes($json)) }
+        }
+        if ($Uri.EndsWith('/pendentes')) {
+            $json = if ($script:filaVazia) { '[]' } else {
+                '[{"clienteNome":"Jo' + [char]0x00E3 + 'o"}]'
+            }
+            return @{ RawContentStream = New-Object IO.MemoryStream(,[Text.Encoding]::UTF8.GetBytes($json)) }
+        }
         $nome = if ($Uri.EndsWith('/ordenar-itens.js')) { 'ordenar-itens.js' } else { 'admin.js' }
         $bytes = [IO.File]::ReadAllBytes((Join-Path $static $nome))
         return @{ RawContentStream = New-Object IO.MemoryStream(,$bytes) }
     }
-    function Invoke-RestMethod {
-        param($Uri, $TimeoutSec)
-        if ($script:catalogoInvalido) { return @{ erro = 'erro' } }
-        return ,@([pscustomobject]@{ id = 1; categoria = 'FRANGO' },
-            [pscustomobject]@{ id = 2; categoria = 'BEBIDA' })
+    $recebidos = Obter-JsonUtf8 'http://localhost/pendentes'
+    if ($recebidos -isnot [array] -or $recebidos.Count -ne 1 -or
+        $recebidos[0].clienteNome -cne ('Jo' + [char]0x00E3 + 'o')) {
+        throw 'A fila nao foi decodificada corretamente como UTF-8.'
     }
+    $script:filaVazia = $true
+    $recebidos = Obter-JsonUtf8 'http://localhost/pendentes'
+    if ($recebidos -isnot [array] -or $recebidos.Count -ne 0) { throw 'Fila vazia nao foi preservada.' }
     $pedido = @{
         id = 123; clienteNome = 'Teste local'; telefone = '123'
         endereco = 'Rua A, 12, Bairro: Centro (Ref: Mercado)'
