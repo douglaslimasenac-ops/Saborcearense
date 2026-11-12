@@ -411,10 +411,53 @@ body {
     font-size: 0.76rem;
     text-align: right;
 }
+.separados {
+    margin-top: 16px;
+    border: 1px solid #eadbc5;
+    border-radius: 14px;
+    background: #fff;
+}
+.separados summary {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 14px;
+    cursor: pointer;
+    color: #4a3a29;
+}
+.separados summary small { color: #92704b; font-size: 0.75rem; }
+.separados-conteudo { padding: 0 14px 14px; }
+.separados-conteudo p { color: #766b5f; font-size: 0.8rem; }
+.separados-lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.separados-opcao {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 44px;
+    padding: 8px;
+    border: 1px solid #eadbc5;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+}
+.separados-opcao input { width: 18px; height: 18px; accent-color: #b8791d; flex-shrink: 0; }
+.separados-outro { display: block; margin-top: 14px; color: #4a3a29; font-size: 0.8rem; font-weight: 700; }
+.separados-campo { display: flex; gap: 8px; margin-top: 6px; }
+.separados-campo input { min-width: 0; flex: 1; padding: 10px; border: 1px solid #d8cbbb; border-radius: 9px; font-size: 16px; }
+.separados-campo button, .separados-outros button { border: 1px solid #d8ba87; border-radius: 9px; background: #fff8eb; color: #70480e; font-weight: 700; cursor: pointer; }
+.separados-campo button { padding: 10px; }
+.separados-outros { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.separados-outros button { max-width: 100%; padding: 7px 10px; overflow-wrap: anywhere; }
+.separados-erro { color: #a44f35; font-size: 0.75rem; }
+.separados-total { margin-top: 12px; padding: 10px; border-radius: 9px; background: #fff4dc; color: #70480e; font-size: 0.85rem; font-weight: 800; }
 .modal-acompanhamentos-acoes {
     display: flex;
     gap: 9px;
     margin-top: 18px;
+    position: sticky;
+    bottom: -22px;
+    padding: 12px 0 2px;
+    background: #fffaf2;
 }
 .btn-acomp-cancelar,
 .btn-acomp-confirmar {

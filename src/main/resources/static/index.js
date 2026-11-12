@@ -436,14 +436,15 @@ function mudarQuantidade(id, valor, nome, preco) {
 }
 
 // Persistência interna do carrinho de compras
-function executarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal) {
+function executarMudarQuantidadeReal(idChave, valor, nome, preco, idOriginal, personalizacao) {
     const idContadorVisual = idOriginal || idChave;
 
     if (!carrinho[idChave]) {
         if (valor <= 0) return;
         carrinho[idChave] = {
             id: idChave, nome: nome, preco: parseFloat(preco), quantidade: 0,
-            categoria: obterCategoriaItem({ id: idOriginal || idChave }, catalogoProdutos)
+            categoria: obterCategoriaItem({ id: idOriginal || idChave }, catalogoProdutos),
+            ...(personalizacao || {})
         };
     }
     if (!carrinho[idChave].categoria) {
@@ -494,18 +495,28 @@ function renderizarItensSacola() {
         container.innerHTML += `
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
                 <div style="flex: 1; padding-right: 12px; text-align: left;">
-                    <div style="font-weight: 600; font-size: 14px; color: #1e293b; line-height: 1.3;">${item.nome}</div>
-                    ${String(item.nome).includes(" (") ? `<button type="button" class="botao-editar-acomp" onclick="editarAcompanhamentos('${encodeURIComponent(chaveId)}', '${encodeURIComponent(item.nome)}', ${item.preco}, ${item.quantidade})">Editar acompanhamentos</button>` : ""}
+                    <div style="font-weight: 600; font-size: 14px; color: #1e293b; line-height: 1.3;">${escaparItemSacola(item.nome)}</div>
+                    ${item.nomeBase || String(item.nome).includes(" (") ? `<button type="button" class="botao-editar-acomp" onclick="editarAcompanhamentos('${codificarItemSacola(chaveId)}', '${codificarItemSacola(item.nome)}', ${Number(item.preco)}, ${Number(item.quantidade)})">Editar prato</button>` : ""}
                     <div style="font-size: 13px; color: #27ae60; font-weight: 700; margin-top: 2px;">R$ ${(item.preco * item.quantidade).toFixed(2).replace('.', ',')}</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <button onclick="executarMudarQuantidadeReal('${chaveId}', -1, '${item.nome}', ${item.preco}, '${idBaseOriginal}')" style="padding: 2px 8px; font-weight: bold; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; border-radius: 4px;">-</button>
+                    <button onclick="executarMudarQuantidadeReal(decodeURIComponent('${codificarItemSacola(chaveId)}'), -1, decodeURIComponent('${codificarItemSacola(item.nome)}'), ${Number(item.preco)}, decodeURIComponent('${codificarItemSacola(idBaseOriginal)}'))" aria-label="Diminuir quantidade" style="padding: 2px 8px; font-weight: bold; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; border-radius: 4px;">-</button>
                     <span style="font-weight: bold; min-width: 15px; text-align: center;">${item.quantidade}</span>
-                    <button onclick="executarMudarQuantidadeReal('${chaveId}', 1, '${item.nome}', ${item.preco}, '${idBaseOriginal}')" style="padding: 2px 8px; font-weight: bold; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; border-radius: 4px;">+</button>
+                    <button onclick="executarMudarQuantidadeReal(decodeURIComponent('${codificarItemSacola(chaveId)}'), 1, decodeURIComponent('${codificarItemSacola(item.nome)}'), ${Number(item.preco)}, decodeURIComponent('${codificarItemSacola(idBaseOriginal)}'))" aria-label="Aumentar quantidade" style="padding: 2px 8px; font-weight: bold; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; border-radius: 4px;">+</button>
                 </div>
             </div>
         `;
     });
+}
+
+function escaparItemSacola(valor) {
+    return String(valor ?? "").replace(/[&<>"']/g, caractere => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[caractere]));
+}
+
+function codificarItemSacola(valor) {
+    return encodeURIComponent(String(valor)).replace(/'/g, "%27");
 }
 
 // Atualização de preços em lote na barra flutuante inferior

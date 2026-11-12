@@ -34,15 +34,19 @@ try {
     $pedido = @{
         id = 123; clienteNome = 'Teste local'; telefone = '123'
         endereco = 'Rua A, 12, Bairro: Centro (Ref: Mercado)'
-        itens = '[{"id":2,"nome":"Suco","quantidade":1,"preco":5},{"id":1,"nome":"Prato","quantidade":2,"preco":12.5}]'
-        valorTotal = 30; formaPagamento = 'Dinheiro'; trocoPara = 50
+        itens = '[{"id":2,"nome":"Suco","quantidade":1,"preco":5},{"id":1,"nome":"Prato - SEPARADO: Arroz","quantidade":2,"preco":14.5,"itensSeparados":["Arroz"],"adicionalSeparados":2}]'
+        valorTotal = 34; formaPagamento = 'Dinheiro'; trocoPara = 50
     }
+    $pedido.itens = $pedido.itens.Replace(' - SEPARADO', (' ' + [char]0x2014 + ' SEPARADO'))
     $codigo = Preparar-ComandaWebView @{ url = 'http://localhost' } $pedido
     if (-not $codigo.Contains('listaPratosLocal=[{"id":1,"categoria":"FRANGO"},{"id":2,"categoria":"BEBIDA"}]')) {
         throw 'O catalogo nao foi serializado como uma lista de produtos.'
     }
     if (-not $codigo.Contains(('Previs' + [char]0x00E3 + 'o de entrega'))) {
         throw 'O modelo da comanda nao foi decodificado como UTF-8.'
+    }
+    if (-not $codigo.Contains('SEPARADO: Arroz') -or -not $codigo.Contains('"valorTotal":34')) {
+        throw 'Itens separados ou valor total nao foram enviados ao modelo de impressao.'
     }
     $script:catalogoInvalido = $true
     try { $null = Preparar-ComandaWebView @{ url = 'http://localhost' } $pedido; throw 'Catalogo invalido foi aceito.' }
@@ -53,7 +57,14 @@ try {
         $validacao = @'
 const linhas = document.querySelectorAll('tbody tr');
 if (linhas.length !== 2 || !linhas[0].textContent.includes('PRATO') || !linhas[1].textContent.includes('SUCO')) throw new Error('Ordem dos itens incorreta');
-if (!document.body.textContent.includes('Mercado') || !document.body.textContent.includes('20,00')) throw new Error('Dados da comanda ausentes');
+if (!document.body.textContent.includes('Mercado') || !linhas[0].textContent.includes('Separados: Arroz') || !document.body.textContent.includes('34,00')) throw new Error('Dados da comanda ausentes');
+if (!linhas[0].textContent.includes('25,00') || !linhas[0].textContent.includes('4,00')) throw new Error('Adicionais nao foram exibidos corretamente');
+if (document.body.textContent.includes('Adicionais (')) throw new Error('O fechamento nao deve repetir os adicionais');
+const detalheSeparado = getComputedStyle(linhas[0].querySelectorAll('div')[5]);
+const valorSeparado = getComputedStyle(linhas[0].querySelectorAll('div')[6]);
+if (detalheSeparado.fontWeight !== '400' || valorSeparado.fontWeight !== '400' ||
+    detalheSeparado.fontSize !== '17px' || valorSeparado.fontSize !== '17px' ||
+    detalheSeparado.color !== 'rgb(0, 0, 0)' || valorSeparado.color !== 'rgb(0, 0, 0)') throw new Error('Itens separados devem ter fonte legivel, preta e sem negrito');
 if (!document.head.textContent.includes('size: 80mm auto')) throw new Error('CSS de impressao ausente');
 if (document.title !== 'iFood Cupom #123') throw new Error('Titulo da comanda incorreto');
 '@

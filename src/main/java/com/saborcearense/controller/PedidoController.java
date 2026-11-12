@@ -34,6 +34,7 @@ import com.saborcearense.model.Pedido;
 import com.saborcearense.repository.PedidoRepository;
 import com.saborcearense.repository.ChatMensagemRepository;
 import com.saborcearense.service.FuncionamentoRestauranteService;
+import com.saborcearense.service.ValidacaoItensSeparadosService;
 import org.springframework.transaction.annotation.Transactional;
 
 
@@ -56,6 +57,9 @@ public class PedidoController {
 
     @Autowired
     private FuncionamentoRestauranteService funcionamentoRestauranteService;
+
+    @Autowired
+    private ValidacaoItensSeparadosService validacaoItensSeparadosService;
 
     @Autowired
     private ObjectMapper mapper;
@@ -130,6 +134,7 @@ public class PedidoController {
    }
 
    private Pedido salvarNovoPedido(Pedido novoPedido) {
+      validacaoItensSeparadosService.validar(novoPedido);
       // Campos de controle pertencem ao servidor, não ao navegador do cliente.
       novoPedido.setId(null);
       novoPedido.setNumeroPedido(gerarNumeroPedido());

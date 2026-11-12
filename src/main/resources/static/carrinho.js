@@ -14,6 +14,12 @@ let preparacaoCategoriasCarrinho = Promise.resolve();
 
 const URL_API_BACKEND = window.location.origin;
 
+function escaparNomeCarrinho(valor) {
+    return String(valor ?? "").replace(/[&<>"']/g, caractere => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[caractere]));
+}
+
 // ==========================================
 // 🌐 EVENTOS DE INICIALIZAÇÃO (DOM)
 // ==========================================
@@ -134,7 +140,7 @@ function carregarDadosDoCarrinho() {
     const paramUrl = urlParams.get("carrinho");
 
     if (paramUrl) {
-        dadosCarrinhoRaw = decodeURIComponent(paramUrl);
+        dadosCarrinhoRaw = paramUrl;
     } else {
         dadosCarrinhoRaw = localStorage.getItem("carrinhoSaborCearense");
     }
@@ -151,7 +157,7 @@ function carregarDadosDoCarrinho() {
                 const divItem = document.createElement("div");
                 divItem.className = "item-resumo";
 
-                const nomeLimpo = item.nome ? decodeURIComponent(item.nome) : "Prato";
+                const nomeLimpo = escaparNomeCarrinho(item.nome || "Prato");
                 const qtd = item.quantidade || item.qtd || 1;
                 const preco = item.preco || 0;
                 const subtotal = qtd * preco;
@@ -187,7 +193,7 @@ function carregarItensDaUrlNoCarrinho() {
 
         if (carrinhoParam) {
             // Decodifica a string JSON vinda da sua URL real
-            itensCarrinho = JSON.parse(decodeURIComponent(carrinhoParam));
+            itensCarrinho = JSON.parse(carrinhoParam);
         } else {
             // Fallback para o LocalStorage caso o parâmetro suma
             const localRaw = localStorage.getItem("carrinhoSaborCearense") || localStorage.getItem("saborCearense_carrinho");
@@ -226,7 +232,7 @@ function carregarItensDaUrlNoCarrinho() {
                 divItem.style.padding = "6px 0";
 
                 // Mapeamento exato das propriedades vinda da sua URL ("nome", "quantidade", "preco")
-                const nomeLimpo = item.nome ? decodeURIComponent(item.nome) : "Prato";
+                const nomeLimpo = escaparNomeCarrinho(item.nome || "Prato");
                 const qtd = item.quantidade || item.qtd || 1;
                 const preco = item.preco || 0;
                 const subtotalItem = qtd * preco;
@@ -493,6 +499,7 @@ async function enviarPedido(e) {
         telefone: contatoTelefone,
         endereco: enderecoCompleto,
         formaPagamento: pagamento,
+        bairroEntrega: isRetirada ? null : bairroTextoPedido,
         valorTotal: Number(totalComTaxaGeral.toFixed(2)),
         trocoPara,
         itens: JSON.stringify(itens.map(item => ({
@@ -539,6 +546,10 @@ async function enviarPedido(e) {
                 console.error("O backend recusou os dados. Status do erro:", response.status);
                 if (response.status === 409) {
                     alert("O restaurante está fechado no momento. Não é possível enviar novos pedidos.");
+                    return;
+                }
+                if (response.status === 400) {
+                    alert("Não foi possível validar os valores do pedido. Volte ao cardápio, atualize a sacola e tente novamente.");
                     return;
                 }
             }

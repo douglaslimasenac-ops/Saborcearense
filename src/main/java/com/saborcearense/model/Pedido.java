@@ -43,6 +43,8 @@ public class Pedido {
     private String itens;
     @Column(length = 500)
     private String observacao;
+    @Transient
+    private String bairroEntrega;
     private LocalDateTime dataCriacao = LocalDateTime.now();
     private LocalDateTime previsaoEntregaInicio;
     private LocalDateTime previsaoEntregaFim;
@@ -87,6 +89,8 @@ public class Pedido {
     public void setItens(String itens) { this.itens = itens; }
     public String getObservacao() { return observacao; }
     public void setObservacao(String observacao) { this.observacao = observacao; }
+    public String getBairroEntrega() { return bairroEntrega; }
+    public void setBairroEntrega(String bairroEntrega) { this.bairroEntrega = bairroEntrega; }
     public LocalDateTime getDataCriacao() { return dataCriacao; }
     public void setDataCriacao(LocalDateTime dataCriacao) { this.dataCriacao = dataCriacao; }
     public LocalDateTime getPrevisaoEntregaInicio() { return previsaoEntregaInicio; }

@@ -1926,13 +1926,39 @@ function renderizarCupomIFood(pedido, janelaImpressao) {
             var tr = janelaImpressao.document.createElement("tr");
             
             var nomeTexto = item.nome ? item.nome.toString().toUpperCase() : "PRATO";
+            var nomeComanda = escaparHtml(nomeTexto);
             var qtdTexto = item.quantidade || item.qtd || 1;
             var precoItem = obterPrecoItem(item);
             var subtotalItem = qtdTexto * precoItem;
+            var subtotalPrato = subtotalItem;
+            var adicionais = [];
+            if (Array.isArray(item.itensSeparados) && item.itensSeparados.length) {
+                var adicionalPorPrato = Number(item.adicionalSeparados);
+                if (item.adicionalSeparados == null || !Number.isFinite(adicionalPorPrato) ||
+                    adicionalPorPrato < 0 || adicionalPorPrato > precoItem) {
+                    throw new Error("Valor dos itens separados ausente ou inválido na comanda.");
+                }
+                var marcadorSeparado = nomeTexto.lastIndexOf(" — SEPARADO: ");
+                if (marcadorSeparado < 0) throw new Error("Descrição dos itens separados ausente na comanda.");
+                nomeComanda = escaparHtml(nomeTexto.substring(0, marcadorSeparado));
+                subtotalPrato = (precoItem - adicionalPorPrato) * Number(qtdTexto);
+                adicionais = item.itensSeparados;
+            }
             
             totalProdutosCalculado += subtotalItem;
 
-            tr.innerHTML = "<td class='col-qtd'>" + qtdTexto + "x</td><td class='col-nome'>" + escaparHtml(nomeTexto) + "</td><td class='col-preco'>R$ " + subtotalItem.toFixed(2).replace(".", ",") + "</td>";
+            if (adicionais.length) {
+                var valorSeparados = adicionalPorPrato * Number(qtdTexto);
+                tr.innerHTML = "<td colspan='3'><div style='display:grid;grid-template-columns:13% 60% 27%'>" +
+                    "<div>" + qtdTexto + "x</div><div style='font-style:italic;overflow-wrap:anywhere'>" + nomeComanda + "</div>" +
+                    "<div style='text-align:right;white-space:nowrap'>R$ " + subtotalPrato.toFixed(2).replace(".", ",") + "</div>" +
+                    "<div></div><div style='font-size:17px;font-weight:400 !important;font-style:normal;overflow-wrap:anywhere'>Separados: " +
+                    adicionais.map(escaparHtml).join(", ") + "</div>" +
+                    "<div style='font-size:17px;font-weight:400 !important;text-align:right;white-space:nowrap'>R$ " +
+                    valorSeparados.toFixed(2).replace(".", ",") + "</div></div></td>";
+            } else {
+                tr.innerHTML = "<td class='col-qtd'>" + qtdTexto + "x</td><td class='col-nome'>" + nomeComanda + "</td><td class='col-preco'>R$ " + subtotalPrato.toFixed(2).replace(".", ",") + "</td>";
+            }
             corpoTabelaItens.appendChild(tr);
         });
         containerPrincipal.appendChild(tabelaItens);

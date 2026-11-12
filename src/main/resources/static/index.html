@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sabor Cearense - Cardápio</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
@@ -176,7 +176,7 @@
 
     <!-- SCRIPTS DE LOGICA -->
     <script src="ordenar-itens.js"></script>
-    <script src="index.js?v=5"></script>
+    <script src="index.js?v=6"></script>
     <script src="chat-widget.js"></script>
     <!-- INTERCEPTADOR DE ACOMPANHAMENTOS DO SABOR CEARENSE -->
 <!-- SISTEMA AUTOMÁTICO DE ACAMPONHAMENTOS E SACOLA DO SABOR CEARENSE -->
@@ -234,14 +234,17 @@ window.mudarQuantidade = function(id, mudanca, nome, preco) {
 window.editarAcompanhamentos = function(chaveCodificada, nomeCodificado, preco, quantidade) {
     var chaveId = decodeURIComponent(chaveCodificada);
     var nomeAtual = decodeURIComponent(nomeCodificado);
+    var itemAtual = carrinho[chaveId];
     var partesNome = nomeAtual.match(/^(.*?) \((.*)\)$/);
-    var nomeBase = partesNome ? partesNome[1] : nomeAtual;
-    var selecionados = partesNome ? partesNome[2].split(", ") : [];
+    var nomeBase = itemAtual && itemAtual.nomeBase ? itemAtual.nomeBase : (partesNome ? partesNome[1] : nomeAtual);
+    var selecionados = itemAtual && itemAtual.acompanhamentos ? itemAtual.acompanhamentos : (partesNome ? partesNome[2].split(", ") : []);
     var idOriginal = String(chaveId).split("-")[0];
 
     abrirModalAcompanhamentos(idOriginal, quantidade, nomeBase, preco, {
         chaveId: chaveId,
         selecionados: selecionados,
+        itensSeparados: itemAtual && itemAtual.itensSeparados ? itemAtual.itensSeparados : [],
+        precoBase: itemAtual && itemAtual.precoBase != null ? itemAtual.precoBase : preco,
         quantidade: quantidade
     });
 };
@@ -249,17 +252,27 @@ window.editarAcompanhamentos = function(chaveCodificada, nomeCodificado, preco, 
 function abrirModalAcompanhamentos(id, mudanca, nome, preco, edicao) {
     // 1. Se o cliente estiver diminuindo a quantidade (botão -), executa direto na sacola
     if (mudanca < 0) {
-        window.executarMudarQuantidadeReal(id, mudanca, nome, preco, id);
+        var variantes = Object.entries(carrinho).filter(function(entrada) {
+            return String(entrada[0]) === String(id) || String(entrada[0]).startsWith(id + "-");
+        });
+        if (variantes.length === 1) {
+            var variante = variantes[0];
+            window.executarMudarQuantidadeReal(variante[0], mudanca, variante[1].nome, variante[1].preco, id);
+        } else if (variantes.length > 1) {
+            abrirSacola();
+        }
         return;
     }
 
     // 2. Filtro automático: Se for bebida ou sobremesa, pula os acompanhamentos e adiciona direto
     var nomeMinusculo = nome.toLowerCase();
     var termosPular = ["coca", "suco", "guaraná", "fanta", "água", "bebida", "pudim", "doce", "sobremesa", "cerveja", "sprite", "fanta"];
-    var devePular = termosPular.some(function(termo) { return nomeMinusculo.includes(termo); });
+    var produto = catalogoProdutos.find(function(item) { return String(item.id) === String(id); });
+    var categoria = produto && produto.categoria ? produto.categoria.toUpperCase() : "";
+    var devePular = categoria === "BEBIDA" || categoria === "SOBREMESA" ||
+        (!categoria && termosPular.some(function(termo) { return nomeMinusculo.includes(termo); }));
 
-    // Se o prato já tiver os parênteses de acompanhamento no nome, adiciona direto
-    if (devePular || (nome.includes("(") && nome.includes(")")) ) {
+    if (devePular) {
         window.executarMudarQuantidadeReal(id, mudanca, nome, preco, id);
         return;
     }
@@ -282,7 +295,7 @@ function abrirModalAcompanhamentos(id, mudanca, nome, preco, edicao) {
             </div>
             <div class="modal-acompanhamentos-prato">
                 <span class="modal-acompanhamentos-prato-icone">🍽️</span>
-                <div><small>Você está escolhendo para</small><strong>${nome}</strong></div>
+                <div><small>Você está escolhendo para</small><strong>${escaparItemSacola(nome)}</strong></div>
             </div>
             <p class="modal-acompanhamentos-instrucao">Escolha até <strong>2 acompanhamentos</strong> para deixar seu pedido do seu jeito.</p>
             
@@ -290,6 +303,18 @@ function abrirModalAcompanhamentos(id, mudanca, nome, preco, edicao) {
                 ${renderizarOpcoesAcompanhamento()}
             </div>
             <div class="acompanhamentos-selecao-status"><span id="contador-acomp">0</span>/2 selecionados</div>
+            <details class="separados">
+                <summary><strong>📦 Quer algum item separado?</strong><small>Opcional · R$ 2,00 por item separado</small></summary>
+                <div class="separados-conteudo">
+                    <p>Selecione os itens do prato que deseja receber separados. Cada um acrescenta <strong>R$ 2,00 por prato</strong>.</p>
+                    <div class="separados-lista" id="lista-separados"></div>
+                    <label class="separados-outro" for="outro-separado">Outro item do prato (um por vez)</label>
+                    <div class="separados-campo"><input id="outro-separado" maxlength="60" placeholder="Ex.: carne"><button type="button" id="adicionar-separado">Adicionar</button></div>
+                    <div id="erro-separado" class="separados-erro" role="status"></div>
+                    <div id="outros-separados" class="separados-outros"></div>
+                    <div class="separados-total" id="total-separados" aria-live="polite"></div>
+                </div>
+            </details>
             
             <div class="modal-acompanhamentos-acoes">
                 <button type="button" id="btn-cancelar-acomp" class="btn-acomp-cancelar">Agora não</button>
@@ -300,6 +325,74 @@ function abrirModalAcompanhamentos(id, mudanca, nome, preco, edicao) {
     
     document.body.appendChild(modal);
 
+    var listaSeparados = modal.querySelector("#lista-separados");
+    var outrosSeparados = [];
+    var selecionadosSeparados = edicao ? edicao.itensSeparados.slice() : [];
+    var fixosSeparados = ["Arroz", "Feijão", "Farofa"];
+    var nomesAcompanhamentos = acompanhamentosDisponiveis.map(function(item) { return item.nome; });
+    outrosSeparados = selecionadosSeparados.filter(function(item) {
+        return fixosSeparados.indexOf(item) < 0 && nomesAcompanhamentos.indexOf(item) < 0;
+    });
+    function atualizarSeparados() {
+        var anteriores = Array.from(listaSeparados.querySelectorAll("input:checked")).map(function(input) { return input.value; });
+        if (!listaSeparados.childElementCount) anteriores = selecionadosSeparados;
+        var opcoes = fixosSeparados.concat(Array.from(modal.querySelectorAll("#lista-opcoes-acomp input:checked")).map(function(input) { return input.value; }));
+        listaSeparados.replaceChildren();
+        opcoes.forEach(function(nomeOpcao) {
+            var label = document.createElement("label");
+            label.className = "separados-opcao";
+            var input = document.createElement("input");
+            input.type = "checkbox";
+            input.value = nomeOpcao;
+            input.checked = anteriores.indexOf(nomeOpcao) >= 0;
+            input.addEventListener("change", function() {
+                if (obterSeparados().length > 20) {
+                    input.checked = false;
+                    modal.querySelector("#erro-separado").textContent = "O limite é de 20 itens separados por prato.";
+                } else {
+                    modal.querySelector("#erro-separado").textContent = "";
+                }
+                atualizarTotalSeparados();
+            });
+            var texto = document.createElement("span");
+            texto.textContent = nomeOpcao + " · +R$ 2,00";
+            label.append(input, texto);
+            listaSeparados.appendChild(label);
+        });
+        atualizarTotalSeparados();
+    }
+    function obterSeparados() {
+        return Array.from(listaSeparados.querySelectorAll("input:checked")).map(function(input) { return input.value; }).concat(outrosSeparados);
+    }
+    function atualizarTotalSeparados() {
+        var listaOutros = modal.querySelector("#outros-separados");
+        listaOutros.replaceChildren();
+        outrosSeparados.forEach(function(item, indice) {
+            var botao = document.createElement("button");
+            botao.type = "button";
+            botao.textContent = item + " ×";
+            botao.setAttribute("aria-label", "Remover " + item);
+            botao.onclick = function() { outrosSeparados.splice(indice, 1); atualizarTotalSeparados(); };
+            listaOutros.appendChild(botao);
+        });
+        modal.querySelector("#total-separados").textContent = "Adicional por prato: R$ " + (obterSeparados().length * 2).toFixed(2).replace(".", ",");
+    }
+    modal.querySelector("#adicionar-separado").onclick = function() {
+        var campo = modal.querySelector("#outro-separado");
+        var erro = modal.querySelector("#erro-separado");
+        var valor = campo.value.trim();
+        if (!valor || /[,;\/\r\n]/.test(valor)) { erro.textContent = "Digite um item por vez."; return; }
+        var nomes = fixosSeparados.concat(nomesAcompanhamentos, outrosSeparados);
+        if (nomes.some(function(item) { return item.toLocaleLowerCase("pt-BR") === valor.toLocaleLowerCase("pt-BR"); })) {
+            erro.textContent = "Escolha este item na lista ou selecione o acompanhamento acima.";
+            return;
+        }
+        if (obterSeparados().length >= 20) { erro.textContent = "O limite é de 20 itens separados por prato."; return; }
+        outrosSeparados.push(valor);
+        campo.value = "";
+        erro.textContent = "";
+        atualizarTotalSeparados();
+    };
     // Trava a seleção em no máximo 2 opções marcadas
     var checkboxes = modal.querySelectorAll("#lista-opcoes-acomp input");
     checkboxes.forEach(function(cb) {
@@ -314,10 +407,12 @@ function abrirModalAcompanhamentos(id, mudanca, nome, preco, edicao) {
                 modal.querySelector("#contador-acomp").textContent = 2;
                 alert("⚠️ Você pode escolher no máximo 2 acompanhamentos!");
             }
+            atualizarSeparados();
         });
     });
     modal.querySelector("#contador-acomp").textContent =
         modal.querySelectorAll("#lista-opcoes-acomp input:checked").length;
+    atualizarSeparados();
 
     // Ação do Botão Cancelar
     modal.querySelector("#btn-cancelar-acomp").onclick = function() { modal.remove(); };
@@ -342,6 +437,13 @@ function abrirModalAcompanhamentos(id, mudanca, nome, preco, edicao) {
         if (acompanhamentos.length > 0) {
             nomeItemComAcomp += " (" + acompanhamentos.join(", ") + ")";
         }
+        var separados = obterSeparados();
+        if (separados.length > 0) nomeItemComAcomp += " — SEPARADO: " + separados.join(", ");
+        var precoBase = edicao ? Number(edicao.precoBase) : Number(preco);
+        var precoFinal = (Math.round(precoBase * 100) + separados.length * 200) / 100;
+        var chave = acompanhamentos.length || separados.length
+            ? id + "-p-" + encodeURIComponent(JSON.stringify([acompanhamentos, separados]))
+            : id;
 
         if (edicao) {
             delete carrinho[edicao.chaveId];
@@ -349,13 +451,12 @@ function abrirModalAcompanhamentos(id, mudanca, nome, preco, edicao) {
         }
         modal.remove();
         window.executarMudarQuantidadeReal(
-            acompanhamentos.length > 0
-                ? id + "-" + acompanhamentos.map(function(item) { return item.substring(0, 3).toLowerCase(); }).join("-")
-                : id,
+            chave,
             edicao ? edicao.quantidade : mudanca,
             nomeItemComAcomp,
-            preco,
-            id
+            precoFinal,
+            id,
+            { nomeBase: nome, acompanhamentos: acompanhamentos, itensSeparados: separados, precoBase: precoBase }
         );
     };
 }
@@ -459,8 +560,7 @@ window.irParaCheckout = function() {
         alert("O restaurante está fechado no momento.");
         return;
     }
-    var dadosCarrinhoSalvos = localStorage.getItem("carrinhoSaborCearense") || "[]";
-    window.location.href = "carrinho.html?carrinho=" + encodeURIComponent(dadosCarrinhoSalvos);
+    window.location.href = "carrinho.html";
 };
 </script>
 <!-- 🌵 AJUSTE VISUAL RESPONSIVO DEFINITIVO - PC E CELULAR -->

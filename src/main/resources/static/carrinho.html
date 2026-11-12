@@ -12,7 +12,7 @@
             
             if (dadosDoCelular) {
                 try {
-                    const carrinhoDecodificado = decodeURIComponent(dadosDoCelular);
+                    const carrinhoDecodificado = dadosDoCelular;
                     localStorage.setItem("carrinhoSaborCearense", carrinhoDecodificado);
                     console.log("🛒 Carrinho injetado via URL com segurança para Mobile!");
                 } catch (erro) {
@@ -597,7 +597,7 @@
     </div>
      <!-- Vincle o seu novo arquivo externo aqui de forma limpa -->
     <script src="ordenar-itens.js"></script>
-    <script src="carrinho.js?v=4"></script>
+    <script src="carrinho.js?v=5"></script>
     <script src="chat-widget.js"></script>
 </body>
 </html>
