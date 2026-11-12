@@ -287,8 +287,12 @@ function Iniciar-Agente {
                     Write-Host "Pedido #$($estado.numero) confirmado no servidor."
                 }
                 $configServidor = Invoke-RestMethod -Uri ($config.url + '/api/admin/impressao/configuracao') -Headers $headers -TimeoutSec 15
+                if ($null -eq $configServidor -or $configServidor.habilitada -isnot [bool]) {
+                    throw 'Resposta invalida da configuracao da fila de impressao.'
+                }
                 if (-not $configServidor.habilitada) { Write-Warning 'Fila automatica desativada no servidor; novos pedidos nao serao adicionados.' }
                 $pendentes = Obter-JsonUtf8 ($config.url + '/api/admin/impressao/pendentes') $headers
+                if ($pendentes -isnot [array]) { throw 'Resposta invalida da fila de impressao.' }
                 $quantidadePendente = @($pendentes | Where-Object { $null -ne $_ }).Count
                 Verificar-Impressora $config.impressora
                 if (-not (Testar-RuntimeWebView) -or -not (Testar-SdkWebView)) {
@@ -301,7 +305,7 @@ function Iniciar-Agente {
                     $texto = Preparar-ComandaWebView $config $pedido
                     $numero = if ($pedido.numeroPedido) { $pedido.numeroPedido } else { $pedido.id }
                     Verificar-Impressora $config.impressora
-                    Atualizar-StatusAgente 'verificando' "Enviando pedido #$numero para a impressora."
+                    Atualizar-StatusAgente 'enviando' "Enviando pedido #$numero para a impressora."
                     $estado = @{ id = $pedido.id; numero = $numero; status = 'incerto' }
                     Gravar-JsonAtomico $estadoPath $estado
                     Enviar-ParaImpressora $config.impressora $texto $numero

@@ -57,14 +57,23 @@ try {
     function Testar-RuntimeWebView { return -not ($script:modo -eq 'runtime' -and $script:esperas -eq 0) }
     function Testar-SdkWebView { return $true }
     function Preparar-ComandaWebView($config, $pedido) { return 'comanda-teste' }
-    function Obter-JsonUtf8($uri, $headers) { return Invoke-RestMethod -Uri $uri -Headers $headers -TimeoutSec 15 }
+    function Obter-JsonUtf8($uri, $headers) {
+        if ($script:modo -eq 'fila-invalida') { return @{ erro = 'resposta inesperada' } }
+        return Invoke-RestMethod -Uri $uri -Headers $headers -TimeoutSec 15
+    }
     function Enviar-ParaImpressora($nome, $texto, $numero) {
+        if ((Ler-Json $statusPath).tipo -ne 'enviando' -or (Ler-Json $estadoPath).status -ne 'incerto') {
+            throw 'O envio deve manter o estado de seguranca e informar que esta em andamento.'
+        }
         $script:impressoes++
         if ($script:modo -eq 'incerto') { throw 'Erro no envio' }
     }
     function Invoke-RestMethod {
         param($Uri, $Method, $Headers, $TimeoutSec)
-        if ($Uri.EndsWith('/configuracao')) { return @{ habilitada = $true } }
+        if ($Uri.EndsWith('/configuracao')) {
+            if ($script:modo -eq 'configuracao-invalida') { return @{ habilitada = 'true' } }
+            return @{ habilitada = $true }
+        }
         if ($Uri.EndsWith('/pendentes')) {
             if ($script:confirmado) { return ,@() }
             if ($script:modo -eq 'parada') {
@@ -104,6 +113,19 @@ try {
             }
         } elseif (-not $script:confirmado -or (Test-Path -LiteralPath $estadoPath)) {
             throw "$modo : pedido nao foi confirmado e limpo."
+        }
+    }
+    foreach ($modo in @('fila-invalida', 'configuracao-invalida')) {
+        if (Test-Path -LiteralPath $estadoPath) { Remove-Item -LiteralPath $estadoPath }
+        $script:modo = $modo
+        $script:impressoes = 0
+        $script:confirmacoes = 0
+        $script:esperas = 0
+        try { Iniciar-Agente } catch { if ($_.Exception.Message -ne 'fim do teste') { throw } }
+        $statusInvalido = Ler-Json $statusPath
+        if ($script:impressoes -ne 0 -or $script:confirmacoes -ne 0 -or
+            $statusInvalido.tipo -ne 'erro' -or $statusInvalido.mensagem -notmatch 'Resposta invalida') {
+            throw "$modo : resposta invalida deve impedir impressao e gerar erro."
         }
     }
     if (Test-Path -LiteralPath $estadoPath) { Remove-Item -LiteralPath $estadoPath }

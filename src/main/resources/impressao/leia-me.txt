@@ -4,13 +4,15 @@ SABOR CEARENSE - IMPRESSAO AUTOMATICA NO WINDOWS
 2. Extraia todos os arquivos deste ZIP e clique duas vezes em instalar.cmd.
 3. O instalador baixa os componentes oficiais WebView2, se necessario. Mantenha a internet conectada e autorize se o Windows solicitar. Se falhar ou o codigo expirar, baixe outro instalador.
 4. Na central de impressao, escolha a impressora padrao e clique em Salvar e iniciar. Nao e necessario informar senha.
-5. Ao minimizar ou fechar a janela, a impressao continua no icone da bandeja ao lado do relogio. Para abrir novamente, clique duas vezes no icone.
+5. Ao minimizar ou fechar a janela, a impressao continua no icone da bandeja ao lado do relogio. Para abrir novamente, clique duas vezes no icone ou use o atalho na area de trabalho ou no menu Iniciar.
 6. Faca um pedido de teste, imprima-o tambem manualmente e compare as comandas fisicas.
 
+A impressao inicia automaticamente quando o mesmo usuario entrar no Windows. Se a impressora ainda nao estiver configurada ou ocorrer uma falha na abertura, a central permanece visivel.
 A fila deve estar ativada no servidor. Verifique a situacao na aba Impressao Automatica do painel.
 O instalador deve ser executado em ate 15 minutos. Se expirar ou ja tiver sido utilizado, baixe outro no painel.
 A vinculacao e exclusiva para impressao. Instalar em outro computador desvincula o anterior.
 Se o computador estiver desligado ou sem internet, os pedidos pendentes aguardam a volta da conexao.
+Se o agente parar inesperadamente, a central tenta reinicia-lo ate tres vezes e avisa sobre a falha. Se continuar parado, confira o erro e clique em Salvar e iniciar.
 Use somente um computador para a impressao automatica.
 
 Se um pedido ficar em situacao incerta, confira a impressora e a fila do Windows, abra o aplicativo e clique em Conferir pedido.

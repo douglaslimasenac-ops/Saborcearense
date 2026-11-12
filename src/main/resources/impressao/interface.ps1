@@ -10,6 +10,9 @@ $script:processoAgente = $null
 $script:acaoPendente = $null
 $script:permitirFechar = $false
 $script:ultimoAlerta = ''
+$script:tentativasReinicio = 0
+$script:proximoReinicio = $null
+$script:agenteIniciadoEm = $null
 . (Join-Path $PSScriptRoot 'agente.ps1')
 
 function Mostrar-Erro($mensagem) {
@@ -32,16 +35,28 @@ function Instalar-Arquivos {
     } finally { $mutex.ReleaseMutex(); $mutex.Dispose() }
 }
 
-function Criar-AtalhoInterface {
-    $startup = [Environment]::GetFolderPath('Startup')
-    if (-not $startup) { throw 'Não foi possível localizar a pasta Inicializar do Windows.' }
-    $atalho = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $startup 'Sabor Cearense Impressao.lnk'))
-    $atalho.TargetPath = (Join-Path $PSHOME 'powershell.exe')
-    $atalho.Arguments = '-STA -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' +
-        (Join-Path $script:pastaAplicativo 'interface.ps1') + '" -Bandeja'
-    $atalho.WorkingDirectory = $script:pastaAplicativo
-    $atalho.IconLocation = Join-Path $script:pastaAplicativo 'icone.ico'
-    $atalho.Save()
+function Criar-AtalhoInterface(
+    $startup = [Environment]::GetFolderPath('Startup'),
+    $programas = [Environment]::GetFolderPath('Programs'),
+    $areaDeTrabalho = [Environment]::GetFolderPath('DesktopDirectory')
+) {
+    if (-not $startup -or -not $programas -or -not $areaDeTrabalho) {
+        throw 'Não foi possível localizar as pastas de atalhos do Windows.'
+    }
+    $shell = New-Object -ComObject WScript.Shell
+    foreach ($pasta in @($startup, $programas, $areaDeTrabalho)) {
+        if (-not (Test-Path -LiteralPath $pasta -PathType Container)) {
+            throw "Pasta de atalhos do Windows não encontrada: $pasta"
+        }
+        $atalho = $shell.CreateShortcut((Join-Path $pasta 'Sabor Cearense Impressao.lnk'))
+        $atalho.TargetPath = (Join-Path $PSHOME 'powershell.exe')
+        $atalho.Arguments = '-STA -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' +
+            (Join-Path $script:pastaAplicativo 'interface.ps1') + '"'
+        if ($pasta -eq $startup) { $atalho.Arguments += ' -Bandeja' }
+        $atalho.WorkingDirectory = $script:pastaAplicativo
+        $atalho.IconLocation = Join-Path $script:pastaAplicativo 'icone.ico'
+        $atalho.Save()
+    }
 }
 
 function Vincular-Dispositivo($origem = $PSScriptRoot) {
@@ -75,10 +90,18 @@ function Vincular-Dispositivo($origem = $PSScriptRoot) {
 
 function Atualizar-Impressoras {
     $selecionada = [string]$script:campoImpressora.SelectedItem
+    if (-not $selecionada -and (Test-Path -LiteralPath $configPath)) {
+        $selecionada = [string](Ler-Json $configPath).impressora
+    }
     $impressoras = @(Get-Printer | Sort-Object Name)
     $script:campoImpressora.Items.Clear()
     foreach ($printer in $impressoras) { [void]$script:campoImpressora.Items.Add($printer.Name) }
+    if (-not $selecionada) { $selecionada = Obter-ImpressoraPadrao }
     if ($selecionada) { $script:campoImpressora.SelectedItem = $selecionada }
+}
+
+function Obter-ImpressoraPadrao {
+    return (New-Object System.Drawing.Printing.PrinterSettings).PrinterName
 }
 
 function Iniciar-ProcessoAgente {
@@ -89,8 +112,11 @@ function Iniciar-ProcessoAgente {
     $argumentos = '-NoProfile -ExecutionPolicy Bypass -File "' + $caminho + '" -ResponsavelPid ' + $PID
     $script:processoAgente = Start-Process -FilePath (Join-Path $PSHOME 'powershell.exe') `
         -ArgumentList $argumentos -WindowStyle Hidden -PassThru
+    $script:agenteIniciadoEm = [DateTime]::UtcNow
+    $script:proximoReinicio = $null
     $script:estadoTitulo.Text = 'Conectando...'
     $script:estadoDetalhe.Text = 'Aguardando a primeira verificação do servidor e da impressora.'
+    $script:ultimaVerificacao.Text = 'Aguardando a primeira verificação.'
 }
 
 function Solicitar-Parada($acao) {
@@ -140,6 +166,8 @@ function Salvar-Configuracao {
         Criar-AtalhoInterface
     } finally { $mutex.ReleaseMutex(); $mutex.Dispose() }
     $script:configAtual.Text = "Impressora configurada: $impressora"
+    $script:tentativasReinicio = 0
+    $script:proximoReinicio = $null
     Iniciar-ProcessoAgente
 }
 
@@ -202,11 +230,21 @@ function Atualizar-Tela {
         if (Test-Path -LiteralPath $estadoPath) {
             $estado = Ler-Json $estadoPath
             if ($estado.status -eq 'incerto') {
-                $script:botaoResolver.Visible = $true
-                $script:estadoTitulo.Text = "Pedido #$($estado.numero) precisa de conferência"
-                $script:estadoDetalhe.Text = 'Confira a impressora e a fila do Windows antes de continuar.'
-                Avisar-Bandeja "pedido-$($estado.id)" 'Pedido precisa de conferência' "Confira o pedido #$($estado.numero) no aplicativo."
-                return
+                $enviando = $false
+                if ($script:processoAgente -and -not $script:processoAgente.HasExited -and
+                    (Test-Path -LiteralPath $statusPath)) {
+                    $enviando = (Ler-Json $statusPath).tipo -eq 'enviando'
+                }
+                if (-not $enviando -and (Test-Path -LiteralPath $estadoPath)) {
+                    $estado = Ler-Json $estadoPath
+                    if ($estado.status -eq 'incerto') {
+                        $script:botaoResolver.Visible = $true
+                        $script:estadoTitulo.Text = "Pedido #$($estado.numero) precisa de conferência"
+                        $script:estadoDetalhe.Text = 'Confira a impressora e a fila do Windows antes de continuar.'
+                        Avisar-Bandeja "pedido-$($estado.id)" 'Pedido precisa de conferência' "Confira o pedido #$($estado.numero) no aplicativo."
+                        return
+                    }
+                }
             }
         }
         if (-not $script:processoAgente) { return }
@@ -217,19 +255,47 @@ function Atualizar-Tela {
                 $status = Ler-Json $statusPath
                 if ($status.tipo -eq 'erro') { $script:estadoDetalhe.Text = $status.mensagem }
             }
-            Avisar-Bandeja 'agente-interrompido' 'Impressão interrompida' 'Abra a central para verificar o erro e reiniciar.'
+            if ($script:tentativasReinicio -lt 3) {
+                if (-not $script:proximoReinicio) {
+                    $script:proximoReinicio = [DateTime]::UtcNow.AddSeconds(15 * [Math]::Pow(2, $script:tentativasReinicio))
+                }
+                $script:estadoDetalhe.Text += ' O aplicativo tentará reiniciar o agente automaticamente.'
+                Avisar-Bandeja 'agente-reiniciando' 'Impressão interrompida' 'O aplicativo tentará reiniciar o agente. Abra a central para acompanhar.'
+                if ([DateTime]::UtcNow -ge $script:proximoReinicio) {
+                    $script:tentativasReinicio++
+                    try { Iniciar-ProcessoAgente }
+                    catch {
+                        $script:proximoReinicio = $null
+                        $script:estadoDetalhe.Text = "Não foi possível reiniciar o agente: $($_.Exception.Message)"
+                        Avisar-Bandeja "reinicio-$script:tentativasReinicio" 'Falha ao reiniciar impressão' $script:estadoDetalhe.Text
+                    }
+                }
+            } else {
+                Avisar-Bandeja 'agente-interrompido' 'Impressão interrompida' 'Abra a central para verificar o erro e reiniciar.'
+            }
             return
         }
-        if (-not (Test-Path -LiteralPath $statusPath)) { return }
+        if ($script:agenteIniciadoEm -and ([DateTime]::UtcNow - $script:agenteIniciadoEm).TotalMinutes -ge 5) {
+            $script:tentativasReinicio = 0
+        }
+        if (-not (Test-Path -LiteralPath $statusPath)) {
+            if ($script:agenteIniciadoEm -and ([DateTime]::UtcNow - $script:agenteIniciadoEm).TotalSeconds -gt 60) {
+                $script:estadoTitulo.Text = 'Agente sem resposta'
+                $script:estadoDetalhe.Text = 'O agente ainda não informou o estado. Confira a impressora e a conexão.'
+                Avisar-Bandeja 'agente-sem-resposta' 'Impressão sem resposta' 'Abra a central para verificar a impressão.'
+            }
+            return
+        }
         $status = Ler-Json $statusPath
         $tempo = [DateTimeOffset]::Parse($status.atualizado)
+        $script:ultimaVerificacao.Text = 'Última verificação: ' + $tempo.ToLocalTime().ToString('dd/MM/yyyy HH:mm:ss')
         if (([DateTimeOffset]::UtcNow - $tempo).TotalSeconds -gt 60) {
             $script:estadoTitulo.Text = 'Verificação demorada'
             $script:estadoDetalhe.Text = 'O agente ainda não respondeu. Confira a impressora e a conexão.'
             Avisar-Bandeja 'verificacao-demorada' 'Impressão sem resposta' 'Abra a central para verificar a conexão e a impressora.'
             return
         }
-        $titulos = @{ operacional = 'Tudo pronto'; verificando = 'Verificando'; alerta = 'Atenção'; erro = 'Não foi possível imprimir' }
+        $titulos = @{ operacional = 'Tudo pronto'; verificando = 'Verificando'; enviando = 'Imprimindo'; alerta = 'Atenção'; erro = 'Não foi possível imprimir' }
         $script:estadoTitulo.Text = if ($titulos.ContainsKey($status.tipo)) { $titulos[$status.tipo] } else { 'Estado desconhecido' }
         $script:estadoDetalhe.Text = $status.mensagem
         if ($status.tipo -eq 'operacional' -and $null -ne $status.pendentes) {
@@ -311,9 +377,14 @@ function Criar-Janela {
 
     $script:configAtual = New-Object System.Windows.Forms.Label
     $script:configAtual.Location = New-Object System.Drawing.Point(28, 150)
-    $script:configAtual.Size = New-Object System.Drawing.Size(600, 24)
+    $script:configAtual.Size = New-Object System.Drawing.Size(600, 22)
     $script:configAtual.Text = 'Nenhuma impressora configurada.'
     $area.Controls.Add($script:configAtual)
+    $script:ultimaVerificacao = New-Object System.Windows.Forms.Label
+    $script:ultimaVerificacao.Location = New-Object System.Drawing.Point(28, 174)
+    $script:ultimaVerificacao.Size = New-Object System.Drawing.Size(600, 18)
+    $script:ultimaVerificacao.Text = 'Ainda não foi realizada uma verificação.'
+    $area.Controls.Add($script:ultimaVerificacao)
 
     function Adicionar-Campo($rotulo, $topo, $controle) {
         $label = New-Object System.Windows.Forms.Label
@@ -328,7 +399,7 @@ function Criar-Janela {
 
     $script:campoImpressora = New-Object System.Windows.Forms.ComboBox
     $script:campoImpressora.DropDownStyle = 'DropDownList'
-    Adicionar-Campo 'Impressora instalada no Windows' 192 $script:campoImpressora
+    Adicionar-Campo 'Impressora instalada e definida como padrão no Windows' 192 $script:campoImpressora
     $script:campoImpressora.Width = 445
     $atualizarImpressoras = New-Object System.Windows.Forms.Button
     $atualizarImpressoras.Location = New-Object System.Drawing.Point(485, 216)
@@ -366,7 +437,7 @@ function Criar-Janela {
 
     $menu = New-Object System.Windows.Forms.ContextMenuStrip
     $abrir = $menu.Items.Add('Abrir central de impressão')
-    $abrir.Add_Click({ $script:janela.Show(); $script:janela.WindowState = 'Normal'; $script:janela.Activate() })
+    $abrir.Add_Click({ Mostrar-Janela })
     $sair = $menu.Items.Add('Sair e parar impressão')
     $sair.Add_Click({
         $confirmacao = [System.Windows.Forms.MessageBox]::Show(
@@ -380,7 +451,7 @@ function Criar-Janela {
     $script:bandejaIcone.Text = 'Sabor Cearense - Impressão'
     $script:bandejaIcone.ContextMenuStrip = $menu
     $script:bandejaIcone.Visible = $true
-    $script:bandejaIcone.Add_DoubleClick({ $script:janela.Show(); $script:janela.WindowState = 'Normal'; $script:janela.Activate() })
+    $script:bandejaIcone.Add_DoubleClick({ Mostrar-Janela })
     $script:janela.Add_Resize({ if ($script:janela.WindowState -eq 'Minimized') { $script:janela.Hide() } })
     $script:janela.Add_FormClosing({
         param($sender, $evento)
@@ -396,14 +467,29 @@ function Criar-Janela {
     })
     $script:timer = New-Object System.Windows.Forms.Timer
     $script:timer.Interval = 1000
-    $script:timer.Add_Tick({ Atualizar-Tela })
+    $script:timer.Add_Tick({
+        if ($script:eventoAbrir -and $script:eventoAbrir.WaitOne(0)) { Mostrar-Janela }
+        Atualizar-Tela
+    })
+}
+
+function Mostrar-Janela {
+    $script:janela.Show()
+    $script:janela.WindowState = 'Normal'
+    $script:janela.Activate()
 }
 
 function Iniciar-Interface {
     $mutexInterface = New-Object System.Threading.Mutex($false, 'Local\SaborCearenseInterfaceImpressao')
+    $script:eventoAbrir = New-Object System.Threading.EventWaitHandle(
+        $false, [System.Threading.EventResetMode]::AutoReset, 'Local\SaborCearenseAbrirInterfaceImpressao')
     if (-not $mutexInterface.WaitOne(0)) {
         $mutexInterface.Dispose()
-        throw 'O aplicativo já está aberto. Use o ícone ao lado do relógio para abri-lo.'
+        try {
+            if ($InstalarInterface) { throw 'Feche o aplicativo pelo ícone da bandeja antes de instalar novamente.' }
+            [void]$script:eventoAbrir.Set()
+        } finally { $script:eventoAbrir.Dispose() }
+        return
     }
     try {
         if ($InstalarInterface) {
@@ -414,24 +500,37 @@ function Iniciar-Interface {
                 [System.Windows.Forms.MessageBoxIcon]::Information) | Out-Null
             Instalar-DependenciasWebView
             Vincular-Dispositivo
+            Criar-AtalhoInterface
         }
         Criar-Janela
+        $iniciado = $false
+        try { Atualizar-Impressoras }
+        catch {
+            $script:estadoTitulo.Text = 'Não foi possível listar impressoras'
+            $script:estadoDetalhe.Text = $_.Exception.Message
+            Mostrar-Erro $_.Exception.Message
+        }
         try {
-            Atualizar-Impressoras
             if (Test-Path -LiteralPath $configPath) {
                 $config = Ler-Json $configPath
-                $script:campoImpressora.SelectedItem = $config.impressora
-                if ($config.impressora) { $script:configAtual.Text = "Impressora configurada: $($config.impressora)" }
-                if ($InstalarInterface) { Criar-AtalhoInterface }
-                if ($config.impressora) { Iniciar-ProcessoAgente }
+                if ($config.impressora) {
+                    $script:campoImpressora.SelectedItem = $config.impressora
+                    $script:configAtual.Text = "Impressora configurada: $($config.impressora)"
+                    Iniciar-ProcessoAgente
+                    $iniciado = $true
+                }
             }
         } catch { Mostrar-Erro $_.Exception.Message }
         $script:timer.Start()
-        if ($Bandeja -and (Test-Path -LiteralPath $configPath)) {
+        if ($Bandeja -and $iniciado) {
             $script:janela.Add_Shown({ $script:janela.Hide() })
         }
         [System.Windows.Forms.Application]::Run($script:janela)
-    } finally { $mutexInterface.ReleaseMutex(); $mutexInterface.Dispose() }
+    } finally {
+        $mutexInterface.ReleaseMutex()
+        $mutexInterface.Dispose()
+        $script:eventoAbrir.Dispose()
+    }
 }
 
 if ($MyInvocation.InvocationName -ne '.') {
