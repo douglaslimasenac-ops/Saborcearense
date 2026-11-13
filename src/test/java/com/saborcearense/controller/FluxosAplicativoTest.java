@@ -283,8 +283,11 @@ class FluxosAplicativoTest {
         long id = pedido.get("id").asLong();
         long numero = pedido.get("numeroPedido").asLong();
         mvc.perform(get("/api/pedidos/numero/{numero}", numero)).andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("RECEBIDO"));
-        mvc.perform(get("/api/clientes/000000001")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("RECEBIDO"))
+                .andExpect(jsonPath("$.telefone").doesNotExist())
+                .andExpect(jsonPath("$.clienteNome").doesNotExist());
+        mvc.perform(get("/api/clientes/000000001")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/clientes/000000001").header("Authorization", token)).andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.id == " + id + ")]", hasSize(1)));
         mvc.perform(post("/api/chat/{numero}", numero).contentType(MediaType.APPLICATION_JSON)
                 .content("{\"mensagem\":\"Olá\"}")).andExpect(status().isCreated());

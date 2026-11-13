@@ -26,11 +26,18 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Pedido p where p.numeroPedido = :numero")
     java.util.Optional<Pedido> findByNumeroPedidoForUpdate(@Param("numero") Long numero);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from Pedido p where p.pagamentoReferencia = :referencia")
+    java.util.Optional<Pedido> findByPagamentoReferenciaForUpdate(@Param("referencia") String referencia);
     @Transactional(readOnly = true)
     List<Pedido> findByStatusNotIgnoreCase(String status);
 
     @Transactional(readOnly = true)
     List<Pedido> findByStatusNotIn(java.util.Collection<String> statuses);
+
+    @Transactional(readOnly = true)
+    List<Pedido> findByStatusOrderByDataCriacaoDesc(String status);
 
     @Transactional(readOnly = true)
     List<Pedido> findByTelefone(String telefone);

@@ -32,21 +32,28 @@ public class ValidacaoItensSeparadosService {
     }
 
     public void validar(Pedido pedido) {
-        if (pedido.getItens() == null) return;
+        boolean validarTotal = "Online".equalsIgnoreCase(pedido.getFormaPagamento());
+        if (pedido.getItens() == null) {
+            if (validarTotal) throw invalido("Itens do pedido inválidos");
+            return;
+        }
         JsonNode itens;
         try {
             itens = mapper.readTree(pedido.getItens());
         } catch (JsonProcessingException | IllegalArgumentException erro) {
             throw invalido("Itens do pedido inválidos");
         }
-        if (itens == null || !itens.isArray()) return;
+        if (itens == null || !itens.isArray() || itens.isEmpty()) {
+            if (validarTotal) throw invalido("Itens do pedido inválidos");
+            return;
+        }
         boolean temSeparados = false;
         for (JsonNode item : itens) {
             JsonNode separados = item.get("itensSeparados");
             if (separados != null && (!separados.isArray() || !separados.isEmpty())) temSeparados = true;
             if (item.path("nome").asText().contains(" — SEPARADO: ")) temSeparados = true;
         }
-        if (!temSeparados) return;
+        if (!temSeparados && !validarTotal) return;
 
         BigDecimal subtotal = BigDecimal.ZERO;
         for (JsonNode item : itens) {

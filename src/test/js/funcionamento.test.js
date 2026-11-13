@@ -96,6 +96,7 @@ test("checkout impede envio quando o restaurante é fechado manualmente", async 
     const urls = [];
     const contexto = {
         URL_API_BACKEND: "",
+        envioEmAndamento: false,
         preparacaoCategoriasCarrinho: Promise.resolve(),
         localStorage: { getItem: () => "token-admin" },
         fetch: async url => {
@@ -118,6 +119,7 @@ test("checkout respeita fechamento automático mesmo com sessão administrativa"
     const urls = [];
     const contexto = {
         URL_API_BACKEND: "",
+        envioEmAndamento: false,
         preparacaoCategoriasCarrinho: Promise.resolve(),
         localStorage: { getItem: () => "token-admin" },
         fetch: async url => {

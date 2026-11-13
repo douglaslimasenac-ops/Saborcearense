@@ -26,9 +26,10 @@ public class WebSecurityConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new AdminAuthInterceptor(tokenService, dispositivos))
-                .addPathPatterns("/api/admin/**", "/api/pedidos", "/api/pedidos/ativos",
+                .addPathPatterns("/api/admin/**", "/api/pedidos", "/api/pedidos/ativos", "/api/pedidos/pagamentos-pendentes",
                         "/api/pedidos/*/status", "/api/pedidos/*/comprovante",
-                        "/api/pedidos/historico-antigo", "/api/chat/admin", "/api/chat/admin/**");
+                        "/api/pedidos/historico-antigo", "/api/chat/admin", "/api/chat/admin/**",
+                        "/api/clientes/**");
     }
 
     @Override
@@ -36,7 +37,7 @@ public class WebSecurityConfig implements WebMvcConfigurer {
         registry.addMapping("/api/**")
                 .allowedOrigins(allowedOrigins)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("Authorization", "Content-Type", "Accept")
+                .allowedHeaders("Authorization", "Content-Type", "Accept", "X-Pagamento-Token")
                 .allowCredentials(false);
     }
 }

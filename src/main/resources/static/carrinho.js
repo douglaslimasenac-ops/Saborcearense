@@ -48,6 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
         verificarHorarioFuncionamento();
     }
     carregarBairrosEntrega();
+    verificarPagamentoOnline();
 
     if (document.getElementById("lista-itens-carrinho")) {
         preparacaoCategoriasCarrinho = prepararCategoriasCarrinho();
@@ -63,6 +64,21 @@ document.addEventListener("DOMContentLoaded", () => {
         atualizarContador();
     }
 });
+
+async function verificarPagamentoOnline() {
+    const opcao = document.querySelector('#pagamento option[value="Online"]');
+    try {
+        const resposta = await fetch(`${URL_API_BACKEND}/api/pagamentos/disponibilidade`, { cache: "no-store" });
+        if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+        const dados = await resposta.json();
+        if (dados.disponivel === true) {
+            opcao.disabled = false;
+            opcao.textContent = "Pagar agora no site (Pix ou cartão de crédito)";
+        }
+    } catch (erro) {
+        console.error("Não foi possível verificar o pagamento online:", erro);
+    }
+}
 
 async function prepararCategoriasCarrinho() {
     let dados;
@@ -362,7 +378,146 @@ function atualizarResumoFinanceiroTela() {
 function controlarExibicaoPagamento(opcao) {
     document.getElementById("container-pix-dinamico").style.display = opcao === "Pix" ? "block" : "none";
     document.getElementById("container-troco").hidden = opcao !== "Dinheiro";
+    document.getElementById("container-pagamento-online").hidden = opcao !== "Online";
     atualizarCampoTroco();
+}
+
+let numeroPedidoOnline = sessionStorage.getItem("pedidoOnlineNumero");
+let tokenPedidoOnline = sessionStorage.getItem("pedidoOnlineToken");
+let monitorPixAtivo = null;
+let envioEmAndamento = false;
+
+function metodoOnlineSelecionado() {
+    return document.querySelector('input[name="metodo-online"]:checked').value;
+}
+
+function alterarMetodoOnline(metodo) {
+    document.getElementById("online-campos-cartao").hidden = metodo !== "CARTAO";
+}
+
+function copiarCodigoPix() {
+    const campo = document.getElementById("online-pix-copia");
+    campo.select();
+    navigator.clipboard?.writeText(campo.value);
+}
+
+function validarCpf(valor) {
+    const cpf = valor.replace(/\D/g, "");
+    if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+    for (const posicao of [9, 10]) {
+        let soma = 0;
+        for (let i = 0; i < posicao; i++) soma += Number(cpf[i]) * (posicao + 1 - i);
+        if (((soma * 10) % 11) % 10 !== Number(cpf[posicao])) return false;
+    }
+    return true;
+}
+
+async function chamarPagamento(caminho, corpo) {
+    const base = (typeof URL_API_BACKEND !== "undefined" ? URL_API_BACKEND : "").replace(/\/$/, "");
+    const resposta = await fetch(`${base}/api/pagamentos/${caminho}`, {
+        method: corpo ? "POST" : "GET",
+        headers: { "Content-Type": "application/json", "Accept": "application/json",
+            ...(corpo ? { "X-Pagamento-Token": tokenPedidoOnline } : {}) },
+        body: corpo ? JSON.stringify(corpo) : undefined
+    });
+    const dados = await resposta.json().catch(() => ({}));
+    if (!resposta.ok) {
+        const erro = new Error(dados.message || "Erro no pagamento");
+        erro.status = resposta.status;
+        throw erro;
+    }
+    return dados;
+}
+
+function concluirPedidoOnline(numero) {
+    sessionStorage.removeItem("pedidoOnlineNumero");
+    sessionStorage.removeItem("pedidoOnlineToken");
+    localStorage.removeItem("carrinhoSaborCearense");
+    window.location.href = `acompanhar.html?numero=${encodeURIComponent(numero)}`;
+}
+
+function acompanharPagamentoPix(numero) {
+    clearInterval(monitorPixAtivo);
+    const base = (typeof URL_API_BACKEND !== "undefined" ? URL_API_BACKEND : "").replace(/\/$/, "");
+    monitorPixAtivo = setInterval(async () => {
+        try {
+            const resposta = await fetch(`${base}/api/pedidos/numero/${numero}`, { cache: "no-store" });
+            if (!resposta.ok) return;
+            const pedido = await resposta.json();
+            if (pedido.pagamentoStatus === "PAGO") {
+                clearInterval(monitorPixAtivo);
+                document.getElementById("online-pix-status").textContent = "Pagamento confirmado!";
+                concluirPedidoOnline(numero);
+            } else if (pedido.pagamentoStatus === "RECUSADO" || pedido.pagamentoStatus === "VALOR_DIVERGENTE") {
+                clearInterval(monitorPixAtivo);
+                document.getElementById("online-pix-status").textContent =
+                    "O pagamento não foi confirmado. Entre em contato com o restaurante antes de pagar novamente.";
+            }
+        } catch (erro) {
+            console.error("Falha ao consultar o pagamento:", erro);
+        }
+    }, 4000);
+}
+
+async function pagarOnline(numero) {
+    const cpf = document.getElementById("online-cpf").value;
+    const email = document.getElementById("online-email").value.trim();
+    if (!validarCpf(cpf)) {
+        alert("Informe um CPF válido.");
+        document.getElementById("online-cpf").focus();
+        return;
+    }
+    if (!document.getElementById("online-email").checkValidity() || !email) {
+        alert("Informe um e-mail válido.");
+        document.getElementById("online-email").focus();
+        return;
+    }
+    const botao = document.querySelector(".btn-enviar");
+    botao.disabled = true;
+    acompanharPagamentoPix(numero);
+    try {
+        if (metodoOnlineSelecionado() === "PIX") {
+            const pix = await chamarPagamento(`${numero}/pix`, { cpf, email });
+            if (pix.status === "PAGO") {
+                concluirPedidoOnline(numero);
+                return;
+            }
+            document.getElementById("online-pix-qrcode").src = pix.qrCode;
+            document.getElementById("online-pix-copia").value = pix.copiaECola;
+            document.getElementById("online-pix-resultado").hidden = false;
+            acompanharPagamentoPix(numero);
+            return;
+        }
+        const titular = document.getElementById("cartao-titular").value.trim();
+        const [mes, ano] = document.getElementById("cartao-validade").value.split("/");
+        const chave = (await chamarPagamento("chave-publica")).chave;
+        const cartao = PagSeguro.encryptCard({
+            publicKey: chave,
+            holder: titular,
+            number: document.getElementById("cartao-numero").value.replace(/\D/g, ""),
+            expMonth: (mes || "").trim(),
+            expYear: ano && ano.trim().length === 2 ? `20${ano.trim()}` : (ano || "").trim(),
+            securityCode: document.getElementById("cartao-cvv").value.trim()
+        });
+        if (cartao.hasErrors) {
+            alert("Confira os dados do cartão e tente novamente.");
+            return;
+        }
+        document.getElementById("cartao-numero").value = "";
+        document.getElementById("cartao-cvv").value = "";
+        await chamarPagamento(`${numero}/cartao`, { cpf, email, titular, cartao: cartao.encryptedCard });
+        concluirPedidoOnline(numero);
+    } catch (erro) {
+        alert(erro.message || "Não foi possível processar o pagamento.");
+    } finally {
+        botao.disabled = false;
+    }
+}
+
+if (numeroPedidoOnline && tokenPedidoOnline) {
+    document.getElementById("pagamento").value = "Online";
+    controlarExibicaoPagamento("Online");
+    acompanharPagamentoPix(numeroPedidoOnline);
 }
 
 function atualizarCampoTroco() {
@@ -426,6 +581,16 @@ function atualizarAvisoInicioEntregas() {
 // 🚀 ENVIAR PEDIDO AO BACKEND
 // ==========================================
 async function enviarPedido(e) {
+    if (envioEmAndamento) return;
+    envioEmAndamento = true;
+    try {
+        await enviarPedidoInterno(e);
+    } finally {
+        envioEmAndamento = false;
+    }
+}
+
+async function enviarPedidoInterno(e) {
     if (e && typeof e.preventDefault === "function") {
         e.preventDefault();
     }
@@ -477,6 +642,15 @@ async function enviarPedido(e) {
     const ref = isRetirada ? "Não se aplica" : (document.getElementById("ponto-referencia").value || "Não informado");
     const observacao = document.getElementById("observacao").value.trim();
     const pagamento = document.getElementById("pagamento").value;
+
+    if (numeroPedidoOnline && pagamento !== "Online") {
+        alert("Há um pagamento online em andamento. Consulte o restaurante antes de criar outro pedido.");
+        return;
+    }
+    if (pagamento === "Online" && numeroPedidoOnline) {
+        await pagarOnline(numeroPedidoOnline);
+        return;
+    }
 
     let trocoPara = null;
     if (pagamento === "Dinheiro" && document.getElementById("precisa-troco").checked) {
@@ -542,8 +716,23 @@ async function enviarPedido(e) {
                 pedidoIdGerado = pedidoSalvo.numeroPedido || pedidoSalvo.id;
                 localStorage.setItem("ultimoPedidoIdSaborCearense", pedidoIdGerado);
                 pedidoSalvoComSucesso = true;
+                if (pagamento === "Online") {
+                    numeroPedidoOnline = pedidoIdGerado;
+                    tokenPedidoOnline = pedidoSalvo.pagamentoToken;
+                    if (!tokenPedidoOnline) {
+                        throw new Error("Não foi possível iniciar o pagamento. Entre em contato com o restaurante.");
+                    }
+                    sessionStorage.setItem("pedidoOnlineNumero", numeroPedidoOnline);
+                    sessionStorage.setItem("pedidoOnlineToken", tokenPedidoOnline);
+                    await pagarOnline(numeroPedidoOnline);
+                    return;
+                }
             } else {
                 console.error("O backend recusou os dados. Status do erro:", response.status);
+                if (response.status === 503 || response.status === 502) {
+                    alert("O pagamento online está indisponível no momento. Escolha outra forma de pagamento.");
+                    return;
+                }
                 if (response.status === 409) {
                     alert("O restaurante está fechado no momento. Não é possível enviar novos pedidos.");
                     return;

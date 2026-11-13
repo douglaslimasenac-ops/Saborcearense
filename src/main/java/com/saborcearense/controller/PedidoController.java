@@ -34,6 +34,8 @@ import com.saborcearense.model.Pedido;
 import com.saborcearense.repository.PedidoRepository;
 import com.saborcearense.repository.ChatMensagemRepository;
 import com.saborcearense.service.FuncionamentoRestauranteService;
+import com.saborcearense.service.NovoPedidoNotificador;
+import com.saborcearense.service.PagBankService;
 import com.saborcearense.service.ValidacaoItensSeparadosService;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,7 +48,7 @@ public class PedidoController {
     @org.springframework.web.bind.annotation.GetMapping
     public java.util.List<com.saborcearense.model.Pedido> listarTodosOsPedidos() {
         // Altere 'pedidoRepository' para o nome exato do repositório injetado na sua classe
-        return pedidoRepository.findAll(); 
+        return pedidoRepository.findByStatusNotIn(java.util.List.of("AGUARDANDO_PAGAMENTO"));
     }   
 
     @Autowired
@@ -63,6 +65,12 @@ public class PedidoController {
 
     @Autowired
     private ObjectMapper mapper;
+
+    @Autowired
+    private PagBankService pagBankService;
+
+    @Autowired
+    private NovoPedidoNotificador notificadorNovoPedido;
 
     @Value("${app.impressao-automatica.enabled:false}")
     private boolean impressaoAutomaticaHabilitada;
@@ -83,21 +91,51 @@ public class PedidoController {
     public List<Pedido> listarPedidosAtivos() {
         // Se o seu repositório não tiver essa query nativa, o Spring Boot aceita o método abaixo
         // ou você pode filtrar via stream na lista completa:
-        return pedidoRepository.findByStatusNotIn(java.util.List.of("ENTREGUE", "CANCELADO"));
+        return pedidoRepository.findByStatusNotIn(java.util.List.of("ENTREGUE", "CANCELADO", "AGUARDANDO_PAGAMENTO"));
     } // <-- ESSA CHAVE ESTAVA FALTANDO AQUI PARA FECHAR A FUNÇÃO DOS ATIVOS!
+
+    @GetMapping("/pagamentos-pendentes")
+    public List<com.fasterxml.jackson.databind.node.ObjectNode> listarPagamentosPendentes() {
+        return pedidoRepository.findByStatusOrderByDataCriacaoDesc("AGUARDANDO_PAGAMENTO").stream().map(pedido -> {
+            com.fasterxml.jackson.databind.node.ObjectNode resposta = mapper.valueToTree(pedido);
+            if (pedido.getPagamentoReferencia() != null) {
+                resposta.put("pagamentoReferencia", pedido.getPagamentoReferencia());
+            }
+            return resposta;
+        }).toList();
+    }
+
+    // Consulta pública: nunca expõe nome, telefone, endereço ou dados de pagamento.
+    private static java.util.Map<String, Object> visaoPublica(Pedido pedido) {
+        boolean retirada = pedido.getEndereco() != null
+                && pedido.getEndereco().trim().regionMatches(true, 0, "RETIRADA", 0, "RETIRADA".length());
+        java.util.Map<String, Object> visao = new java.util.LinkedHashMap<>();
+        visao.put("numeroPedido", pedido.getNumeroPedido());
+        visao.put("status", pedido.getStatus());
+        visao.put("pagamentoStatus", pedido.getPagamentoStatus());
+        visao.put("formaPagamento", pedido.getFormaPagamento());
+        visao.put("valorTotal", pedido.getValorTotal());
+        visao.put("trocoPara", pedido.getTrocoPara());
+        visao.put("itens", pedido.getItens());
+        visao.put("endereco", retirada ? "RETIRADA NO ESTABELECIMENTO" : "ENTREGA");
+        visao.put("dataCriacao", pedido.getDataCriacao());
+        visao.put("previsaoEntregaInicio", pedido.getPrevisaoEntregaInicio());
+        visao.put("previsaoEntregaFim", pedido.getPrevisaoEntregaFim());
+        return visao;
+    }
 
     // 🔍 BUSCAR STATUS POR ID: Chamado pelo site para rastrear o pedido
     @GetMapping("/{id}")
-    public ResponseEntity<Pedido> buscarPedidoPorId(@PathVariable Long id) {
+    public ResponseEntity<java.util.Map<String, Object>> buscarPedidoPorId(@PathVariable Long id) {
         return pedidoRepository.findById(id)
-                .map(pedido -> ResponseEntity.ok(pedido))
+                .map(pedido -> ResponseEntity.ok(visaoPublica(pedido)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
    @GetMapping("/numero/{numeroPedido}")
-   public ResponseEntity<Pedido> buscarPorNumeroPedido(@PathVariable Long numeroPedido) {
+   public ResponseEntity<java.util.Map<String, Object>> buscarPorNumeroPedido(@PathVariable Long numeroPedido) {
        return pedidoRepository.findByNumeroPedido(numeroPedido)
-               .map(ResponseEntity::ok)
+               .map(pedido -> ResponseEntity.ok(visaoPublica(pedido)))
                .orElse(ResponseEntity.notFound().build());
    }
 
@@ -112,18 +150,26 @@ public class PedidoController {
    }
 
    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-   public Pedido receberNovoPedido(
+   public com.fasterxml.jackson.databind.node.ObjectNode receberNovoPedido(
            @Valid @org.springframework.web.bind.annotation.RequestPart("pedido") Pedido novoPedido,
            @org.springframework.web.bind.annotation.RequestPart(value = "comprovante", required = false) MultipartFile comprovante) {
        verificarFuncionamento();
        anexarComprovante(novoPedido, comprovante);
-       return salvarNovoPedido(novoPedido);
+       return respostaNovoPedido(salvarNovoPedido(novoPedido));
    }
 
    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-   public Pedido receberNovoPedidoJson(@Valid @org.springframework.web.bind.annotation.RequestBody Pedido novoPedido) {
+   public com.fasterxml.jackson.databind.node.ObjectNode receberNovoPedidoJson(@Valid @org.springframework.web.bind.annotation.RequestBody Pedido novoPedido) {
        verificarFuncionamento();
-       return salvarNovoPedido(novoPedido);
+       return respostaNovoPedido(salvarNovoPedido(novoPedido));
+   }
+
+   private com.fasterxml.jackson.databind.node.ObjectNode respostaNovoPedido(Pedido pedido) {
+       com.fasterxml.jackson.databind.node.ObjectNode resposta = mapper.valueToTree(pedido);
+       if (pedido.getPagamentoToken() != null) {
+           resposta.put("pagamentoToken", pedido.getPagamentoToken());
+       }
+       return resposta;
    }
 
    private void verificarFuncionamento() {
@@ -140,7 +186,22 @@ public class PedidoController {
       novoPedido.setNumeroPedido(gerarNumeroPedido());
        novoPedido.setDataCriacao(java.time.LocalDateTime.now());
        novoPedido.setStatus("RECEBIDO");
-       novoPedido.setImpressaoPendente(impressaoAutomaticaHabilitada);
+       novoPedido.setPagamentoStatus(null);
+       novoPedido.setPagbankPedidoId(null);
+       novoPedido.setPixCopiaECola(null);
+       novoPedido.setPagamentoReferencia(null);
+       novoPedido.setPagamentoToken(null);
+       boolean pagamentoOnline = "Online".equalsIgnoreCase(novoPedido.getFormaPagamento());
+       if (pagamentoOnline) {
+           if (!pagBankService.habilitado()) {
+               throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Pagamento online indisponível");
+           }
+           novoPedido.setFormaPagamento("Online");
+           novoPedido.setStatus("AGUARDANDO_PAGAMENTO");
+           novoPedido.setPagamentoStatus("PENDENTE");
+           novoPedido.setPagamentoToken(java.util.UUID.randomUUID().toString());
+       }
+       novoPedido.setImpressaoPendente(impressaoAutomaticaHabilitada && !pagamentoOnline);
        if (novoPedido.getEndereco().trim().regionMatches(true, 0, "RETIRADA", 0, "RETIRADA".length())) {
            novoPedido.setPrevisaoEntregaInicio(null);
            novoPedido.setPrevisaoEntregaFim(null);
@@ -150,28 +211,14 @@ public class PedidoController {
            novoPedido.setPrevisaoEntregaFim(inicio.plusMinutes(10));
        }
         
-        System.out.println("Sabor Cearense: Novo pedido recebido do cliente " + novoPedido.getClienteNome());
+        System.out.println("Sabor Cearense: Novo pedido recebido #" + novoPedido.getNumeroPedido());
         
         // Salva no banco de dados primeiro
         Pedido pedidoSalvo = pedidoRepository.save(novoPedido);
 
-        // 👇 TRANSMITE O PEDIDO SALVO VIA WEBSOCKET EM TEMPO REAL
-        try {
-            // Converte o objeto Pedido completo para uma String JSON
-            String pedidoJson = mapper.writeValueAsString(pedidoSalvo); 
-            TextMessage message = new TextMessage(pedidoJson);
-
-            // Percorre todas as telas do admin conectadas e envia o novo pedido
-            for (org.springframework.web.socket.WebSocketSession sessao : com.saborcearense.config.WebSocketConfig.getSessoes()) {
-                if (sessao.isOpen()) {
-                    sessao.sendMessage(message);
-                }
-            }
-            System.out.println("🌵 Sabor Cearense: Alerta de novo pedido enviado via WebSocket!");
-        } catch (IOException e) {
-            System.err.println("Erro ao enviar pedido via WebSocket: " + e.getMessage());
+        if (!pagamentoOnline) {
+            notificadorNovoPedido.notificar(pedidoSalvo);
         }
-
         return pedidoSalvo;
     }
 
@@ -255,6 +302,10 @@ public class PedidoController {
         }
         
         return pedidoRepository.findByIdForUpdate(id).map(pedido -> {
+            if ("Online".equalsIgnoreCase(pedido.getFormaPagamento())
+                    && !"PAGO".equals(pedido.getPagamentoStatus())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Pagamento ainda não confirmado");
+            }
             pedido.setStatus(statusNormalizado);
             if (java.util.Set.of("ENTREGUE", "CANCELADO").contains(statusNormalizado)
                     && pedido.getNumeroPedido() != null) {

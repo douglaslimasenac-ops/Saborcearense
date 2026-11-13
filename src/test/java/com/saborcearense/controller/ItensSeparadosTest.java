@@ -1,6 +1,7 @@
 package com.saborcearense.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -22,9 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saborcearense.model.BairroEntrega;
 import com.saborcearense.model.Produto;
+import com.saborcearense.model.Pedido;
 import com.saborcearense.repository.BairroEntregaRepository;
 import com.saborcearense.repository.ItemCardapioRepository;
 import com.saborcearense.service.FuncionamentoRestauranteService;
+import com.saborcearense.service.ValidacaoItensSeparadosService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -35,6 +38,7 @@ class ItensSeparadosTest {
     @Autowired ItemCardapioRepository produtos;
     @Autowired BairroEntregaRepository bairros;
     @Autowired FuncionamentoRestauranteService funcionamento;
+    @Autowired ValidacaoItensSeparadosService validacao;
     private Produto produto;
 
     @BeforeEach
@@ -132,5 +136,21 @@ class ItensSeparadosTest {
         enviar(dados, 200);
         dados.put("valorTotal", 57);
         enviar(dados, 400);
+    }
+
+    @Test
+    void pagamentoOnlineConferePrecosMesmoSemItensSeparados() throws Exception {
+        Map<String, Object> dados = pedido();
+        dados.put("formaPagamento", "Online");
+        dados.put("itens", mapper.writeValueAsString(List.of(Map.of(
+                "id", produto.getId(), "nome", produto.getNome(), "quantidade", 2, "preco", 20))));
+        dados.put("valorTotal", 45);
+        validacao.validar(mapper.convertValue(dados, Pedido.class));
+        dados.put("valorTotal", 1);
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> validacao.validar(mapper.convertValue(dados, Pedido.class)));
+        dados.put("itens", "[]");
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> validacao.validar(mapper.convertValue(dados, Pedido.class)));
     }
 }

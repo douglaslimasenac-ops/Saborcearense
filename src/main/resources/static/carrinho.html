@@ -564,6 +564,7 @@
                     <label for="pagamento">Escolha como deseja pagar:</label>
                     <select id="pagamento" required onchange="controlarExibicaoPagamento(this.value)">
                         <option value="Pix" selected>Pix (na entrega ou retirada)</option>
+                        <option value="Online" disabled>Pagamento online indisponível</option>
                         <option value="Dinheiro">Dinheiro (Pagar na Entrega)</option>
                         <option value="Cartão de Crédito">Cartão de Crédito (Na Entrega)</option>
                         <option value="Cartão de Débito">Cartão de Débito (Na Entrega)</option>
@@ -588,6 +589,46 @@
                 </div>
             </div>
             
+            <div id="container-pagamento-online" class="secao-card" hidden>
+                <div class="opcoes-recebimento" role="radiogroup" aria-label="Meio de pagamento online">
+                    <label><input type="radio" name="metodo-online" value="PIX" checked onchange="alterarMetodoOnline(this.value)"> Pix</label>
+                    <label><input type="radio" name="metodo-online" value="CARTAO" onchange="alterarMetodoOnline(this.value)"> Cartão de crédito</label>
+                </div>
+                <div class="form-grupo">
+                    <label for="online-cpf">CPF</label>
+                    <input type="text" id="online-cpf" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="000.000.000-00">
+                </div>
+                <div class="form-grupo">
+                    <label for="online-email">E-mail</label>
+                    <input type="email" id="online-email" autocomplete="email" placeholder="voce@email.com">
+                </div>
+                <div id="online-campos-cartao" hidden>
+                    <div class="form-grupo">
+                        <label for="cartao-titular">Nome impresso no cartão</label>
+                        <input type="text" id="cartao-titular" autocomplete="cc-name">
+                    </div>
+                    <div class="form-grupo">
+                        <label for="cartao-numero">Número do cartão</label>
+                        <input type="text" id="cartao-numero" inputmode="numeric" maxlength="19" autocomplete="cc-number">
+                    </div>
+                    <div class="form-grupo">
+                        <label for="cartao-validade">Validade (MM/AA)</label>
+                        <input type="text" id="cartao-validade" inputmode="numeric" maxlength="5" placeholder="MM/AA" autocomplete="cc-exp">
+                    </div>
+                    <div class="form-grupo">
+                        <label for="cartao-cvv">Código de segurança</label>
+                        <input type="text" id="cartao-cvv" inputmode="numeric" maxlength="4" autocomplete="cc-csc">
+                    </div>
+                </div>
+                <div id="online-pix-resultado" hidden style="text-align: center;">
+                    <p><strong>Escaneie o QR Code ou copie o código Pix</strong></p>
+                    <img id="online-pix-qrcode" alt="QR Code Pix" width="240" height="240">
+                    <textarea id="online-pix-copia" readonly rows="3" style="width: 100%;"></textarea>
+                    <button type="button" class="btn-voltar-checkout" onclick="copiarCodigoPix()">Copiar código Pix</button>
+                    <p id="online-pix-status">Aguardando o pagamento...</p>
+                </div>
+            </div>
+
             <div style="margin-top: 25px;">
                 <button type="button" class="btn-voltar-checkout" onclick="voltarParaEtapaDados()">← Voltar para entrega</button>
                 <button type="button" class="btn-enviar" onclick="enviarPedido(event)">Finalizar pedido 🌵</button>
@@ -597,7 +638,8 @@
     </div>
      <!-- Vincle o seu novo arquivo externo aqui de forma limpa -->
     <script src="ordenar-itens.js"></script>
-    <script src="carrinho.js?v=5"></script>
+    <script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"></script>
+    <script src="carrinho.js?v=7"></script>
     <script src="chat-widget.js"></script>
 </body>
 </html>

@@ -58,7 +58,31 @@ public class Pedido {
     @Column(length = 255)
     private String comprovantePixNome;
 
+    @Column(length = 40)
+    private String pagamentoStatus;
+    @Column(length = 100)
+    private String pagbankPedidoId;
+    @Column(length = 600)
+    private String pixCopiaECola;
+    @JsonIgnore
+    @Column(length = 36)
+    private String pagamentoReferencia;
+    @JsonIgnore
+    @Column(length = 36)
+    private String pagamentoToken;
+
     public Pedido() {}
+
+    public String getPagamentoStatus() { return pagamentoStatus; }
+    public void setPagamentoStatus(String pagamentoStatus) { this.pagamentoStatus = pagamentoStatus; }
+    public String getPagbankPedidoId() { return pagbankPedidoId; }
+    public void setPagbankPedidoId(String pagbankPedidoId) { this.pagbankPedidoId = pagbankPedidoId; }
+    public String getPixCopiaECola() { return pixCopiaECola; }
+    public void setPixCopiaECola(String pixCopiaECola) { this.pixCopiaECola = pixCopiaECola; }
+    public String getPagamentoReferencia() { return pagamentoReferencia; }
+    public void setPagamentoReferencia(String pagamentoReferencia) { this.pagamentoReferencia = pagamentoReferencia; }
+    public String getPagamentoToken() { return pagamentoToken; }
+    public void setPagamentoToken(String pagamentoToken) { this.pagamentoToken = pagamentoToken; }
 
     // --- GETTERS E SETTERS ---
     public Long getId() { return id; }
